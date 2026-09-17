@@ -14,6 +14,7 @@
   ④ gymnasium 真跑一步（接口层）
   ⑤ torch 真做一次反向传播（训练层）
   ⑥ 配置能加载、wmlab 各层能 import（本仓库结构完整）
+  ⑦ 绘图样式中文字体可用（出图不出现方块）
 
 运行：
     python scripts/00_check_env.py
@@ -183,6 +184,20 @@ def main() -> int:
         return f"reliable_horizon 插值 = {h}（期望约 3.2）"
 
     check("可靠视界指标", _metrics)
+
+    # ---------- ⑦ 绘图样式 ----------
+    line("\n【7】绘图样式（中文字体）")
+
+    def _plot():
+        import matplotlib
+        from wmlab.utils.plot import apply_style, pick_cjk_font
+        font = apply_style()
+        minus_ok = matplotlib.rcParams["axes.unicode_minus"] is False
+        if font is None:
+            raise RuntimeError("未找到任何中文字体，图内中文会显示为方块")
+        return f"中文字体={font}  负号修复={'OK' if minus_ok else '未生效'}"
+
+    check("apply_style 中文字体", _plot)
 
     # ---------- 汇总 ----------
     line("\n" + "=" * 78)

@@ -43,6 +43,7 @@ from wmlab.models import MLPWorldModel
 from wmlab.rollout import closed_loop_error_curve, imagine, multi_step_error_curve
 from wmlab.utils import (count_params, describe_device, get_device, load_config,
                          output_dir, set_seed)
+from wmlab.utils.plot import apply_style, save_fig
 
 
 def parse_args():
@@ -117,6 +118,8 @@ def main():
 
     seed = int(cfg["seed"])
     set_seed(seed)
+    # 统一样式：中文字体由代码显式设置，不依赖 MPLCONFIGDIR 等进程环境
+    apply_style()
     device = get_device(args.device or cfg.get("device"))
     out = output_dir(cfg)
 
@@ -234,8 +237,7 @@ def main():
         fontsize=10,
     )
     fig.tight_layout()
-    png = out / f"{args.tag}.png"
-    fig.savefig(png, dpi=150)
+    png = save_fig(fig, out / f"{args.tag}.png")
     plt.close(fig)
 
     summary = {

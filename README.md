@@ -17,12 +17,16 @@
 
 ```bash
 # 1) 环境（本机已建好 ai-lab，见项目文档）
-conda activate ai-lab
+conda activate D:\devtools\miniconda3\envs\ai-lab
+# 或在 VSCode 里直接用任务：Terminal -> Run Task -> wmlab: 环境自检
 
-# 2) 随机策略 baseline，产出第一张图
+# 2) 环境自检（15 项，含中文字体链路）
+python scripts/00_check_env.py
+
+# 3) 随机策略 baseline，产出第一张图
 python scripts/01_random_baseline.py
 
-# 3) 训练一个世界模型，产出 loss 曲线 + 多步预测误差曲线
+# 4) 训练一个世界模型，产出 loss 曲线 + 多步预测误差曲线
 python scripts/02_train_world_model.py
 ```
 
@@ -36,8 +40,8 @@ wmlab/
   models/   世界模型。编码器 / 潜空间转移 / 解码器
   rollout/  潜空间多步 rollout，以及误差随视界增长的测量
   eval/     指标：NMSE、可靠视界、预测区间覆盖率
-  utils/    设备选择（CPU/云 GPU 无痛切换）、随机种子
-scripts/    可直接运行的入口脚本（编号即依赖顺序）
+  utils/    设备选择（CPU/云 GPU 无痛切换）、随机种子、统一绘图样式
+scripts/    可直接运行的入口脚本（编号即依赖顺序；00 = 环境自检）
 configs/    YAML 配置（device: auto 时自动选 cuda 或 cpu）
 outputs/    ★ 结果图与日志，已 gitignore
 ```
@@ -49,6 +53,11 @@ outputs/    ★ 结果图与日志，已 gitignore
 2. **种子固定**：`set_seed()` 统一设置 python / numpy / torch，保证曲线可复现。
 3. **配置外置**：超参走 `configs/*.yaml`，不写死在脚本里，便于扫参。
 4. **结果落盘**：所有图与指标写 `outputs/`，README 里引用的图都从它来。
+5. **样式随代码走**：中文字体由 `wmlab.utils.plot.apply_style()` 显式设置（探测
+   YaHei / PingFang / Noto CJK 等并逐个回退），**不依赖 `MPLCONFIGDIR` 等进程环境**——
+   换机器、换终端、上云，图里中文都不会变方块；负号渲染同步修复。
+6. **依赖锁定**：`requirements.lock.txt` 记录本机全量依赖（torch 为 +cpu 版，
+   上云时替换为对应 CUDA 版本即可）。
 
 ## 结果（2026-09-17 首次测量，CPU 全部跑通）
 

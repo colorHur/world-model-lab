@@ -32,6 +32,7 @@ import numpy as np
 from wmlab.data import collect_random_episodes, episode_stats
 from wmlab.envs import make_env
 from wmlab.utils import describe_device, get_device, load_config, output_dir, set_seed
+from wmlab.utils.plot import apply_style, save_fig
 
 
 def parse_args():
@@ -53,6 +54,8 @@ def main():
 
     seed = int(cfg["seed"])
     set_seed(seed)
+    # 统一样式：中文字体由代码显式设置，不依赖 MPLCONFIGDIR 等进程环境
+    apply_style()
     device = get_device(args.device or cfg.get("device"))
     out = output_dir(cfg)
 
@@ -101,8 +104,7 @@ def main():
         fontsize=10,
     )
     fig.tight_layout()
-    png = out / "01_random_baseline.png"
-    fig.savefig(png, dpi=150)
+    png = save_fig(fig, out / "01_random_baseline.png")
     plt.close(fig)
 
     js = out / "01_random_baseline.json"
