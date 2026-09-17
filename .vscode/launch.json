@@ -1,0 +1,46 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "01 · 随机策略 baseline",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/01_random_baseline.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": { "PYTHONUTF8": "1" },
+      "justMyCode": false
+    },
+    {
+      "name": "02 · 训练世界模型 + 可靠视界",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/02_train_world_model.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": { "PYTHONUTF8": "1" },
+      "justMyCode": false
+    },
+    {
+      "name": "02 · 快速自检（10 epoch 冒烟测试）",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/02_train_world_model.py",
+      "args": ["--epochs", "10", "--episodes", "100", "--tag", "smoke"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": { "PYTHONUTF8": "1" },
+      "justMyCode": false
+    },
+    {
+      "name": "当前文件",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": { "PYTHONUTF8": "1" },
+      "justMyCode": false
+    }
+  ]
+}

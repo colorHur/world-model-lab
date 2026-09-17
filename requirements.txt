@@ -1,0 +1,16 @@
+# ---- 核心依赖（本机 CPU 起步）----
+# PyTorch 装 CPU 版以省空间（比默认 CUDA 版小 8 倍）：
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+torch>=2.2
+numpy>=1.26
+matplotlib>=3.8
+pyyaml>=6.0
+tqdm>=4.66
+gymnasium>=0.29
+
+# ---- 云 GPU 上追加（本地不装）----
+# 换 CUDA 版：pip install torch --index-url https://download.pytorch.org/whl/cu121
+# stable-baselines3      # PPO/DQN 参考基线（E1 对照用）
+# mujoco                 # DMC 连续控制任务（E2 扩展）
+# tensorboard            # 训练可视化
+# diffusers              # 扩散策略动作头（N5）

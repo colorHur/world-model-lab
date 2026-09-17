@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-python.debugpy",
+    "ms-toolsai.jupyter",
+    "ms-toolsai.jupyter-renderers",
+    "eamodio.gitlens",
+    "mhutchie.git-graph",
+    "charliermarsh.ruff",
+    "ms-vscode-remote.remote-ssh"
+  ]
+}

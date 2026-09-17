@@ -1,0 +1,37 @@
+# world-model-lab 默认配置
+# 超参全部外置，便于扫参与云 GPU 上批量复现
+
+seed: 0
+device: auto            # auto -> 有 CUDA 用 CUDA，否则 CPU。云端加 --device cuda 即可
+
+env:
+  id: CartPole-v1       # 后续换 UAV 轨迹 / 无线信道场景时只改这一行 + envs/ 下加 Adapter
+  max_steps: 500
+
+data:
+  n_episodes: 600       # 用随机策略采集的转移数据量（CartPole 随机策略平均仅 ~20 步/集）
+
+model:
+  latent_dim: 32        # 潜空间维度（B1 的 H_t/Z_t 因子化会在此扩展）
+  hidden: 128
+  discrete_act: true
+
+train:
+  epochs: 150
+  batch_size: 256
+  lr: 0.001
+  weight_decay: 0.0
+  grad_clip: 5.0
+  val_ratio: 0.1
+
+eval:
+  # 多步 rollout 视界（步）。用来画"预测误差随步数增长"的曲线。
+  # 上限受数据限制：随机策略在 CartPole 上平均仅 ~20 步/集，故最长取 15。
+  # 换 Pendulum（每集固定 200 步）或 UAV 轨迹数据后可延长到 50+。
+  horizons: [1, 2, 3, 4, 5, 6, 8, 10, 12, 15]
+  # 可靠视界判据：归一化 MSE 首次超过该阈值的那一步
+  err_threshold: 0.05
+  threshold_mode: rel    # rel = 相对该步的观测方差；abs = 绝对 MSE
+
+output:
+  dir: outputs

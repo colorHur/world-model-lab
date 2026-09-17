@@ -1,0 +1,37 @@
+{
+  // ★ 默认解释器指向本机已建好的 ai-lab（不是 base 的 Python 3.14）
+  "python.defaultInterpreterPath": "D:\\devtools\\miniconda3\\envs\\ai-lab\\python.exe",
+  "python.terminal.activateEnvironment": true,
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.autoImportCompletions": true,
+
+  // 保存即格式化（Ruff，比 black 快很多）
+  "editor.formatOnSave": true,
+  "editor.rulers": [100],
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
+  },
+
+  // 中文路径与输出的根治开关（和用户级环境变量一致）
+  "files.encoding": "utf8",
+  "files.eol": "\n",
+  "terminal.integrated.env.windows": {
+    "PYTHONUTF8": "1",
+    "PYTHONIOENCODING": "utf-8"
+  },
+
+  // Notebook：以仓库根为工作目录，import wmlab 才能生效
+  "jupyter.notebookFileRoot": "${workspaceFolder}",
+  "jupyter.askForKernelRestart": false,
+
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/.pytest_cache": true
+  }
+}

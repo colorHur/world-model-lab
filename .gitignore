@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# 结果与产物（图、日志、检查点都不进版本库；README 引用的图放 assets/）
+outputs/
+logs/
+data/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+
+# 环境
+.venv/
+venv/
+env/
+.env
+
+# 编辑器
+.idea/
+.DS_Store
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
