@@ -17,12 +17,20 @@
     }
   },
 
+  // ★ Git：写死绝对路径，不依赖系统 PATH（本机改过 PATH 后新进程才可见，容易踩空）
+  "git.path": "D:\\devtools\\Git\\cmd\\git.exe",
+  "git.autofetch": true,
+  "git.confirmSync": false,
+
   // 中文路径与输出的根治开关（和用户级环境变量一致）
   "files.encoding": "utf8",
   "files.eol": "\n",
+  // PATH 前置：VSCode 里设 PATH 会替换而非追加，必须带 ${env:PATH} 兜住系统项
   "terminal.integrated.env.windows": {
+    "PATH": "D:\\devtools\\Git\\cmd;D:\\devtools\\Git\\mingw64\\bin;D:\\devtools\\VSCode\\bin;D:\\devtools\\miniconda3\\condabin;${env:PATH}",
     "PYTHONUTF8": "1",
-    "PYTHONIOENCODING": "utf-8"
+    "PYTHONIOENCODING": "utf-8",
+    "GIT_TERMINAL_PROMPT": "0"
   },
 
   // Notebook：以仓库根为工作目录，import wmlab 才能生效

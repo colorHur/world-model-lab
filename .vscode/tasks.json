@@ -4,7 +4,7 @@
         {
             "label": "wmlab: 环境自检",
             "type": "shell",
-            "command": "${command:python.interpreterPath}",
+            "command": "${config:python.defaultInterpreterPath}",
             "args": ["scripts/00_check_env.py"],
             "options": {"cwd": "${workspaceFolder}"},
             "group": "test",
@@ -13,7 +13,7 @@
         {
             "label": "wmlab: 随机基线 (01)",
             "type": "shell",
-            "command": "${command:python.interpreterPath}",
+            "command": "${config:python.defaultInterpreterPath}",
             "args": ["scripts/01_random_baseline.py"],
             "options": {"cwd": "${workspaceFolder}"},
             "group": "build",
@@ -22,7 +22,7 @@
         {
             "label": "wmlab: 训练世界模型 (02)",
             "type": "shell",
-            "command": "${command:python.interpreterPath}",
+            "command": "${config:python.defaultInterpreterPath}",
             "args": ["scripts/02_train_world_model.py"],
             "options": {"cwd": "${workspaceFolder}"},
             "group": {"kind": "build", "isDefault": true},
@@ -31,7 +31,7 @@
         {
             "label": "wmlab: 上云训练 (cuda)",
             "type": "shell",
-            "command": "${command:python.interpreterPath}",
+            "command": "${config:python.defaultInterpreterPath}",
             "args": ["scripts/02_train_world_model.py", "--device", "cuda", "--epochs", "60"],
             "options": {"cwd": "${workspaceFolder}"},
             "problemMatcher": []
