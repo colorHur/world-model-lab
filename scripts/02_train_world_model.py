@@ -223,12 +223,16 @@ def main():
 
     # ④ 每步误差增量
     ax = axes[1, 1]
+    # ★ 口径修正（2026-09-18）：horizons 间隔不等（…2,2,3,5,5,10,10,25,25,50,40），
+    #   直接 np.diff(nm) 会把「间隔变大」混进「误差增长加速」。按步数归一才是每步增量。
+    hs_f = np.asarray(curve_open["horizons"], dtype=float)
     nm = np.asarray(curve_open["nmse"], dtype=float)
-    inc = np.diff(nm)
-    ax.bar(range(1, len(inc) + 1), inc, color="#72B7B2")
-    ax.set_xlabel("Horizon index (between consecutive horizons)")
-    ax.set_ylabel("Δ NMSE per step")
-    ax.set_title("④ Error growth rate (is it self-amplifying?)")
+    inc = np.diff(nm) / np.diff(hs_f)
+    centers = 0.5 * (hs_f[:-1] + hs_f[1:])
+    ax.bar(centers, inc, width=0.6 * np.diff(hs_f), color="#72B7B2")
+    ax.set_xlabel("Horizon (steps) · bar at interval midpoint, width ∝ interval")
+    ax.set_ylabel("Δ NMSE per step (normalized)")
+    ax.set_title("④ Per-step error growth rate (is it self-amplifying?)")
     ax.grid(alpha=0.25, axis="y")
 
     fig.suptitle(

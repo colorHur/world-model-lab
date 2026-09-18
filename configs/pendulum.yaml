@@ -1,0 +1,49 @@
+# world-model-lab · Pendulum 长视界配置
+#
+# 存在的理由（一句话）：
+#   上一轮 CartPole 的开环可靠视界测出"> 15 步"，但 15 是**数据上限**而不是模型上限
+#   —— 随机策略在 CartPole 上平均只活 24 步（实测 60 条：mean=24.0, max=60,
+#   长度 >100 的有 0 条），horizon 根本没法设更大。
+#   Pendulum-v1 每集固定 200 步（实测 8/8 = 200），把视界上限抬到 100+，
+#   才能给出**第一个有信息量的开环 H\***。
+#
+# 与 default.yaml 的差异只有三处（都是被迫的，不是调参）：
+#   1. env.id           -> Pendulum-v1（每集 200 步）
+#   2. model.discrete_act -> false（Pendulum 动作是连续量，Box(-2,2,1)）
+#   3. eval.horizons    -> 拉到 190（这才是本配置的目的）
+#
+# 代码零改动：models / rollout / eval 三层对连续动作与长视界均已支持（已实测预演）。
+
+seed: 0
+device: auto
+
+env:
+  id: Pendulum-v1
+  max_steps: 200          # 与 gymnasium 的 truncation 上限一致
+
+data:
+  n_episodes: 300         # 300 × 200 = 6 万条转移（CartPole 默认档约 1.4 万条）
+
+model:
+  latent_dim: 32
+  hidden: 128
+  discrete_act: false     # ★ 连续动作
+
+train:
+  epochs: 150
+  batch_size: 256
+  lr: 0.001
+  weight_decay: 0.0
+  grad_clip: 5.0
+  val_ratio: 0.1
+
+eval:
+  # ★ 这是本配置的核心：视界从 15 抬到 190
+  #   （100 不够：3 epoch 冒烟时 h=100 的 NMSE 已 0.49，训练充分后整条曲线下移，
+  #      H* 大概率落在 100 右边而被截断成 None —— 一次跑到位的成本 < 二次重跑）
+  horizons: [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100, 150, 190]
+  err_threshold: 0.05     # 与 CartPole 那轮保持一致，否则两者不可比
+  threshold_mode: rel
+
+output:
+  dir: outputs
