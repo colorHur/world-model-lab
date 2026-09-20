@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import math
 import warnings
 from typing import Sequence
 
@@ -96,6 +97,12 @@ def reliable_horizon(
         首次穿越阈值的步数（线性插值，返回 float）；若全程未超阈返回 None
         （None 意味着在测得的视界范围内模型始终可靠 —— 应加大视界重测）。
 
+    Raises:
+        ValueError: `errors` 里出现 NaN / Inf —— rollout 已数值发散，H\\* 无定义。
+            ★ 这里**故意不降级**：NaN 与任何数比较都返回 False ⇒ 会被静默当成
+            "已超阈"而返回一个虚假偏小的 H\\*。**一个假数字比一次崩溃危险得多**，
+            因为它会被当作结论写进论文。
+
     为什么返回插值而不是整数：整数步会让曲线上的穿越点跳变，
     多个种子一平均就丢掉了信息。插值后的值对种子更稳定，可作为论文里的一个连续指标。
 
@@ -127,7 +134,23 @@ def reliable_horizon(
         raise ValueError("至少需要两个视界点才能判定穿越")
 
     for i in range(len(es)):
-        if es[i] <= threshold:
+        e = float(es[i])
+        # ★★ NaN/Inf 必须拦住（2026-09-20，X3/X4 期间发现）
+        #   IEEE-754 下**任何**与 NaN 的比较都返回 False ⇒ `NaN <= threshold` = False
+        #   ⇒ 循环会立刻把它当成"误差超阈"，返回一个**虚假偏小**的 H*。
+        #   那比崩溃危险得多 —— 一个假数字会被直接写进论文。
+        #   触发场景是实测到的：15 epoch 的弱模型做**观测空间闭环** rollout，
+        #   第 131 步之后出现 60 个非有限值，峰值 3.9e34（改用足量训练后即消失）。
+        if not math.isfinite(e):
+            raise ValueError(
+                f"errors[{i}]（horizon={hs[i]}）不是有限值：{e!r}。\n"
+                f"这意味着 rollout 已经数值发散，'首次超阈'在此处没有定义。\n"
+                f"若不拦住，NaN 与任何数比较都为 False ⇒ 会被静默当成'已超阈'，"
+                f"返回一个虚假偏小的 H*。\n"
+                f"处置：① 加大 epochs 让模型真正收敛 ② 缩短 horizons  "
+                f"③ 开环（潜空间）rollout 比观测空间闭环更不容易发散。"
+            )
+        if e <= threshold:
             continue
         if i == 0:
             # 第一步就已超阈 —— 模型基本不可用

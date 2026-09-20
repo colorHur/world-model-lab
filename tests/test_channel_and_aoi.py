@@ -16,6 +16,7 @@
   ⑧ NmseCurve 拒绝长度不一致       —— 稠密逐点数组误配稀疏 horizons 会静默截断
   ⑨ 时延真的延迟了信息（X27）      —— 旧实现里 `delay` 是**空参数**，只做算术偏移
   ⑩ 陈旧载荷的前向补偿（X27）      —— 且"补偿有效"的前提是**模型够好**（未训练时反而更糟）
+  ⑪ NaN/Inf 不得静默通过（X3）     —— `NaN <= 阈值` 恒为 False ⇒ 会被当成"已超阈"返回假 H*
 """
 
 from __future__ import annotations
@@ -486,6 +487,33 @@ def test_delay_mode_rejects_bad_value():
             raise AssertionError(f"非法 delay_mode={bad!r} 未被拒绝")
         except ValueError:
             pass
+
+
+# ----------------------------------------------------------- ⑪ NaN 不得静默通过（X3）
+def test_reliable_horizon_rejects_non_finite():
+    """★ 曲线发散时，H\\* 必须**响**,不能给假数字。
+
+    实测触发场景：15 epoch 的弱模型做观测空间闭环 rollout，
+    第 131 步之后出现 60 个非有限值、峰值 3.9e34。
+
+    危险在于 `NaN <= 0.05` 恒为 False —— 循环会把它当成"已超阈"，
+    在第 3 个点就返回 H\\*≈2.x。**一个假数字会被写进论文**，比崩溃危险得多。
+    """
+    hs = [1, 2, 3, 4, 5]
+    for bad, name in ((float("nan"), "NaN"), (float("inf"), "+Inf"),
+                      (float("-inf"), "-Inf")):
+        es = [0.01, 0.02, bad, 0.50, 0.80]
+        try:
+            h = reliable_horizon(hs, es, 0.05)
+            raise AssertionError(
+                f"{name} 未被拦住 —— reliable_horizon 返回了 {h}，"
+                f"这是把 NaN/Inf 当成'已超阈'的假值")
+        except ValueError as e:
+            assert "有限值" in str(e), f"报错信息应指明原因，实际：{e}"
+
+    # ★ 反向确认：全程有限的同型曲线仍能正常工作（别把修复做成一刀切的误伤）
+    ok = reliable_horizon(hs, [0.01, 0.02, 0.50, 0.80, 0.90], 0.05)
+    assert ok is not None and 2.0 < ok < 3.0, f"正常曲线应给出 H*≈2.x，实际 {ok}"
 
 
 # ----------------------------------------------------------- runner
