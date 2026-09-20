@@ -8,14 +8,60 @@
 
 from __future__ import annotations
 
+import warnings
 from typing import Sequence
 
 import torch
 
 
 def mse(pred: torch.Tensor, target: torch.Tensor) -> float:
-    """均方误差。"""
+    """均方误差（累积口径：把 tensor 里所有元素一起平均）。"""
     return float(torch.mean((pred - target) ** 2).item())
+
+
+def per_step_mse(pred: torch.Tensor, target: torch.Tensor) -> list[float]:
+    """**逐点**均方误差：返回每一步自身的误差，不跨步平均。
+
+    与 `mse()` 的关系：若 pred/target 形状为 (B, H, D)，则
+        `mse(pred[:, :h], target[:, :h])`  = (1/h) * Σ_{k≤h} per_step_mse[k-1]
+    也就是说累积口径是逐点口径的**运行平均**。两者回答不同的问题：
+
+    | 口径 | 回答 |
+    |---|---|
+    | 累积 `mse` | "平均到第 h 步，误差水平是多少" |
+    | 逐点 `per_step_mse` | "**第 h 步本身**有多不准" |
+
+    `reliable_horizon` 问的是"误差**首次**超阈的那一步" ⇒ 必须用逐点。
+    用累积口径会把前 h-1 步的小误差摊进均值，**系统性低估**长视界误差、**高估 H\\***。
+
+    Args:
+        pred, target: 形状 (B, H, ...) 或 (B, H) 或 (H,)
+    Returns:
+        长度 H 的 list，第 i 项 = 第 i+1 步的 MSE
+    """
+    err = (pred - target).float() ** 2
+    if err.dim() <= 1:
+        return [float(err.mean().item())]
+    if err.dim() == 2:                      # (B, H)
+        return [float(v) for v in err.mean(dim=0)]
+    return [float(v) for v in err.flatten(2).mean(dim=(0, 2))]
+
+
+def per_step_nmse(pred: torch.Tensor, target: torch.Tensor,
+                  eps: float = 1e-8) -> list[float]:
+    """**逐点**归一化均方误差：每一步的 MSE 除以该步目标方差。
+
+    与 `nmse()` 同源（都除目标方差），差别只在"是否跨步平均"。
+    注意：若下游需要用**全窗口 pooling** 的单一分母（为了与在线 tracking 严格可比），
+    请用 `per_step_mse()` 自取分子再除以那个分母 —— 见 `wmlab/eval/tracking.py`。
+    """
+    ps = per_step_mse(pred, target)
+    if target.dim() <= 1:
+        vars_ = [float(torch.var(target.float(), unbiased=False).item())]
+    else:
+        flat = target.float().flatten(2)                      # (B, H, M)
+        vars_ = [float(v) for v in flat.var(dim=(0, 2), unbiased=False)]
+    return [m / max(v, eps) for m, v in zip(ps, vars_)]
 
 
 def nmse(pred: torch.Tensor, target: torch.Tensor, eps: float = 1e-8) -> float:
@@ -33,6 +79,8 @@ def reliable_horizon(
     errors: Sequence[float],
     threshold: float,
     mode: str = "rel",
+    *,
+    calibration: str = "pointwise",
 ) -> float | None:
     """可靠视界：误差**首次**超过阈值的那一步。
 
@@ -41,6 +89,8 @@ def reliable_horizon(
         errors:   对应的误差（mse 或 nmse）
         threshold: 阈值。mode="rel" 时按 NMSE 口径给定（如 0.05 表示误差达目标方差的 5%）
         mode:      "rel"（归一化）或 "abs"（绝对）
+        calibration: 传进来的 errors 是哪种口径 —— "pointwise"（默认，**正确**）
+                     或 "cumulative"（仅用于复现历史结论，会触发警告）。
 
     Returns:
         首次穿越阈值的步数（线性插值，返回 float）；若全程未超阈返回 None
@@ -48,7 +98,27 @@ def reliable_horizon(
 
     为什么返回插值而不是整数：整数步会让曲线上的穿越点跳变，
     多个种子一平均就丢掉了信息。插值后的值对种子更稳定，可作为论文里的一个连续指标。
+
+    ★★ 口径必须是逐点（2026-09-20 由 X26 对账发现）
+    ------------------------------------------------
+    "首次超阈" = 第 h 步**本身**的误差第一次越过阈值 ⇒ errors 必须是逐点口径
+    （`per_step_mse` / `per_step_nmse`，或它们在 pooled 分母下的版本）。
+    若误传累积口径（`mse(pred[:, :h], tgt[:, :h])`），前 h-1 步的误差会被摊成均值，
+    穿越更晚 ⇒ H\\* 被**系统性抬高**。Pendulum 实测：开环 64.83→42.99（+50.8%）、
+    闭环 51.96→39.01（+33.2%）；CartPole 开环累积口径直接测不出（`None`）而逐点给 12.95。
+
+    ★ 另：`errors` 的**单位必须与 threshold 同源**。threshold 是归一化口径时，
+    `errors` 必须是 NMSE（不是 MSE）—— 混用会让 H\\* 随环境的目标方差漂移。
     """
+    if calibration not in ("pointwise", "cumulative"):
+        raise ValueError(f"calibration 只能是 pointwise / cumulative，收到 {calibration!r}")
+    if calibration == "cumulative":
+        warnings.warn(
+            "reliable_horizon 收到累积口径曲线：'首次超阈' 的定义要求逐点口径，"
+            "累积口径会系统性抬高 H*（Pendulum 实测：开环 +50.8%、闭环 +33.2%；"
+            "CartPole 开环甚至测不出）。仅在复现历史结论时才这样用。",
+            stacklevel=2,
+        )
     hs = list(horizons)
     es = list(errors)
     if len(hs) != len(es):

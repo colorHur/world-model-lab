@@ -27,9 +27,19 @@ class StepResult:
     terminated: bool
     truncated: bool
 
+    #: ★ X24 新增（2026-09-19）：信道/调度侧的附带记账。
+    #: **向后兼容** —— 现有调用方不传即为 None，语义与上一版完全一致。
+    #: 约定字段：`delivered`（本步观测是否送达本地）、`delay`（传输时延步数）。
+    info: dict | None = None
+
     @property
     def done(self) -> bool:
         return bool(self.terminated or self.truncated)
+
+    @property
+    def delivered(self) -> bool:
+        """本步观测是否送达本地。未接信道时恒为 True（= 完美观测）。"""
+        return True if self.info is None else bool(self.info.get("delivered", True))
 
 
 class EnvAdapter(ABC):

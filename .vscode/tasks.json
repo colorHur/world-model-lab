@@ -29,6 +29,34 @@
             "problemMatcher": []
         },
         {
+            "label": "wmlab: 长视界 H* (02 · Pendulum)",
+            "type": "shell",
+            "command": "${config:python.defaultInterpreterPath}",
+            "args": ["scripts/02_train_world_model.py", "--config", "configs/pendulum.yaml",
+                     "--tag", "02_world_model_pendulum"],
+            "options": {"cwd": "${workspaceFolder}"},
+            "problemMatcher": []
+        },
+        {
+            "label": "wmlab: 通信接入 (04 · X24/X25/X26)",
+            "type": "shell",
+            "command": "${config:python.defaultInterpreterPath}",
+            "args": ["-u", "scripts/04_channel_tracking.py", "--config", "configs/channel.yaml",
+                     "--tag", "04_channel"],
+            "options": {"cwd": "${workspaceFolder}"},
+            "problemMatcher": []
+        },
+        {
+            "label": "wmlab: 通信接入 · 冒烟 (04 --quick)",
+            "type": "shell",
+            "command": "${config:python.defaultInterpreterPath}",
+            "args": ["-u", "scripts/04_channel_tracking.py", "--config", "configs/channel.yaml",
+                     "--quick", "--tag", "04_smoke"],
+            "options": {"cwd": "${workspaceFolder}"},
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
             "label": "wmlab: 上云训练 (cuda)",
             "type": "shell",
             "command": "${config:python.defaultInterpreterPath}",

@@ -10,9 +10,25 @@
   ① 训练/验证 loss 曲线            —— 确认训练确实收敛（不是"跑了但没学"）
   ② NMSE vs rollout 视界（开环/闭环）—— 核心研究图，误差随步数增长
   ③ 一条示例轨迹的真值 vs 多步预测    —— 直观展示"第几步开始飘"
-  ④ 误差增长率（每步 NMSE 增量）      —— 判断误差是线性累积还是自我放大
+  ④ 逐点误差 vs 视界                 —— 判断误差是线性累积、自我放大还是饱和
 
 并打印 reliable horizon（首次超阈的步数，线性插值）。
+
+★ 误差口径（2026-09-20 修正，由 X26 对账发现）
+--------------------------------------------
+H* 的定义是"误差**首次**超阈" ⇒ 必须用**逐点**口径（第 h 步自身的误差）。
+历史上本脚本用的是**累积**口径（`mse(pred[:, :h], tgt[:, :h])`），它把前 h-1 步的误差
+摊成均值 ⇒ **穿越更晚 ⇒ H\* 被系统性抬高**。实测更正：
+
+| 环境 | 曲线 | 累积（历史） | 逐点（正确） |
+|---|---|---|---|
+| Pendulum | 开环 | 64.83 | **42.99** |
+| Pendulum | 闭环 | 51.96 | **39.01** |
+| CartPole | 开环 | `None`（测不出） | **12.95** |
+| CartPole | 闭环 | 10.11 | **6.96** |
+
+现在两个口径都算、都存 json，图中主线画逐点、累积作淡色参照。
+**归一化分母 = 切片目标方差**（与历史口径同源）。
 
 运行
 ----
@@ -26,6 +42,7 @@ import argparse
 import json
 import sys
 import time
+import warnings
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -41,6 +58,7 @@ from wmlab.envs import make_env
 from wmlab.eval import reliable_horizon
 from wmlab.models import MLPWorldModel
 from wmlab.rollout import closed_loop_error_curve, imagine, multi_step_error_curve
+from wmlab.train import train_world_model
 from wmlab.utils import (count_params, describe_device, get_device, load_config,
                          output_dir, set_seed)
 from wmlab.utils.plot import apply_style, save_fig
@@ -57,53 +75,10 @@ def parse_args():
     return p.parse_args()
 
 
-def train_world_model(model, tr, va, cfg, device, verbose=True):
-    """监督训练：预测下一步观测。返回 loss 历史。"""
-    tcfg = cfg["train"]
-    obs, act, nxt = tr
-    obs_v, act_v, nxt_v = va
-
-    opt = torch.optim.Adam(model.parameters(), lr=float(tcfg["lr"]),
-                           weight_decay=float(tcfg.get("weight_decay", 0.0)))
-    n = obs.shape[0]
-    bs = int(tcfg["batch_size"])
-    epochs = int(tcfg["epochs"])
-
-    hist = {"train_total": [], "train_recon": [], "train_latent": [], "val_total": []}
-    g = torch.Generator(device="cpu").manual_seed(int(cfg["seed"]))
-
-    for ep in range(epochs):
-        model.train()
-        perm = torch.randperm(n, generator=g)
-        tot = rec = lat = 0.0
-        nb = 0
-        for i in range(0, n, bs):
-            idx = perm[i:i + bs]
-            b_obs = obs[idx].to(device)
-            b_act = act[idx].to(device)
-            b_nxt = nxt[idx].to(device)
-            loss, parts = model.loss(b_obs, b_act, b_nxt)
-            opt.zero_grad(set_to_none=True)
-            loss.backward()
-            if tcfg.get("grad_clip"):
-                torch.nn.utils.clip_grad_norm_(model.parameters(), float(tcfg["grad_clip"]))
-            opt.step()
-            tot += float(loss.item()); rec += float(parts["recon"].item())
-            lat += float(parts["latent"].item()); nb += 1
-        hist["train_total"].append(tot / max(nb, 1))
-        hist["train_recon"].append(rec / max(nb, 1))
-        hist["train_latent"].append(lat / max(nb, 1))
-
-        model.eval()
-        with torch.no_grad():
-            vloss, _ = model.loss(obs_v.to(device), act_v.to(device), nxt_v.to(device))
-        hist["val_total"].append(float(vloss.item()))
-
-        if verbose and (ep % max(1, epochs // 10) == 0 or ep == epochs - 1):
-            print(f"  epoch {ep:4d}  train={hist['train_total'][-1]:.6f}  "
-                  f"val={hist['val_total'][-1]:.6f}  (recon={hist['train_recon'][-1]:.6f} "
-                  f"latent={hist['train_latent'][-1]:.6f})")
-    return hist
+# ★ 训练循环已抽到 `wmlab/train.py`（2026-09-19），本脚本改为导入，调用点不变。
+#   抽取原因：X24 的等价性检验需要在同一进程里训练多个世界模型做逐位对比；
+#   若训练实现留在脚本里就会变成两份代码，两次实验的模型将不再可比。
+#   抽取后行为与抽取前逐行一致（同 seed 下逐位可复现，已由 04 脚本的 E2 检验覆盖）。
 
 
 def main():
@@ -162,9 +137,31 @@ def main():
     curve_open = multi_step_error_curve(model, val_eps, hs, device, seed=seed)
     curve_closed = closed_loop_error_curve(model, val_eps, hs, device, seed=seed)
 
-    rh_open = reliable_horizon(curve_open["horizons"], curve_open["nmse"], thr, mode)
-    rh_closed = reliable_horizon(curve_closed["horizons"], curve_closed["nmse"], thr, mode)
-    print(f"[02] ★ reliable horizon（NMSE>{thr}）: 开环={rh_open}  闭环={rh_closed}")
+    # ★★ 口径修正（2026-09-20，由 X26 对账发现）：
+    #   H* 的定义是"误差**首次**超阈"，因此必须用**逐点**口径（每一步自身的误差）。
+    #   历史上这里用的是 `curve["nmse"]`（**累积**口径：mse(pred[:, :h], tgt[:, :h])），
+    #   它被前 h-1 步的小误差摊薄 ⇒ 系统性高估 H*。
+    #   见 wmlab/rollout/imagine.py 的口径说明。累积值仍然保留在 json 里，用于复现历史结论。
+    #
+    #   ★★ 单位必须与阈值同源（这一条踩过坑）：阈值 0.05 是**归一化**口径（nmse），
+    #      所以逐点序列也必须取 `nmse_per_step`，**不能取 `mse_per_step`**。
+    #      第一版写成 mse_per_step 后，CartPole 上 H* 反而比累积口径更大（14.91 vs 10.11），
+    #      与"累积=逐点的运行平均 ≤ 逐点 ⇒ 累积 H* 必不小于逐点 H*"矛盾 —— 由此查出单位混用。
+    def _pointwise(curve):
+        """把稠密的逐点 **NMSE** 数组按 horizons 取出来（索引 i ↔ 第 h 步）。"""
+        v = np.asarray(curve["nmse_per_step"], dtype=float)
+        return [float(v[h - 1]) for h in curve["horizons"]]
+
+    rh_open = reliable_horizon(curve_open["horizons"], _pointwise(curve_open), thr, mode)
+    rh_closed = reliable_horizon(curve_closed["horizons"], _pointwise(curve_closed), thr, mode)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")          # 这里是有意复现历史口径，不必刷警告
+        rh_open_cum = reliable_horizon(curve_open["horizons"], curve_open["nmse"], thr, mode,
+                                       calibration="cumulative")
+        rh_closed_cum = reliable_horizon(curve_closed["horizons"], curve_closed["nmse"], thr, mode,
+                                         calibration="cumulative")
+    print(f"[02] ★ reliable horizon（NMSE>{thr}，逐点口径）: 开环={rh_open}  闭环={rh_closed}")
+    print(f"[02]   （累积口径，历史记录用）:                开环={rh_open_cum}  闭环={rh_closed_cum}")
 
     # ---------- 5) 出图 ----------
     fig, axes = plt.subplots(2, 2, figsize=(12.5, 8.5))
@@ -181,9 +178,17 @@ def main():
     ax.legend(fontsize=8); ax.grid(alpha=0.25)
 
     # ② NMSE vs horizon
+    #   ★ 主线画**逐点**口径（H* 的定义口径）；累积口径画成淡色虚线 —— 
+    #     两条线的间距就是这个口径选择的影响力，直接可视化了，不需要另开一张图解释。
     ax = axes[0, 1]
-    ax.plot(curve_open["horizons"], curve_open["nmse"], "o-", color="#4C78A8", label="open-loop")
-    ax.plot(curve_closed["horizons"], curve_closed["nmse"], "s--", color="#E45756", label="closed-loop")
+    ax.plot(curve_open["horizons"], curve_open["nmse"], ":", color="#4C78A8", alpha=0.35,
+            label="open · cumulative (legacy)")
+    ax.plot(curve_closed["horizons"], curve_closed["nmse"], ":", color="#E45756", alpha=0.35,
+            label="closed · cumulative (legacy)")
+    ax.plot(curve_open["horizons"], _pointwise(curve_open), "o-", color="#4C78A8",
+            label="open-loop · per-step ★")
+    ax.plot(curve_closed["horizons"], _pointwise(curve_closed), "s--", color="#E45756",
+            label="closed-loop · per-step ★")
     ax.axhline(thr, color="#888", linestyle=":", linewidth=1.2,
                label=f"threshold = {thr}")
     if rh_open is not None:
@@ -198,7 +203,7 @@ def main():
     ax.set_yscale("log")
     ax.set_xlabel("Rollout horizon (steps)"); ax.set_ylabel("NMSE (log)")
     ax.set_title("② Prediction error vs horizon  ★core result")
-    ax.legend(fontsize=8); ax.grid(alpha=0.25)
+    ax.legend(fontsize=7); ax.grid(alpha=0.25)
 
     # ③ 示例轨迹
     ax = axes[1, 0]
@@ -222,18 +227,18 @@ def main():
     ax.legend(fontsize=8); ax.grid(alpha=0.25)
 
     # ④ 每步误差增量
+    #   ★ 口径修正（2026-09-20）：这里原来画的是 `np.diff(累积NMSE) / np.diff(horizon)`，
+    #     那是**累积曲线的斜率**，不是"第 h 步的误差"。既然逐点口径已经可用，
+    #     直接画逐点 NMSE —— 它本身就是"每一步有多准"，不需要再差分（对应硬约定 R2）。
     ax = axes[1, 1]
-    # ★ 口径修正（2026-09-18）：horizons 间隔不等（…2,2,3,5,5,10,10,25,25,50,40），
-    #   直接 np.diff(nm) 会把「间隔变大」混进「误差增长加速」。按步数归一才是每步增量。
-    hs_f = np.asarray(curve_open["horizons"], dtype=float)
-    nm = np.asarray(curve_open["nmse"], dtype=float)
-    inc = np.diff(nm) / np.diff(hs_f)
-    centers = 0.5 * (hs_f[:-1] + hs_f[1:])
-    ax.bar(centers, inc, width=0.6 * np.diff(hs_f), color="#72B7B2")
-    ax.set_xlabel("Horizon (steps) · bar at interval midpoint, width ∝ interval")
-    ax.set_ylabel("Δ NMSE per step (normalized)")
-    ax.set_title("④ Per-step error growth rate (is it self-amplifying?)")
-    ax.grid(alpha=0.25, axis="y")
+    ax.plot(curve_open["horizons"], _pointwise(curve_open), "o-", color="#72B7B2",
+            label="open-loop · per-step")
+    ax.plot(curve_closed["horizons"], _pointwise(curve_closed), "s--", color="#B279A2",
+            label="closed-loop · per-step")
+    ax.set_xlabel("Rollout horizon (steps)")
+    ax.set_ylabel("NMSE at step h (per-step)")
+    ax.set_title("④ Per-step error: is it self-amplifying?")
+    ax.legend(fontsize=8); ax.grid(alpha=0.25)
 
     fig.suptitle(
         f"wmlab · world model on {cfg['env']['id']} · seed={seed} · "
@@ -253,10 +258,19 @@ def main():
         "final_loss": {"train": hist["train_total"][-1], "val": hist["val_total"][-1]},
         "curve_open_loop": curve_open,
         "curve_closed_loop": curve_closed,
+        # ★ H* 以**逐点**口径为准（"首次超阈"的定义）；累积口径单列，仅用于复现历史结论。
+        "nmse_calibration": "per_step (pointwise)  —— H* 的定义口径",
         "reliable_horizon_open": rh_open,
         "reliable_horizon_closed": rh_closed,
+        "reliable_horizon_open_cumulative": rh_open_cum,
+        "reliable_horizon_closed_cumulative": rh_closed_cum,
         "threshold": thr,
         "threshold_mode": mode,
+        "eval_set": {"n_val_episodes": len(val_eps),
+                     "len_min": int(min(e["length"] for e in val_eps)),
+                     "len_max": int(max(e["length"] for e in val_eps)),
+                     "note": "评测集 = 训练数据的 10% 切分（短 episode）。"
+                             "换评测集会改变 H*，跨结论比较前必须核对这个字段。"},
     }
     js = out / f"{args.tag}.json"
     js.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")

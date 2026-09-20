@@ -1,0 +1,78 @@
+# world-model-lab · 通信接入配置（X24 / X25 / X26）
+#
+# 为什么单独一份配置（而不是复用 pendulum.yaml）：
+#   训练部分必须与 X2 **逐字段一致**，否则新结果与 H*=64.8/52.0 不可比；
+#   只有「评测集」和「信道/调度扫描」这两块是新加的。
+#   放在同一个文件里，便于一眼看出"哪些是继承的、哪些是新增的"。
+
+seed: 0
+device: auto
+
+env:
+  id: Pendulum-v1
+  max_steps: 200          # ★ 与 X2 一致：训练数据每条 200 步
+
+data:
+  n_episodes: 300         # ★ 与 X2 一致
+
+model:
+  latent_dim: 32
+  hidden: 128
+  discrete_act: false
+
+train:
+  epochs: 150
+  batch_size: 256
+  lr: 0.001
+  weight_decay: 0.0
+  grad_clip: 5.0
+  val_ratio: 0.1
+
+eval:
+  horizons: [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100, 150, 190]
+  err_threshold: 0.05
+  threshold_mode: rel
+  n_samples: 512
+
+channel:
+  # ★ 评测集与训练集**必须分离**：训练用 seed=0 的 200 步短集，
+  #   评测另采 seed=12345 的 1000 步长集 —— 长集才能容纳 age 的长尾（X26 的关键）
+  eval_episodes: 20
+  eval_steps: 1000
+  eval_seed: 12345
+
+  # 调度族 P（主动周期调度）：每 T 步传一次，age 在 {0..T-1} 均匀
+  #   上界 150/200 是有意放进去的：要看到「传得太稀」的那一侧，否则帕累托前沿画不完整
+  periodic: [1, 2, 3, 5, 8, 10, 15, 20, 30, 50, 65, 100, 150, 200]
+
+  # 调度族 R（被动丢包信道）：每步独立以概率 p 丢失，age ~ Geometric
+  #   ★ 为什么一路扫到 0.995：计划书 §3 已用解析式算出"容忍丢包率 p* ≈ 0.93"。
+  #     在 p < 0.9 的区域，所有策略的 NMSE 差异会被噪声淹没，看不出任何东西。
+  #     要让 R 族覆盖到与 H*（52–65 步）相当的平均间隔，必须把 p 推到 0.98+。
+  #     1/(1-p) 对照：0.9→10  0.95→20  0.97→33  0.98→50  0.99→100  0.995→200
+  loss_prob: [0.1, 0.2, 0.3, 0.5, 0.7, 0.85, 0.9, 0.95, 0.97, 0.98, 0.99, 0.995]
+
+  delay: 0                # 传输时延（步）。本轮固定 0：x24 先只做丢包
+  tracking_seed: 2026
+
+  # 等价性检验用的 CartPole 基线
+  # ★★ 2026-09-20 注记：「历史记录：闭环 H* = 10.10731756489904」这个值**不可追溯** ——
+  #    本轮同配置下用**累积口径**实测得 10.763001415896735（差 0.656），
+  #    说明该历史值来自另一份未记录的测量条件（horizons / n_samples / eval 集不同）。
+  #    因此它**不作为 E2 的 pass 判据**（E2 的判据是"裸 env 与 p=0 信道的 H* 逐位一致"，
+  #    与历史值无关），只作信息项打印。
+  #    若将来要用作回归基线，必须把条件一起冻结（见下方 reference_note）。
+  equivalence:
+    env_id: CartPole-v1
+    n_episodes: 600
+    epochs: 150
+    reference_closed_h: 10.10731756489904   # 累积口径；条件未绑定，仅存疑备查
+    reference_closed_h_measured_2026_09_20: 10.763001415896735  # 本轮累积口径实测
+    reference_closed_h_pointwise_2026_09_20: 32.79544780459661  # 本轮逐点口径（正确口径）
+    reference_note: >
+      作为长期回归基线时必须同时冻结：configs/channel.yaml 的 eval.horizons、
+      eval.n_samples、E2 的 n_episodes/epochs/seed，以及 NMSE 口径（逐点/累积）。
+      实测已证明"同一模型 + 不同评测集 + 不同口径"会给出 10.1 / 10.8 / 32.8 三种值。
+
+output:
+  dir: outputs
