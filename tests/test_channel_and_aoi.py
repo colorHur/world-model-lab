@@ -14,6 +14,8 @@
   ⑥ 凸曲线上的 Jensen 符号        —— 结论"方差大的调度误差更高"的依据
   ⑦ 误差口径 = 逐点（非累积）      —— X26 对账发现：累积口径高估 H* 约 51%
   ⑧ NmseCurve 拒绝长度不一致       —— 稠密逐点数组误配稀疏 horizons 会静默截断
+  ⑨ 时延真的延迟了信息（X27）      —— 旧实现里 `delay` 是**空参数**，只做算术偏移
+  ⑩ 陈旧载荷的前向补偿（X27）      —— 且"补偿有效"的前提是**模型够好**（未训练时反而更糟）
 """
 
 from __future__ import annotations
@@ -28,16 +30,17 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from wmlab.data import collect_random_episodes
+from wmlab.data import collect_random_episodes, transitions_from_episodes
 from wmlab.envs import (ChannelAdapter, StepResult, make_env, make_env_with_channel)
 from wmlab.eval import (NmseCurve, expected_nmse_analytic, geometric_age_pmf,
                         geometric_age_stats, jensen_gap, loss_prob_for_tail_risk,
-                        mse, nmse_at_mean_age, per_step_mse, periodic_schedule,
-                        reliable_horizon, run_tracking, uniform_age_pmf,
-                        uniform_age_stats)
+                        lossy_schedule, mse, nmse_at_mean_age, per_step_mse,
+                        periodic_schedule, reliable_horizon, run_tracking,
+                        uniform_age_pmf, uniform_age_stats)
 from wmlab.eval.tracking import StateTracker
 from wmlab.models import MLPWorldModel
 from wmlab.rollout import closed_loop_error_curve, multi_step_error_curve
+from wmlab.train import train_world_model
 
 
 # ----------------------------------------------------------- ① StepResult 兼容
@@ -345,6 +348,144 @@ def test_curves_expose_both_calibrations():
         for i, h in enumerate(c["horizons"]):
             got = float(np.mean(c["mse_per_step"][:h]))
             assert abs(got - c["mse"][i]) < 1e-5, f"{fn.__name__} h={h} 口径不自洽"
+
+
+# ----------------------------------------------------------- ⑨ 时延真的生效（X27）
+def _floor_from_data(episodes, D):
+    """直接从数据算"时延地板"（model-free）。
+
+    `p=0` 且时延 `D` 时，本地估计值**恰好等于** `obs[t+1-D]`（与模型无关）
+    ⇒ NMSE_floor(D) = E[(o_{t+1} − o_{t+1−D})²] / Var(o) = 2(1 − ρ_o(D))。
+    前 `D` 步还没有包到达，是暂态，跳过（与 `run_tracking(warmup=D)` 对齐）。
+    """
+    sq, n = 0.0, 0
+    vals = []
+    for ep in episodes:
+        obs = ep["obs"]
+        for t in range(len(ep["act"])):
+            if t < D:
+                continue
+            d = obs[t + 1] - obs[t - D + 1]
+            sq += float(np.sum(d ** 2))
+            n += d.size
+            vals.append(np.asarray(obs[t + 1], dtype=np.float64).reshape(-1))
+    allv = np.concatenate(vals)
+    return sq / n / float(allv.var())
+
+
+def test_delay_arrival_counts():
+    """`delay=0` 时到达数 = 发送数；`delay=D>0` 时末尾 `D` 个包到不了（每条 episode）。"""
+    eps = collect_random_episodes(make_env("Pendulum-v1", seed=0), n_episodes=2, seed=0)
+    model = _tiny_model(3, 1, False)
+    T = eps[0]["length"]
+    r0 = run_tracking(model, eps, torch.device("cpu"), periodic_schedule(1), seed=0, delay=0)
+    assert r0.n_arrived == r0.n_tx == 2 * T
+    for D in (1, 5):
+        r = run_tracking(model, eps, torch.device("cpu"), periodic_schedule(1), seed=0, delay=D)
+        assert r.n_tx == 2 * T, "发送数不该因时延而变"
+        assert r.n_arrived == r.n_tx - D * len(eps), \
+            f"D={D}: 到达数应为发送数减去每条 episode 末尾 {D} 个到不了的包"
+
+
+def test_delay_creates_irreducible_error_floor():
+    """★ X27 的核心命题：时延给误差设了一个**通信压不掉的地板**。
+
+    解析式（见 `tracking.py` module docstring）：p=0 时估计值恒等于 `obs[t+1-D]`
+    ⇒ `NMSE_floor(D) = 2(1 - ρ_o(D))`，**与世界模型质量无关**。
+    这里用两条独立路径验它：
+      (a) `run_tracking` 的在线仿真；
+      (b) 直接从评测数据算 `mean((o_{t+1} - o_{t+1-D})²)/Var`（完全不碰模型）。
+    两者必须一致 —— 这正是 X26 那套"两条路径算同一个量"的纪律。
+    """
+    eps = collect_random_episodes(make_env("Pendulum-v1", seed=0), n_episodes=3, seed=0)
+    model = _tiny_model(3, 1, False)
+    nmses = []
+    for D in (1, 3, 10, 30):
+        r = run_tracking(model, eps, torch.device("cpu"), periodic_schedule(1), seed=0,
+                         delay=D, warmup=D, label=f"floor(D={D})")
+        ana = _floor_from_data(eps, D)
+        rel = abs(r.nmse - ana) / max(ana, 1e-12)
+        assert rel < 1e-4, f"D={D}: 在线 {r.nmse:.6f} vs 解析地板 {ana:.6f}（相对差 {rel:.2%}）"
+        assert r.nmse > 0.0, f"D={D}: 时延应产生正误差地板"
+        assert r.age_tx_mean == 0.0, f"D={D}: p=0 ⇒ transmission age 必须恒为 0"
+        assert abs(r.age_gen_mean - D) < 1e-9, f"D={D}: generation age 应恒为 D"
+        nmses.append(r.nmse)
+    assert all(x < y for x, y in zip(nmses, nmses[1:])), \
+        f"地板应随 D 单调增（滞后越大、观测越陈旧）：{nmses}"
+
+
+def _trained_small_model(train_eps, val_eps, epochs: int = 60):
+    """训一个小模型（latent=8, hidden=64）—— 只为本文件里的时延用例服务。
+
+    ★ **为什么必须训练**：`forward` 补偿的本质是"用模型把陈旧观测推到当前时刻"，
+      模型垃圾时它当然更糟。未训练模型的 1 步 rollout 误差 ≈ 1.0，
+      比"直接用陈旧但真实的观测"（D=1 时 0.037）还差 **27 倍**。
+      这不是实现错误，是真现象 —— 2026-09-20 首次写这条用例时就是被它打回来的。
+    """
+    torch.manual_seed(0)
+    model = MLPWorldModel(obs_dim=3, act_dim=1, latent_dim=8, hidden=64,
+                          discrete_act=False)
+    tr = tuple(torch.as_tensor(x) for x in transitions_from_episodes(train_eps))
+    va = tuple(torch.as_tensor(x) for x in transitions_from_episodes(val_eps))
+    train_world_model(model, tr, va,
+                      {"train": {"lr": 3e-3, "batch_size": 64, "epochs": epochs,
+                                 "grad_clip": 5.0}, "seed": 0},
+                      torch.device("cpu"), verbose=False)
+    return model
+
+
+def test_delay_forward_mode_helps_when_model_is_trained():
+    """★ X27 的第二半：把陈旧载荷**向前推进**（forward）远优于直接用（naive）。
+
+    实测（latent=8/hidden=64/60 epoch，本机 CPU，2026-09-20）：
+      D=1   naive 0.0374 → forward 0.00076（**约 1/49**）
+      D=5   naive 0.7318 → forward 0.00979（**约 1/75**）
+      D=20  naive 3.1652 → forward 0.22902（**约 1/14**）
+
+    ⇒ 结论不是"时延有害"，而是**「收到陈旧观测就直接当当前状态用」才是有害的**。
+    这正是"世界模型对通信系统有没有用"的第一个可量化回答。
+    """
+    eps = collect_random_episodes(make_env("Pendulum-v1", seed=0), n_episodes=6, seed=0)
+    model = _trained_small_model(eps[:4], eps[4:])
+    dev = torch.device("cpu")
+    for D in (1, 2, 5, 10, 20):
+        rn = run_tracking(model, eps[4:], dev, periodic_schedule(1), seed=0,
+                          delay=D, warmup=D, delay_mode="naive")
+        rf = run_tracking(model, eps[4:], dev, periodic_schedule(1), seed=0,
+                          delay=D, warmup=D, delay_mode="forward")
+        assert rf.nmse < 0.5 * rn.nmse, \
+            f"D={D}: forward({rf.nmse:.6f}) 应显著优于 naive({rn.nmse:.6f})"
+        f_ana = _floor_from_data(eps[4:], D)
+        assert abs(rn.nmse - f_ana) / max(f_ana, 1e-12) < 1e-4, \
+            f"D={D}: naive 必须等于解析地板（{rn.nmse} vs {f_ana}）"
+
+
+def test_delay_zero_is_mode_invariant():
+    """★ 回归：`delay=0` 时两种 `delay_mode` 必须**逐位相同**。
+
+    没有陈旧载荷，就无所谓补不补偿。这条保证 X27 引入的 `delay_mode`
+    **不会动到 X24/X25/X26 的任何结论**（它们全部用 `delay=0`）。
+    """
+    eps = collect_random_episodes(make_env("Pendulum-v1", seed=0), n_episodes=2, seed=0)
+    model = _tiny_model(3, 1, False)
+    for sched, lbl in ((periodic_schedule(3), "P(T=3)"), (lossy_schedule(0.6), "R(p=0.6)")):
+        a = run_tracking(model, eps, torch.device("cpu"), sched, seed=0, delay=0, label=lbl)
+        b = run_tracking(model, eps, torch.device("cpu"), sched, seed=0, delay=0, label=lbl,
+                         delay_mode="forward")
+        assert a.mse == b.mse and a.nmse == b.nmse, "delay=0 时两种模式必须逐位相同"
+        assert a.age_tx_mean == b.age_tx_mean and a.n_arrived == b.n_arrived
+
+
+def test_delay_mode_rejects_bad_value():
+    eps = collect_random_episodes(make_env("CartPole-v1", seed=0), n_episodes=1, seed=0)
+    model = _tiny_model(4, 2, True)
+    for bad in ("Forward", "naive2", ""):
+        try:
+            run_tracking(model, eps, torch.device("cpu"), periodic_schedule(2), seed=0,
+                         delay=0, delay_mode=bad)
+            raise AssertionError(f"非法 delay_mode={bad!r} 未被拒绝")
+        except ValueError:
+            pass
 
 
 # ----------------------------------------------------------- runner
