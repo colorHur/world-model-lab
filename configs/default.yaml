@@ -35,3 +35,22 @@ eval:
 
 output:
   dir: outputs
+
+# ★ X5 新增（2026-09-21）：手写 PPO 的超参（scripts/09_train_ppo.py 读这一段）
+# 超参外置的理由与世界模型侧相同：扫参与云端复现时不改代码。
+ppo:
+  total_steps: 150000       # 总交互步数；CartPole-v1 上通常 5–10 万步可达 500 上限
+  rollout_steps: 128        # 每次 update 采集的 on-policy 步数
+  update_epochs: 4          # 同一批数据复用几轮（PPO 靠 clip 才敢 >1）
+  minibatch_size: 32
+  lr: 0.0003
+  gamma: 0.99
+  gae_lambda: 0.95          # GAE 的偏差-方差旋钮：0=一步TD(低方差高偏差)，1=MC(无偏高方差)
+  clip_eps: 0.2
+  vf_coef: 0.5              # 价值项系数
+  ent_coef: 0.01            # 熵奖励系数（符号陷阱：进 loss 时取负号以"上升"熵）
+  max_grad_norm: 0.5
+  hidden: 64
+  eval_every: 10            # 每 N 次 update 做一次确定性评估
+  n_eval_episodes: 5
+  target_return: 450.0      # X5 判据（CartPole-v1 上限 500）
