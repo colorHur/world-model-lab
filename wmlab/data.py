@@ -52,6 +52,65 @@ def collect_random_episodes(
     return episodes
 
 
+def collect_policy_episodes(
+    env: EnvAdapter,
+    policy_fn,
+    n_episodes: int = 50,
+    seed: int = 0,
+    max_steps: int | None = None,
+) -> list[dict]:
+    """用**指定策略**（而非随机策略）采集 episode —— X6 / X7 用。
+
+    ★ 为什么需要它：世界模型此前只在随机策略数据上评测过。
+    随机策略在 CartPole 上平均只撑 ~22 步 ⇒ **长视界根本没有被测过**
+    （视界一超过 episode 长度，测量就被数据上限截断，而非模型能力上限）。
+    PPO 策略能撑满 500 步，于是"模型在真实控制分布上能推多远"这个问题才第一次可测。
+
+    Args:
+        policy_fn: obs(np.ndarray) -> action(int, 离散环境)
+    """
+    episodes: list[dict] = []
+    for i in range(n_episodes):
+        obs = env.reset(seed=seed + i)
+        obs_list = [obs]
+        act_list, rew_list = [], []
+        t = 0
+        while True:
+            a = int(policy_fn(obs))
+            res = env.step(np.array([a], dtype=np.int64))
+            obs_list.append(res.obs)
+            act_list.append(a)
+            rew_list.append(res.reward)
+            t += 1
+            if res.done or (max_steps is not None and t >= max_steps):
+                break
+            obs = res.obs
+        episodes.append({
+            "obs": np.asarray(obs_list, dtype=np.float32),
+            "act": np.asarray(act_list),
+            "reward": np.asarray(rew_list, dtype=np.float32),
+            "length": len(act_list),
+        })
+    return episodes
+
+
+def align_transitions(episodes: Sequence[dict], target: int) -> list[dict]:
+    """把 episode 列表**按转移样本数**截断到 target 条（★ 消融的关键控制）。
+
+    X7 比较的是"行为策略（数据分布）"这一个变量，因此**训练集的总样本数必须相等** ——
+    否则"PPO 数据更好"与"PPO 数据更多"两个因素会混在一起，结论不可解释。
+    （PPO 每集 500 步、随机每集 ~22 步，若按 episode 数对齐，样本数会差 20 倍以上。）
+    """
+    out: list[dict] = []
+    n = 0
+    for ep in episodes:
+        if n >= target:
+            break
+        out.append(ep)
+        n += int(ep["length"])
+    return out
+
+
 def split_episodes(episodes: Sequence[dict], val_ratio: float = 0.1, seed: int = 0):
     """按 episode 切分训练/验证集（不按时间步切，避免同一 episode 泄漏）。"""
     idx = np.random.default_rng(seed).permutation(len(episodes))
