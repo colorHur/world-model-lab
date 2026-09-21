@@ -63,6 +63,30 @@
             "args": ["scripts/02_train_world_model.py", "--device", "cuda", "--epochs", "60"],
             "options": {"cwd": "${workspaceFolder}"},
             "problemMatcher": []
+        },
+        {
+            // 仓库刻意不依赖 pytest（见 tests/ 文件头说明），所以自检走脚本直跑
+            "label": "wmlab: 自检测试（11 个用例，不依赖 pytest）",
+            "type": "shell",
+            "command": "${config:python.defaultInterpreterPath}",
+            "args": ["tests/test_channel_and_aoi.py"],
+            "options": {"cwd": "${workspaceFolder}"},
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            // 本机执行环境会注入死代理 (127.0.0.1:<随机端口>) 覆盖 git 的 7897，
+            // 导致 push 静默失败（exit=128 且无输出）。必须先真删环境变量再推。
+            // 末尾用 ls-remote 实时核对远端，不要看 git status 的 [ahead N]（沙箱里不落盘）。
+            "label": "wmlab: 安全推送（先清死代理再 push）",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-NoProfile", "-NoLogo", "-Command",
+                "foreach ($v in 'http_proxy','https_proxy','HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','all_proxy') { Remove-Item -Path ('Env:' + $v) -ErrorAction SilentlyContinue }; git push; Write-Host '--- 远端 main ---'; git ls-remote origin refs/heads/main"
+            ],
+            "options": {"cwd": "${workspaceFolder}"},
+            "problemMatcher": []
         }
     ]
 }

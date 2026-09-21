@@ -8,6 +8,8 @@
     "eamodio.gitlens",
     "mhutchie.git-graph",
     "charliermarsh.ruff",
-    "ms-vscode-remote.remote-ssh"
+    "ms-vscode-remote.remote-ssh",
+    "ms-azuretools.vscode-docker",
+    "redhat.vscode-yaml"
   ]
 }
