@@ -1,0 +1,43 @@
+# world-model-lab · UAV 目标跟踪（X14 场景迁移 · 路线 A）
+
+# 为什么有这个文件：
+#   总纲 §0.4 的最大敞口 = "前 13 个实验全在玩具环境上，与『无人系统』身份零交集"。
+#   X14 是解决它的决策点。本配置 = 路线 A（自建 2D UAV 跟踪 env）的首跑。
+#
+# 与 pendulum.yaml 的差异（都是场景决定的，不是调参）：
+#   1. env.id  -> uav-track（自建 Adapter，见 wmlab/envs/uav_track.py）
+#   2. env.noise_std -> 0.15（风扰；★ 继承 X28：δ 要有分辨力必须带过程噪声）
+#   3. model.discrete_act -> false（动作 = 2 维连续加速度）
+#   4. data.n_episodes -> 200（episode 较长时 200 足够；随机策略会提前跟丢终止）
+
+seed: 0
+device: auto
+
+env:
+  id: uav-track
+  max_steps: 200
+  noise_std: 0.15        # 风扰 (m/s per step)；0 = 确定性动力学
+
+data:
+  n_episodes: 200
+
+model:
+  latent_dim: 32
+  hidden: 128
+  discrete_act: false     # ★ 2 维连续动作
+
+train:
+  epochs: 150
+  batch_size: 256
+  lr: 0.001
+  weight_decay: 0.0
+  grad_clip: 5.0
+  val_ratio: 0.1
+
+eval:
+  horizons: [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100, 150, 190]
+  err_threshold: 0.05
+  threshold_mode: rel
+
+output:
+  dir: outputs

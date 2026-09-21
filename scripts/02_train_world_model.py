@@ -101,7 +101,12 @@ def main():
     print(f"[02] env={cfg['env']['id']}  seed={seed}  device={describe_device(device)}")
 
     # ---------- 1) 采数据 ----------
-    env = make_env(cfg["env"]["id"], seed=seed)
+    # ★ X14（2026-09-22）：把 env 段里除 id/max_steps 外的键透传给 Adapter
+    #   （如 noise_std）。这是自建场景接入的**唯一**上层改动 —— base.py 声明的
+    #   "换场景只需新增 Adapter 子类"在其余部分被原样验证（详见 X14 记录）。
+    env_kwargs = {k: v for k, v in cfg["env"].items()
+                  if k not in ("id", "max_steps")}
+    env = make_env(cfg["env"]["id"], seed=seed, **env_kwargs)
     episodes = collect_random_episodes(env, n_episodes=int(cfg["data"]["n_episodes"]),
                                        seed=seed, max_steps=cfg["env"].get("max_steps"))
     env.close()

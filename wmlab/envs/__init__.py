@@ -9,13 +9,16 @@ from __future__ import annotations
 from .base import EnvAdapter, StepResult
 from .channel import ChannelAdapter, wrap_channel
 from .classic import GymClassicAdapter
+from .noisy_pendulum import NoisyPendulumAdapter
+from .uav_track import UavTrackAdapter
 
 __all__ = [
     "EnvAdapter", "StepResult", "GymClassicAdapter", "ChannelAdapter", "wrap_channel",
+    "NoisyPendulumAdapter", "UavTrackAdapter",
     "make_env", "make_env_with_channel",
 ]
 
-#: 后续接入研究场景时在此注册，例如 "uav": UAVTrajectoryAdapter, "channel": WirelessChannelAdapter
+#: 后续接入研究场景时在此注册
 _REGISTRY: dict[str, type[EnvAdapter]] = {
     "classic": GymClassicAdapter,
     "gym": GymClassicAdapter,
@@ -25,17 +28,14 @@ _REGISTRY: dict[str, type[EnvAdapter]] = {
 def make_env(env_id: str = "CartPole-v1", seed: int = 0, **kwargs) -> EnvAdapter:
     """按环境 id 构造适配器。
 
-    目前所有 gymnasium 经典控制任务都走 GymClassicAdapter；
-    一旦 `uav-*` / `channel-*` 这类 id 出现，就在这里分派到专用 Adapter。
+    分派规则（前缀匹配）：
+      "uav*"   -> UavTrackAdapter（X14 场景迁移；**不**接收 env_id）
+      其他     -> GymClassicAdapter（转发 env_id）
     """
-    key = "classic"
-    if env_id.lower().startswith(("uav", "wireless")):
-        raise KeyError(
-            f"环境 '{env_id}' 的适配器尚未实现。"
-            f"请在 wmlab/envs/ 下新增 Adapter 并在 _REGISTRY 注册 —— "
-            f"这正是本仓库为'换场景'预留的扩展点。"
-        )
-    return _REGISTRY[key](env_id=env_id, seed=seed, **kwargs)
+    key = env_id.lower()
+    if key.startswith("uav"):
+        return UavTrackAdapter(seed=seed, **kwargs)
+    return _REGISTRY["classic"](env_id=env_id, seed=seed, **kwargs)
 
 
 def make_env_with_channel(env_id: str = "CartPole-v1", seed: int = 0,
