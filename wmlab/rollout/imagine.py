@@ -80,20 +80,41 @@ def imagine(model, obs0: torch.Tensor, actions: torch.Tensor) -> torch.Tensor:
 
 
 def _sample_windows(episodes: Sequence[dict], horizon: int, n_samples: int,
-                    rng: np.random.Generator):
-    """从 episode 里随机截取长度为 horizon 的窗口（保证不跨 episode 边界）。"""
+                    rng: np.random.Generator, t0_min: int = 0):
+    """从 episode 里随机截取长度为 horizon 的窗口（保证不跨 episode 边界）。
+
+    Args:
+        t0_min: ★ X31 新增 —— 起点的**下界**（跳过每条 episode 的前 `t0_min` 步）。
+            默认 0 ⇒ 与旧行为逐位一致（X2/X14/X30 的结果不受影响）。
+
+    ★★ 为什么必须有这个参数（一个很容易被忽略的口径陷阱）
+    --------------------------------------------------------
+    起点取值范围是 `t0 ∈ [t0_min, T − horizon − 1)`。**视界越宽，可选起点越少**，
+    而且可选区间是**从 episode 开头算起的一段** —— 也就是说：
+
+        最大视界 h_max 越大 ⇒ 起点越被挤到 episode 的**开头**。
+
+    本仓库 UAV 场景：episode 451 步、h_max=190 ⇒ `t0 ∈ [0, 260)`。
+    而 UAV 的**初始捕获瞬态要 ~250 步**才衰减掉（见 `wmlab/control.py` 的 warmup 说明）
+    ⇒ **离线曲线几乎只在瞬态区取样**，而在线测量跑满整个 episode。
+    两者混在一起，得到的是**系统性偏差**而非噪声：f(1) 高估 49%、f(6) 高估 11%
+    （瞬态的一步预测误差大；rollout 越长，起点的影响越被稀释）。
+
+    ⇒ 凡是"离线曲线要代进在线量的解析式"的实验（X26 / X31），
+      **必须让两边都在稳态区测量**，否则报出来的 gap 是假的。
+    """
     obs0, acts, targets = [], [], []
-    valid = [i for i, ep in enumerate(episodes) if len(ep["obs"]) > horizon + 1]
+    valid = [i for i, ep in enumerate(episodes) if len(ep["obs"]) > horizon + 1 + t0_min]
     if not valid:
         raise ValueError(
-            f"没有足够长的 episode 支持 horizon={horizon}；"
+            f"没有足够长的 episode 支持 horizon={horizon} 且 t0_min={t0_min}；"
             f"最长 episode 长度 = {max((len(e['obs']) for e in episodes), default=0)}"
         )
     for _ in range(n_samples):
         ei = valid[rng.integers(len(valid))]
         ep = episodes[ei]
         T = len(ep["obs"])
-        t0 = rng.integers(0, T - horizon - 1)
+        t0 = rng.integers(int(t0_min), T - horizon - 1)
         obs0.append(ep["obs"][t0])
         acts.append(ep["act"][t0:t0 + horizon])
         targets.append(ep["obs"][t0 + 1:t0 + 1 + horizon])
@@ -110,6 +131,7 @@ def multi_step_error_curve(
     device: torch.device,
     n_samples: int = 512,
     seed: int = 0,
+    t0_min: int = 0,
 ) -> dict:
     """统计多步预测误差随 rollout 步数的增长。
 
@@ -133,7 +155,8 @@ def multi_step_error_curve(
     h_max = horizons[-1]
     rng = np.random.default_rng(seed)
 
-    obs0_np, acts_np, targets_np = _sample_windows(episodes, h_max, n_samples, rng)
+    obs0_np, acts_np, targets_np = _sample_windows(episodes, h_max, n_samples, rng,
+                                                   t0_min=int(t0_min))
     obs0 = torch.as_tensor(obs0_np, device=device)
     acts = torch.as_tensor(acts_np, device=device)
     targets = torch.as_tensor(targets_np, device=device)
@@ -157,6 +180,7 @@ def closed_loop_error_curve(
     device: torch.device,
     n_samples: int = 256,
     seed: int = 0,
+    t0_min: int = 0,
 ) -> dict:
     """闭环 rollout 的误差曲线：把模型自己的预测当作下一步输入。
 
@@ -172,7 +196,8 @@ def closed_loop_error_curve(
     horizons = sorted(int(h) for h in horizons)
     h_max = horizons[-1]
     rng = np.random.default_rng(seed)
-    obs0_np, acts_np, targets_np = _sample_windows(episodes, h_max, n_samples, rng)
+    obs0_np, acts_np, targets_np = _sample_windows(episodes, h_max, n_samples, rng,
+                                                   t0_min=int(t0_min))
 
     obs0 = torch.as_tensor(obs0_np, device=device)
     acts = torch.as_tensor(acts_np, device=device)

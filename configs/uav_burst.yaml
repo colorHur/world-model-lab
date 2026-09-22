@@ -1,0 +1,79 @@
+# world-model-lab · ★ X31「突发信道」(Gilbert–Elliott) · UAV 场景
+#
+# 与 configs/uav_task.yaml（X30）的关系
+#   uav_task.yaml = X30：**周期调度**（T 固定、每 T 步必送一次）测任务锚定的 H\*
+#   本文件        = X31：**随机信道**（每步都尝试发，成败由信道决定）
+#                   —— 固定平均丢包率 p̄，扫**突发长度** L
+#
+# ★★ 本实验的两个控制变量（写死在这里，因为它们是结论口径）
+#   1. p̄ = 平均丢包率（= 通信资源的平均开销）—— 扫 L 时保持不变
+#   2. L = 平均突发长度（连续丢多少步）
+#
+# ★★★ 一个必须知道的耦合（决定了本实验的分析方式）
+#   Gilbert 模型下 **E[age] = p̄ · L** —— 固定 p̄ 扫 L 时，平均信息年龄**也在变**。
+#   ⇒ 直接比 E[NMSE] 是**没有控制变量**的。
+#   ⇒ 脚本会额外算「同均值几何对照」E_geo，用 burst_gain = 实测/E_geo 剥离掉它。
+#
+# ★ 突发长度网格为什么这样取
+#   「无记忆」（= 退化成 i.i.d. 伯努利）的条件是 ρ₁ = 1−α−β = 0，
+#   代入 α = p̄/(L(1−p̄))、β = 1/L ⇒ **L_iid = 1/(1−p̄) = 2**（p̄=0.5）。
+#   ⇒ L=1 是「通/丢交替」(ρ₁<0)；L=2 是「无记忆」；L≥4 才是「真突发」(ρ₁>0)。
+#   网格 1→32 连续穿过三种机制。**注意 L=1 不是 i.i.d.，这是容易搞错的一点。**
+#   可行域 L ≥ p̄/(1−p̄) = 1.0（p̄=0.5 时整个网格都可行）。
+
+seed: 0
+device: auto
+
+env:
+  id: uav-track
+  # ★ 为什么是 700 而不是 X30 的 450（口径要求，不是调参）
+  #   离线曲线的起点范围是 t0 ∈ [t0_min, T − h_max − 1)，h_max=190、t0_min=250
+  #   ⇒ episode 必须 ≥ 250 + 190 + 余量，否则**根本没有稳态起点可选**。
+  #   450 步时起点只有 [250, 260) 这 10 个 ⇒ 采样退化；700 步 ⇒ [250, 510)，260 个。
+  #   详见 wmlab/rollout/imagine.py 的 _sample_windows docstring。
+  max_steps: 700           # = task.warmup_steps(250) + task.measured_steps(450)
+  noise_std: 0.15
+
+controller:
+  omega_n: 2.5
+  zeta: 1.0
+
+channel:
+  p_loss: 0.5              # 平均丢包率 p̄（扫 L 时固定）
+  burst_lens: [1, 2, 4, 8, 16, 32]
+  n_track_episodes: 60     # A 层（纯跟踪）用多少条 held-out episode
+
+data:
+  n_episodes: 120
+  eval_seed_offset: 1000
+  online_seed_offset: 2000
+
+model:
+  latent_dim: 32
+  hidden: 128
+  discrete_act: false
+
+train:
+  epochs: 150
+  batch_size: 256
+  lr: 0.001
+  weight_decay: 0.0
+  grad_clip: 5.0
+  val_ratio: 0.1
+
+eval:
+  horizons: [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100, 150, 190]
+  err_threshold: 0.05
+  threshold_mode: rel
+  # ★ 512 不够：X27 已实测 n_samples=64 会造出 5.4 倍的假缺口，2048 才收敛。
+  #   本实验要把离线 f(h) 代进在线量的闭式里，f 自身的噪声会直接变成假 gap。
+  n_samples: 2048
+
+task:
+  warmup_steps: 250        # ★ 同时用作离线曲线的 t0_min（两边都在稳态区测）
+  measured_steps: 450
+  n_episodes: 60           # B 层（闭环控制）每个 L 跑多少集
+  tail_frac: 0.25
+
+output:
+  dir: outputs

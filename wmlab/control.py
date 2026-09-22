@@ -230,6 +230,9 @@ def run_closed_loop_control(
     if estimator not in ("model", "persistence"):
         raise ValueError(f"estimator 必须是 model/persistence，收到 {estimator!r}")
     rng = np.random.default_rng(seed)
+    #: ★ X31：有状态信道（`GilbertElliottChannel`）每条 episode 开头按稳态重采样。
+    #: 无状态 schedule（`periodic_schedule`）没有 `reset` ⇒ 零影响（X30 结果不变）。
+    reset_fn = getattr(schedule, "reset", None)
 
     n_tx = 0
     n_steps = 0
@@ -245,6 +248,8 @@ def run_closed_loop_control(
         obs = env.reset(seed=seed + i)
         est = np.asarray(obs, dtype=np.float32).copy()
         controller.reset(est)
+        if callable(reset_fn):
+            reset_fn(rng)
 
         # ---------- 预热：每步送真值，控制器先收敛到稳态 ----------
         for _ in range(int(warmup_steps)):
@@ -314,6 +319,12 @@ def run_closed_loop_control(
         "tx_rate": n_tx / max(n_steps, 1),
         "mean_age": float(ages_a.mean()) if ages_a.size else float("nan"),
         "max_age": int(ages_a.max()) if ages_a.size else 0,
+        # ★ X31：突发信道下 age 的**分布形状**才是观测量（均值相同、方差可以差很多）
+        "age_std": float(ages_a.std()) if ages_a.size else float("nan"),
+        "age_p95": float(np.percentile(ages_a, 95)) if ages_a.size else float("nan"),
+        "age_hist": {int(k): int(v) for k, v in
+                     zip(*np.unique(ages_a.astype(int), return_counts=True))}
+        if ages_a.size else {},
         # ---- ★ 任务指标（H*_task 就定义在它上面）----
         "escape_rate": n_escape / max(n_episodes, 1),
         "mean_dist": float(dists_a.mean()) if dists_a.size else float("nan"),

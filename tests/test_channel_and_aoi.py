@@ -22,6 +22,11 @@
                                        两次给出 5–7 倍的错误预期
   ⑭ 闭环仿真的记账与接线（X30）     —— n_tx / E[age] 有闭式解；T=1 时估计误差必须**恒为 0**
   ⑮ 闭环 rollout 发散必须抛（X30）  —— 同 ⑪，但发生在**控制闭环里**：假 H* 会直接进结论
+  ⑯ GE 信道的解析量（X31）          —— π_B / E[L] / ρ₁ 闭式零容差；可行域 L ≥ p̄/(1−p̄)
+  ⑰ 无记忆点 L=1/(1−p̄)（X31）      —— ★ 不是 L=1（那是"通/丢交替"）；此处 ρ₁=0 ⇒ i.i.d.
+  ⑱ ★ 条件年龄恒为 Geom(β)（X31）   —— 一阶/二阶分解的地基，不成立则整个分解不可信
+  ⑲ ★ n_tx 与 n_steps 同区间（X31） —— 修掉的 bug：预热期计入 n_tx 使 tx_rate 高估（23σ）
+  ⑳ ★ t0_min 真的抬高起点（X31）    —— 修掉的坑：离线曲线被最大视界挤进瞬态区
 """
 
 from __future__ import annotations
@@ -45,9 +50,10 @@ from wmlab.eval import (NmseCurve, expected_nmse_analytic, geometric_age_pmf,
                         lossy_schedule, mse, nmse_at_mean_age, per_step_mse,
                         periodic_schedule, reliable_horizon, run_tracking,
                         uniform_age_pmf, uniform_age_stats)
-from wmlab.eval.tracking import StateTracker
+from wmlab.eval.tracking import GilbertElliottChannel, StateTracker
 from wmlab.models import MLPWorldModel
 from wmlab.rollout import closed_loop_error_curve, multi_step_error_curve
+from wmlab.rollout.imagine import _sample_windows
 from wmlab.train import train_world_model
 
 
@@ -676,6 +682,120 @@ def test_task_horizon_definition():
 
 
 # ----------------------------------------------------------- runner
+# ------------------------------- ⑯ GE 信道的解析量（X31）
+def test_ge_analytic_quantities():
+    """S1：π_B / E[L] / ρ₁ / E[age] 全有闭式解（零容差）；不可行参数必须抛。"""
+    ch = GilbertElliottChannel(0.5, 4.0, seed=0)
+    assert abs(ch.pi_bad - 0.5) < 1e-12
+    assert abs(ch.mean_burst_len - 4.0) < 1e-12
+    assert abs(ch.expected_age - 2.0) < 1e-12
+    assert abs(ch.rho1 - (1 - ch.alpha - ch.beta)) < 1e-15
+    assert abs(ch.alpha - 0.25) < 1e-15 and abs(ch.beta - 0.25) < 1e-15
+    # 可行域 L ≥ p̄/(1−p̄)：p̄=0.8 ⇒ L ≥ 4
+    for bad in ((0.8, 1.0), (0.8, 2.0)):
+        try:
+            GilbertElliottChannel(*bad)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"p̄={bad[0]}, L={bad[1]} 应当不可行")
+    GilbertElliottChannel(0.8, 4.0)          # ★ 边界恰好可行（浮点不许误杀）
+    for bad in ((0.0, 4.0), (1.0, 4.0), (0.5, 0.5)):
+        try:
+            GilbertElliottChannel(*bad)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"参数 {bad} 应当被拒")
+
+
+# ------------------------------- ⑰ 无记忆点（X31）
+def test_ge_memoryless_point_is_not_L1():
+    """★ 无记忆条件是 **L = 1/(1−p̄)**，不是 L=1（L=1 是"通/丢交替"，ρ₁=−1）。"""
+    for pl in (0.2, 0.5, 0.8):
+        ch = GilbertElliottChannel(pl, 1.0 / (1.0 - pl), seed=3)
+        assert abs(ch.rho1) < 1e-12, f"p̄={pl} 的 L_iid 处 ρ₁={ch.rho1}"
+        assert abs(ch.expected_age - pl / (1.0 - pl)) < 1e-12
+    assert abs(GilbertElliottChannel(0.5, 1.0).rho1 + 1.0) < 1e-12
+    ch = GilbertElliottChannel(0.5, 2.0, seed=11)
+    rng = np.random.default_rng(0)
+    ch.reset(rng)
+    lost = np.fromiter((not ch(t, rng) for t in range(60000)), dtype=bool, count=60000)
+    assert abs(lost.mean() - 0.5) < 0.01, f"经验丢包率 {lost.mean():.4f}"
+
+
+# ------------------------------- ⑱ ★ 条件年龄恒为 Geom(β)（X31 核心恒等式）
+def test_ge_conditional_age_is_geometric():
+    """P(age=k | age>0) = β(1−β)^(k−1)，且 E[age] = p̄·L。
+
+    这是分解式 `E[NMSE] = p̄·[f(L)+J]` 的地基；不成立则整个一阶/二阶分解不可信。
+    """
+    for pl, L in ((0.3, 3.0), (0.5, 8.0)):
+        ch = GilbertElliottChannel(pl, L, seed=5)
+        rng = np.random.default_rng(0)
+        ch.reset(rng)
+        cur = 0
+        age = np.empty(150000, dtype=np.int32)
+        for t in range(age.size):
+            cur = cur + 1 if not ch(t, rng) else 0
+            age[t] = cur
+        assert abs(age.mean() - pl * L) / (pl * L) < 0.05, \
+            f"E[age]={age.mean():.3f} 应 ≈ p̄·L={pl * L:.3f}"
+        pos = age[age > 0]
+        K = 60
+        emp = np.array([(pos == k).mean() for k in range(1, K + 1)])
+        th = np.array([ch.beta * (1 - ch.beta) ** (k - 1) for k in range(1, K + 1)])
+        tv = 0.5 * float(np.abs(emp - th).sum())
+        assert tv < 0.03, f"p̄={pl}, L={L} 条件年龄分布 TV={tv:.4f}"
+
+
+# ------------------------------- ⑲ ★ tx_rate 与 warmup 同区间（X31 修掉的 bug）
+def test_tracking_tx_rate_excludes_warmup():
+    """warmup>0 时 tx_rate 必须仍是**记账区间内**的送达率。
+
+    ★ X31 实测：修之前 n_tx 在预热期也累加、n_steps 只记预热之后，
+      L=1 时算出丢包率 0.222 而非 0.5（差 23σ）。X26/X27 因 warmup=0 从未触发。
+    """
+    class _ConstModel:                       # 预测 = 原样返回（本例只测计数）
+        def eval(self):
+            pass
+
+        def predict_next(self, obs, act):
+            return obs
+
+    n, D = 400, 3
+    eps = []
+    for i in range(3):
+        obs = np.random.default_rng(i).normal(size=(n + 1, D)).astype(np.float32)
+        eps.append({"obs": obs, "act": np.zeros((n, 1), np.float32)})
+    for warm in (0, 150):
+        r = run_tracking(_ConstModel(), eps, torch.device("cpu"),
+                         lossy_schedule(0.5), seed=0, warmup=warm, denom=1.0)
+        assert r.n_steps == 3 * (n - warm), f"warmup={warm}: n_steps={r.n_steps}"
+        assert abs(r.tx_rate - 0.5) < 0.04, f"warmup={warm}: tx_rate={r.tx_rate:.4f}"
+
+
+# ------------------------------- ⑳ ★ t0_min 真的抬高起点（X31 修掉的坑）
+def test_sample_windows_t0_min():
+    """`t0_min` 必须真的把起点下界抬上去。
+
+    ★ 背景：起点范围 t0 ∈ [t0_min, T−h_max−1) —— **h_max 越大起点越少，且全挤在
+      episode 开头**。UAV 捕获瞬态占前 ~250 步 ⇒ 离线曲线几乎只在瞬态区取样，
+      f(1) 高估 49%。修法：给离线与在线**两边**都加"跳过瞬态"。
+    """
+    T, D = 300, 2
+    eps = []
+    for _ in range(2):
+        obs = np.tile(np.arange(T + 1, dtype=np.float32).reshape(-1, 1), (1, D))
+        eps.append({"obs": obs, "act": np.zeros((T, 1), np.float32)})
+    for t0_min in (0, 100):
+        obs0, _acts, _tgt = _sample_windows(eps, 50, 400,
+                                            np.random.default_rng(0), t0_min=t0_min)
+        assert obs0[:, 0].min() >= t0_min - 1e-6, \
+            f"t0_min={t0_min} 但最小起点 = {obs0[:, 0].min()}"
+        assert obs0[:, 0].max() <= T - 50 - 1
+
+
 def main() -> int:
     tests = [(k, v) for k, v in sorted(globals().items())
              if k.startswith("test_") and callable(v)]

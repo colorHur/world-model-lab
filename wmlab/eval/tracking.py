@@ -77,7 +77,7 @@ NMSE = mean_{t,dim} (ŝ - o)² / Var(o)，**Var 在整批评测观测上 pooled 
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Callable, Sequence
 
 import numpy as np
@@ -102,7 +102,7 @@ def lossy_schedule(loss_prob: float) -> Schedule:
     """被动丢包信道：每步独立地以概率 `p` 丢弃。
 
     ★ 独立性假设（必须在记录里写明）：无记忆伯努利丢包。
-    真实无线信道有突发性（burst），需换成 Gilbert–Elliott 后补。
+    真实无线信道有突发性（burst）—— **X31 用下面的 `GilbertElliottChannel` 补上了**。
     """
     p = float(loss_prob)
 
@@ -111,6 +111,162 @@ def lossy_schedule(loss_prob: float) -> Schedule:
 
     _f.__name__ = f"lossy(p={p})"
     return _f
+
+
+# ================================================================ 突发信道（X31）
+class GilbertElliottChannel:
+    """★ Gilbert–Elliott 两状态突发信道（X31）。
+
+    Good 状态**全通**、Bad 状态**全丢**（Gilbert 模型的最简形式，也是通信教科书里
+    描述突发误码的标准模型）。状态转移概率：
+
+        α = P(Good → Bad)      β = P(Bad → Good)
+
+    ★★ 全部解析量（本类的自检锚点 —— 都不靠仿真估计，有闭式解）
+    ------------------------------------------------------------------
+    | 量 | 闭式解 | 含义 |
+    |---|---|---|
+    | 稳态 Bad 概率 | `π_B = α/(α+β)` | **平均丢包率** |
+    | 平均突发长度 | `E[L_bad] = 1/β` | 连续丢多少步 |
+    | 平均无丢长度 | `E[L_good] = 1/α` | 连续通多少步 |
+    | **记忆性** | `ρ₁ = 1 − α − β` | 信道状态的 lag-1 自相关 |
+
+    给定 (平均丢包率 `p̄`, 平均突发长度 `L`) 反解（★ 本类的对外参数化）：
+
+        β = 1/L,      α = p̄·β/(1−p̄) = p̄ / (L·(1−p̄))
+
+    可行域（数学必然，不是 bug）：α ≤ 1 ⇒ **L ≥ p̄/(1−p̄)**。
+    丢包率越高，能做出的"最短突发"越长（p̄=0.8 ⇒ L ≥ 4）。
+
+    ★★★ 本实验最反直觉、也最关键的一点
+    --------------------------------------------------------------
+    "无记忆"（= 退化成 i.i.d. 伯努利）的条件是 **ρ₁ = 0 ⇔ α + β = 1**，
+    代入上面的反解 ⇒ **L_iid = 1/(1 − p̄)**，**不是 L = 1**。
+
+    | L 相对 L_iid | ρ₁ | 信道长什么样 |
+    |---|---|---|
+    | L < L_iid | **< 0** | **负相关** —— 通/丢趋于**交替**，比 i.i.d. 更"规律" |
+    | L = L_iid | 0 | 无记忆 ⇒ 与 `lossy_schedule(p̄)` 统计等价 |
+    | L > L_iid | **> 0** | **正相关的突发** —— 一丢丢一串 |
+
+    于是扫描 L **连续地穿过**「交替 → 无记忆 → 强突发」三种机制。
+    （★ 第一版我默认 L=1 就是 i.i.d.，那是错的：L=1 ⇒ β=1、α=1 ⇒ 确定性交替。）
+
+    ★★ 固定 p̄ 扫 L 时，**E[age] 不是常数**（这一点决定了实验的分析口径）
+    ------------------------------------------------------------------
+    Bad 游程长度 n ~ Geometric(β)，游程内 age 取 1…n。随机挑一个 Bad 时刻，
+
+        E[age | Bad] = E[n(n+1)/2] / E[n] = 1/β = L
+        ⇒ **E[age] = p̄ · L**
+
+    也就是说"突发性"和"平均信息年龄"是**耦合**的：L 变大，age 均值同时变大。
+
+    ★★★ age 的**精确分布**（2026-09-22 推导，X31 的核心结果）
+    ------------------------------------------------------------------
+    固定 p̄ 时，处于 Good 的概率恒为 1−p̄ ⇒ **P(age = 0) = 1 − p̄ 是常数**。
+    而给定 age>0，落在长度 n 的 Bad 游程里的概率 ∝ n·P(n)，游程内 age 取 1…n 均匀：
+
+        P(age = k | age > 0) = P(n ≥ k) / E[n] = β·(1−β)^(k−1)        ← **几何分布，参数 β**
+
+    于是完整分布为：
+
+        **P(age = 0) = 1 − p̄,    P(age = k) = p̄ · β · (1−β)^(k−1),  k ≥ 1**
+
+    ⇒ 两个立刻可用的推论：
+      1. **条件年龄分布恒为几何分布，唯一参数就是突发长度 L = 1/β。**
+         突发并没有引入"新的分布形状"，只是把条件年龄的均值从 L_iid 拉到 L。
+      2. 取 β = 1 − p̄（即 L = L_iid）时条件分布恰是 i.i.d. 丢包的条件分布
+         ⇒ **i.i.d. 是「L = L_iid 的 Gilbert 信道」的特例**，两者不是两类东西。
+
+    ⇒★ 因此**跟踪误差有闭式分解**（f = 离线闭环 NMSE 曲线）：
+
+        **E[NMSE] = p̄ · [ f(L) + J(L) ]**
+        J(L) = Σ_{k≥1} Geom(k; β)·f(k) − f(L)        （Jensen 项）
+
+    一阶项 f(L)：突发把条件年龄拉长到 L，f 递增 ⇒ 误差变大（**这是主效应**）。
+    二阶项 J(L)：纯粹由 f 的**凹凸**决定符号（f 凸 ⇒ J>0 ⇒ 雪上加霜）。
+    ⇒ **"突发更糟"是一阶效应，不是 Jensen 高阶效应** —— 这个区分是本实验的答案。
+    """
+
+    GOOD, BAD = 0, 1
+
+    def __init__(self, p_loss: float, burst_len: float, seed: int | None = None) -> None:
+        pl = float(p_loss)
+        L = float(burst_len)
+        if not 0.0 < pl < 1.0:
+            raise ValueError(f"p_loss 必须落在 (0, 1)，收到 {p_loss}")
+        if L < 1.0:
+            raise ValueError(f"burst_len 必须 ≥ 1，收到 {burst_len}")
+        beta = 1.0 / L
+        alpha = pl * beta / (1.0 - pl)
+        # ★ 边界处（L = p̄/(1−p̄) ⇒ α 恰为 1）浮点会给出 1.0000000000000002，
+        #   直接判 `> 1.0` 会把**恰好可行**的点误杀（p̄=0.8/L=4 就是这样被拒的）。
+        if alpha > 1.0 + 1e-9:
+            raise ValueError(
+                f"参数不可行：p̄={pl}, L={L} ⇒ α={alpha:.4f} > 1。"
+                f"（由 π_B = α/(α+β) = p̄ 且 β = 1/L 解得 α = p̄/(L(1−p̄))；"
+                f"可行域为 L ≥ p̄/(1−p̄) = {pl / (1.0 - pl):.2f}）")
+        alpha = min(alpha, 1.0)
+        self.p_loss = pl
+        self.burst_len = L
+        self.alpha = float(alpha)
+        self.beta = float(beta)
+        self._rng = None if seed is None else np.random.default_rng(int(seed))
+        self.state = self.GOOD
+        self.reset()
+        self.__name__ = f"GE(p̄={pl:g},L={L:g})"
+
+    # ---------- 解析量（★ 自检用，全部闭式）----------
+    @property
+    def pi_bad(self) -> float:
+        """稳态 Bad 概率 = 平均丢包率。**必须恒等于构造时给的 p_loss**（自检 A1）。"""
+        return self.alpha / (self.alpha + self.beta)
+
+    @property
+    def mean_burst_len(self) -> float:
+        """平均突发长度 1/β。**必须恒等于构造时给的 burst_len**（自检 A2）。"""
+        return 1.0 / self.beta
+
+    @property
+    def rho1(self) -> float:
+        """信道状态 lag-1 自相关 = 1 − α − β。=0 ⇒ 无记忆 ⇒ 退化成 i.i.d.。"""
+        return 1.0 - self.alpha - self.beta
+
+    @property
+    def l_iid(self) -> float:
+        """该丢包率下"无记忆"对应的突发长度 1/(1−p̄)。"""
+        return 1.0 / (1.0 - self.p_loss)
+
+    @property
+    def expected_age(self) -> float:
+        """E[age] = p̄·L（见类 docstring 的推导）—— 用于构造同均值几何对照。"""
+        return self.p_loss * self.burst_len
+
+    # ---------- 采样 ----------
+    def reset(self, rng: np.random.Generator | None = None) -> None:
+        """把信道状态按**稳态分布**重采样。
+
+        ★ 为什么必须按稳态采样（而不是一律置 Good）：一律置 Good 会让每条 episode
+        开头都处于"刚从好状态起步"，引入一个**与突发性无关**的瞬态偏置。
+        """
+        r = rng if rng is not None else self._rng
+        if r is None:
+            self.state = self.GOOD
+        else:
+            self.state = self.BAD if r.random() < self.pi_bad else self.GOOD
+
+    def __call__(self, t: int, rng: np.random.Generator) -> bool:
+        if self.state == self.GOOD:
+            if rng.random() < self.alpha:
+                self.state = self.BAD
+        else:
+            if rng.random() < self.beta:
+                self.state = self.GOOD
+        return self.state == self.GOOD
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return (f"<GilbertElliottChannel p̄={self.p_loss:g} L={self.burst_len:g} "
+                f"α={self.alpha:.4f} β={self.beta:.4f} ρ₁={self.rho1:+.4f}>")
 
 
 # ---------------------------------------------------------------- 结果容器
@@ -132,6 +288,17 @@ class TrackingResult:
     nmse_by_gen_age: dict
     #: 实际到达的包数（`delay>0` 时，episode 末尾发出的包到不了 ⇒ 小于 `n_tx`）
     n_arrived: int = 0
+    #: ★ X31：age 的**完整经验分布** {age: 出现步数}。
+    #: 突发信道下 age 不再是无记忆几何分布 —— 这张直方图是"突发性"的唯一可观测量，
+    #: 也是把 X26 解析式 `E[NMSE] = Σ_h P_age(h)·NMSE(h)` 从 i.i.d. 推广到任意信道的依据。
+    age_hist: dict = field(default_factory=dict)
+    age_std: float = float("nan")
+    age_p95: float = float("nan")
+    #: ★ 同均值几何对照：`Σ_h Geom_{p_eff}(h)·NMSE(h)`，其中几何分布的均值
+    #: 被调成与实测 `E[age]` 相同。**把"突发效应"从"年龄变大了"里剥离出来**（见
+    #: `GilbertElliottChannel` 类 docstring 的 E[age] = p̄·L 推导）。
+    #: 由 `scripts/17` 填；本函数只负责给出 `age_hist`。
+    geo_matched_nmse: float | None = None
 
     @property
     def tx_rate(self) -> float:
@@ -249,11 +416,20 @@ def run_tracking(
     age_max = 0
     err_by_age: dict[int, list] = {}
     err_by_gen: dict[int, list] = {}
+    #: ★ X31：age 的**步数**直方图（与 err_by_age 的区别：后者记的是元素数，
+    #: 要除以 obs_dim 才是步数 —— 单独记一份避免口径混淆）
+    age_counts: dict[int, int] = {}
     true_sq_sum = 0.0
     true_sum = 0.0
+    #: ★ X31：有状态信道（GilbertElliottChannel）每条 episode 开头要按稳态重采样，
+    #: 否则 channel 状态会跨 episode 延续，各 episode 不再独立。
+    #: 无状态 schedule（`periodic_schedule` / `lossy_schedule`）没有 `reset` ⇒ 零影响。
+    reset_fn = getattr(schedule, "reset", None)
 
     for ep in episodes:
         tracker.reset(ep["obs"][0])
+        if callable(reset_fn):
+            reset_fn(rng)
         # ★ 在飞包：arrival_step -> 载荷。**每条 episode 独立**，包不跨 episode 存活。
         inflight: dict[int, np.ndarray] = {}
         T = len(ep["act"])
@@ -262,12 +438,18 @@ def run_tracking(
         for t in range(T):
             # ① 远端本步是否发真值：发了 ⇒ 在 `t + D` 步到达
             if schedule(t, rng):
-                n_tx += 1
+                # ★ 发送**行为**在预热期照常发生（否则延迟到达的包会在预热结束后
+                #   凭空出现），但**计数**只在记账区间内累加 ——
+                #   否则 `tx_rate = n_tx/n_steps` 的分子分母不同区间，会被系统性高估。
+                #   （X31 实测：L=1 时算出丢包率 0.222 而非 0.5，差 23σ。
+                #    X26/X27 因为 warmup=0 从未触发过这个 bug。）
+                if t >= warmup:
+                    n_tx += 1
                 inflight[t + D] = ep["obs"][t + 1]
             # ② 本步到达的包（可能没有）。固定时延下发送与到达一一对应；
             #    若信道升级为变时延，后来的包覆盖先到的 ⇒ 天然"取最新生成的那个"。
             rx = inflight.pop(t, None)
-            if rx is not None:
+            if rx is not None and t >= warmup:
                 n_arrived += 1
 
             a = ep["act"][t]
@@ -298,12 +480,25 @@ def run_tracking(
                 accg = err_by_gen.setdefault(a_gen, [0.0, 0])
                 accg[0] += float(np.sum(d ** 2))
                 accg[1] += int(d.size)
+                age_counts[a_tx] = age_counts.get(a_tx, 0) + 1
 
     mse = sq_err_sum / max(n_elem, 1)
     mean_true = true_sum / max(n_elem, 1)
     var_true = true_sq_sum / max(n_elem, 1) - mean_true ** 2
     scale = float(denom) if denom is not None else max(var_true, 1e-8)
     nmse = mse / max(scale, 1e-8)
+
+    # ★ X31：age 分布的分位数用**完整样本**算（不能对已聚合的直方图再取分位数，
+    #   那样是按 age 值加权、不是按步数加权 —— 正好把权重搞反）
+    _hist = {k: v for k, v in sorted(age_counts.items())}
+    _n = sum(_hist.values())
+    if _n:
+        _vals = np.repeat(np.asarray(list(_hist.keys()), dtype=float),
+                          [int(v) for v in _hist.values()])
+        age_std = float(_vals.std())
+        age_p95 = float(np.percentile(_vals, 95))
+    else:
+        age_std, age_p95 = float("nan"), float("nan")
 
     return TrackingResult(
         label=label,
@@ -317,4 +512,7 @@ def run_tracking(
         nmse_by_age={k: v for k, v in sorted(err_by_age.items())},
         nmse_by_gen_age={k: v for k, v in sorted(err_by_gen.items())},
         n_arrived=n_arrived,
+        age_hist=_hist,
+        age_std=age_std,
+        age_p95=age_p95,
     )
