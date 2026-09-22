@@ -56,8 +56,10 @@ python scripts/07_seeds_threshold.py --seeds 0 1 2 3 4
 python tests/test_channel_and_aoi.py
 
 # 11) X22：C17 的 safe horizon 在本场景**能不能实证**（12 项断言，秒级；不训练、不需 GPU）
-# 12) X30：任务锚定的 H*（UAV 闭环控制，约 2 min CPU；误差阈值 vs 任务失败的比值）
 python scripts/08_x22_theory_check.py
+
+# 12) X30：任务锚定的 H*（UAV 闭环控制，约 2 min CPU；误差阈值 vs 任务失败的比值）
+python scripts/16_task_horizon.py
 ```
 
 换环境只换配置，代码不动（长视界那轮就是这么做控制变量的）：
@@ -471,6 +473,8 @@ config 的 `horizons` 在长视界段很稀（100 → 150 → 190）。在同一
 **gap ≈ 8.5–23.8×，数量级真实**；保守性来源可实证（max 定义 + measurand 双重过强）。
 ⚠️ measurand 断裂点仍在（序反转 vs 误差超阈）⇒ **gap 只能定性引用，不能当倍数宣称**。
 
+![C17 reconciliation](assets/13_x29_reconcile.png)
+
 **X14 首跑（`configs/uav.yaml` + `envs/uav_track.py`）** —— 自建 2D UAV 跟踪场景
 （双积分器 + 阻尼 + 风扰过程噪声）：
 
@@ -507,6 +511,8 @@ X30 第一次把「误差 → 任务」的映射测出来：UAV 跟踪场景 + �
 | **H\*_escape** | 逃逸率 ≤ 基线 **+0.05** | **32** | **1.22** |
 | H\*_dist | 稳态距离 ≤ 基线 ×1.2 / ×2 / ×3 | 1 / 2 / 8 | 0.04–0.31 |
 
+![task-anchored horizon](assets/16_task_horizon.png)
+
 - **同一批数据上 H\*_task 跨 32 倍**（1–32 步），而 H\*_err 只有一个数 ⇒
   **换任务指标就会换结论**。0.05 这个阈值恰好处在"灾难性失败"一侧
   （H_escape/H_err=1.22），对"性能可感知退化"（距离口径）则**保守 30 倍**。
@@ -526,6 +532,31 @@ X30 第一次把「误差 → 任务」的映射测出来：UAV 跟踪场景 + �
 
 自检 ⑫–⑮（共 33 项）覆盖：增益闭式解、稳态=解析解、n_tx/E[age] 闭式解精确匹配、
 T=1 估计误差恒为 0、NaN 闭环必须抛、estimator 开关接线。
+
+### ⑩ ★ 自己写的 PPO，与「数据从哪来」的消融（2026-09-21，X5 / X6 / X7）
+
+`wmlab/agents/ppo.py` + `scripts/09_train_ppo.py` + `scripts/10_behavior_ablation.py`。
+
+**X5（`scripts/09_train_ppo.py`）** —— 不抄库，手写 PPO；文件头留完整推导
+（策略梯度 → 重要性采样 → clip 为什么要双分支取 min → GAE → 三项 loss 的符号）：
+
+- 确定性评估 **500.0 ± 0.0**（20 条全满），判据 PASS；
+- ★ 踩坑：`Tanh` trunk 让 **79.6% 的激活饱和** ⇒ 梯度断流 ⇒ critic explained-variance 仅 **0.24**；
+  换 `ReLU` 后 209 → **500**。同一份超参，差别只在激活函数。
+
+![ppo cartpole](assets/09_ppo_cartpole.png)
+
+**X6 / X7（`scripts/10_behavior_ablation.py`）** —— 世界模型的**训练数据从哪来**，决定了它的可靠视界：
+
+| 训练数据来自 | 在 PPO 策略分布上的回报 |
+|---|---|
+| 随机策略 | **1.20 ± 0.35** |
+| PPO 策略（训练过的） | **47.84 ± 6.27** |
+
+3 种子配对差 **+46.6 ± 6.1**，3/3 同向。★ 不对称性：**好策略的数据向下兼容差策略的分布，反之不成立**
+—— 所以"用随机策略采数据训世界模型"不是省事，是**把模型上限压死**。
+
+![behavior ablation](assets/10_behavior_ablation.png)
 
 ## 当前状态
 
@@ -557,9 +588,36 @@ T=1 估计误差恒为 0、NaN 闭环必须抛、estimator 开关接线。
 - [x] ★ **X30 任务锚定的 H\***（2026-09-22，见 §⑨）：闭环控制下 H\*_task 随任务指标在
   **1–32 步间漂移（32 倍）**，而 H\*_err 只有一个数（26.1）；误差阈值恰好落在"灾难性失败"
   一侧（H_escape/H_err = 1.22）；**闭环控制把估计误差放大 ~1.7×**（同口径对账）
-- [ ] X14 续：UAV 多种子 + σ 敏感性 + PPO 接入（随机策略下跟丢不会发生）
+- [ ] X14 续：**连续动作策略接入**（多种子 H\* 与 σ 敏感性已于 `47d6dd1` 完成；
+  本仓库 PPO 仅支持离散动作 ⇒ X30 先用解析 PD 控制器顶上；SAC/连续 PPO 待做）
 - [ ] 因子化潜空间（确定性 H_t + 随机 Z_t）与不确定性校准（X12；σ 头已就位）
 - [ ] 扩散策略动作头（对齐 diffusion policy）
+
+## 结果图索引（`assets/` 共 18 张，全部进了版本库）
+
+> 判据：**不进版本库的图不算对外可验证的产出**（`outputs/` 已 gitignore）。
+> 下表是「图 ↔ 实验编号 ↔ README 小节」的对照，防止图躺在库里却没人能对上出处。
+
+| 图 | 实验 | 小节 |
+|---|---|---|
+| `01_random_baseline.png` | 随机策略 baseline | §① |
+| `02_world_model.png` | X1 / X2（CartPole，短视界） | §② |
+| `02_world_model_pendulum.png` | X2（Pendulum，视界到 190） | §③ |
+| `04_channel.png` | X24 / X25 / X26 | §④ |
+| `05_x26_gap_diagnosis.png` | X26 对账 | §④ |
+| `06_delay_floor.png` | X27 时延地板 | §⑤ |
+| `07_seeds_threshold.png` | X3 / X4 种子与阈值 | §⑥ |
+| `08_x22_theory_check.png` | X22 理论界 | §⑦ |
+| `11_latent_roundtrip.png` | X11 纠错频率 K | §⑧ |
+| `12_delta_continuity.png` | X28 σ 扫描 | §⑧ |
+| `12_delta_ldim4_full.png` | X28（latent_dim=4 = 可分辨区） | §⑧ |
+| `13_x29_reconcile.png` | X29 C17 对账 | §⑧ |
+| `14_uav_track.png` | X14 首跑 | §⑧ |
+| `14_uav_sigma_scan.png` | X14 σ 敏感性 | §⑧ |
+| `15_sigma_calibration.png` | X12-min σ 头校准 | §⑧ |
+| `16_task_horizon.png` | X30 任务锚定 H\* | §⑨ |
+| `09_ppo_cartpole.png` | X5 手写 PPO | §⑩ |
+| `10_behavior_ablation.png` | X6 / X7 行为策略消融 | §⑩ |
 
 ## 参考
 
