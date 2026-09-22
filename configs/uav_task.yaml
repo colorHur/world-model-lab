@@ -1,0 +1,67 @@
+# world-model-lab · ★ X30「任务锚定的 H\*」（UAV 场景 · PD 控制器闭环）
+
+# 为什么有这份配置（与 configs/uav.yaml 的分工）
+#   uav.yaml    = X14 场景迁移首跑：随机策略采数据，只测「误差阈值定义的 H\*」
+#   本文件      = X30：PD 控制器采数据 + 闭环控制，**用任务指标重新定标 H\***
+#
+# ★ 与 uav.yaml 的三处实质差异（都是实验设计决定的，不是调参）
+#   1. data 用 **PD 控制器**采集（见 wmlab/control.py）—— 训练分布 = 真实控制分布
+#   2. 新增 controller 段：PD 增益的**闭式解参数**（ω_n / ζ；kp kd 由公式推出）
+#   3. 新增 task 段：传输周期网格 + 任务口径的容差（H*_task 的定义参数）
+#
+# ★★ H*_task 的定义（写死在这里，因为它是本实验的结论口径）
+#   H_escape = max{ T : escape_rate(T) ≤ escape_rate(T=1) + escape_tol_abs }
+#   H_dist   = max{ T : mean_dist_tail(T) ≤ mean_dist_tail(T=1) · (1 + dist_tol_rel) }
+#   —— 两者与 H*_err（NMSE 逐点超 0.05 的步数）并排，报出比值。
+
+seed: 0
+device: auto
+
+env:
+  id: uav-track
+  max_steps: 450           # = task.warmup_steps(250) + task.measured_steps(200)
+  noise_std: 0.15          # 风扰 (m/s per step)
+
+controller:
+  omega_n: 2.5           # 期望闭环自然频率 → kp = ω_n² = 6.25
+  zeta: 1.0              # 临界阻尼 → kd = 2ζω_n − κ = 4.5
+  # kp / kd 不写：由 ω_n / ζ / env.kappa 推出（显式覆盖用于消融，见 control.py）
+
+data:
+  n_episodes: 120        # ×450 步 = 54k 转移（CPU 训练 150 epoch 约 3–5 min）
+  eval_seed_offset: 1000     # 离线曲线用的 held-out 集（与训练集种子隔离）
+  online_seed_offset: 2000   # 在线闭环仿真的 episode 种子
+
+model:
+  latent_dim: 32
+  hidden: 128
+  discrete_act: false    # ★ 2 维连续动作
+
+train:
+  epochs: 150
+  batch_size: 256
+  lr: 0.001
+  weight_decay: 0.0
+  grad_clip: 5.0
+  val_ratio: 0.1
+
+eval:
+  horizons: [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100, 150, 190]
+  err_threshold: 0.05
+  threshold_mode: rel
+  n_samples: 512
+
+task:
+  # ★★ 预热：先用 T=1（每步送真值）跑 250 步，让 PD 控制器收敛到稳态，
+  #    再切到被测调度跑 200 步并记账。理由见 control.py 的 warmup 说明
+  #    （不加预热 ⇒ 初始捕获瞬态 ~400 步 >> episode 长度，会把拐点糊掉）。
+  warmup_steps: 250
+  measured_steps: 200
+  periods: [1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128]
+  n_episodes: 100        # 每个 T 跑多少集（100 ⇒ 逃逸率分辨率 1%）
+  escape_tol_abs: 0.05   # 允许的逃逸率绝对增量（5 个百分点）
+  dist_tol_rel: 0.20     # 允许的稳态跟踪距离相对增量（20%）
+  tail_frac: 0.25        # 稳态段 = 每集最后 25% 步
+
+output:
+  dir: outputs

@@ -17,6 +17,11 @@
   ⑨ 时延真的延迟了信息（X27）      —— 旧实现里 `delay` 是**空参数**，只做算术偏移
   ⑩ 陈旧载荷的前向补偿（X27）      —— 且"补偿有效"的前提是**模型够好**（未训练时反而更糟）
   ⑪ NaN/Inf 不得静默通过（X3）     —— `NaN <= 阈值` 恒为 False ⇒ 会被当成"已超阈"返回假 H*
+  ⑫ PD 增益 = 闭式解（X30）        —— kp=ω_n², kd=2ζω_n−κ；显式 kp/kd 必须能覆盖（消融用）
+  ⑬ PD 稳态误差 = 解析解（X30）     —— 旋转系向量解；★ 曾因"正交项标量相加"与"瞬态没走完"
+                                       两次给出 5–7 倍的错误预期
+  ⑭ 闭环仿真的记账与接线（X30）     —— n_tx / E[age] 有闭式解；T=1 时估计误差必须**恒为 0**
+  ⑮ 闭环 rollout 发散必须抛（X30）  —— 同 ⑪，但发生在**控制闭环里**：假 H* 会直接进结论
 """
 
 from __future__ import annotations
@@ -31,6 +36,8 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from wmlab.control import (PDRelativeController, run_closed_loop_control,
+                           task_horizon)
 from wmlab.data import collect_random_episodes, transitions_from_episodes
 from wmlab.envs import (ChannelAdapter, StepResult, make_env, make_env_with_channel)
 from wmlab.eval import (NmseCurve, expected_nmse_analytic, geometric_age_pmf,
@@ -514,6 +521,158 @@ def test_reliable_horizon_rejects_non_finite():
     # ★ 反向确认：全程有限的同型曲线仍能正常工作（别把修复做成一刀切的误伤）
     ok = reliable_horizon(hs, [0.01, 0.02, 0.50, 0.80, 0.90], 0.05)
     assert ok is not None and 2.0 < ok < 3.0, f"正常曲线应给出 H*≈2.x，实际 {ok}"
+
+
+# ----------------------------------------------------------- ⑫ X30 · PD 增益闭式解
+def test_pd_gains_follow_closed_form():
+    c = PDRelativeController(dt=0.1, omega_n=2.5, zeta=1.0, kappa=0.5, a_max=3.0)
+    assert abs(c.kp - 2.5 ** 2) < 1e-12, f"kp 应 = ω_n²，实际 {c.kp}"
+    assert abs(c.kd - (2 * 1.0 * 2.5 - 0.5)) < 1e-12, f"kd 应 = 2ζω_n−κ，实际 {c.kd}"
+    # ★ 显式 kp/kd 必须能覆盖公式值 —— 否则"换增益做消融"这个动作根本没接线（R12）
+    c2 = PDRelativeController(dt=0.1, kappa=0.5, a_max=3.0, kp=1.0, kd=2.0)
+    assert (c2.kp, c2.kd) == (1.0, 2.0), "显式给出的 kp/kd 被公式覆盖了"
+
+
+# ----------------------------------------------------------- ⑬ X30 · 稳态误差 = 解析解
+def test_pd_steady_state_matches_analytic():
+    """★ 解析推导的实测验证（确定性环境、T=1、充分预热）。
+
+    ★★ 这一条在 2026-09-22 连续查出两个真错误，都不是"测试太严"，是真错了：
+
+    ① **标量式错**：文件头第一版写 `e_ss = (a_tgt + κ·v_tgt)/kp = 0.576 m`。
+       但目标做圆周运动 ⇒ 向心项（径向）与阻尼项（切向）**正交**，不能相加。
+       实测稳态 **0.394 m**，与标量解差 46%，与旋转系 2×2 向量解 0.3996 m 差 1.4%。
+    ② **瞬态没走完**：不加预热时 T=1 实测 **2.86 m**（UAV 起点最远离目标 15 m，
+       而 a_max=3 m/s² ⇒ 加速度**全程饱和**，捕获瞬态要 ~400 步，episode 只有 200 步）。
+       误判成"解析错了"，实际是测量窗口太短 —— 加了预热段才暴露真相。
+    """
+    env = make_env("uav-track", seed=0, noise_std=0.0, max_steps=900)
+    ctrl = PDRelativeController(dt=env.dt, omega_n=2.5, zeta=1.0,
+                                kappa=float(env.kappa), a_max=float(env.a_max))
+    w, r, kap = float(env.omega), float(env.r_orbit), float(env.kappa)
+    A = np.array([[ctrl.kp - w ** 2, -(kap + ctrl.kd) * w],
+                  [(kap + ctrl.kd) * w, ctrl.kp - w ** 2]])
+    e_ana = float(np.linalg.norm(np.linalg.solve(A, np.array([-(w ** 2) * r, kap * w * r]))))
+
+    model = MLPWorldModel(6, 2, latent_dim=4, hidden=8, discrete_act=False)
+    res = run_closed_loop_control(env, model, ctrl, periodic_schedule(1),
+                                  n_episodes=3, seed=7, max_steps=200,
+                                  device=torch.device("cpu"), estimator="model",
+                                  var_g=1.0, warmup_steps=600)
+    env.close()
+    rel = abs(res["mean_dist"] - e_ana) / e_ana
+    assert rel < 0.05, (f"T=1 稳态距离实测 {res['mean_dist']:.4f} m vs 解析 {e_ana:.4f} m "
+                        f"（相对偏差 {rel:.1%}）。若差 5–7 倍，先查两件事："
+                        f"① e_ss 是不是又用了标量式；② 预热步数够不够")
+
+
+# ----------------------------------------------------------- ⑭ X30 · 记账与接线
+def test_closed_loop_tx_and_age_match_closed_form():
+    """周期调度的 n_tx 与 E[age] 都有闭式解 ⇒ **用精确判据，不用容差**。
+
+    ★ 为什么不用容差（第一版踩过）：用 "tx_rate ≈ 1/T（容差 2%）" 时，
+      T=32 被判失败（实测 0.0300 vs 0.03125）—— 但那不是 bug，
+      是 **episode 有限长的边缘效应**（200 步只在 t=32,64,...,192 送 6 次）。
+      容差判据两头不讨好：会把数学必然误报成 bug，也会放过真 bug。
+    """
+    env = make_env("uav-track", seed=0, noise_std=0.15, max_steps=60)
+    ctrl = PDRelativeController(dt=env.dt, omega_n=2.5, zeta=1.0,
+                                kappa=float(env.kappa), a_max=float(env.a_max))
+    model = MLPWorldModel(6, 2, latent_dim=8, hidden=16, discrete_act=False)
+    for T in (1, 3, 8):
+        r = run_closed_loop_control(env, model, ctrl, periodic_schedule(T),
+                                    n_episodes=4, seed=3, max_steps=40,
+                                    device=torch.device("cpu"), estimator="model",
+                                    var_g=1.0, warmup_steps=20)
+        exp_tx, exp_age = 0, 0
+        for L in r["ep_lens"]:
+            q, rem = divmod(int(L), T)
+            exp_tx += q
+            exp_age += q * T * (T - 1) // 2 + rem * (rem + 1) // 2
+        assert r["n_tx"] == exp_tx, f"T={T}: n_tx={r['n_tx']} ≠ Σ floor(L/T)={exp_tx}"
+        assert abs(r["mean_age"] - exp_age / max(r["n_steps"], 1)) < 1e-9, \
+            f"T={T}: mean_age 与闭式解不符"
+    env.close()
+
+
+def test_closed_loop_T1_estimation_error_is_zero():
+    """T=1（每步都送真值）时估计误差必须**恒等于 0** —— 恒等于 0 才叫接线正确。
+
+    ★ 踩过的坑：第一版把"更新估计"写在"记账误差"之后，记到的是
+      `obs_t − obs_t+1`（一步状态变化量），于是 T=1 的 est_nmse 永远不为 0，
+      而误差曲线看起来"完全合理" —— 只有这个恒等式能把它抓出来。
+    """
+    env = make_env("uav-track", seed=0, noise_std=0.15, max_steps=60)
+    ctrl = PDRelativeController(dt=env.dt, omega_n=2.5, zeta=1.0,
+                                kappa=float(env.kappa), a_max=float(env.a_max))
+    model = MLPWorldModel(6, 2, latent_dim=8, hidden=16, discrete_act=False)
+    r = run_closed_loop_control(env, model, ctrl, periodic_schedule(1),
+                                n_episodes=3, seed=11, max_steps=40,
+                                device=torch.device("cpu"), estimator="model",
+                                var_g=1.0, warmup_steps=20)
+    env.close()
+    assert r["est_nmse"] == 0.0, f"T=1 时 est_nmse 应恒为 0，实际 {r['est_nmse']:.3e}"
+
+
+def test_estimator_switch_changes_behaviour():
+    """★ R12：`estimator` 这个开关**接线了吗**？model 与 persistence 必须给出不同结果。"""
+    env = make_env("uav-track", seed=0, noise_std=0.15, max_steps=60)
+    ctrl = PDRelativeController(dt=env.dt, omega_n=2.5, zeta=1.0,
+                                kappa=float(env.kappa), a_max=float(env.a_max))
+    torch.manual_seed(0)
+    model = MLPWorldModel(6, 2, latent_dim=8, hidden=16, discrete_act=False)
+    kw = dict(n_episodes=3, seed=5, max_steps=40, device=torch.device("cpu"),
+              var_g=1.0, warmup_steps=20)
+    a = run_closed_loop_control(env, model, ctrl, periodic_schedule(16),
+                                estimator="model", **kw)
+    b = run_closed_loop_control(env, model, ctrl, periodic_schedule(16),
+                                estimator="persistence", **kw)
+    env.close()
+    assert a["est_nmse"] != b["est_nmse"], \
+        "estimator=model 与 persistence 结果完全相同 ⇒ 开关没接线"
+
+
+# ----------------------------------------------------------- ⑮ X30 · 发散必须抛
+def test_closed_loop_rejects_nan_rollout():
+    """闭环 rollout 一旦发散出 NaN，必须**抛错**，不能给假数字（R14）。
+
+    危险点与 ⑪ 同源但更隐蔽：这里 NaN 出现在**控制闭环里**，
+    "任务还没失败"会被误读成"视界还够长"，于是 H\\*_task 直接偏大进结论。
+    """
+
+    class _NanModel:
+        def predict_next(self, obs, act):
+            return torch.full_like(obs, float("nan"))
+
+    env = make_env("uav-track", seed=0, noise_std=0.15, max_steps=60)
+    ctrl = PDRelativeController(dt=env.dt, omega_n=2.5, zeta=1.0,
+                                kappa=float(env.kappa), a_max=float(env.a_max))
+    try:
+        run_closed_loop_control(env, _NanModel(), ctrl, periodic_schedule(8),
+                                n_episodes=1, seed=0, max_steps=20,
+                                device=torch.device("cpu"), estimator="model",
+                                var_g=1.0, warmup_steps=10)
+        env.close()
+        raise AssertionError("模型输出 NaN 未被引发异常 —— 会产出假 H*_task")
+    except FloatingPointError as e:
+        assert "非有限值" in str(e), f"报错信息应指明原因，实际：{e}"
+        env.close()
+
+
+def test_task_horizon_definition():
+    """H\\*_task 的定义本身：容差必须二选一；T=1 就不合格 ⇒ None；全合格 ⇒ 网格最大值。"""
+    rows = [{"T": 1, "escape_rate": 0.0}, {"T": 4, "escape_rate": 0.01},
+            {"T": 8, "escape_rate": 0.30}, {"T": 16, "escape_rate": 0.80}]
+    assert task_horizon(rows, "escape_rate", 0.0, tol_abs=0.05) == 4
+    assert task_horizon(rows, "escape_rate", 0.0, tol_rel=0.0) == 1
+    assert task_horizon(rows, "escape_rate", -1.0, tol_abs=0.05) is None, \
+        "T=1 本身就不合格 ⇒ 应返回 None（说明场景/控制器没配好）"
+    for kw in ({}, {"tol_abs": 0.05, "tol_rel": 0.1}):
+        try:
+            task_horizon(rows, "escape_rate", 0.0, **kw)
+            raise AssertionError(f"容差二选一未被强制（{kw}）")
+        except ValueError:
+            pass
 
 
 # ----------------------------------------------------------- runner
