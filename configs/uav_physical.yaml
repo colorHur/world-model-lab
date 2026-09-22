@@ -1,0 +1,74 @@
+# world-model-lab · ★ X32「物理层接入」(M-QAM + 均匀量化)
+#
+# ★★ 设定（详见 scripts/19_physical_layer.py 文件头）
+#   每时隙固定 N_sym = d 个符号 ⇒ 每符号比特数 m = d·b/d = **b** ⇒ M = 2^b
+#   b = 2 / 4 / 6 / 8  ⇒  4 / 16 / 64 / 256-QAM（标准方形星座）
+#   b = 10 / 12        ⇒  1024 / 4096-QAM —— **超出实际系统**，只用来看趋势
+#
+# ★ 权衡的两个来源
+#   b ↑  量化更精细（误差 ∝ 2^(−2b)）  但 M ↑ ⇒ 星座更密 ⇒ BER ↑ ⇒ PER ↑ ⇒ 丢包更多
+#   b ↓  星座抗噪（PER 低）            但量化粗糙（每次到达都注入误差）
+#   ⇒ 总误差对 b 呈 **U 形**，存在最优 b*
+#
+# ★★ 本实验要回答的问题（判据已预写，跑前定死）
+#   b*_model 与 b*_persistence 谁大？
+#   推理：量化误差是**每次到达都注入**的地板，模型补不掉（它补的是时间上的空缺）
+#        ⇒ 模型的价值在于**能扛丢包** ⇒ 可以选更大的 b（更高阶调制、更精细量化）
+#        ⇒ 预测 **b*_model ≥ b*_persistence**
+
+seed: 0
+device: auto
+
+env:
+  id: uav-track
+  max_steps: 700
+  noise_std: 0.15
+
+controller:
+  omega_n: 2.5
+  zeta: 1.0
+
+physical:
+  # ★ 网格是这样定的（第一版取 [-5,25]dB × b∈[2,12]，跑出来**全是 PER≈1**）：
+  #   256-QAM 要 BER~1e-3 需 ~30dB；b=10/12（1024/4096-QAM）在本网格下 PER 恒为 1
+  #   ⇒ 网格退化成"b 越大越糟"的单调曲线，看不出 U 形。
+  #   手算定位：20dB 时 b=2 PER≈0（量化主导）、b=8 PER≈0.96（丢包主导）
+  #   ⇒ **U 形的两个分支在这个 SNR 上能同时出现** ⇒ 取 5–30dB × b∈{2,4,6,8}
+  snr_db_list: [5, 10, 15, 20, 25, 30]
+  bits_list: [2, 4, 6, 8]
+  n_track_episodes: 40      # 每个 (SNR,b,估计器) 组合用多少条 episode
+  burst_len: null           # null ⇒ L = 1/(1−PER)，即无记忆 i.i.d. 丢包
+  range_margin: 0.05        # 量化量程在 min/max 外各扩 5%（防过载/裁剪）
+
+data:
+  n_episodes: 120
+  eval_seed_offset: 1000
+  online_seed_offset: 2000
+
+model:
+  latent_dim: 32
+  hidden: 128
+  discrete_act: false
+
+train:
+  epochs: 150
+  batch_size: 256
+  lr: 0.001
+  weight_decay: 0.0
+  grad_clip: 5.0
+  val_ratio: 0.1
+
+eval:
+  horizons: [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100, 150, 190]
+  err_threshold: 0.05
+  threshold_mode: rel
+  n_samples: 2048
+
+task:
+  warmup_steps: 250
+  measured_steps: 450
+  n_episodes: 60
+  tail_frac: 0.25
+
+output:
+  dir: outputs

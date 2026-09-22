@@ -107,7 +107,8 @@ from wmlab.control import (PDRelativeController, collect_controlled_episodes,
 from wmlab.data import split_episodes, transitions_from_episodes
 from wmlab.envs import make_env
 from wmlab.eval import reliable_horizon
-from wmlab.eval.tracking import GilbertElliottChannel, lossy_schedule, run_tracking
+from wmlab.eval.tracking import (GilbertElliottChannel, lossy_schedule, run_tracking,
+                                 run_length_goodness, simulate_bad_runs)
 from wmlab.models import MLPWorldModel
 from wmlab.rollout import closed_loop_error_curve
 from wmlab.train import train_world_model
@@ -171,6 +172,44 @@ def full_age_pmf(p_loss: float, beta: float, k_max: int) -> np.ndarray:
     tail = max(0.0, 1.0 - float(pmf[:k_max].sum()))
     pmf[k_max] += tail
     return pmf / pmf.sum()
+
+
+def age_goodness(cond_emp: np.ndarray, cond_th: np.ndarray, n_pos: int) -> dict:
+    """★ 条件年龄分布的拟合优度（硬判定用 KS，TV 只作报告量）。
+
+    ★★★ 第 14 次自我修正：TV 阈值**不能用 3/√n**
+    ------------------------------------------------------------------
+    第一版（X31）我用 `tv_thresh = max(0.03, 3/√n_pos)`。这个形式来自
+    "比较两个二项比例"的直觉，但 TV 是**多类别**之和：
+
+        TV = 0.5 Σ_k |p̂_k − p_k|
+        E[TV | H0] ≈ 0.5 · √(2/(π n)) · Σ_k √(p_k (1−p_k)) ≈ 0.5 · √(2/(π n)) · Σ_k √p_k
+
+    而 Geom(β) 的 **Σ_k √p_k = √β / (1 − √(1−β))**，这个因子随突发长度**发散**：
+        β=1/4  ⇒ 2.0      β=1/16 ⇒ 6.1      β=1/32 ⇒ **11.2**
+    ⇒ n=6076、β=1/32 时 **E[TV] ≈ 0.057**，而 3/√n 只有 0.038
+    ⇒ **阈值比纯噪声还小，判据必然误杀**。（X31 侥幸没触发，只因那一个点
+    的实测 TV 恰好偏小；X31-b 把 p̄ 铺开后立刻在 p̄=0.35,L=32 处炸了。）
+
+    ⇒ 硬判定改用 **KS**：临界值 1.36/√n 与分布形状无关；对离散分布 KS 检验是
+    **保守**的（实际一类错误 ≤ 名义值）⇒ 拿它做"不通过就抛"不会误杀。
+    """
+    n = max(int(n_pos), 1)
+    ce = np.asarray(cond_emp, dtype=np.float64)
+    ct = np.asarray(cond_th, dtype=np.float64)
+    s = float(ct.sum())
+    if s <= 0:
+        raise ValueError("理论条件分布质量为 0")
+    ct = ct / s                                   # 归一化（尾巴截断后仍要归一）
+    tv = float(0.5 * np.abs(ce - ct).sum())
+    # 解析的纯噪声期望（只作参考，不作判据）
+    tv_noise = float(0.5 * np.sum(np.sqrt(2.0 * ct * (1.0 - ct) / (np.pi * n))))
+    fe = np.cumsum(ce)
+    ft = np.cumsum(ct)
+    ks = float(np.max(np.abs(fe - ft)))
+    ks_crit = 1.36 / np.sqrt(n)                   # 95%，对离散分布保守
+    return {"tv": tv, "tv_noise": tv_noise, "ks": ks, "ks_crit": ks_crit,
+            "ok": bool(ks <= ks_crit)}
 
 
 def age_matched_geom_pmf(mean_age: float, k_max: int) -> np.ndarray:
@@ -385,15 +424,30 @@ def main():
                                      for k in range(1, K + 1)])
         cond_th = np.array([0.0] + [ch.beta * ((1.0 - ch.beta) ** (k - 1))
                                     for k in range(1, K + 1)])
-        tv = float(0.5 * np.abs(cond_emp - cond_th).sum())
-        # ★ 阈值随样本量收紧（样本多时才有权要求吻合）：
-        #   TV 的统计噪声 ~ 1/√n_pos；固定 0.05 会用噪声把正常的长突发点误杀。
-        tv_thresh = max(0.03, 3.0 / np.sqrt(max(n_pos, 1)))
-        if tv > tv_thresh:
+        # ★ S6 改用 KS 作硬判定（TV 的噪声随突发长度发散，不能当判据 —— 见
+        #   `age_goodness` docstring 的第 14 次自我修正）
+        # ★ 有效样本量 = **游程数**而非 age 样本数：游程内 age 是 1…n 的确定性
+        #   序列，一个游程只有 1 个独立样本（用 n_pos 会把功效高估 √L 倍）。
+        n_eff = max(int(n_pos / max(L, 1.0)), 1)
+        go = age_goodness(cond_emp, cond_th, n_eff)
+        tv, tv_noise, tv_thresh = go["tv"], go["tv_noise"], go["ks_crit"]
+        if not go["ok"]:
             raise AssertionError(
-                f"★ S6 未通过：L={L:g} 实测条件年龄分布与 Geom(β={ch.beta:.4f}) 的 "
-                f"TV 距离 {tv:.4f} > {tv_thresh:.4f}（n_pos={n_pos}）—— "
-                f"「条件年龄恒为几何分布」的闭式推导与仿真不符，整个一阶/二阶分解都不可信")
+                f"★ S6 未通过：L={L:g} 条件年龄分布 KS={go['ks']:.4f} > 临界 "
+                f"{go['ks_crit']:.4f}（n_pos={n_pos}；TV={tv:.4f} vs 纯噪声期望 "
+                f"{tv_noise:.4f}）—— 「条件年龄恒为几何分布」的闭式推导与仿真不符，"
+                f"整个一阶/二阶分解都不可信")
+        # ★ S7：纯信道的**游程长度**分布（i.i.d. 样本 ⇒ 这才是严格的硬判定）
+        #   在线 age 直方图自相关严重（游程内 age = 1…n 是确定性序列），
+        #   只能作参考；Gilbert 链下游程长度 i.i.d. ~ Geom(β)，且仿真极便宜。
+        runs = simulate_bad_runs(ch, 200000, np.random.default_rng(seed + 31))
+        rl = run_length_goodness(runs, ch.beta, alpha=0.05 / max(len(chans), 1))
+        if rl["ok"] is False:
+            raise AssertionError(
+                f"★ S7 未通过：L={L:g} 游程长度 KS={rl['ks']:.4f} > {rl['ks_crit']:.4f}"
+                f" 或均值 {rl['mean_emp']:.3f} vs 闭式 {rl['mean_th']:.3f} "
+                f"(z={rl['mean_z']:+.1f})（n_runs={rl['n_runs']}）⇒ 信道实现有误")
+
         # ★ 附加诊断：在线**按 age 分桶**的实测误差 vs 离线曲线 f(k)。
         #   这是 X26 解析式最直接的检验（不经过任何分布假设）。
         by_age = {int(k): (float(v[0]) / max(float(v[1]), 1e-12)) / var_g
@@ -433,14 +487,18 @@ def main():
                        "first_order_f_of_L": f_of_L, "jensen_J": j_L,
                        "closed_gap": r.nmse / max(pred_th, 1e-12) - 1.0,
                        "pred_gap": r.nmse / max(pred, 1e-12) - 1.0,
-                       "cond_tv": tv, "tv_thresh": float(tv_thresh),
+                       "cond_tv": tv, "cond_tv_noise": float(tv_noise),
+                       "cond_ks": float(go["ks"]), "cond_ks_crit": float(go["ks_crit"]),
+                       "n_eff": int(n_eff),
+                       "run_len": {k: (float(v) if isinstance(v, (int, float, np.floating))
+                                       else v) for k, v in rl.items()},
                        "nmse_by_age_online": by_age,
                        "emp_p_loss": emp_p, "sigma_p": sigma})
         print(f"[17] GE(L={L:>4g}) ρ₁={ch.rho1:+.3f} E[age]={r.age_tx_mean:6.3f}"
               f"(解析 {p_loss * L:5.2f})  E[NMSE]={r.nmse:.5f}")
         print(f"[17]        闭式={pred_th:.5f}({r.nmse / max(pred_th, 1e-12) - 1:+.1%})  "
               f"实测直方图={pred:.5f}({r.nmse / max(pred, 1e-12) - 1:+.1%})  "
-              f"TV(条件分布)={tv:.4f}")
+              f"KS={go['ks']:.4f}/{go['ks_crit']:.4f}  TV={tv:.4f}(噪声期望 {tv_noise:.4f})")
         print(f"[17]        分解 p̄·[f(L)+J] = {p_loss:.2f}·[{f_of_L:.5f}{j_L:+.5f}] "
               f"⇒ 一阶 f(L) 占 {abs(f_of_L) / max(abs(f_of_L) + abs(j_L), 1e-12):.1%}")
         cmp = [(k, v, f_at(k)) for k, v in sorted(by_age.items())

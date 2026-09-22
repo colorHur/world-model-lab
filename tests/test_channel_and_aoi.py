@@ -27,11 +27,24 @@
   ⑱ ★ 条件年龄恒为 Geom(β)（X31）   —— 一阶/二阶分解的地基，不成立则整个分解不可信
   ⑲ ★ n_tx 与 n_steps 同区间（X31） —— 修掉的 bug：预热期计入 n_tx 使 tx_rate 高估（23σ）
   ⑳ ★ t0_min 真的抬高起点（X31）    —— 修掉的坑：离线曲线被最大视界挤进瞬态区
+  ㉑ ★ 游程长度 ~ Geom(β)（X31-b）    —— ★ 比 ⑱ 更严格：游程长度是**i.i.d.**样本，
+                                          而在线 age 序列强自相关（一个游程只有 1 个
+                                          独立样本）⇒ 用它才能检出分布错误
+  ㉒ ★★ payload_fn 真的接线（X32）    —— R12 落地：`delay` 曾声明/传递/记录/测试全过
+                                          却从未生效。两条断言缺一不可：不传=逐位不变，
+                                          传粗量化器=误差必须变大
+  ㉓ M=4 时 BER = QPSK 精确式（X32）  —— 唯一能自证的公式检验（须避开饱和 clip 区）
+  ㉔ SER 饱和 + 失效区标记（X32）     —— 近似式在"高阶调制+低 SNR"下会算出 >1−1/M；
+                                          且 BER≈SER/log2M 在饱和时失效（会让 PER 非单调）
+  ㉕ PER 对 b 单调增 / 对 SNR 单调减   —— U 形曲线两个分支的地基
+  ㉖ 量化 MSE 单调减 + 无过载（X32）  —— 过载（裁剪）会让 Δ²/12 失效，故量程必须由
+                                          数据统计并留 margin
 """
 
 from __future__ import annotations
 
 import copy
+import math
 import sys
 import warnings
 from pathlib import Path
@@ -50,7 +63,11 @@ from wmlab.eval import (NmseCurve, expected_nmse_analytic, geometric_age_pmf,
                         lossy_schedule, mse, nmse_at_mean_age, per_step_mse,
                         periodic_schedule, reliable_horizon, run_tracking,
                         uniform_age_pmf, uniform_age_stats)
-from wmlab.eval.tracking import GilbertElliottChannel, StateTracker
+from wmlab.eval.physical import (UniformQuantizer, fit_quantizer_range, overload_fraction,
+                                 per_from_ber, qam_approximation_valid, qam_bit_error_rate,
+                                 qam_symbol_error_rate, snr_db_to_linear)
+from wmlab.eval.tracking import (GilbertElliottChannel, StateTracker,
+                                 run_length_goodness, simulate_bad_runs)
 from wmlab.models import MLPWorldModel
 from wmlab.rollout import closed_loop_error_curve, multi_step_error_curve
 from wmlab.rollout.imagine import _sample_windows
@@ -794,6 +811,116 @@ def test_sample_windows_t0_min():
         assert obs0[:, 0].min() >= t0_min - 1e-6, \
             f"t0_min={t0_min} 但最小起点 = {obs0[:, 0].min()}"
         assert obs0[:, 0].max() <= T - 50 - 1
+
+
+def test_ge_run_length_is_geometric():
+    """㉑ ★ 游程长度 ~ Geom(β)（**i.i.d. 样本**）—— X31-b 逼出来的更严格的检验。
+
+    ★★ 为什么不能拿在线 age 直方图来做这件事（第 14 次自我修正）
+    age 序列**强自相关**：一个长度 n 的 Bad 游程里 age 就是 1,2,…,n 这个确定性
+    序列 ⇒ 一个游程只有 **1 个独立样本**。用 n_pos 当样本量会把检验功效高估
+    约 √L 倍。X31-b 的实测症状：p̄=0.2/L=16 处 KS 判"显著"(0.0235>0.0225)，
+    而同一份数据的 TV=0.0278 却**低于**纯噪声期望 0.0512 —— 两个指标互相矛盾。
+    游程长度在 Gilbert 链下是 i.i.d. Geom(β)，且仿真极便宜 ⇒ 用它。
+    """
+    for pl, L in ((0.5, 2.0), (0.35, 8.0), (0.2, 16.0), (0.65, 4.0)):
+        ch = GilbertElliottChannel(pl, L, seed=3)
+        runs = simulate_bad_runs(ch, 120_000, np.random.default_rng(7))
+        g = run_length_goodness(runs, ch.beta, alpha=0.05 / 4)   # Bonferroni
+        assert g["ok"] is True, \
+            f"p̄={pl} L={L} 游程分布不服从 Geom(β)：KS={g['ks']:.4f}/{g['ks_crit']:.4f}, " \
+            f"均值 {g['mean_emp']:.3f} vs {g['mean_th']:.3f} (z={g['mean_z']:+.1f})"
+        # 均值必须收敛到 L（这条对长尾比 KS 更敏感）
+        assert abs(g["mean_emp"] / L - 1.0) < 0.06, \
+            f"p̄={pl} L={L} 平均游程长度 {g['mean_emp']:.3f} 偏离 L={L} 超过 6%"
+
+
+def test_payload_fn_is_wired():
+    """㉒ ★★ R12：`run_tracking` 的 `payload_fn` 必须真的接线（X32 新增）。
+
+    ★ 这是本仓库第 12 条硬约定（R12）的直接落地：看到开关先问"它接线了吗"。
+    `delay` 这个参数曾经声明/传递/记录/写文档/测试全过，却**从未生效**，空跑两轮。
+    这里两条断言缺一不可：
+      (a) 传 None ⇒ 与旧行为**逐位一致**（零侵入，既有实验不变）
+      (b) 传一个粗量化器 ⇒ 结果必须**明显变大**（真的生效了）
+    """
+    eps = collect_random_episodes(make_env("CartPole-v1", seed=0), n_episodes=3, seed=0)
+    model = _tiny_model(4, 2, True)
+    dev = torch.device("cpu")
+    base = run_tracking(model, eps, dev, periodic_schedule(1), seed=0, label="no-fn")
+    same = run_tracking(model, eps, dev, periodic_schedule(1), seed=0, label="none",
+                        payload_fn=None)
+    assert base.nmse == same.nmse, "payload_fn=None 必须与不传**逐位一致**"
+
+    lo, hi = fit_quantizer_range(eps, margin=0.05)
+    coarse = UniformQuantizer(lo, hi, 2)          # 2 比特 ⇒ 极粗
+    q = run_tracking(model, eps, dev, periodic_schedule(1), seed=0, label="quant",
+                     payload_fn=coarse)
+    assert q.nmse > base.nmse * 1.05, \
+        f"传了粗量化器但误差没变大（{q.nmse:.6f} vs {base.nmse:.6f}）⇒ payload_fn 没接线"
+
+
+def test_qam_ber_degenerates_to_qpsk():
+    """㉓ M=4（QPSK）时 BER 公式必须等于**精确**误码率 Q(√γ_s)。
+
+    ⚠ 只在未饱和区比：SER 近似式在低 SNR 会算出 >1−1/M 而被 clip，
+      那时差异来自 clip 而非公式（第一版在 −10dB 就是这样误报的）。
+    """
+    for g_db in (0.0, 3.0, 6.0, 10.0, 20.0):
+        g = snr_db_to_linear(g_db)
+        ber = qam_bit_error_rate(g, 4.0)
+        exact = 0.5 * math.erfc(math.sqrt(g / 2.0))      # Q(√γ_s)
+        assert abs(ber - exact) < 1e-12, \
+            f"γ={g_db}dB：BER={ber:.6e} ≠ QPSK 精确值 {exact:.6e}"
+
+
+def test_qam_ser_saturates_and_validity_flag():
+    """㉔ SER 必须饱和在 1−1/M，且公式失效区要被**标记**出来。
+
+    ★ 背景：`BER ≈ SER/log2(M)` 依赖"每次符号错误只错 1 个比特"，低 SNR 下失效。
+      失效症状（X32 实测，SNR=5dB）：64-QAM 与 256-QAM 的 SER 都饱和，
+      BER = (1−1/M)/log2(M) 随 M 增大反而**减小**（0.164 → 0.124）
+      ⇒ PER 对 b **非单调**（0.99842 → 0.99831）。这是公式的人工产物。
+    """
+    M = 256.0
+    ser_low = qam_symbol_error_rate(snr_db_to_linear(-20.0), M)
+    assert abs(ser_low - (1.0 - 1.0 / M)) < 1e-12, f"低 SNR 下 SER 未饱和到 1−1/M：{ser_low}"
+    assert qam_approximation_valid(snr_db_to_linear(-20.0), M) is False
+    assert qam_approximation_valid(snr_db_to_linear(35.0), M) is True
+
+
+def test_per_monotonic_in_bits_and_snr():
+    """㉕ PER 对 b 单调增、对 SNR 单调减（U 形曲线的两个分支的地基）。"""
+    for g_db in (5.0, 15.0, 25.0):
+        pers = []
+        for b in (2, 4, 6, 8):
+            g = snr_db_to_linear(g_db)
+            per = (1.0 - 1e-6 if not qam_approximation_valid(g, 2.0 ** b)
+                   else per_from_ber(qam_bit_error_rate(g, 2.0 ** b), 6.0 * b))
+            pers.append(per)
+        assert all(np.diff(pers) >= -1e-12), f"SNR={g_db}dB 时 PER 对 b 非单调增：{pers}"
+    for b in (2, 4, 6, 8):
+        pers = []
+        for g_db in (5.0, 15.0, 25.0, 35.0):
+            g = snr_db_to_linear(g_db)
+            per = (1.0 - 1e-6 if not qam_approximation_valid(g, 2.0 ** b)
+                   else per_from_ber(qam_bit_error_rate(g, 2.0 ** b), 6.0 * b))
+            pers.append(per)
+        assert all(np.diff(pers) <= 1e-12), f"b={b} 时 PER 对 SNR 非单调减：{pers}"
+
+
+def test_quantizer_mse_monotone_and_no_overload():
+    """㉖ 量化 MSE 对 b 单调减；量程由数据统计 ⇒ **不得过载**（过载会让 Δ²/12 失效）。"""
+    eps = collect_random_episodes(make_env("CartPole-v1", seed=0), n_episodes=3, seed=0)
+    lo, hi = fit_quantizer_range(eps, margin=0.05)
+    obs = np.concatenate([np.asarray(e["obs"], dtype=np.float64) for e in eps], axis=0)
+    ms = []
+    for b in (2, 4, 6, 8):
+        qz = UniformQuantizer(lo, hi, b)
+        assert overload_fraction(qz, obs) <= 1e-9, f"b={b} 存在过载（裁剪）"
+        ms.append(qz.measure_mse(obs))
+    assert all(ms[i] >= ms[i + 1] * (1 - 1e-9) for i in range(len(ms) - 1)), \
+        f"量化 MSE 对 b 非单调减：{ms}"
 
 
 def main() -> int:

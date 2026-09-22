@@ -77,6 +77,7 @@ NMSE = mean_{t,dim} (ŝ - o)² / Var(o)，**Var 在整批评测观测上 pooled 
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Callable, Sequence
 
@@ -269,6 +270,77 @@ class GilbertElliottChannel:
                 f"α={self.alpha:.4f} β={self.beta:.4f} ρ₁={self.rho1:+.4f}>")
 
 
+# ---------------------------------------------------------------- 信道层自检
+def simulate_bad_runs(channel: "GilbertElliottChannel", n_steps: int,
+                      rng: np.random.Generator, burn_in: int = 2000) -> np.ndarray:
+    """★ 纯信道仿真：抽出 **Bad 游程长度**序列（不需要世界模型，很便宜）。
+
+    ★★ 为什么分布检验要用游程长度、而不是在线的 age 直方图（第 14 次自我修正）
+    ------------------------------------------------------------------
+    age 序列是**强自相关**的：一个长度为 n 的 Bad 游程里，age 就是 1,2,…,n
+    这个**确定性**序列。⇒ 一个游程只贡献 **1 个独立样本**，而不是 n 个。
+    把 n_pos 当成样本量，会把检验功效高估约 √L 倍。
+
+    实测症状（X31-b，p̄=0.2/L=16）：用 n_pos=3665 算 KS 临界值 0.0225，
+    实测 KS=0.0235 判"显著"；但同一份数据的 TV=0.0278 却**低于**纯噪声期望
+    0.0512。两个指标互相矛盾 ⇒ 一定是样本量口径错了。
+
+    游程长度在 Gilbert 链下是 **i.i.d. Geometric(β)** —— 真正独立的样本，
+    而且可以廉价地跑几十万步 ⇒ 检验既**严格**又**便宜**。
+
+    ★ 末尾未闭合的游程被丢弃（会轻微低估长游程）；n_steps 足够大时可忽略。
+    """
+    channel.reset(rng)
+    for _ in range(int(burn_in)):
+        channel(0, rng)
+    runs: list[int] = []
+    cur = 0
+    for t in range(int(n_steps)):
+        if not channel(t, rng):
+            cur += 1
+        elif cur > 0:
+            runs.append(cur)
+            cur = 0
+    return np.asarray(runs, dtype=np.int64)
+
+
+def run_length_goodness(runs: np.ndarray, beta: float, alpha: float = 0.05) -> dict:
+    """检验游程长度是否 ~ Geometric(β)（**i.i.d. 样本**，KS 临界值可用）。
+
+    同时报均值（闭式 E[n] = 1/β = L），均值检验对长尾比 KS 更敏感。
+
+    ★★★ `alpha` 必须做**多重比较校正**（第 14 次自我修正的续集）
+    KS 的临界值是 c(α)/√n，其中 c(α) = √( −0.5·ln(α/2) )：
+        α=0.05 ⇒ c=1.36    α=0.0025 ⇒ c=1.83
+    一个网格扫 20 个点、每点各做一次 α=0.05 的检验 ⇒ 至少一个误报的概率
+    **1 − 0.95^20 = 64%**。实测正是这样：20 点网格跑到第 13 个点时
+    KS=0.0127 判"显著"（临界 0.0122），只超 4%，而同一份数据的均值检验
+    z=+2.3 完全正常 ⇒ 典型的多重比较假阳性。
+    ⇒ 调用方应当传 `alpha = 0.05 / n_tests`（Bonferroni）。
+    """
+    r = np.asarray(runs, dtype=np.int64)
+    n = int(r.size)
+    if n < 50:
+        return {"n_runs": n, "ok": None, "reason": "样本太少，不判定"}
+    b = float(min(max(beta, 1e-12), 1.0))
+    kmax = int(max(r.max(), int(np.ceil(3.0 / b)) + 10))
+    ks_ = np.arange(1, kmax + 1)
+    # Geom(β) 的 CDF（支持集 1,2,…）
+    cdf_th = 1.0 - (1.0 - b) ** ks_
+    xs = np.sort(r)
+    cdf_emp = np.searchsorted(xs, ks_, side="right") / float(n)
+    ks = float(np.max(np.abs(cdf_emp - cdf_th)))
+    a = float(min(max(alpha, 1e-9), 0.5))
+    ks_crit = math.sqrt(-0.5 * math.log(a / 2.0)) / math.sqrt(n)
+    mean_emp = float(r.mean())
+    mean_th = 1.0 / b
+    sd = float(np.sqrt((1.0 - b) / (b * b) / n))       # Geom 均值的标准误
+    z = (mean_emp - mean_th) / max(sd, 1e-12)
+    return {"n_runs": n, "ks": ks, "ks_crit": ks_crit, "alpha": a,
+            "mean_emp": mean_emp, "mean_th": mean_th, "mean_z": float(z),
+            "ok": bool(ks <= ks_crit and abs(z) <= 4.0)}
+
+
 # ---------------------------------------------------------------- 结果容器
 @dataclass
 class TrackingResult:
@@ -381,6 +453,7 @@ def run_tracking(
     denom: float | None = None,
     warmup: int = 0,
     delay_mode: str = "naive",
+    payload_fn: Callable[[np.ndarray], np.ndarray] | None = None,
 ) -> TrackingResult:
     """按给定调度跑一遍"符真—预测—跟踪"，返回聚合指标。
 
@@ -398,6 +471,10 @@ def run_tracking(
             `"naive"`（默认）直接当当前状态用；`"forward"` 先用动作把它向前推进到
             当前时刻（即"真的用上世界模型"）。两者的差 = 被浪费掉的预测能力。
             `delay=0` 时两种模式**逐位相同**（没有陈旧可言）。
+        payload_fn: ★ X32 新增。发送端对**载荷**的变换（例如均匀量化）。
+            None（默认）⇒ 恒等 ⇒ **既有全部实验（X24/X26/X27/X30/X31）逐位不变**。
+            这是 X24「信道层零侵入」原则的延续：新能力以可选参数接入，
+            不传就等价于没这回事。★ 自检见 tests 第 39 项（R12：改掉它，看输出是否真变）。
     """
     if delay_mode not in ("naive", "forward"):
         raise ValueError(f"delay_mode 必须是 'naive' 或 'forward'，收到 {delay_mode!r}")
@@ -445,7 +522,9 @@ def run_tracking(
                 #    X26/X27 因为 warmup=0 从未触发过这个 bug。）
                 if t >= warmup:
                     n_tx += 1
-                inflight[t + D] = ep["obs"][t + 1]
+                # ★ X32：发送端变换（量化）。None ⇒ 恒等，逐位等价于旧行为。
+                payload = ep["obs"][t + 1]
+                inflight[t + D] = payload if payload_fn is None else payload_fn(payload)
             # ② 本步到达的包（可能没有）。固定时延下发送与到达一一对应；
             #    若信道升级为变时延，后来的包覆盖先到的 ⇒ 天然"取最新生成的那个"。
             rx = inflight.pop(t, None)

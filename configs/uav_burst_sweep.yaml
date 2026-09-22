@@ -1,0 +1,73 @@
+# world-model-lab · ★ X31-b「多丢包率扫描」(p̄ × L 网格)
+#
+# 与 configs/uav_burst.yaml（X31）的关系
+#   uav_burst.yaml       = X31：**单个** p̄=0.5，扫突发长度 L
+#   本文件               = X31-b：把 p̄ 也铺成网格，验 E[NMSE] = p̄·G(L) 的**结构性**
+#
+# ★★ 本实验要证伪的预言（见 scripts/18_burst_sweep.py 文件头）
+#   Gilbert–Elliott 下条件年龄分布恒为 Geom(β=1/L)，**与 p̄ 无关**；
+#   p̄ 只决定 P(age=0)=1−p̄。又 f(0)=0 ⇒ **E[NMSE] = p̄ · G(L)**。
+#   C1 数据塌缩：E[NMSE]/p̄ 在同一 L 上与 p̄ 无关（不同 p̄ 的曲线重合）
+#   C2 线性于 p̄：固定 L，E[NMSE] ∝ p̄（过原点直线）
+#
+# ★ 网格可行域：α = p̄/(L(1−p̄)) ≤ 1 ⇒ **L ≥ p̄/(1−p̄)**
+#   p̄=0.65 ⇒ L ≥ 1.857（L=2 可行）  p̄=0.8 ⇒ L ≥ 4（L=2 无解）
+#   ⇒ p̄ 取到 0.65 为止，保证 {2,4,8,16,32} 五个 L **全部可行**
+#     （少一个点，塌缩检验就少一个自由度）
+#
+# ★ 控制变量：模型与离线曲线各只算一次，全网格共享
+#   —— 否则"模型质量"会混进 p̄ 的效应，C1 直接失效
+
+seed: 0
+device: auto
+
+env:
+  id: uav-track
+  # ★ 700 而非 450 的理由同 X31：离线曲线起点范围 t0 ∈ [250, T−h_max−1)，
+  #   h_max=190 ⇒ 450 步时只有 10 个可选起点（采样退化），700 步有 260 个。
+  max_steps: 700
+  noise_std: 0.15
+
+controller:
+  omega_n: 2.5
+  zeta: 1.0
+
+channel:
+  p_loss_list: [0.2, 0.35, 0.5, 0.65]
+  burst_lens: [2, 4, 8, 16, 32]
+  n_track_episodes: 60     # 每个 (p̄, L) 用多少条 held-out episode 记账
+
+data:
+  n_episodes: 120
+  eval_seed_offset: 1000
+  online_seed_offset: 2000
+
+model:
+  latent_dim: 32
+  hidden: 128
+  discrete_act: false
+
+train:
+  epochs: 150
+  batch_size: 256
+  lr: 0.001
+  weight_decay: 0.0
+  grad_clip: 5.0
+  val_ratio: 0.1
+
+eval:
+  horizons: [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100, 150, 190]
+  err_threshold: 0.05
+  threshold_mode: rel
+  # ★ 2048：X27 已实测 n_samples=64 会造 5.4 倍假缺口。
+  #   本实验的 f(h) 要代进闭式 ⇒ f 的噪声直接变成 C1/C2 的假偏离。
+  n_samples: 2048
+
+task:
+  warmup_steps: 250        # 同时用作离线曲线 t0_min（两边都在稳态区）
+  measured_steps: 450
+  n_episodes: 60
+  tail_frac: 0.25
+
+output:
+  dir: outputs
