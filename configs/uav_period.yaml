@@ -1,0 +1,86 @@
+# world-model-lab · ★ X34「联合设计：发送周期 × 量化精度」
+#
+# ★★ 设定（每次只动一个自变量）
+#   每个时隙有 d 个符号可用（带宽×时隙，固定）
+#   状态 d 维、每维 b 比特 ⇒ 一包 d·b 比特
+#   每 **T** 步发一次 ⇒ 这一包摊到 T·d 个符号 ⇒ **每符号比特数 m = b / T**
+#   ⇒ 调制阶数 M = 2^m
+#
+#   T ↑  ⇒  m ↓ ⇒ 星座稀 ⇒ **抗噪（PER 低）**，但两次更新之间隔得久 ⇒ **信息更旧**
+#   T ↓  ⇒  m ↑ ⇒ 星座密 ⇒ 误码飙升 ⇒ 包更容易丢，但一旦到了就是新的
+#   ⇒ 存在最优 T*（同样地，给定 T 也有最优 b*）
+#
+# ★★ 为什么要它能把 X33 的"能预报"变成"能设计"
+#   X33 验证了：E[NMSE] = Σ_h P_age(h)·g_b(h)，只用离线曲线 + 信道参数，偏差 %级。
+#   而周期发送的年龄分布有**闭式**（见 scripts/21 里的推导）：
+#       P(age = h) = (s/T)·(1−s)^floor(h/T),   s = 1 − PER
+#   ⇒ 只要选一个 T，无需跑闭环仿真就能算出期待误差 ⇒ **可以在秒级扫出设计曲线**。
+#   本实验做的事就是：闭式扫出 T*，再用真仿真去核 T* 是不是真的最优。
+#
+# ★ 预写判据（跑前定死，不许事后编解释）
+#   D1  闭式预报在设计网格上 |偏差| 中位 < 15% ⇒ "可以不仿真地选 T"
+#   D2  闭式选出的 T*_pred 与仿真选出的 T*_sim 一致（或相邻）
+#   D3  ★ T*_model > T*_persistence —— 世界模型能 rollout，理应能拉长发送周期；
+#       这是把 X25 的负面结论（H* 不能当发送周期）翻成正面设计规则的答案
+#
+# ⚠ 本实验只用**逐包独立**丢包（每 T 步掷一次伯努利），暂不含突发；
+#   突发版本需要另一条年龄分布闭式，列为后续（不得在这里假装覆盖）。
+
+seed: 0
+device: auto
+
+env:
+  id: uav-track
+  max_steps: 700
+  noise_std: 0.15
+
+controller:
+  omega_n: 2.5
+  zeta: 1.0
+
+design:
+  # ★ SNR 范围必须覆盖"高阶分枝已经烂、低阶分枝还很干净"的区间。
+  #   参考 X33 反解出的标定（目标 PER=0.4）：m=2→4.8dB, 4→12.6dB, 6→19.1dB, 8→25.3dB
+  snr_db_list: [10, 14, 18, 22, 26, 30]
+  # ★ b=16 只为把 T 拉到 8 步（现实系统不会用 16 位量化）；
+  #   它的作用是检验"最优 T* 是否超出网格边界" —— 引用时必须标注这一点
+  bits_list: [4, 6, 8, 12, 16]
+  # ★ 调制必须是**方形**星座 ⇒ m 取偶数 2/4/6/8 ⇒ 4/16/64/256-QAM
+  #   T = b / m 必须为整数 ⇒ 不可行的组合会自动跳过（在脚本里列出）
+  m_sym_list: [2, 4, 6, 8]
+  max_period: 64
+  n_track_episodes: 40
+  range_margin: 0.05
+
+data:
+  n_episodes: 120
+  eval_seed_offset: 1000
+  online_seed_offset: 2000
+
+model:
+  latent_dim: 32
+  hidden: 128
+  discrete_act: false
+
+train:
+  epochs: 150
+  batch_size: 256
+  lr: 0.001
+  weight_decay: 0.0
+  grad_clip: 5.0
+  val_ratio: 0.1
+
+eval:
+  horizons: [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100, 150, 190]
+  err_threshold: 0.05
+  threshold_mode: rel
+  n_samples: 2048
+
+task:
+  warmup_steps: 250
+  measured_steps: 450
+  n_episodes: 60
+  tail_frac: 0.25
+
+output:
+  dir: outputs

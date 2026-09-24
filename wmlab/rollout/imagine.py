@@ -53,7 +53,7 @@
 
 from __future__ import annotations
 
-from typing import Sequence
+from typing import Callable, Sequence
 
 import numpy as np
 import torch
@@ -181,6 +181,7 @@ def closed_loop_error_curve(
     n_samples: int = 256,
     seed: int = 0,
     t0_min: int = 0,
+    payload_fn: Callable | None = None,
 ) -> dict:
     """闭环 rollout 的误差曲线：把模型自己的预测当作下一步输入。
 
@@ -190,6 +191,20 @@ def closed_loop_error_curve(
     "没有新观测时用模型外推"就是这里的闭环机制，所以 X26 的解析对账要拿它比。
 
     当前用解码后的观测再编码回潜空间（因为潜空间转移训练时只见过真实观测的编码）。
+    ★★ `payload_fn`（X33 新增）—— 只在 **t0 这一帧**上作用一次，之后不再作用
+    ------------------------------------------------------------------------
+    语义对应在线 tracking 里的"**收到的那一帧被跨层加工过**"（量化 / 压缩 / 有损编码）：
+    只有真正到达的包才带失真，之后的外推是世界模型自己的事。
+
+    ⇒ 于是可以定义一条新的离线曲线（本实验的核心观测量）：
+
+        g(h) = 从"被量化过的状态"出发闭环外推 h 步的误差
+
+    而 X31 那条 f(h) 是 g 在 payload_fn=None 时的特例。把 f 换成 g 代进 X31 的
+    闭式 `E[NMSE] = Σ_h P_age(h)·g(h)`，就得到一个**同时包含量化与丢包**的预报式。
+
+    默认 None ⇒ 与旧行为逐位一致（X2/X14/X26/X30/X31 的结果全部不受影响）。
+
     返回字段与 `multi_step_error_curve` 完全一致（逐点口径同样为**稠密**数组）。
     """
     model.eval()
@@ -198,6 +213,10 @@ def closed_loop_error_curve(
     rng = np.random.default_rng(seed)
     obs0_np, acts_np, targets_np = _sample_windows(episodes, h_max, n_samples, rng,
                                                    t0_min=int(t0_min))
+    if payload_fn is not None:
+        # ★ 只作用在**起点**这一帧（语义见 docstring）；返回 float32 与 np 栈兼容
+        obs0_np = np.asarray(payload_fn(np.asarray(obs0_np, dtype=np.float64)),
+                             dtype=obs0_np.dtype)
 
     obs0 = torch.as_tensor(obs0_np, device=device)
     acts = torch.as_tensor(acts_np, device=device)

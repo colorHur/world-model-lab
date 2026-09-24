@@ -99,6 +99,100 @@ def periodic_schedule(period: int) -> Schedule:
     return _f
 
 
+def periodic_age_pmf(loss_prob: float, period: int, k_max: int) -> np.ndarray:
+    """★ 周期发送 + 逐包独立丢包下的**平稳年龄分布**（截断到 [0, k_max]）。
+
+        P(age = h) = (s/T) · (1−s)^⌊h/T⌋ ,   s = 1 − p,   h = 0 … k_max
+
+    推导（写在这里，因为它就是本仓库的 ② 类证据）：
+      每次尝试独立成功 w.p. s ⇒ 两次到达之间的**尝试次数** K ~ Geom(s)
+      ⇒ 到达间隔 D = T·K，E[D] = T/s。平稳更新过程里 P(age=h) = P(D>h)/E[D]，而
+      P(D > h) = P(K > h/T) = (1−s)^⌊h/T⌋  ⇒ 上式。
+      归一化自检：Σ_h (s/T)·q^⌊h/T⌋ = s·Σ_j q^j = s/(1−q) = 1。
+    """
+    s = 1.0 - float(min(max(loss_prob, 0.0), 1.0 - 1e-12))
+    T = int(max(period, 1))
+    K = int(max(k_max, 1))
+    h = np.arange(K + 1, dtype=np.int64)
+    pmf = (s / float(T)) * ((1.0 - s) ** (h // T))
+    tail = max(0.0, 1.0 - float(pmf[:K].sum()))      # h > K 的质量压到 K
+    pmf[K] += tail
+    return pmf / pmf.sum()
+
+
+def periodic_mean_age(loss_prob: float, period: int) -> float:
+    """E[age] = T·q/s + (T−1)/2（**无截断**的闭式）。
+
+    由 Σ_h h·q^⌊h/T⌋ = T²q/s² + T(T−1)/(2s) 再除以 E[D]=T/s 得到。
+    两个必须成立的退化：
+      T=1 ⇒ q/s = p/(1−p)        （与 `lossy_schedule` 的 i.i.d. 结果一致）
+      s=1 ⇒ (T−1)/2              （无丢包时 age 在 0…T−1 上均匀 —— 周期本身的地板）
+    """
+    q = float(min(max(loss_prob, 0.0), 1.0 - 1e-12))
+    s = 1.0 - q
+    T = float(max(period, 1))
+    return T * q / s + (T - 1.0) / 2.0
+
+
+def periodic_age_tail(loss_prob: float, period: int, k_max: int) -> float:
+    """★ X34-b2：周期发送年龄分布**超出 [0, k_max] 的尾部质量** P(age > k_max)（精确闭式）。
+
+        P(age > K) = (s/T)·q^{k0}·r + q^{k0+1},
+        k0 = (K+1)//T ,  r = (k0+1)·T − (K+1)
+
+    推导：`periodic_age_pmf` 里每一「块」k 覆盖 h ∈ [kT, (k+1)T−1]，块内共 T 个 h、
+    每点质量 (s/T)·q^k ⇒ 整块质量 s·q^k。
+      · 第 k0 块被 K 截断后只剩 r 个点         ⇒ 贡献 (s/T)·q^{k0}·r
+      · 之后所有块 Σ_{k≥k0+1} s·q^k = q^{k0+1} ⇒ 贡献 q^{k0+1}
+    两个必须成立的退化：q→0 ⇒ 0；T=1 ⇒ q^{K+1}（与 i.i.d. 几何分布一致）。
+
+    ★★ 为什么单列一条（本仓库第 16 次自证伪的记录）：
+    第一版判据写成了 `1 − (1−q)^{K/T}` —— 那是「**至少一次失败**」的概率，不是「**全部失败**」
+    的概率（把"至少一次"当成"全部"）。两者**都随 q 增大**，但量级差了约 160 个数量级：
+      q=0.019, T=2, K=190 ⇒ 错式 1−0.981^95 = 83.8%   正确式 0.019^95 ≈ 1e−160
+    于是第一版把 PER>0 的**全部**点判成"截断"而丢弃，网格里只剩 PER≈0 的退化点
+    —— 而那正是本实验最该研究的高丢包区间。
+    ⇒ 教训仍是 R12：判据写完后必须拿一个已知答案代进去验量级，不能只看它"跑得动"。
+    （顺带：我在写这条注释时一度把方向也写反，是自检 ㉛ 的单调性断言把它抓出来的。）
+    """
+    q = float(min(max(loss_prob, 0.0), 1.0 - 1e-12))
+    s = 1.0 - q
+    T = int(max(period, 1))
+    K = int(max(k_max, 1))
+    n = K + 1
+    k0 = n // T
+    r = (k0 + 1) * T - n
+    return float((s / float(T)) * (q ** k0) * r + q ** (k0 + 1))
+
+
+def periodic_lossy_schedule(period: int, loss_prob: float) -> Schedule:
+    """★ X34 新增：**周期发送 + 逐包独立丢包**（`periodic_schedule` 的带损版本）。
+
+    与 `lossy_schedule` 的差别只在"只在 t % T == 0 时才尝试发送"：
+    非发送步不消耗随机数 ⇒ 每次**尝试**独立地以 `p` 丢掉。
+
+    ★★ 为什么必须为它单独写一条年龄分布闭式（见 `scripts/21_period_design.py`）
+    周期发送让 age 有了**地板**：即使一个包都不丢，age 也在 0…T−1 上循环，
+    E[age] = (T−1)/2 ⇒ 发送周期本身就是一种信息代价，与丢包无关。
+
+        P(age = h) = (s/T)·(1−s)^⌊h/T⌋ ,   s = 1 − p
+        E[age]     = T·(1−s)/s + (T−1)/2
+
+    `T=1` 时退化为 `lossy_schedule(p)`（P(age=h) = s·(1−s)^h，E[age] = p/(1−p)），
+    这条退化关系在自检 ㉗ 里被逐位检查。
+    """
+    T = max(1, int(period))
+    p = float(min(max(loss_prob, 0.0), 1.0))
+
+    def _f(t: int, rng: np.random.Generator) -> bool:
+        if t % T != 0:
+            return False
+        return bool(rng.random() >= p)
+
+    _f.__name__ = f"periodic_lossy(T={T},p={p})"
+    return _f
+
+
 def lossy_schedule(loss_prob: float) -> Schedule:
     """被动丢包信道：每步独立地以概率 `p` 丢弃。
 

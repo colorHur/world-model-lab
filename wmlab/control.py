@@ -201,8 +201,14 @@ def run_closed_loop_control(
     label: str = "",
     tail_frac: float = 0.25,
     warmup_steps: int = 0,
+    payload_fn: Callable[[np.ndarray], np.ndarray] | None = None,
 ) -> dict:
     """★ 闭环控制仿真：**估计状态驱动控制器，控制器改变真实轨迹**。
+
+    ★ X35 新增 `payload_fn`：给**送达的载荷**加一道变换（X33/X34 里是均匀量化器）。
+    语义与 `eval.run_tracking` / `rollout.closed_loop_error_curve` 完全一致：
+    只改"送过来的那份观测"，不改世界模型、不改控制器。
+    ⇒ **量化误差第一次真正进入闭环**（X33/X34 只在开环回放里量过它）。
 
     与 `eval.run_tracking` 的关键差别（这不是重复实现）：
       `run_tracking` 里动作来自离线 episode ⇒ 轨迹与模型无关；
@@ -281,7 +287,10 @@ def run_closed_loop_control(
             delivered = bool(schedule(t, rng))
             if delivered:
                 n_tx += 1
-                est = true_next.copy()
+                if payload_fn is None:
+                    est = true_next.copy()
+                else:
+                    est = np.asarray(payload_fn(true_next), dtype=np.float32).copy()
                 age = 0
             else:
                 est = (_predict_next(model, est, a, device) if estimator == "model"

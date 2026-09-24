@@ -39,6 +39,10 @@
   ㉕ PER 对 b 单调增 / 对 SNR 单调减   —— U 形曲线两个分支的地基
   ㉖ 量化 MSE 单调减 + 无过载（X32）  —— 过载（裁剪）会让 Δ²/12 失效，故量程必须由
                                           数据统计并留 margin
+  ㉗ ★ 周期发送的年龄闭式（X34）      —— 归一化 + 均值闭式 + 两个退化（T=1 / s=1）
+  ㉘ ★ 周期本身造成年龄地板（X34）    —— 不丢包时 E[age]=(T−1)/2；同时是 R12 检查
+  ㉙ ★ 离线 payload_fn 只作用于起点（X33）—— 恒等⇒逐位一致；量化⇒必须变化
+  ㉚ ★ 完美信道下两 head 逐位相同（X33）—— 每步都到⇒从不调用预测；同龄对照的地基
 """
 
 from __future__ import annotations
@@ -54,8 +58,8 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from wmlab.control import (PDRelativeController, run_closed_loop_control,
-                           task_horizon)
+from wmlab.control import (PDRelativeController, collect_controlled_episodes,
+                           run_closed_loop_control, task_horizon)
 from wmlab.data import collect_random_episodes, transitions_from_episodes
 from wmlab.envs import (ChannelAdapter, StepResult, make_env, make_env_with_channel)
 from wmlab.eval import (NmseCurve, expected_nmse_analytic, geometric_age_pmf,
@@ -67,7 +71,9 @@ from wmlab.eval.physical import (UniformQuantizer, fit_quantizer_range, overload
                                  per_from_ber, qam_approximation_valid, qam_bit_error_rate,
                                  qam_symbol_error_rate, snr_db_to_linear)
 from wmlab.eval.tracking import (GilbertElliottChannel, StateTracker,
-                                 run_length_goodness, simulate_bad_runs)
+                                 periodic_age_pmf, periodic_age_tail,
+                                 periodic_lossy_schedule,
+                                 periodic_mean_age, run_length_goodness, simulate_bad_runs)
 from wmlab.models import MLPWorldModel
 from wmlab.rollout import closed_loop_error_curve, multi_step_error_curve
 from wmlab.rollout.imagine import _sample_windows
@@ -921,6 +927,227 @@ def test_quantizer_mse_monotone_and_no_overload():
         ms.append(qz.measure_mse(obs))
     assert all(ms[i] >= ms[i + 1] * (1 - 1e-9) for i in range(len(ms) - 1)), \
         f"量化 MSE 对 b 非单调减：{ms}"
+
+
+def test_periodic_age_closed_form():
+    """㉗ ★★ 周期发送的年龄分布闭式（X34 的全部设计结论都压在这一条上）。
+
+    三条必须成立，缺一不可：
+      (a) 归一化：Σ_h P(h) = 1（截断时把尾部质量压回边界后仍成立）
+      (b) 均值闭式 E[age] = T·q/s + (T−1)/2 与 pmf 直接求和一致（K 足够大时）
+      (c) 两个退化：T=1 ⇒ p/(1−p)（= i.i.d. 丢包，`lossy_schedule` 的结果）；
+                   s=1 ⇒ (T−1)/2（无丢包时 age 在 0…T−1 均匀 —— **周期本身的地板**）
+    """
+    K = 20000
+    for p, T in ((0.0, 4), (0.1, 1), (0.3, 3), (0.5, 8), (0.8, 2)):
+        pmf = periodic_age_pmf(p, T, K)
+        assert abs(float(pmf.sum()) - 1.0) < 1e-12, f"p={p} T={T} pmf 未归一化"
+        m_pmf = float(np.dot(np.arange(K + 1), pmf))
+        m_cf = periodic_mean_age(p, T)
+        assert abs(m_pmf - m_cf) < max(0.02, 0.01 * abs(m_cf)), \
+            f"p={p} T={T}：pmf 均值 {m_pmf:.4f} ≠ 闭式 {m_cf:.4f}"
+    assert abs(periodic_mean_age(0.4, 1) - 0.4 / 0.6) < 1e-12, "T=1 未退化到 i.i.d."
+    assert abs(periodic_mean_age(0.0, 5) - 2.0) < 1e-12, "无丢包时未退化到 (T−1)/2"
+
+
+def test_closed_loop_payload_fn_is_wired():
+    """㉜ ★★ R12：闭环控制里的 `payload_fn`（量化器）**真的接进去了**（X35 的 T4）。
+
+    为什么非测不可：X35 的全部结论都建立在"量化误差进入闭环"上。
+    `payload_fn` 在 `control.run_closed_loop_control` 里只有一行
+    （`est = payload_fn(true_next)`），漏掉它实验会**跑得通、出数字、全是假的**。
+
+    三条必须成立：
+      (a) 恒等 payload ⇒ 与不传 payload **逐位一致**（既有实验零侵入）
+      (b) 粗量化 payload ⇒ 闭环 est_nmse **显著变大**（T4 的机器版）
+      (c) 量化越粗 ⇒ 闭环 est_nmse **单调不减**（量级对，不是接错方向）
+
+    ★ 这里必须用 T=1（每步都送）：T=1 时估计误差 = 载荷本身的误差，
+      于是"量化器接没接"这件事不会被世界模型的 rollout 稀释。
+    """
+    env = make_env("uav-track", seed=0, noise_std=0.15, max_steps=400)
+    ctrl = PDRelativeController(dt=env.dt, omega_n=2.5, zeta=1.0, kappa=float(env.kappa),
+                                a_max=float(env.a_max))
+    eps = collect_controlled_episodes(env, ctrl, n_episodes=3, seed=0, max_steps=400)
+    dev = torch.device("cpu")
+    model = _tiny_model(int(eps[0]["obs"].shape[1]), int(env.act_dim), False)
+    lo, hi = fit_quantizer_range(eps, margin=0.05)
+    obs = np.concatenate([e["obs"] for e in eps], axis=0).astype(np.float64)
+
+    def _run(payload):
+        return run_closed_loop_control(
+            env, model, ctrl, periodic_schedule(1), n_episodes=3, seed=0,
+            max_steps=200, device=dev, estimator="model", var_g=1.0,
+            warmup_steps=50, payload_fn=payload)["est_nmse"]
+
+    base = _run(None)
+    ident = _run(lambda x: np.asarray(x, dtype=np.float64))
+    assert abs(ident - base) <= 1e-12 * max(abs(base), 1.0), \
+        f"(a) 恒等 payload 未逐位一致：{ident!r} vs {base!r}"
+
+    vals, msers = [], []
+    for b in (2, 4, 8):
+        qz = UniformQuantizer(lo, hi, b)
+        vals.append(_run(qz))
+        msers.append(qz.measure_mse(obs))
+    # (b) 最粗的 2 比特必须显著变大
+    assert vals[0] > base * 1.05, \
+        f"(b) 粗量化没有改变闭环 est_nmse（{vals[0]!r} vs 无量化 {base!r}）" \
+        f"⇒ payload_fn 没接进 control.py（R12 违规，整个 X35 在空跑）"
+    # (c) 单调：量化 MSE 递减 ⇒ 闭环误差不增
+    assert all(vals[i] >= vals[i + 1] * (1 - 1e-9) for i in range(len(vals) - 1)), \
+        f"(c) 闭环 est_nmse 未随精度单调：{vals}"
+    assert all(msers[i] >= msers[i + 1] * (1 - 1e-9) for i in range(len(msers) - 1)), \
+        f"(c) 量化 MSE 未随 b 单调减：{msers}"
+    env.close()
+
+
+def test_periodic_age_tail_matches_bruteforce():
+    """㉛ ★★ 尾部质量 P(age > K)（X34-b2）：**方向**必须是对的。
+
+    背景（本仓库第 16 次自证伪）：第一版判据误写成 `1 − (1−q)^{K/T}`，
+    即把丢包率当成成功率代入 ⇒ **q 越大尾巴越大**，于是高丢包（最该研究的）
+    那批点被全部误判为"截断"丢掉，网格里只剩 PER≈0 的退化点。
+
+    本测试锁四件事：
+      (a) 与暴力求和一致（把分布展开到 H 远大于 K，直接加 h>K 的部分）
+      (b) 单调性：**q 越大 ⇒ 尾部越大**（q 大 = 更久没送到 = 更可能超过 K）
+      (c) 量级：这是第一版真正错的地方 —— 错式把"至少一次失败"当成"全部失败"，
+          q=0.019 / T=2 / K=190 时算出 83.8%，而正确值 ≈ 1e−160。
+          ⇒ 单看"随 q 单调"抓不到这个 bug，必须钉死量级。
+      (d) 两个退化：q=0 ⇒ 0；T=1 ⇒ q^{K+1}（几何分布尾）
+    """
+    for T in (1, 2, 3, 8):
+        for K in (10, 63, 190):
+            for q in (0.0, 0.05, 0.2, 0.5, 0.8, 0.95):
+                # 暴力：把同一分布展开到 H 远大于 K，直接加 h>K 的部分
+                H = int(K + 1 + 200 * T / max(1e-9, -np.log(max(q, 1e-12))) + 5000)
+                H = min(H, 400000)
+                hh = np.arange(H + 1, dtype=np.int64)
+                s = 1.0 - q
+                full = (s / float(T)) * (q ** (hh // T))
+                brute = float(full[K + 1:].sum())
+                got = periodic_age_tail(q, T, K)
+                assert abs(got - brute) < max(1e-9, 1e-6 * max(brute, 1e-12)), \
+                    f"q={q} T={T} K={K}：闭式尾 {got:.3e} ≠ 暴力 {brute:.3e}"
+    # (b) 方向：q 增大 ⇒ 尾部单调**不减**
+    prev = None
+    for q in (0.02, 0.1, 0.3, 0.5, 0.7, 0.9, 0.99):
+        t = periodic_age_tail(q, 4, 190)
+        assert prev is None or t >= prev - 1e-18, \
+            f"尾部未随丢包率单调增（q={q}）：{t:.3e} < {prev:.3e} —— 方向错了"
+        prev = t
+    # (c) 量级：第一版错式在这里会给出 0.838，正确值天文级地小
+    t_small = periodic_age_tail(0.019, 2, 190)
+    assert t_small < 1e-100, \
+        f"q=0.019/T=2/K=190 的尾部应为 ≈1e−160，实得 {t_small:.3e} —— 量级判据被写错"
+    assert periodic_age_tail(0.0, 4, 190) == 0.0, "q=0 时尾部必须为 0"
+    assert abs(periodic_age_tail(0.5, 1, 9) - 0.5 ** 10) < 1e-12, "T=1 未退化到 q^{K+1}"
+
+
+class _IdentityModel:
+    """预测 = 恒等（把"模型"换成一根导线）。
+
+    ★★ 为什么自检要用它（第一版踩的坑）
+    第一版用 `_tiny_model`（未训练的 4→8→4 小 MLP + Tanh）去验 payload 是否接线，
+    结果量化扰动 0.674 只换来输出变化 **2.6e-4** ⇒ 断言"误差必须变大 5%"永远失败，
+    看起来像"payload_fn 没接线"，实际是 **Tanh 潜层饱和**（X5 撞过的同一个坑）。
+    用恒等模型 ⇒ 起点扰动**必定**一比一传到预测上，判据才有意义。
+    """
+
+    def eval(self):
+        return self
+
+    def to(self, *a, **k):
+        return self
+
+    def predict_next(self, obs, act):
+        return obs
+
+
+def test_periodic_schedule_has_age_floor():
+    """㉘ ★ 周期发送即使**一个包都不丢**，也有年龄地板 (T−1)/2（X34 的成本项）。
+
+    ★ 必须用**长 episode**：地板是"每 T 步一个循环"的平稳性质，短 episode 里
+      开头/结尾的不完整循环会把它拉偏。第一版用 CartPole（13–19 步）配 T=4，
+      实测 E[age]=1.403 vs 地板 1.50（−6%），那是边界瞬态不是 bug。
+      换成 UAV 长轨迹（每集数百步）后偏差回到 1% 量级。
+    ★ 这条同时是 R12 检查：改周期必须真的改变跟踪结果。
+    """
+    env = make_env("uav-track", seed=0, noise_std=0.15, max_steps=400)
+    ctrl = PDRelativeController(dt=env.dt, omega_n=2.5, zeta=1.0, kappa=float(env.kappa),
+                                a_max=float(env.a_max))
+    eps = collect_controlled_episodes(env, ctrl, n_episodes=3, seed=0, max_steps=400)
+    env.close()
+    model = _tiny_model(int(eps[0]["obs"].shape[1]), int(env.act_dim), False)
+    dev = torch.device("cpu")
+    ages, nmses = [], []
+    for T in (1, 4, 8):
+        r = run_tracking(model, eps, dev, periodic_lossy_schedule(T, 0.0), seed=0,
+                         label=f"T={T}")
+        ages.append(r.age_tx_mean)
+        nmses.append(r.nmse)
+    for T, a in zip((1, 4, 8), ages):
+        assert abs(a - (T - 1) / 2.0) < max(0.05, 0.05 * (T - 1) / 2.0), \
+            f"T={T} 无丢包时 E[age]={a:.3f} ≠ 地板 (T−1)/2={(T - 1) / 2:.2f}"
+    assert max(nmses) > min(nmses) * 1.05, \
+        f"改周期没有改变误差（{nmses}）⇒ 周期性没接进 schedule（R12 违规）"
+
+
+def test_payload_fn_applies_only_at_t0():
+    """㉙ ★ 离线曲线的 `payload_fn` 只作用在**起点**这一帧（X33 的 g_b 曲线）。
+
+    (a) 传恒等函数 ⇒ 必须与不传**逐位一致**（既有实验零侵入）
+    (b) 传粗量化器 ⇒ 起点扰动必须**一比一**地出现在第一步误差里
+        （用恒等模型 ⇒ 定量可查：第一步 MSE 的增量 ≈ 量化器实测 MSE）
+    """
+    eps = collect_random_episodes(make_env("CartPole-v1", seed=0), n_episodes=4, seed=0)
+    dev = torch.device("cpu")
+    base = closed_loop_error_curve(_IdentityModel(), eps, [1, 2, 4, 8], dev,
+                                   n_samples=128, seed=0)
+    same = closed_loop_error_curve(_IdentityModel(), eps, [1, 2, 4, 8], dev,
+                                   n_samples=128, seed=0, payload_fn=lambda x: x)
+    assert np.array_equal(np.asarray(base["mse_per_step"]),
+                          np.asarray(same["mse_per_step"])), \
+        "payload_fn=恒等 时曲线必须与不传**逐位一致**（零侵入被破坏）"
+    lo, hi = fit_quantizer_range(eps, margin=0.05)
+    obs = np.concatenate([np.asarray(e["obs"], dtype=np.float64) for e in eps], axis=0)
+    coarse = UniformQuantizer(lo, hi, 2)
+    q = closed_loop_error_curve(_IdentityModel(), eps, [1, 2, 4, 8], dev,
+                                n_samples=128, seed=0, payload_fn=coarse)
+    d = float(np.asarray(q["mse_per_step"])[0]) - float(np.asarray(base["mse_per_step"])[0])
+    qm = coarse.measure_mse(obs)
+    assert d > 0.5 * qm, \
+        f"起点量化后第一步 MSE 只增加了 {d:.5f}，而量化器实测 MSE={qm:.5f} " \
+        f"⇒ payload_fn 没接线（R12 违规）"
+
+
+def test_perfect_channel_heads_identical():
+    """㉚ ★ 完美信道下 model 与 persistence 的跟踪误差必须**逐位相同**（X33 的 S1）。
+
+    语义：每步都有包到达 ⇒ 估计器**从不调用预测** ⇒ 用哪个预测器都一样。
+    这条一旦破，"同龄对照"（X26/X31 的 R13 教训）就失效了 —— 两次测量的差别
+    就不再只来自预测器。
+    """
+    eps = collect_random_episodes(make_env("CartPole-v1", seed=0), n_episodes=3, seed=0)
+    model = _tiny_model(4, 2, True)
+    dev = torch.device("cpu")
+
+    class _Persist:
+        def eval(self):
+            model.eval()
+            return self
+
+        def to(self, *a, **k):
+            return self
+
+        def predict_next(self, obs, act):
+            return obs
+
+    a = run_tracking(model, eps, dev, lossy_schedule(0.0), seed=0, label="model")
+    b = run_tracking(_Persist(), eps, dev, lossy_schedule(0.0), seed=0, label="persist")
+    assert a.nmse == b.nmse, \
+        f"完美信道下两 head 不一致（{a.nmse:.8f} vs {b.nmse:.8f}）⇒ 仍在调用预测"
 
 
 def main() -> int:

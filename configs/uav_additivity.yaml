@@ -1,0 +1,78 @@
+# world-model-lab · ★ X33「丢包 × 量化：误差可分解性检验」
+#
+# ★★ 要回答的问题（跑前把判据定死，不许事后编解释）
+#   总误差能不能写成两部分的和：
+#       N_full(信道, 量化)  ≈  N_drop(同信道, 无量化)  +  N_quant(完美信道, 有量化)
+#   其中
+#       N_drop  = X31/X31-b 已经能闭式预测的那一块（信息年龄结构）
+#       N_quant = X32 量化的静态地板（每次到达都注入，与时间无关）
+#
+#   ★ 为什么这件事重要：只有可加/可乘地可预测，才能用两次**便宜**的测量去
+#     **预报**一个没跑过的配置 —— 那是「联合设计」（下一步 X34）的前提。
+#
+# ★ 推想到的机制（写在这里，用作对照，不是结论）
+#   量化误差一旦注入，要跟着状态一起被模型 rollout h 步。
+#   ⇒ 丢包越多（E[age] 越大），同一份量化误差被传播得越久 ⇒ 它造成的
+#     实际误差应当**大于**静态地板 ⇒ 定义放大倍数
+#           A = (N_full − N_drop) / N_quant
+#   预写判据 H1：A > 1 普遍成立，且随 E[age] 单调增；
+#   预写判据 H2：A_model ≠ A_persistence（persistence 是零阶保持，
+#               量化误差不会随时间被"放大"，只会保持在原地）
+#   ⇒ 若 H1/H2 成立 ⇒ 单纯"可加"不成立，正确的模型是可加 + 放大因子。
+#
+# ⚠ 网格可行性：突发长度 L 有可行域 L ≥ p̄/(1−p̄)（见 GilbertElliottChannel）。
+#   PER 很高的点配 L=8 会不可行 ⇒ 脚本会**跳过并记录**，不是报错。
+
+seed: 0
+device: auto
+
+env:
+  id: uav-track
+  max_steps: 700
+  noise_std: 0.15
+
+controller:
+  omega_n: 2.5
+  zeta: 1.0
+
+physical:
+  # ★★ 网格是按 **目标 PER** 反解 SNR 的（不是直接列 SNR）—— 见脚本里
+  #    `snr_for_target_per` 的说明：直接扫 SNR 时 4-QAM@25dB 的 PER 会下溢到 0。
+  per_targets: [0.005, 0.02, 0.08, 0.2, 0.4, 0.7]
+  bits_list: [2, 4, 6, 8]
+  burst_lens: [null, 8, 32]   # null ⇒ 无记忆；32 ⇒ E[age] 最大到 0.7×32 ≈ 22 步
+  n_track_episodes: 40
+  range_margin: 0.05
+
+data:
+  n_episodes: 120
+  eval_seed_offset: 1000
+  online_seed_offset: 2000
+
+model:
+  latent_dim: 32
+  hidden: 128
+  discrete_act: false
+
+train:
+  epochs: 150
+  batch_size: 256
+  lr: 0.001
+  weight_decay: 0.0
+  grad_clip: 5.0
+  val_ratio: 0.1
+
+eval:
+  horizons: [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100, 150, 190]
+  err_threshold: 0.05
+  threshold_mode: rel
+  n_samples: 2048
+
+task:
+  warmup_steps: 250
+  measured_steps: 450
+  n_episodes: 60
+  tail_frac: 0.25
+
+output:
+  dir: outputs
