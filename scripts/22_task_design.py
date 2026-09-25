@@ -32,8 +32,21 @@ T4  ★ R12：改 b 必须改变**闭环**结果（否则 payload_fn 没接进 c
 T5  闭式预报（离线曲线在**开环轨迹**上标定）搬到闭环后偏差**显著变大**
     ⇒ 量化「离线标定 → 在线闭环」的分布偏移
 
+================================================================= ★★ 第 17 次自证伪（跑第一版时挂出来的，照记）
+第一版 S_a 写成「实测 vs 闭式相对差 ≤ 8%」，在 SNR=14dB / b=6 / T=1（64-QAM，
+PER=0.9502）这个点上被打穿：实测 17.51 vs 闭式 19.08（−8.2%）。
+诊断（纯调度空跑 24 个种子，不含控制、不含删失）显示：
+    该点 E[age]=19.08，但 **sqrt(Var(age))=19.6 —— 标准差与均值同量级**；
+    40×450 步里只有约 900 次到达 ⇒ 单次实测标准误 ≈ 4.7% ⇒ −8% 只是 1.8σ 的噪声，
+    纯调度无偏（−0.38% ± 0.89）—— **闭式没错，是我的容差拍得没有依据**。
+⇒ 改为：容差 = 本点**采样标准误 × 3**（标准误由纯调度 MC 估出，与控制器无关），
+   并对逃逸删失的点（episode 提前结束 ⇒ 长年龄被切掉）只做**单侧**断言。
+⇒ 共因仍与前面 16 次相同：拿一个"看起来合理"的固定数当判据，没有先算它的量级（R2/R13）。
+
 ================================================================= 自检（不过就抛 —— R14）
 S_a  闭环实测 E[age] 与闭式 periodic_mean_age 一致（⇒ 年龄闭式在闭环里也成立）
+     容差 = 3 × 本点采样标准误（见上；**不是**固定百分比）
+     ★ 删失点（episode 因逃逸提前结束）只断言「实测不会**偏高**」
 S_b  全部有限（R14：NaN/Inf 一律抛，不许静默）
 S_c  b 最大 + T 最小 + PER≈0 的那个点 ≈ oracle，其 est_nmse 必须是全场最小量级
 S_d  ★ R12：固定 (SNR, T)，改 b 必须改变闭环 est_nmse（T4 的机器版）
@@ -69,7 +82,8 @@ from wmlab.eval.physical import (UniformQuantizer, fit_quantizer_range, overload
                                  per_from_ber, qam_approximation_valid, qam_bit_error_rate,
                                  snr_db_to_linear)
 from wmlab.eval.tracking import (periodic_age_pmf, periodic_age_tail,
-                                 periodic_lossy_schedule, periodic_mean_age)
+                                 periodic_age_var, periodic_lossy_schedule,
+                                 periodic_mean_age)
 from wmlab.models import MLPWorldModel
 from wmlab.rollout import closed_loop_error_curve
 from wmlab.train import train_world_model
@@ -128,13 +142,15 @@ def main():
         cfg["design"]["bits_list"] = [int(x) for x in args.bits.split(",")]
     dz = cfg["design"]
     if args.quick:
-        cfg["train"]["epochs"] = min(int(cfg["train"]["epochs"]), 3)
-        cfg["data"]["n_episodes"] = min(int(cfg["data"]["n_episodes"]), 20)
+        # ★ 冒烟**不能**把 epoch 压到 3：闭环里模型误差会盖过量化误差，
+        #   那样 T4（量化接线检查）必然假失败，还看不出任何设计效应。
+        #   实测：3 epoch 时闭环 est_nmse 0.266 而闭式 0.0066（40×），全是模型误差。
+        cfg["train"]["epochs"] = min(int(cfg["train"]["epochs"]), 60)
+        cfg["data"]["n_episodes"] = min(int(cfg["data"]["n_episodes"]), 40)
         dz["snr_db_list"] = [20.0]
         dz["bits_list"] = [4, 8]
         cfg["task"]["n_episodes"] = 6
-        cfg["task"]["measured_steps"] = 120
-        cfg["eval"]["n_samples"] = 64
+        cfg["eval"]["n_samples"] = 256
 
     seed = int(cfg["seed"])
     set_seed(seed)
@@ -208,9 +224,10 @@ def main():
         return np.concatenate([[0.0], np.asarray(c["mse_per_step"], dtype=float) / var_g])
 
     K = None
-    g_curves = {}
+    g_curves, f_curves = {}, {}
     for name, head in heads.items():
         f = _offline(head, None)
+        f_curves[name] = f
         K = len(f) - 1 if K is None else K
         if len(f) != K + 1:
             raise AssertionError(f"★ S_off 未通过：{name} 曲线长度不一致")
@@ -222,7 +239,7 @@ def main():
             g_curves[(name, b)] = gb
         print(f"[22]   [{name:>11s}] f(1)={f[1]:.5f} f(10)={f[min(10, K)]:.5f} "
               f"f(K={K})={f[K]:.5f}")
-    h_err = reliable_horizon(hs, [float(x) for x in _offline(model, None)[hs]],
+    h_err = reliable_horizon(hs, [float(f_curves["model"][h]) for h in hs],
                              float(cfg["eval"]["err_threshold"]),
                              cfg["eval"].get("threshold_mode", "rel"))
     print(f"[22] 离线：K={K} 步   H*_err={h_err}")
@@ -252,7 +269,36 @@ def main():
 
     # ---------- 4) 扫：闭式预报 + **闭环**实测 ----------
     online_seed = seed + int(cfg["data"].get("online_seed_offset", 2000))
+    meas_steps = int(cfg["task"]["measured_steps"])
     rows = []
+    censored = []
+
+    def _age_se(T, per, n_rep=12):
+        """★ 本点「闭环实测 E[age]」的**采样标准误**：纯调度空跑 n_rep 个种子取 std。
+
+        年龄过程只由调度决定（与环境、控制器都无关 —— 只要 episode 没被删失），
+        所以可以脱离仿真直接估。⇒ 比拍固定百分比诚实：
+          PER=0.95 / T=1 ⇒ std ≈ 4.7%（E[age]=19 而 sqrt(Var)=19.6，同量级！）
+          PER=0.20 / T=1 ⇒ std ≈ 0.1%
+        """
+        vals = []
+        for i in range(n_rep):
+            rng = np.random.default_rng(online_seed + 977 * (i + 1))
+            sch = periodic_lossy_schedule(T, per)
+            tot, n = 0.0, 0
+            age = 0
+            for _ in range(n_task_ep):
+                age = 0
+                for t in range(WARMUP + meas_steps):
+                    if sch(t, rng):
+                        age = 0
+                    else:
+                        age += 1
+                    if t >= WARMUP:
+                        tot += age
+                        n += 1
+            vals.append(tot / max(n, 1))
+        return float(np.std(vals, ddof=1)) if len(vals) > 1 else 0.0
     for snr in snrs:
         for gd in grid:
             b, m, T = gd["bits"], gd["m"], gd["T"]
@@ -275,7 +321,9 @@ def main():
                    "M": float(2.0 ** m), "per": float(per01),
                    "tail_mass": tail_mass,
                    "age_mean_analytic": float(periodic_mean_age(per01, T)),
-                   "age_mean_pmf_trunc": float(np.dot(np.arange(K + 1), pmf))}
+                   "age_mean_pmf_trunc": float(np.dot(np.arange(K + 1), pmf)),
+                   "age_sd": float(np.sqrt(periodic_age_var(per01, T))),
+                   "age_se": float(_age_se(T, per01))}
             for name, head in heads.items():
                 pred = float(np.dot(pmf, g_curves[(name, b)]))
                 r = run_closed_loop_control(
@@ -292,13 +340,32 @@ def main():
                         raise FloatingPointError(
                             f"S_b：(snr={snr},b={b},T={T},{name}) 指标 {k} 非有限（R14）")
                 # ★ S_a：年龄闭式在闭环里也必须成立
+                #   ★★ 容差 = 3 × 本点采样标准误（第 17 次自证伪：固定 8% 会被噪声打穿）
                 emp_age = float(r["mean_age"])
-                if abs(emp_age - rec["age_mean_pmf_trunc"]) > max(
-                        0.10, 0.08 * max(abs(emp_age), abs(rec["age_mean_pmf_trunc"]))):
+                ana_age = rec["age_mean_pmf_trunc"]
+                # ★★ se 必须有个**有量纲的地板**：PER≈0 时年龄是确定的（std=0），
+                #    dev/1e-12 会造出 7.2e8 σ 这种**纯除零假数**（第一版就报了这个数）。
+                #    地板取 1e-3 步 —— 远小于任何真实采样误差，但足以让比值有意义。
+                se = max(rec["age_se"], 1e-3)
+                tol = max(0.10, 3.0 * se)
+                dev = emp_age - ana_age
+                ep_frac = float(r["mean_ep_len"]) / max(meas_steps, 1)
+                if ep_frac < 0.98:
+                    # ★ 删失：episode 因逃逸提前结束 ⇒ 长年龄被系统性切掉
+                    #   ⇒ 只可能把均值**拉低**，所以只断言上侧（上侧超了一定是真 bug）
+                    censored.append({"snr_db": float(snr), "bits": b, "T": T,
+                                     "per": float(per01), "ep_frac": ep_frac,
+                                     "emp": emp_age, "ana": ana_age})
+                    if dev > tol:
+                        raise AssertionError(
+                            f"★ S_a 未通过（删失点却偏高）：SNR={snr} T={T} per={per01:.4f} "
+                            f"实测 {emp_age:.4f} vs 闭式 {ana_age:.4f}（+{dev/se:.1f}σ）"
+                            f"—— 删失只会拉低均值，偏高说明调度没接上")
+                elif abs(dev) > tol:
                     raise AssertionError(
                         f"★ S_a 未通过：SNR={snr} T={T} per={per01:.4f} "
-                        f"闭环实测 E[age]={emp_age:.4f} vs 闭式（截断后）"
-                        f"{rec['age_mean_pmf_trunc']:.4f}")
+                        f"闭环实测 E[age]={emp_age:.4f} vs 闭式（截断后）{ana_age:.4f} "
+                        f"（偏差 {dev/se:+.1f}σ，容差 ±{tol:.4f} = 3×SE={se:.4f}）")
                 rec[name] = {"pred": pred, "est_nmse": float(r["est_nmse"]),
                              "gap_closed": float(pred / max(float(r["est_nmse"]), 1e-18) - 1.0),
                              "escape_rate": float(r["escape_rate"]),
@@ -307,7 +374,9 @@ def main():
                              "p95_dist": float(r["p95_dist"]),
                              "age_mean": emp_age, "tx_rate": float(r["tx_rate"]),
                              "n_steps": int(r["n_steps"]),
-                             "mean_ep_len": float(r["mean_ep_len"])}
+                             "mean_ep_len": float(r["mean_ep_len"]),
+                             "ep_frac": ep_frac,
+                             "age_dev_sigma": float(dev / se)}
             rows.append(rec)
             rm = rec["model"]
             print(f"[22]   {snr:>5g}dB b={b:>2d} T={T:>2d} m={m} PER={per01:.3f} "
@@ -320,32 +389,84 @@ def main():
     if not rows:
         raise AssertionError("★ 设计网格为空 ⇒ 调整 SNR/b/m")
 
+    # ---------- 4b) S_a 汇总：偏差到底多大、删失了多少点 ----------
+    devs = np.array([r["model"]["age_dev_sigma"] for r in rows])
+    print(f"[22] S_a：{len(rows)} 点，|偏差| 中位 {np.median(np.abs(devs)):.2f}σ "
+          f"最大 {np.abs(devs).max():.2f}σ（容差 3σ；超出点数 "
+          f"{int((np.abs(devs) > 3).sum())}）")
+    if censored:
+        ef = np.array([c["ep_frac"] for c in censored])
+        print(f"[22] ★ 删失 {len(censored)}/{len(rows)} 点（episode 因逃逸提前结束，"
+              f"ep_frac 中位 {np.median(ef):.2f} 最小 {ef.min():.2f}）"
+              f"⇒ 这些点的 E[age] 与 NMSE 都是**偏低**的（长年龄被切掉、坏样本被提前终止）"
+              f"⇒ T1/T2/T3 同时报全量口径与「未删失」口径")
+
     # ---------- 5) ★ R12 接线检查（T4 的机器版）----------
-    n_wired = 0
+    # ★★ 不用"改 b 看比值"当主判据（第一版就是它，且会**假失败**）：
+    #    闭环里一旦模型误差占大头，量化从 b=4 改到 b=8 的绝对变化被埋掉，
+    #    比值 <5% ⇒ 判据报警，但 payload_fn 其实接得好好的。
+    #    ⇒ 改成**绝对标定**：T=1 且 PER≈0 时，控制器每步拿到的就是量化后的载荷，
+    #      所以闭环 est_nmse **必须等于**量化地板 `g_b(0) = MSE_q/var_g`（这是已知答案）。
+    #      这条与模型好坏无关 ⇒ 才是 R12 该有的形态（"拿已知答案代进去验量级"）。
+    floor_errs, n_wired = [], 0
+    for r in rows:
+        # ★ 用 1e-3 而不是 1e-9：PER 打印成 0.000 不代表它严格为 0，
+        #   而 T=1 时 PER=1e-3 只让 0.1% 的步用上模型 ⇒ 对地板的影响远小于 10% 容差
+        if r["T"] != 1 or r["per"] > 1e-3:
+            continue
+        for name in ("model", "persistence"):
+            want = float(quantizers[r["bits"]].measure_mse(allobs) / var_g)
+            got = float(r[name]["est_nmse"])
+            floor_errs.append({"snr_db": r["snr_db"], "bits": r["bits"], "head": name,
+                               "want": want, "got": got,
+                               "rel": got / max(want, 1e-18) - 1.0})
+    if floor_errs:
+        worst = max(abs(x["rel"]) for x in floor_errs)
+        if worst > 0.10:
+            raise AssertionError(
+                f"★ T4/S_d 未通过：T=1/PER=0 时闭环 est_nmse 与量化地板差 "
+                f"{worst:.1%}（>10%）⇒ payload_fn 没接进 control.py 或口径错了"
+                f"（R12 违规，整个 X35 在空跑）。明细：{floor_errs[:4]}")
+        n_wired = len(floor_errs)
+        print(f"[22]   T4/S_d 通过：{n_wired} 个 (T=1,PER=0) 点的闭环 est_nmse "
+              f"落在量化地板上（最大偏差 {worst:.2%}）")
+    # 次级：改 b 是否真的改变闭环结果（**只作参考**，不作通过条件，
+    #        因为它会被模型误差埋掉 —— 第一版拿它当主判据 ⇒ 假失败）
+    n_ratio = 0
     for snr in snrs:
         for T in sorted({g["T"] for g in grid}):
             sub = [r for r in rows if abs(r["snr_db"] - snr) < 1e-9 and r["T"] == T]
             if len(sub) < 2:
                 continue
             vals = [r["model"]["est_nmse"] for r in sub]
-            # 判定：改 b 必须改变闭环结果（同一个 T、同一个 SNR）
             if max(vals) / max(min(vals), 1e-18) > 1.05:
-                n_wired += 1
-    if n_wired == 0:
-        raise AssertionError(
-            "★ T4/S_d 未通过：所有 (SNR,T) 下改 b **都不改变闭环结果** ⇒ "
-            "payload_fn 没接进 control.py（R12 违规），整个实验在空跑")
-    print(f"[22]   T4/S_d 通过：{n_wired} 个 (SNR,T) 组验到量化真的进了闭环")
+                n_ratio += 1
+    if n_ratio == 0:
+        print("[22]   ⚠ 次级检查：改 b 未使闭环 est_nmse 变化 >5% "
+              "（模型误差占主导时的正常现象，不是 bug）")
+    else:
+        print(f"[22]   次级检查：{n_ratio} 个 (SNR,T) 组里改 b 使闭环结果变化 >5%")
 
     # ---------- 6) 判据 ----------
     print("[22] " + "=" * 76)
     TASK_METRICS = ("mean_dist_tail", "escape_rate")
     eps = float(cfg["task"].get("eps_floor", 1e-9))
 
+    def _spread(v) -> float:
+        """相对极差 —— 用来判断这个指标在候选集上**有没有分辨率**。
+
+        ★ 为什么必须查：escape_rate 是"每集是否逃逸"的 0/1 均值，在很多
+          (SNR,b) 组里**全为 0**（分辨率不足）⇒ 拿它算"最优→次优退化"会得到
+          0/0 或荒谬的负数（冒烟实测给出 −29×）。这种点必须剔除，不能进中位数。
+        """
+        v = np.asarray(v, dtype=float)
+        return float((v.max() - v.min()) / max(abs(v.max()), abs(v.min()), eps))
+
     # --- T1：最优 → 次优的相对退化，任务指标 vs NMSE ---
     t1 = {}
     for met in TASK_METRICS:
         ratios = []
+        n_degen = 0
         for snr in snrs:
             for b in bits_list:
                 sub = sorted([r for r in rows if abs(r["snr_db"] - snr) < 1e-9
@@ -354,8 +475,10 @@ def main():
                     continue
                 nv = np.array([r["model"]["est_nmse"] for r in sub])
                 tv = np.array([r["model"][met] for r in sub])
+                if _spread(tv) < 1e-6 or _spread(nv) < 1e-6:
+                    n_degen += 1
+                    continue
                 kn, kt = int(np.argmin(nv)), int(np.argmin(tv))
-                # 各自最优点 → 各自次优点
                 n_second = float(np.sort(nv)[1])
                 t_second = float(np.sort(tv)[1])
                 rn = n_second / max(float(nv[kn]), eps) - 1.0
@@ -367,9 +490,10 @@ def main():
             med = float(np.median(ratios))
             ok = sum(1 for x in ratios if x >= 2.0)
             print(f"[22] ★ T1[{met}]：任务退化/NMSE 退化 中位 {med:.2f}×  "
-                  f"≥2× 的点 {ok}/{len(ratios)}")
+                  f"≥2× 的点 {ok}/{len(ratios)}"
+                  f"（剔除分辨率不足的组 {n_degen} 个）")
         else:
-            print(f"[22]   T1[{met}]：无足够候选")
+            print(f"[22]   T1[{met}]：无足够候选（{n_degen} 组分辨率不足）")
 
     # --- T2：排序一致性 ---
     t2 = {}
@@ -378,6 +502,10 @@ def main():
         for met in TASK_METRICS:
             a = np.array([r["model"]["est_nmse"] for r in rows])
             c = np.array([r["model"][met] for r in rows])
+            if _spread(c) < 1e-9:
+                t2[met] = None
+                print(f"[22]   T2[{met}]：该指标在全场**无分辨率**（全等），不计 ρ")
+                continue
             rho = float(spearmanr(a, c).statistic)
             t2[met] = rho
             print(f"[22] ★ T2[{met}]：Spearman(est_nmse, {met}) = {rho:+.3f}"
@@ -388,8 +516,13 @@ def main():
             order = np.argsort(np.argsort(x))
             return order.astype(float)
         for met in TASK_METRICS:
+            c0 = np.array([r["model"][met] for r in rows])
+            if _spread(c0) < 1e-9:
+                t2[met] = None
+                print(f"[22]   T2[{met}]：该指标在全场**无分辨率**（全等），不计 ρ")
+                continue
             a = _rank(np.array([r["model"]["est_nmse"] for r in rows]))
-            c = _rank(np.array([r["model"][met] for r in rows]))
+            c = _rank(c0)
             rho = float(np.corrcoef(a, c)[0, 1])
             t2[met] = rho
             print(f"[22] ★ T2[{met}]：秩相关 = {rho:+.3f}")
@@ -436,15 +569,62 @@ def main():
         print(f"[22] ★ 闭式 argmin T 与任务 argmin T 一致 "
               f"{agree['pred_vs_task']}/{agree['n']}")
 
+    # --- ★ 删失敏感性：只在「未删失」子集上重算 T2 / T5 / argmin 一致性 ----------
+    #    为什么要看：删失点的 NMSE 是**乐观**的（坏到要逃逸的样本被提前终止），
+    #    而 NMSE 与任务指标的关系（T2）恰好最容易被这种乐观污染。
+    unc = [r for r in rows if r["model"]["ep_frac"] >= 0.98]
+    sens = None
+    if 8 <= len(unc) < len(rows):
+        sens = {"n_uncensored": len(unc), "n_total": len(rows)}
+        try:
+            from scipy.stats import spearmanr
+            for met in TASK_METRICS:
+                a = np.array([r["model"]["est_nmse"] for r in unc])
+                c = np.array([r["model"][met] for r in unc])
+                sens[f"T2_{met}"] = (None if _spread(c) < 1e-9
+                                     else float(spearmanr(a, c).statistic))
+        except Exception:
+            pass
+        g = np.abs(np.array([r["model"]["gap_closed"] for r in unc]))
+        sens["T5_median"] = float(np.median(g))
+        ag, n_ag = 0, 0
+        for snr in snrs:
+            for b in bits_list:
+                sub = sorted([r for r in unc if abs(r["snr_db"] - snr) < 1e-9
+                              and r["bits"] == b], key=lambda r: r["T"])
+                if len(sub) < 2:
+                    continue
+                n_ag += 1
+                kp = int(np.argmin([r["model"]["pred"] for r in sub]))
+                kt = int(np.argmin([r["model"]["mean_dist_tail"] for r in sub]))
+                ag += int(sub[kp]["T"] == sub[kt]["T"])
+        sens["argmin_agree"] = f"{ag}/{n_ag}" if n_ag else None
+        print(f"[22] ★ 删失敏感性（未删失 {len(unc)}/{len(rows)} 点）："
+              f"T2[dist]={sens.get('T2_mean_dist_tail')} "
+              f"T2[esc]={sens.get('T2_escape_rate')} "
+              f"T5={sens['T5_median']:.1%} argmin={sens['argmin_agree']}")
+    elif len(unc) == len(rows):
+        print("[22]   （无删失点 ⇒ 不做敏感性对照）")
+
     verdict = {
         "T1_task_over_nmse_regression_median": {k: (float(np.median(v)) if v else None)
                                                 for k, v in t1.items()},
-        "T2_spearman": {k: float(v) for k, v in t2.items()},
+        "T2_spearman": {k: (None if v is None else float(v)) for k, v in t2.items()},
         "T3_task_over_nmse_gap_median": {k: (float(np.median(v)) if v else None)
                                          for k, v in t3.items()},
-        "T4_n_wired": int(n_wired),
+        "T4_quant_floor_check": {"n_points": int(n_wired),
+                                 "max_rel_dev": (max(abs(x["rel"]) for x in floor_errs)
+                                                 if floor_errs else None),
+                                 "detail": floor_errs},
+        "T4b_ratio_check_n": int(n_ratio),
         "T5_closed_pred_median": t5_med,
         "argmin_agree": agree,
+        "S_a_age_dev_sigma": {"median": float(np.median(np.abs(devs))),
+                              "max": float(np.abs(devs).max()),
+                              "n_over_3sigma": int((np.abs(devs) > 3).sum())},
+        "censoring": {"n_censored": len(censored), "n_total": len(rows),
+                      "detail": censored},
+        "censoring_sensitivity": sens,
     }
 
     # ---------- 7) 图 ----------
@@ -469,19 +649,23 @@ def main():
                    and r["bits"] == bits_list[min(2, len(bits_list) - 1)]],
                   key=lambda r: r["T"])
     if sub0:
-        ax.plot([r["T"] for r in sub0], [r["model"]["pred"] for r in sub0], "k--",
-                label="闭式 NMSE")
-        ax.plot([r["T"] for r in sub0], [r["model"]["est_nmse"] for r in sub0], "o-",
+        # ★ 不用 twinx：本仓库的 savefig 链路在 twinx 上会炸
+        #   （matplotlib 的 dpi_scale_trans 被污染：can't multiply sequence by ...）。
+        #   ⇒ 改成各自按本组最大值归一化后画在同一轴上，并在标题里写明"已归一化"。
+        nv = np.array([r["model"]["est_nmse"] for r in sub0], dtype=float)
+        pv = np.array([r["model"]["pred"] for r in sub0], dtype=float)
+        dv = np.array([r["model"]["mean_dist_tail"] for r in sub0], dtype=float)
+        ax.plot([r["T"] for r in sub0], pv / max(pv.max(), 1e-18), "k--", label="闭式 NMSE")
+        ax.plot([r["T"] for r in sub0], nv / max(nv.max(), 1e-18), "o-",
                 color=PALETTE["blue"], label="闭环 NMSE")
-        ax2 = ax.twinx()
-        ax2.plot([r["T"] for r in sub0], [r["model"]["mean_dist_tail"] for r in sub0],
-                 "s-", color=PALETTE["red"], label="跟踪距离")
-        ax2.set_ylabel("稳态跟踪距离 (m)", color=PALETTE["red"])
-        ax.set_yscale("log")
-        ax.set_xlabel("T（步）"); ax.set_ylabel("NMSE")
-        ax.set_title(f"② SNR={snrs[len(snrs)//2]:g}dB b={bits_list[min(2, len(bits_list)-1)]}")
-        ax.legend(fontsize=7.5, loc="upper left")
-        ax2.legend(fontsize=7.5, loc="upper right")
+        ax.plot([r["T"] for r in sub0], dv / max(dv.max(), 1e-18), "s-",
+                color=PALETTE["red"], label="稳态跟踪距离")
+        ax.set_xlabel("T（步）")
+        ax.set_ylabel("各曲线按本组最大值归一化")
+        ax.set_title(f"② SNR={snrs[len(snrs)//2]:g}dB "
+                     f"b={bits_list[min(2, len(bits_list) - 1)]}（已归一化）")
+        ax.legend(fontsize=7.5)
+        ax.grid(alpha=0.3)
     else:
         ax.set_title("② （该 (SNR,b) 无点）")
 
@@ -531,14 +715,14 @@ def main():
         sub = sorted([r for r in rows if abs(r["snr_db"] - snr) < 1e-9],
                      key=lambda r: (r["bits"], r["T"]))
         if sub:
-            ax.plot([r["model"]["mean_age"] for r in sub],
+            ax.plot([r["model"]["age_mean"] for r in sub],
                     [r["model"]["escape_rate"] for r in sub], "o", color=col,
                     ms=5, alpha=0.85, label=f"{snr:g}dB")
     ax.set_xlabel("E[age]（步）"); ax.set_ylabel("逃逸率")
     ax.set_title("⑥ 逃逸率 vs 信息年龄")
     ax.legend(fontsize=7.5, ncol=2)
 
-    save_fig(fig, out, "22_task_design.png")
+    save_fig(fig, os.path.join(out, "22_task_design.png"))
     plt.close(fig)
 
     payload = {

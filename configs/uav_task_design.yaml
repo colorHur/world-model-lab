@@ -79,8 +79,10 @@ eval:
   n_samples: 2048
 
 task:
-  warmup_steps: 250
-  measured_steps: 450
+  # ★ warmup 必须走完"初始捕获"瞬态：X30 实测 UAV 从 15 m 外收敛要 ~400 步，
+  #   只给 250 步的话被测段的头 150 步仍在瞬态里（冒烟实测距离 4.5 m vs 稳态 0.40 m）
+  warmup_steps: 400
+  measured_steps: 300
   n_episodes: 40
   tail_frac: 0.25
   # 判据 T1/T3 用的相对退化的地板（避免除以 0）

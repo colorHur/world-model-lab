@@ -134,6 +134,26 @@ def periodic_mean_age(loss_prob: float, period: int) -> float:
     return T * q / s + (T - 1.0) / 2.0
 
 
+def periodic_age_var(loss_prob: float, period: int) -> float:
+    """★ X35 新增：**年龄本身的方差** Var(age) = T²·q/s² + (T²−1)/12（无截断闭式）。
+
+    推导：把 age 拆成 `age = T·G + U`
+      · G = 两次到达之间的**尝试次数**，G ~ Geom₀(s) ⇒ Var(G) = q/s²
+      · U ~ Unif{0 … T−1}（age 在两次到达之间扫过的一个周期内的位置）⇒ Var(U) = (T²−1)/12
+      两者独立 ⇒ Var(age) = T²·Var(G) + Var(U)。
+    退化自检：T=1 ⇒ q/s²（几何分布方差）；q=0 ⇒ (T²−1)/12（均匀分布方差）。
+
+    ★ 为什么要它：`E[age]` 只是**一阶矩**，而"实测均值 vs 闭式"这个自检的容差
+    必须由**标准误**给出，标准误 ∝ sqrt(Var(age))。没有它就只能用拍脑袋的百分比
+    —— 第一版 X35 就是拍了 8%，结果在高丢包点（PER=0.95，E[age]=19 但
+    sqrt(Var)=19.6，**标准差和均值同量级**）上被采样噪声打穿（第 17 次自证伪）。
+    """
+    q = float(min(max(loss_prob, 0.0), 1.0 - 1e-12))
+    s = 1.0 - q
+    T = float(max(period, 1))
+    return T * T * q / (s * s) + (T * T - 1.0) / 12.0
+
+
 def periodic_age_tail(loss_prob: float, period: int, k_max: int) -> float:
     """★ X34-b2：周期发送年龄分布**超出 [0, k_max] 的尾部质量** P(age > k_max)（精确闭式）。
 

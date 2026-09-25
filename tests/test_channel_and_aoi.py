@@ -72,6 +72,7 @@ from wmlab.eval.physical import (UniformQuantizer, fit_quantizer_range, overload
                                  qam_symbol_error_rate, snr_db_to_linear)
 from wmlab.eval.tracking import (GilbertElliottChannel, StateTracker,
                                  periodic_age_pmf, periodic_age_tail,
+                                 periodic_age_var,
                                  periodic_lossy_schedule,
                                  periodic_mean_age, run_length_goodness, simulate_bad_runs)
 from wmlab.models import MLPWorldModel
@@ -1043,6 +1044,74 @@ def test_periodic_age_tail_matches_bruteforce():
         f"q=0.019/T=2/K=190 的尾部应为 ≈1e−160，实得 {t_small:.3e} —— 量级判据被写错"
     assert periodic_age_tail(0.0, 4, 190) == 0.0, "q=0 时尾部必须为 0"
     assert abs(periodic_age_tail(0.5, 1, 9) - 0.5 ** 10) < 1e-12, "T=1 未退化到 q^{K+1}"
+
+
+def test_periodic_age_var_matches_moments_and_sampling():
+    """㉜ ★★ `periodic_age_var` 的闭式必须对，而且它要能解释"为什么容差不能拍百分比"。
+
+    ★★ 为什么单列一条（本仓库**第 17 次自证伪**的机器版）
+    X35 第一版把「实测 E[age] vs 闭式」的容差拍成 8%，在 64-QAM@14dB
+    （PER=0.9502, T=1）被打穿：实测 17.51 vs 闭式 19.08（−8.2%）。
+    诊断显示**闭式没错**，错的是容差：该点
+        E[age] = 19.08  而  sqrt(Var(age)) = 19.6  —— **标准差与均值同量级**，
+    40×450 步里只有约 900 次到达 ⇒ 单次实测的标准误就有 4.7%，8% 只是 1.8σ。
+    ⇒ 本测试把这三件事钉死：
+      (a) Var 闭式 == 用 `periodic_age_pmf` 数值算出的二阶矩（两条独立通路一致）
+      (b) 两个退化：T=1 ⇒ q/s²（几何）；q=0 ⇒ (T²−1)/12（均匀）
+      (c) ★ 高丢包下 sqrt(Var) 与 E[age] **同量级**（比值 > 0.9）
+          ⇒ 任何"固定百分比"容差在那一端必然被噪声打穿，容差必须由 SE 给。
+    """
+    # (a) 与数值矩逐点一致（两条独立通路）
+    K = 4000
+    for q in (0.05, 0.2, 0.5, 0.8):
+        for T in (1, 2, 5):
+            pmf = periodic_age_pmf(q, T, K)
+            h = np.arange(K + 1, dtype=float)
+            m1 = float(np.dot(h, pmf))
+            m2 = float(np.dot(h * h, pmf))
+            var_num = m2 - m1 * m1
+            var_cf = periodic_age_var(q, T)
+            rel = abs(var_num - var_cf) / max(var_cf, 1e-12)
+            assert rel < 2e-3, (f"Var 闭式与数值矩不符：q={q} T={T} "
+                                f"闭式 {var_cf:.4f} vs 数值 {var_num:.4f}（{rel:.2%}）")
+
+    # (b) 退化
+    q = 0.37
+    assert abs(periodic_age_var(q, 1) - q / (1 - q) ** 2) < 1e-12, "T=1 未退化到 q/s²"
+    for T in (1, 3, 8):
+        assert abs(periodic_age_var(0.0, T) - (T * T - 1) / 12.0) < 1e-12, \
+            "q=0 未退化到 (T²−1)/12"
+
+    # (c) ★ 高丢包：标准差与均值同量级 ⇒ 固定百分比容差必然被打穿
+    sd = float(np.sqrt(periodic_age_var(0.9502, 1)))
+    mean = periodic_mean_age(0.9502, 1)
+    assert sd / mean > 0.9, (f"高丢包下 std/mean = {sd/mean:.3f} 应 >0.9"
+                             f"—— 若这条不成立，说明 Var 闭式量级错了")
+
+    # (d) MC 交叉验证：纯调度空跑的 std 与 sqrt(Var)/sqrt(到达次数) 同量级（0.5×~4×）
+    def _mc_std(T, q, n_ep=12, n_step=400, n_seed=16):
+        vals = []
+        for i in range(n_seed):
+            rng = np.random.default_rng(4000 + i)
+            sch = periodic_lossy_schedule(T, q)
+            tot, n = 0.0, 0
+            for _ in range(n_ep):
+                age = 0
+                for t in range(n_step):
+                    age = 0 if sch(t, rng) else age + 1
+                    tot += age
+                    n += 1
+            vals.append(tot / n)
+        return float(np.std(vals, ddof=1))
+
+    for (T, q) in ((1, 0.9502), (1, 0.2), (2, 0.5)):
+        mc = _mc_std(T, q)
+        n_arrive = 12 * 400 * (1 - q) / T          # 独立"更新"次数的量级
+        pred = float(np.sqrt(periodic_age_var(q, T) / max(n_arrive, 1)))
+        ratio = mc / max(pred, 1e-12)
+        assert 0.4 < ratio < 4.0, (f"MC 采样 std 与 sqrt(Var)/sqrt(n_arrive) 不同量级："
+                                   f"T={T} q={q} MC={mc:.4f} vs 预测 {pred:.4f}"
+                                   f"（比值 {ratio:.2f}）")
 
 
 class _IdentityModel:
