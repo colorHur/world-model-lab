@@ -134,6 +134,142 @@ def periodic_mean_age(loss_prob: float, period: int) -> float:
     return T * q / s + (T - 1.0) / 2.0
 
 
+def burst_periodic_interarrival(p_bar: float, burst_len: float, per_noise: float,
+                                d_max: int = 200000) -> tuple[np.ndarray, float, float]:
+    """★ X36：**周期发送 + 突发信道**下，以「尝试次数」为单位的到达间隔 D_a 的分布。
+
+    模型（★ 三条物理假设，写在这里不许事后改）
+      1. 链路层的**阻塞**用 Gilbert–Elliott 两状态链描述，且链**按「尝试」演化**
+         （每 T 步尝试一次 ⇒ 每 T 步走一步链）—— 这是标准的 packet-level GE。
+      2. Good 状态：包只可能被**物理层噪声**打掉，概率 `per_noise`（逐包独立）。
+      3. Bad 状态：包**必丢**（Gilbert 模型的最简形式，与 X31 同口径）。
+      ⇒ 一次尝试成功 ⇔ (信道 Good) 且 (无噪声错包)，成功概率 s=(1−per)(1−p̄)。
+
+    推导（2×2 矩阵，精确，不靠仿真）
+      G 的转移矩阵 Pm = [[1−α, α], [β, 1−β]]（行 = 当前状态 Good/Bad）。
+      一次尝试"失败且转移到 j" ⇒ F[i,j] = Pm[i,j]·(1−s_j)，s = [1−per, 0]；
+      一次尝试"成功" ⇒ w = Pm·s（列向量）。
+      刚成功之后，下一次尝试的状态分布 v0 = Pm[Good, :] = [1−α, α]。
+      ⇒ **P(D_a = d) = v0 · F^{d−1} · w**（d = 1, 2, …）。
+
+    返回 `(pmf_d, E[D_a], E[D_a²])`，`pmf_d[d-1] = P(D_a = d)`。
+    """
+    pl = float(p_bar)
+    L = float(burst_len)
+    if not 0.0 < pl < 1.0:
+        raise ValueError(f"p_bar 必须在 (0,1)，收到 {p_bar}")
+    if L < 1.0:
+        raise ValueError(f"burst_len 必须 ≥ 1，收到 {burst_len}")
+    beta = 1.0 / L
+    alpha = pl * beta / (1.0 - pl)
+    if alpha > 1.0 + 1e-9:
+        raise ValueError(f"参数不可行：p̄={pl}, L={L} ⇒ α={alpha:.4f} > 1"
+                         f"（可行域 L ≥ p̄/(1−p̄) = {pl/(1.0-pl):.2f}）")
+    alpha = min(alpha, 1.0)
+    per = float(min(max(per_noise, 0.0), 1.0))
+
+    Pm = np.array([[1.0 - alpha, alpha], [beta, 1.0 - beta]], dtype=float)
+    s_col = np.array([1.0 - per, 0.0], dtype=float)      # 各状态下的单次成功概率
+    # ★★ F[i,j] = P(本次尝试**失败** | 状态 i) · P(转移到 j | i)
+    #    = (1 − s_i)·Pm[i,j] ⇒ 乘在**出发状态**上（行），不是到达状态（列）。
+    #    第一版乘在列上 ⇒ 从 Bad 转到 Good 的那份质量被当成"失败"继续往前传，
+    #    其实是**成功**，于是质量凭空消失（尾部 10% 不收敛就是这么来的）。
+    F = Pm * (1.0 - s_col)[:, None]                       # 失败且转移
+    # ★★ w **就是** s_col，不是 Pm @ s_col（第一版写错，差一步转移）：
+    #    一次尝试的成功与否由**这次尝试所处的状态**决定，而 v 已经是"这次尝试的状态分布"
+    #    ⇒ 直接 v @ s_col。写成 Pm @ s_col 等于问"下一次尝试是否成功" ⇒ 整体偏一步，
+    #      验算 T=1/per=0 时给出 2.52，而 X31 的闭式 p̄·L = 1.6（差 58%）。
+    w = s_col                                             # 成功概率（按本次尝试的状态）
+    v = Pm[0].copy()                                      # 刚成功后 ⇒ 出发状态必为 Good
+
+    pmf_d = np.zeros(int(d_max), dtype=float)
+    m1 = m2 = 0.0
+    for d in range(1, int(d_max) + 1):
+        p = float(v @ w)
+        pmf_d[d - 1] = p
+        m1 += d * p
+        m2 += d * d * p
+        v = v @ F
+        if float(v.sum()) < 1e-15 and d > 8:
+            break
+    tail = max(0.0, 1.0 - float(pmf_d.sum()))
+    if tail > 1e-9:
+        raise FloatingPointError(f"D_a 的尾部 {tail:.3e} 未收敛（d_max={d_max} 太小）")
+    return pmf_d, float(m1), float(m2)
+
+
+def burst_periodic_age_pmf(p_bar: float, burst_len: float, per_noise: float,
+                           period: int, k_max: int) -> np.ndarray:
+    """★ X36：突发信道 + 周期发送的**平稳年龄分布**（截断到 [0, k_max]，尾部折进 k_max）。
+
+    由 `P(age = h) = P(D_a·T > h) / E[D_a·T]`（更新过程的平稳年龄公式）⇒
+        P(age = h) = P(D_a ≥ ⌊h/T⌋ + 1) / (T·E[D_a])
+    ★ 注意是 `P(D > h)/E[D]`（**长度偏采样**），不是"间隔内均匀" —— 后者会给出
+      错的均值（T=1 时会差一个 (1+p̄)/2 的因子）。
+
+    ★★ 必须成立的退化（自检 ㉝ 钉死）
+      `L = L_iid = 1/(1−p̄)` ⇒ GE 链无记忆（ρ₁=0）⇒ 逐次尝试独立 ⇒
+      与 `periodic_age_pmf(q_total, T, K)` **逐点相等**，其中
+      `q_total = 1 − (1−p̄)(1−per)`。
+    """
+    T = int(max(period, 1))
+    K = int(max(k_max, 1))
+    pmf_d, m1, _m2 = burst_periodic_interarrival(p_bar, burst_len, per_noise)
+    n = len(pmf_d)
+    # P(D_a ≥ j) = 1 − Σ_{d<j} P(D_a = d)
+    cdf = np.concatenate([[0.0], np.cumsum(pmf_d)])
+    # surv[j] = 1 − P(D_a ≤ j) = P(D_a > j) = P(D_a ≥ j+1)
+    surv = 1.0 - cdf                                   # 索引 j = 0..n
+    h = np.arange(K + 1, dtype=np.int64)
+    j = np.minimum(h // T, n)                           # ★ 需要 P(D_a ≥ j+1) = surv[j]
+    pmf = surv[j] / (T * m1)
+    tail = max(0.0, 1.0 - float(pmf[:K].sum()))
+    pmf[K] += tail
+    return pmf / pmf.sum()
+
+
+def burst_periodic_mean_age(p_bar: float, burst_len: float, per_noise: float,
+                            period: int) -> float:
+    """★ X36：E[age] = T·(E[D_a²]−E[D_a])/(2E[D_a]) + (T−1)/2（**无截断**闭式）。
+
+    推导：age 的平稳均值 = (E[D²]−E[D])/(2E[D])，其中 D = D_a·T 是**以步为单位**的
+    到达间隔 ⇒ 代入 E[D]=T·E[D_a]、E[D²]=T²·E[D_a²] 即得。
+    两个必须成立的退化（自检 ㉝）：
+      · `L = L_iid` ⇒ 等于 `periodic_mean_age(q_total, T)`；
+      · `T = 1 且 per=0` ⇒ 等于 X31 的 `p̄·L`。
+    """
+    T = float(max(period, 1))
+    _p, m1, m2 = burst_periodic_interarrival(p_bar, burst_len, per_noise)
+    return T * (m2 - m1) / (2.0 * m1) + (T - 1.0) / 2.0
+
+
+def burst_periodic_lossy_schedule(period: int, p_bar: float, burst_len: float,
+                                  per_noise: float, seed: int | None = None) -> Schedule:
+    """★ X36：周期发送 + **突发**信道 + 逐包噪声丢包。
+
+    与 `periodic_lossy_schedule` 的唯一差别：丢包不再逐次独立，而是由
+    `GilbertElliottChannel`（**按「尝试」演化**）决定是否在阻塞期，
+    阻塞期内**必丢**，非阻塞期再叠加物理层的逐包 PER。
+    """
+    T = max(1, int(period))
+    per = float(min(max(per_noise, 0.0), 1.0))
+    ch = GilbertElliottChannel(float(p_bar), float(burst_len), seed=seed)
+    state = {"ready": False}
+
+    def _f(t: int, rng: np.random.Generator) -> bool:
+        if t % T != 0:
+            return False
+        if not state["ready"]:                 # ★ 按稳态重采样（否则每条 episode
+            ch.reset(rng)                      #   都从 Good 起步 ⇒ 与突发性无关的瞬态）
+            state["ready"] = True
+        if not ch(t, rng):                     # 阻塞期 ⇒ 必丢
+            return False
+        return bool(rng.random() >= per)       # 非阻塞 ⇒ 叠加物理层 PER
+
+    _f.__name__ = f"burst_periodic(T={T},p̄={p_bar:g},L={burst_len:g},per={per:g})"
+    return _f
+
+
 def periodic_age_var(loss_prob: float, period: int) -> float:
     """★ X35 新增：**年龄本身的方差** Var(age) = T²·q/s² + (T²−1)/12（无截断闭式）。
 

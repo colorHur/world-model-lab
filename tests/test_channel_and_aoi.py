@@ -71,6 +71,8 @@ from wmlab.eval.physical import (UniformQuantizer, fit_quantizer_range, overload
                                  per_from_ber, qam_approximation_valid, qam_bit_error_rate,
                                  qam_symbol_error_rate, snr_db_to_linear)
 from wmlab.eval.tracking import (GilbertElliottChannel, StateTracker,
+                                 burst_periodic_age_pmf, burst_periodic_lossy_schedule,
+                                 burst_periodic_mean_age,
                                  periodic_age_pmf, periodic_age_tail,
                                  periodic_age_var,
                                  periodic_lossy_schedule,
@@ -1112,6 +1114,95 @@ def test_periodic_age_var_matches_moments_and_sampling():
         assert 0.4 < ratio < 4.0, (f"MC 采样 std 与 sqrt(Var)/sqrt(n_arrive) 不同量级："
                                    f"T={T} q={q} MC={mc:.4f} vs 预测 {pred:.4f}"
                                    f"（比值 {ratio:.2f}）")
+
+
+def test_burst_periodic_age_degenerates_to_memoryless():
+    """㉝ ★★ X36 新闭式：突发信道 + 周期发送的年龄分布，**必须**退化到已知答案。
+
+    ★★ 为什么单列一条（本仓库第 18 次自证伪的机器版）
+    第一版写这个闭式时连错两处，都是"看着对"但量级不对：
+      (a) `w` 写成 `Pm @ s_col` —— 等于问"下一次尝试成功吗"，整体偏一步；
+          验算 T=1/PER=0 给 2.52，而 X31 的闭式是 p̄·L=1.6（差 58%）。
+      (b) `F = Pm·(1−s_j)` 乘在**列**（到达状态）上 ⇒ 从 Bad 转到 Good 的那份质量
+          被当成"失败"继续往前传，其实是**成功** ⇒ 质量凭空消失（尾部 10% 不收敛）。
+    ⇒ 钉死三条已知答案：
+      A  `L = L_iid`（GE 无记忆）⇒ 与 `periodic_age_pmf(q_total,T)` **逐点相等**
+      B  `T=1 且 PER=0` ⇒ E[age] == X31 的 `p̄·L`
+      C  pmf 归一化，且 pmf 的均值 == 闭式均值
+    """
+    # A：无记忆退化（逐点 + 均值）
+    for p_bar in (0.1, 0.3, 0.5, 0.7):
+        for per in (0.0, 0.05, 0.3):
+            L = 1.0 / (1.0 - p_bar)
+            q = 1.0 - (1.0 - p_bar) * (1.0 - per)
+            for T in (1, 2, 4, 8):
+                a = burst_periodic_age_pmf(p_bar, L, per, T, 400)
+                b = periodic_age_pmf(q, T, 400)
+                assert np.abs(a - b).max() < 1e-9, (
+                    f"L=L_iid 未退化到无记忆：p̄={p_bar} per={per} T={T} "
+                    f"逐点最大差 {np.abs(a-b).max():.3e}")
+                assert abs(burst_periodic_mean_age(p_bar, L, per, T)
+                           - periodic_mean_age(q, T)) < 1e-9, "E[age] 未退化"
+
+    # B：T=1 且 PER=0 ⇒ p̄·L（X31 的闭式，两条独立推导必须对上）
+    for p_bar in (0.2, 0.5, 0.8):
+        for L in (2.0, 8.0, 32.0):
+            if L < p_bar / (1.0 - p_bar):
+                continue
+            got = burst_periodic_mean_age(p_bar, L, 0.0, 1)
+            assert abs(got - p_bar * L) < 1e-8 * max(1.0, p_bar * L), (
+                f"T=1/PER=0 未退化到 p̄·L：p̄={p_bar} L={L} 得到 {got:.6f}")
+
+    # C：pmf 归一化 + 均值一致
+    for (p_bar, L, per, T) in ((0.3, 8.0, 0.02, 2), (0.5, 16.0, 0.1, 4),
+                               (0.2, 4.0, 0.0, 1)):
+        pmf = burst_periodic_age_pmf(p_bar, L, per, T, 3000)
+        assert abs(float(pmf.sum()) - 1.0) < 1e-9, "pmf 未归一化"
+        m_pmf = float(np.dot(np.arange(3001), pmf))
+        m_cf = burst_periodic_mean_age(p_bar, L, per, T)
+        assert abs(m_pmf / m_cf - 1.0) < 2e-3, (
+            f"pmf 均值与闭式不符：{m_pmf:.4f} vs {m_cf:.4f}")
+
+
+def test_burst_periodic_schedule_matches_closed_form():
+    """㉞ ★ X36：突发调度仿真的年龄直方图必须收敛到新闭式（不是自洽就算过）。
+
+    ★★ 采样口径（第一版在这里踩的坑）：必须在**每一步**记 age_t，
+    不能只在"更新瞬间"记 —— 后者采到的是"间隔长度−1"的分布，
+    会给出 1.92 而不是 5.36（差 2.8 倍），看起来像闭式错。
+
+    ★★ 为什么用**多副本取均值**而不是单次长跑（第二版踩的坑）
+    突发下的年龄分布是**重尾 + 强自相关**的：一个长度 ~L 的坏游程只贡献约
+    1 个独立样本。单次 12 万步在 L=16 那一档给出 8.644 vs 闭式 8.222（差 5.1%），
+    单次 40 万步才给 8.262（0.5%）⇒ 单次估计的标准误在 5% 量级。
+    ⇒ 用 6 个副本（各 8 万步）取均值，把标准误压到 ~2%，容差定 4%。
+    """
+    K, n_step, n_rep = 4000, 80000, 6
+    for (p_bar, L, per, T) in ((0.3, 8.0, 0.02, 2), (0.5, 16.0, 0.1, 1),
+                               (0.2, 4.0, 0.05, 4)):
+        pmf = burst_periodic_age_pmf(p_bar, L, per, T, K)
+        hist = np.zeros(K + 1)
+        means = []
+        for i in range(n_rep):
+            rng = np.random.default_rng(20260925 + 1013 * i)
+            sch = burst_periodic_lossy_schedule(T, p_bar, L, per, seed=4242 + i)
+            h = np.zeros(K + 1)
+            age = 0
+            for t in range(n_step):
+                age = 0 if sch(t, rng) else min(age + 1, K)
+                h[age] += 1.0
+            h /= h.sum()
+            hist += h
+            means.append(float(np.dot(np.arange(K + 1), h)))
+        hist /= n_rep
+        tv = 0.5 * float(np.abs(pmf - hist).sum())
+        assert tv < 0.03, (f"突发调度仿真与闭式不符：p̄={p_bar} L={L} per={per} "
+                           f"T={T} TV={tv:.4f}")
+        cf = burst_periodic_mean_age(p_bar, L, per, T)
+        emp = float(np.mean(means))
+        assert abs(emp / cf - 1.0) < 0.04, (
+            f"E[age] 仿真 {emp:.3f}（{n_rep} 副本，副本间 std="
+            f"{np.std(means, ddof=1):.3f}）vs 闭式 {cf:.3f} 差 {abs(emp/cf-1):.1%}")
 
 
 class _IdentityModel:

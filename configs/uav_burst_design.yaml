@@ -1,0 +1,87 @@
+# world-model-lab · ★ X36「突发信道下的联合设计：丢了『突发结构』还能不能做设计」
+#
+# ★★ 由来（为什么必须有这一号）
+#   X31 已经实测：平均丢包率相同（50%）时，突发结构能让跟踪误差跨 **570 倍**。
+#   但 X34 的联合设计（T × b）**只用了逐包独立丢包** —— 它的设计闭式里，
+#   信道被压缩成了一个数：PER。
+#   ⇒ 于是有个必须回答的问题：**在做 (T,b) 联合设计时，PER 够不够用？**
+#      如果同一个 PER 下、突发长度不同 ⇒ 最优周期 T* 也会变，那么"按 PER 设计"就是错的。
+#
+# ★ 物理模型（三条假设，写在这里不许事后改）
+#   1) 链路层阻塞 = Gilbert–Elliott 两状态链，**按「尝试」演化**（每 T 步走一步链）
+#      —— 标准的 packet-level GE；Good 全通、Bad 全丢（与 X31 同口径，最简 Gilbert）。
+#   2) 非阻塞期再叠加**物理层逐包噪声丢包** PER(b, m, SNR)（与 X32/X34 同口径）。
+#   3) 一次尝试成功 ⇔ (信道 Good) 且 (无噪声错包) ⇒ s = (1−p̄)(1−PER)。
+#   ⇒ p̄（阻塞率）是**环境参数**，PER 是**设计参数**，两者独立 —— 这正是本实验要的：
+#     固定设计、只改突发的**结构**，看最优设计点动不动。
+#
+# ★ 预写判据（跑前定死，不许事后编解释）
+#   E1  ★ 同一 (SNR,b) 下把 L 从 L_iid 拉到 16·L_iid，**闭式选出的 T* 发生偏移（≥1 档）**
+#       的比例 ≥ 50%  ⇒ 「PER 不足以做设计」的定量证据
+#   E2  突发感知年龄分布的预报 |偏差| 中位 < 15%；且**无记忆年龄分布**（同总丢包率）的
+#       预报偏差显著更大（两者中位之比 ≥ 1.5×）
+#   E3  ★ 方向：预写 **T* 随突发变长而单调不增**
+#       （理由：坏串里"多给几次机会"比"提高单次可靠性"更值 —— 因为坏串里提高可靠性也送不出去）
+#       判据：在 T* 发生变化的 (SNR,b) 组里，≥70% 是「L 变大 ⇒ T* 变小」
+#   E4  ★ R12：同 (SNR,b,T) 下改突发长度 L 必须改变实测 NMSE（≥5%），否则 GE 没接进调度
+#   E5  S_a：闭环/开环实测 E[age] 与闭式 burst_periodic_mean_age 一致（容差 = 3×SE）
+#
+# ★ 为什么 SNR/b 的网格比 X34 小：X34 是 5×10=50 点，这里还要乘 6 个信道档
+#   ⇒ 砍到 3×5×6 = 90 点，否则单机会跑到半小时以上。
+
+seed: 0
+device: auto
+
+env:
+  id: uav-track
+  max_steps: 700
+  noise_std: 0.15
+
+controller:
+  omega_n: 2.5
+  zeta: 1.0
+
+design:
+  snr_db_list: [14, 20, 26]
+  bits_list: [4, 8]
+  # 方形星座 ⇒ m 偶数；T = b/m 必须整除
+  m_sym_list: [2, 4, 8]
+  max_period: 32
+  range_margin: 0.05
+  max_tail_mass: 0.02
+  # ★ 阻塞（突发）信道的扫描轴：阻塞率 × 突发长度（**相对无记忆点**的倍数）
+  p_bar_list: [0.1, 0.3]
+  # L = k × L_iid，L_iid = 1/(1−p̄)。k=1 ⇒ 无记忆（必须退化到 X34 的口径）
+  burst_k_list: [1.0, 4.0, 16.0]
+
+data:
+  n_episodes: 120
+  eval_seed_offset: 1000
+  online_seed_offset: 2000
+
+model:
+  latent_dim: 32
+  hidden: 128
+  discrete_act: false
+
+train:
+  epochs: 150
+  batch_size: 256
+  lr: 0.001
+  weight_decay: 0.0
+  grad_clip: 5.0
+  val_ratio: 0.1
+
+eval:
+  horizons: [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100, 150, 190]
+  err_threshold: 0.05
+  threshold_mode: rel
+  n_samples: 2048
+  # 每个 (b,T) 回放多少条 episode（X34 同口径）
+  n_track_episodes: 40
+
+task:
+  warmup_steps: 400
+
+output:
+  dir: outputs
