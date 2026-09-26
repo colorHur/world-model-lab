@@ -186,6 +186,31 @@ def _predict_next(model, est: np.ndarray, act: np.ndarray, device) -> np.ndarray
     return out
 
 
+def _predict_next_u(model, est: np.ndarray, act: np.ndarray, device) -> tuple[np.ndarray, float]:
+    """★ X38（P4）：世界模型单步预测，**顺带返回本步的自报不确定度**。
+
+    与 `_predict_next` 的差别只有一处：还要读 σ 头。
+        U² 累加量 = mean_d(σ²)      （d 为潜空间维度；与 X38 Part C 的 U 定义一致）
+
+    ⇒ 确定性模型（`MLPWorldModel`）没有 `next_latent_dist` ⇒ 这里直接抛，
+      不许静默返回 0（R14：NaN/静默 0 会让"不确定性触发"悄悄退化成"永不触发"）。
+    """
+    if not hasattr(model, "next_latent_dist"):
+        raise AttributeError(
+            "u_state 需要带方差头的世界模型（GaussianWorldModel），"
+            f"收到 {type(model).__name__}（无 next_latent_dist）")
+    o = torch.as_tensor(est, dtype=torch.float32, device=device).reshape(1, -1)
+    a = torch.as_tensor(act, dtype=torch.float32, device=device).reshape(1, -1)
+    with torch.no_grad():
+        z = model.encode(o)
+        mu, sd, _ = model.next_latent_dist(z, a)
+        out = model.decode(mu).reshape(-1).detach().cpu().numpy()
+        u2 = float(sd.pow(2).mean().item())
+    if not np.all(np.isfinite(out)) or not np.isfinite(u2):
+        raise FloatingPointError("世界模型闭环 rollout 发散（含 σ 头）")
+    return out, u2
+
+
 def run_closed_loop_control(
     env: EnvAdapter,
     model,
@@ -202,6 +227,7 @@ def run_closed_loop_control(
     tail_frac: float = 0.25,
     warmup_steps: int = 0,
     payload_fn: Callable[[np.ndarray], np.ndarray] | None = None,
+    u_state: dict | None = None,
 ) -> dict:
     """★ 闭环控制仿真：**估计状态驱动控制器，控制器改变真实轨迹**。
 
@@ -217,6 +243,12 @@ def run_closed_loop_control(
     Args:
         estimator: "model" —— 丢包时用世界模型 rollout 顶上（本实验的实验组）
                    "persistence" —— 丢包时**保持上次收到的观测**（基线，X15 的 persistence）
+        u_state: ★ X38（P4）**可选**：传一个空 dict，本函数会**每步把当前累积不确定度
+                 U 写进去**（`u_state["U"]`），供**不确定性触发**的 schedule 读取。
+                 不传 ⇒ 行为与 X30/X35 完全一致（零影响、零开销）。
+                 ★ 为什么用 dict 而不是回调：`Schedule` 的签名只有 `(t, rng)`，
+                   拿不到 tracker 内部状态 ⇒ 用一个**共享可变容器**做单向传递，
+                   比改签名干净，也不破坏既有调用点。
         var_g: 观测 pooled 方差，用于把估计误差归一成 NMSE（与 X2/X14 同口径）
         warmup_steps: ★★ **预热步数**（隔离"初始捕获"瞬态）。
 
@@ -273,6 +305,9 @@ def run_closed_loop_control(
         t = 0
         escaped = False
         ep_dist: list[float] = []
+        u2 = 0.0
+        if u_state is not None:
+            u_state["U"] = 0.0
         while t < max_steps:
             a = controller.act(est)                 # est ≈ obs_t（age 已知）
             res = env.step(a)
@@ -292,10 +327,21 @@ def run_closed_loop_control(
                 else:
                     est = np.asarray(payload_fn(true_next), dtype=np.float32).copy()
                 age = 0
+                u2 = 0.0                # 收到新观测 ⇒ 累积不确定度清零
             else:
-                est = (_predict_next(model, est, a, device) if estimator == "model"
-                       else est.copy())     # persistence：原样保持
+                if estimator == "model":
+                    if u_state is not None:
+                        est, du2 = _predict_next_u(model, est, a, device)
+                        u2 += du2
+                    else:
+                        est = _predict_next(model, est, a, device)
+                else:
+                    est = est.copy()    # persistence：原样保持
                 age += 1
+
+            # ★ 把「当前估计的累积不确定度」交给调度器（供 P4 的触发策略读）
+            if u_state is not None:
+                u_state["U"] = float(np.sqrt(max(u2, 0.0)))
 
             # ---- 记账：est（对 obs_t 的估计） vs 真值 ----
             d = est - true_next

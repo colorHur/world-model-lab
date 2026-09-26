@@ -349,6 +349,148 @@ def periodic_lossy_schedule(period: int, loss_prob: float) -> Schedule:
     return _f
 
 
+# ================================================================ 年龄阈值触发调度（X38）
+def threshold_attempt_rate(threshold: int, loss_prob: float) -> float:
+    """★ X38：年龄阈值策略的**平均发送率**（每步的尝试次数）。
+
+    策略：age < K 时**不尝试**；age ≥ K 时**每步都尝试**，直到成功。
+    一个更新周期内：K 步静默 + j 次尝试，j ~ Geom(s)（支撑 {1,2,…}）
+        D = K + j ,   E[D] = K + 1/s ,   E[j] = 1/s
+        rate = E[j]/E[D] = (1/s)/(K + 1/s) = **1/(s·K + 1)**
+
+    ★★ 「尝试率」与「送达率」必须分清（本仓库 tx_rate 记的是**送达**）：
+        attempt_rate  = 1/(sK + 1)         ← 真正的资源开销（能量/时隙）
+        delivery_rate = 1/E[D] = s/(sK+1)  ← `run_closed_loop_control` 的 `tx_rate`
+    两者只差一个常数因子 s ⇒ **"等尝试率"与"等送达率"给出同一个配对关系**
+    （见 `threshold_equivalent_period`），所以配对不必纠结口径 —— 但报数时必须说清是哪个。
+
+    两个必须成立的退化（自检 ㉟）：
+      K=0 ⇒ attempt_rate = 1（每步都尝试，即 `lossy_schedule`）
+      s=1 ⇒ attempt_rate = 1/(K+1)（无丢包 ⇒ 退化为确定周期 K+1）
+    """
+    s = 1.0 - float(min(max(loss_prob, 0.0), 1.0 - 1e-12))
+    K = float(max(int(threshold), 0))
+    return 1.0 / (s * K + 1.0)
+
+
+def threshold_delivery_rate(threshold: int, loss_prob: float) -> float:
+    """★ 送达率（= `run_closed_loop_control` 里的 `tx_rate`）= 1/E[D] = s/(s·K + 1)。"""
+    s = 1.0 - float(min(max(loss_prob, 0.0), 1.0 - 1e-12))
+    K = float(max(int(threshold), 0))
+    return s / (s * K + 1.0)
+
+
+def threshold_equivalent_period(threshold: int, loss_prob: float) -> float:
+    """★ 与阈值策略**等发送率**的周期策略的 `T`（可以是实数，仅供解析对照）。
+
+    rate(periodic) = 1/T，rate(threshold) = 1/(sK+1) ⇒ **T = s·K + 1**。
+    ★ 注意 T ≤ K+1：阈值策略把省下来的配额花在"失败后立刻重试"上，
+      所以同样的预算下它的**有效周期更短** —— 这就是它 E[age] 更低的原因。
+    """
+    s = 1.0 - float(min(max(loss_prob, 0.0), 1.0 - 1e-12))
+    K = float(max(int(threshold), 0))
+    return s * K + 1.0
+
+
+def threshold_mean_age(threshold: int, loss_prob: float) -> float:
+    """★ 年龄阈值策略的平稳 E[age] = (E[D²] − E[D]) / (2·E[D])（无截断闭式）。
+
+        D = K + j ,  j ~ Geom(s)
+        E[D]  = K + 1/s
+        Var(D)= Var(j) = q/s²
+        E[D²] = q/s² + (K + 1/s)²
+
+    三个必须成立的退化（自检 ㉟ 逐条钉死）：
+      s=1  ⇒ (K+1 − 1)/2 = K/2                       （确定周期 K+1 的均匀年龄均值）
+      K=0  ⇒ q/s                                      （i.i.d. 几何年龄，与 `lossy_schedule` 一致）
+      与周期策略等预算（T = sK+1）时 **恒不高于** 周期策略的 E[age]
+    """
+    q = float(min(max(loss_prob, 0.0), 1.0 - 1e-12))
+    s = 1.0 - q
+    K = float(max(int(threshold), 0))
+    ed = K + 1.0 / s
+    ed2 = q / (s * s) + ed * ed
+    return (ed2 - ed) / (2.0 * ed)
+
+
+def threshold_age_pmf(threshold: int, loss_prob: float, k_max: int) -> np.ndarray:
+    """★ 年龄阈值策略的平稳年龄分布（截断到 [0, k_max]）。
+
+        P(age = h) = P(D > h) / E[D] = q^{max(h−K, 0)} / (K + 1/s)
+
+    归一化自检：Σ_{h=0}^{K} 1 + Σ_{h>K} q^{h−K} = (K+1) + q/s = K + 1/s = E[D] ✓
+    退化：s=1 ⇒ 0…K 上均匀（周期 K+1）；K=0 ⇒ s·q^h（i.i.d. 几何）。
+    """
+    q = float(min(max(loss_prob, 0.0), 1.0 - 1e-12))
+    s = 1.0 - q
+    K = int(max(int(threshold), 0))
+    Kc = int(max(k_max, 1))
+    h = np.arange(Kc + 1, dtype=np.int64)
+    pmf = (q ** np.maximum(h - K, 0)) / (K + 1.0 / s)
+    tail = max(0.0, 1.0 - float(pmf[:Kc].sum()))
+    pmf[Kc] += tail
+    return pmf / pmf.sum()
+
+
+def threshold_age_tail(threshold: int, loss_prob: float, k_max: int) -> float:
+    """★ 阈值策略的年龄**尾部质量** P(age > k_max)，与 `periodic_age_tail` 同用途。
+
+        P(age > k_max) = Σ_{h>k_max} q^{max(h−K,0)} / (K + 1/s)
+                       = q^{max(k_max+1−K, 0)} / (s·(K + 1/s))
+
+    （k_max < K 时 all terms = 1 ⇒ 尾部不收敛，返回 1.0 —— 这种点必须被网格剔除。）
+    """
+    q = float(min(max(loss_prob, 0.0), 1.0 - 1e-12))
+    s = 1.0 - q
+    K = int(max(int(threshold), 0))
+    Kc = int(max(k_max, 1))
+    if Kc + 1 - K <= 0:
+        return 1.0
+    return float(q ** (Kc + 1 - K) / (s * (K + 1.0 / s)))
+
+
+def threshold_lossy_schedule(threshold: int, loss_prob: float) -> Schedule:
+    """★ X38：年龄阈值触发 + 逐包独立丢包。
+
+    与 `periodic_lossy_schedule` 的差别：**发送时机由年龄决定，不由时钟决定**。
+      · age < K  ⇒ 不尝试（省配额）
+      · age ≥ K  ⇒ 每步尝试，直到成功（失败的配额立刻补上）
+
+    ★★ 为什么它是有状态的（必须带 `reset`）：
+    `Schedule` 的签名只有 `(t, rng)`，拿不到 tracker 内部的 age。
+    但 age 的演化只取决于"上一次是否送达"，而**这正是本函数的返回值**
+    ⇒ 闭包自己数一份 age，与 tracker 严格同步（两者初值都是 0，且都在送达时归零）。
+    `run_closed_loop_control` 在每集开头会调 `schedule.reset(rng)`（若存在）⇒ 不会串味。
+
+    ⚠️ 诚实标注：这类"阈值 vs 周期"的比较在 AoI / 远程估计文献里**已被解决**
+    （Sun–Polyanskiy–Uysal-Biyikoglu，arXiv:1701.06734 / 1707.02531：
+    在采样率约束下最优采样是**阈值策略**，且显式比较过 uniform/periodic 更差）。
+    ⇒ 本函数**不宣称新贡献**，它的用途是：(a) 给闭环控制场景一个实测倍数；
+    (b) 为真正的新问题（**信号依赖**触发，见 X38 的 P3/P4）建立等预算基线。
+    """
+    K = max(0, int(threshold))
+    p = float(min(max(loss_prob, 0.0), 1.0))
+    state = {"age": 0}
+
+    def _f(t: int, rng: np.random.Generator) -> bool:
+        a = state["age"]
+        if a < K:
+            state["age"] = a + 1
+            return False
+        if bool(rng.random() >= p):
+            state["age"] = 0
+            return True
+        state["age"] = a + 1
+        return False
+
+    def _reset(rng: np.random.Generator | None = None) -> None:
+        state["age"] = 0
+
+    _f.reset = _reset                                   # type: ignore[attr-defined]
+    _f.__name__ = f"threshold_lossy(K={K},p={p})"
+    return _f
+
+
 def lossy_schedule(loss_prob: float) -> Schedule:
     """被动丢包信道：每步独立地以概率 `p` 丢弃。
 

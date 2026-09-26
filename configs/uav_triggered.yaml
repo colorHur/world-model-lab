@@ -1,0 +1,106 @@
+# world-model-lab · ★ X38「触发式调度：等传输预算下，周期 / 年龄阈值 / 不确定性触发谁更好」
+#
+# ★★ 由来（为什么必须有这一号）
+#   X34 / X35 / X36 全都在做**同一个隐含假设**：发送是**周期**的（每 T 步发一次）。
+#   而母论文那句话是 *"schedules sensing updates based on task urgency and
+#   **predictive uncertainty**"* —— 说的是**调度策略本身**由预测不确定性决定，不是"周期取多少"。
+#   ⇒ 周期只是**基线**；真正要测的是"换掉周期"能换来多少。
+#
+# ★★ 先在文献上钉死归属（不许事后抢功，也不许假装没人做过）
+#   「采样率约束下的最优采样是**阈值策略**，且显式优于 uniform（周期）采样」
+#   已由 Sun–Polyanskiy–Uysal-Biyikoglu 解决（arXiv:1701.06734、arXiv:1707.02531）。
+#   ⇒ 本实验的 **P1 / P2（周期 vs 年龄阈值）只作「复现 + 移到闭环控制场景」**，
+#      拿的是一个**实测倍数**，**不宣称新贡献**。
+#   ⇒ 真正的新问题在他们自己划的那条线上：**signal-independent vs signal-dependent**。
+#      周期与年龄阈值都是 signal-independent（只看时钟 / 只看年龄）；
+#      世界模型自报的**累积不确定度 U** 是 signal-dependent 的触发量。
+#      P3 就是测：给定年龄 h 之后，U 还剩多少信息。
+#
+# ★★ 为什么用 PER 直接给、而不是 X34 那样从 SNR 反解
+#   本实验的自变量是**调度策略**，不是物理层。走 SNR 会多引入一层
+#   （SNR → M → BER → PER）噪声，把"策略差异"埋进"星座差异"。
+#   ⇒ PER 直接给，物理层的 m/b 沿用 X32/X34 的标定，不在本实验里重扫。
+#
+# ★ 预写判据（跑前定死，不许事后编解释）
+#   P1  等平均发送率下，阈值策略 E[age] ≤ 周期策略；
+#       且 (a) PER=0 时两者**恒等**（都退化成确定周期）；(b) 比值随 PER 呈 U 形
+#       ⇒ 有唯一的最大增益点。解析式已知 ⇒ 属"拿已知答案验量级"的 R12 检查。
+#   P2  闭环上同 tx_rate 下，阈值策略 est_nmse ≤ 周期策略；任务指标（稳态距离）同向。
+#       ⚠️ X35 的教训：Spearman(NMSE, 距离)=0.778 ⇒ **可能不同向 ⇒ 照报**。
+#   P3  ★ 核心：给定 age = h 后，累积不确定度 U 与实测误差的
+#       条件 Pearson ρ_cond 与条件 AUC（U 预测「误差超阈」）。
+#       预写：ρ_cond ≥ 0.3 且 AUC_cond ≥ 0.6 ⇒ U 携带年龄以外的信息。
+#       若 ρ_cond < 0.1 且 AUC_cond < 0.6 ⇒ **U 只是 age 的替身** ⇒
+#       **世界模型在调度上没有额外价值**（负面结论，照报，并写进 README）。
+#
+# ⚠️ 仍然只用**逐包独立**丢包。突发版本（X36 的 GE 信道 × 触发策略）列为后续。
+
+seed: 0
+device: auto
+
+env:
+  id: uav-track
+  max_steps: 700
+  noise_std: 0.15
+
+controller:
+  omega_n: 2.5
+  zeta: 1.0
+
+design:
+  # ★ 丢包率直接给（见文件头理由）
+  per_list: [0.0, 0.1, 0.3, 0.5, 0.7, 0.9]
+  # 周期策略的旋钮
+  period_list: [1, 2, 3, 4, 6, 8, 12, 16, 24, 32]
+  # 年龄阈值策略的旋钮（K=0 ⇒ 每步都尝试，退化为 i.i.d.）
+  threshold_list: [0, 1, 2, 3, 4, 6, 8, 12, 16, 24, 32]
+  # 尾部质量上限（与 X34/X35/X36 同口径）
+  max_tail_mass: 0.02
+  # 年龄截断上限（离线曲线只标到 K 步）
+  max_age_K: 40
+  # P4 的 U 阈值：取离线 U 分布的分位点（潜空间单位，不拍绝对值）
+  # ★★ 只能取 **h ≤ u_calib_horizon 那一段** 的分位点：
+  #    取全池（混进 h=32 的大 U）会把阈值抬到"几乎永不触发" ⇒ E[age] 14–42、逃逸 100%
+  # ★ 按「名义触发年龄 h*」标定：thr = 离线 U(h*) 的中位数
+  #   ⇒ h* 与周期 T / 年龄阈值 K 同量纲可比，也方便看「实际年龄/名义年龄」是否失控
+  u_h_star_list: [1, 2, 3, 4, 6, 8, 12, 16]
+  # P3 探针的最长视界
+  probe_horizon: 32
+
+data:
+  n_episodes: 120
+  eval_seed_offset: 1000
+  online_seed_offset: 2000
+
+model:
+  # ★ 必须是 GaussianWorldModel（要有 σ 头，P3 需要它）⇒ latent_dim 由本文件给
+  #   X28 的教训：σ/δ 的可分辨性对 latent_dim 敏感（Pendulum 上 dim≥8 会饱和）。
+  #   这里取 8：足够 σ 有变化，又不至于让重建质量显著退化。
+  latent_dim: 8
+  hidden: 128
+  discrete_act: false
+  logvar_init: 0.0
+
+train:
+  epochs: 150
+  batch_size: 256
+  lr: 0.001
+  weight_decay: 0.0
+  grad_clip: 5.0
+  val_ratio: 0.1
+
+eval:
+  horizons: [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40]
+  err_threshold: 0.05
+  threshold_mode: rel
+  n_samples: 2048
+
+task:
+  warmup_steps: 400
+  measured_steps: 300
+  n_episodes: 40
+  tail_frac: 0.25
+  eps_floor: 1e-9
+
+output:
+  dir: outputs

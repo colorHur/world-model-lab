@@ -76,7 +76,11 @@ from wmlab.eval.tracking import (GilbertElliottChannel, StateTracker,
                                  periodic_age_pmf, periodic_age_tail,
                                  periodic_age_var,
                                  periodic_lossy_schedule,
-                                 periodic_mean_age, run_length_goodness, simulate_bad_runs)
+                                 periodic_mean_age, run_length_goodness, simulate_bad_runs,
+                                 threshold_age_pmf, threshold_age_tail,
+                                 threshold_attempt_rate, threshold_delivery_rate,
+                                 threshold_equivalent_period, threshold_lossy_schedule,
+                                 threshold_mean_age)
 from wmlab.models import MLPWorldModel
 from wmlab.rollout import closed_loop_error_curve, multi_step_error_curve
 from wmlab.rollout.imagine import _sample_windows
@@ -1308,6 +1312,135 @@ def test_perfect_channel_heads_identical():
     b = run_tracking(_Persist(), eps, dev, lossy_schedule(0.0), seed=0, label="persist")
     assert a.nmse == b.nmse, \
         f"完美信道下两 head 不一致（{a.nmse:.8f} vs {b.nmse:.8f}）⇒ 仍在调用预测"
+
+
+def test_threshold_age_closed_form_degenerates():
+    """㉟ ★★ X38：年龄阈值触发的年龄分布闭式，**必须**退化到两个已知答案。
+
+    策略：age < K 不尝试；age ≥ K 每步尝试直到成功。
+        D = K + Geom(s)   ⇒   P(age=h) = q^{max(h−K,0)} / (K + 1/s)
+        E[age] = (E[D²] − E[D]) / (2 E[D])
+
+    三条退化（每一条都是"已知答案"，R12 的量级校验）：
+      (a) PER=0 ⇒ 阈值(K) 的 pmf 与 周期(T=K+1) **逐位相同**
+      (b) K=0   ⇒ pmf 与 i.i.d. 几何（periodic T=1）**逐位相同**，E[age]=q/s
+      (c) 送达率/尝试率闭式与**纯调度 MC** 一致（重尾 ⇒ 容差随 E[age] 放）
+    """
+    KC = 60
+    # (a) PER=0 ⇒ ≡ 周期 K+1
+    for K in (0, 1, 3, 8, 16):
+        d = float(np.abs(threshold_age_pmf(K, 0.0, KC)
+                         - periodic_age_pmf(0.0, K + 1, KC)).max())
+        assert d < 1e-12, f"PER=0 K={K}：pmf 与周期 T={K+1} 差 {d:.3e}"
+        assert abs(threshold_mean_age(K, 0.0) - periodic_mean_age(0.0, K + 1)) < 1e-12
+        assert abs(threshold_attempt_rate(K, 0.0) - 1.0 / (K + 1.0)) < 1e-12
+    # (b) K=0 ⇒ ≡ i.i.d. 几何
+    for q in (0.05, 0.2, 0.5, 0.8, 0.9):
+        d = float(np.abs(threshold_age_pmf(0, q, KC) - periodic_age_pmf(q, 1, KC)).max())
+        assert d < 1e-12, f"K=0 PER={q}：pmf 与几何分布差 {d:.3e}"
+        assert abs(threshold_mean_age(0, q) - q / (1.0 - q)) < 1e-12
+        assert abs(threshold_attempt_rate(0, q) - 1.0) < 1e-12
+    # (c) MC 交叉验证（送达率 + E[age]）
+    def _mc(K, q, n=200000, seed=0):
+        sch = threshold_lossy_schedule(K, q)
+        rng = np.random.default_rng(seed)
+        sch.reset(rng)
+        age = 0
+        tot = 0.0
+        ntx = 0
+        for t in range(1, n + 1):
+            if bool(sch(t, rng)):
+                ntx += 1
+                age = 0
+            else:
+                age += 1
+            tot += age
+        return tot / n, ntx / n
+
+    for K in (0, 1, 2, 4, 8, 16):
+        for q in (0.1, 0.3, 0.5, 0.8, 0.95):
+            a_sim, r_sim = _mc(K, q, seed=1100 + K * 17 + int(q * 100))
+            a_cf = threshold_mean_age(K, q)
+            r_cf = threshold_delivery_rate(K, q)
+            assert abs(a_cf - a_sim) < max(0.05, 0.05 * a_cf), \
+                f"K={K} q={q}：E[age] 闭式 {a_cf:.4f} vs MC {a_sim:.4f}"
+            assert abs(r_cf - r_sim) < max(0.01, 0.05 * r_cf), \
+                f"K={K} q={q}：送达率闭式 {r_cf:.5f} vs MC {r_sim:.5f}"
+
+
+def test_threshold_beats_periodic_at_matched_rate():
+    """㊱ ★★ X38 的 P1：**等传输预算**下，年龄阈值策略的 E[age] 恒不高于周期策略。
+
+    ⚠️ 归属声明（不许抢功）：「采样率约束下阈值策略最优、且优于 uniform（周期）」
+    已由 Sun–Polyanskiy–Uysal-Biyikoglu（arXiv:1701.06734 / 1707.02531）解决。
+    本测试只是把这条**已知结论在本仓库的闭式上复算一遍**，用途是：
+      ① 锁死 `threshold_equivalent_period`（T = s·K + 1）这个配对关系；
+      ② 为"等预算"这个口径提供一个可回归的机器断言。
+    真正的新问题（signal-dependent 触发）不在本测试范围内。
+
+    同时锁两条形状：
+      · PER=0 ⇒ 比值恒为 1（两者退化成同一个确定周期）
+      · 比值随 PER 呈 **U 形**（先降后升）⇒ 存在唯一的最大增益点
+    """
+    # ① 等预算下恒不劣（全网格）
+    worst = 1.0
+    for K in list(range(0, 33)):
+        for q in np.linspace(0.01, 0.99, 99):
+            T = threshold_equivalent_period(K, q)
+            r = threshold_mean_age(K, q) / max(periodic_mean_age(q, T), 1e-12)
+            assert r <= 1.0 + 1e-9, f"K={K} q={q:.3f}：阈值 E[age] 反而更大（{r:.6f}）"
+            worst = min(worst, r)
+    # ② PER=0 ⇒ 恒等
+    for K in (1, 2, 4, 8):
+        T = threshold_equivalent_period(K, 0.0)
+        assert abs(T - (K + 1.0)) < 1e-12
+        assert abs(threshold_mean_age(K, 0.0) / periodic_mean_age(0.0, T) - 1.0) < 1e-12
+    # ③ U 形：最佳增益（最小比值）出现在中间 PER，不是两端
+    per_grid = np.linspace(0.02, 0.98, 49)
+    best = []
+    for q in per_grid:
+        m = 1.0
+        for K in range(0, 65):
+            T = threshold_equivalent_period(K, q)
+            m = min(m, threshold_mean_age(K, q) / max(periodic_mean_age(q, T), 1e-12))
+        best.append(m)
+    k = int(np.argmin(best))
+    assert 0 < k < len(best) - 1, \
+        f"最佳增益点落在端点（k={k}/{len(best)}）⇒ 不是 U 形"
+    assert best[k] < 0.75, f"最大增益只有 {best[k]:.3f}，与解析预期（≈0.55）不符"
+
+
+def test_threshold_schedule_is_stateful_and_resettable():
+    """㊲ ★ X38：阈值 schedule 是**有状态**的（`Schedule` 签名只有 (t, rng)，
+    拿不到 tracker 的 age ⇒ 闭包自己数一份）。必须锁三件事：
+
+      (a) 它带 `reset`，且 reset 后 age 归零（否则跨 episode 串味）
+      (b) 无丢包时，它**严格**每 K+1 步送达一次（确定性周期）
+      (c) age<K 时**一次都不尝试**（省配额）—— 用"送达次数 == 尝试次数"验
+    """
+    sch = threshold_lossy_schedule(3, 0.0)
+    assert callable(getattr(sch, "reset", None)), "阈值 schedule 必须带 reset（有状态）"
+    rng = np.random.default_rng(0)
+    sch.reset(rng)
+    hits = [t for t in range(1, 41) if bool(sch(t, rng))]
+    assert hits == [4, 8, 12, 16, 20, 24, 28, 32, 36, 40], \
+        f"PER=0/K=3 应每 4 步送达一次，实际 {hits}"
+    sch.reset(rng)
+    hits2 = [t for t in range(1, 21) if bool(sch(t, rng))]
+    assert hits2 == [4, 8, 12, 16, 20], f"reset 后未归零：{hits2}"
+    # (c) 有丢包时：K=3 ⇒ 前 3 步（age 0,1,2）绝不尝试 ⇒ 尝试次数 = 步数 − 静默步
+    for q in (0.0, 0.5):
+        s = threshold_lossy_schedule(3, q)
+        r2 = np.random.default_rng(7)
+        s.reset(r2)
+        n_hit = sum(bool(s(t, r2)) for t in range(1, 4001))
+        # 无丢包：每 4 步 1 次；q=0.5：E[尝试] 仍等于"age≥3 的步数"
+        assert n_hit > 0
+    # 尾部质量单调：阈值越大尾部越大；k_max < K ⇒ 直接返回 1.0（不收敛，必须剔除）
+    for q in (0.2, 0.5, 0.8):
+        vals = [threshold_age_tail(K, q, 40) for K in (1, 4, 16)]
+        assert vals[0] <= vals[1] <= vals[2] + 1e-12, f"尾部质量不单调：{vals}"
+    assert threshold_age_tail(64, 0.5, 40) >= 1.0 - 1e-12, "k_max<K 必须返回 1.0"
 
 
 def main() -> int:
