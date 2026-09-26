@@ -1443,6 +1443,56 @@ def test_threshold_schedule_is_stateful_and_resettable():
     assert threshold_age_tail(64, 0.5, 40) >= 1.0 - 1e-12, "k_max<K 必须返回 1.0"
 
 
+def test_uav_wind_field_is_state_dependent_and_degenerates():
+    """㊳ ★★ X38-b：状态依赖阵风场必须 (a) 真的异方差 (b) wind_amp=0 时**逐位退化**。
+
+    ★ 为什么必须锁这条：X38 的 P3 得出「U 只是 age 的替身」，但这个结论**可能只是因为
+    环境同方差**（真实 σ 无变化 ⇒ 没什么可学）。X38-b 用阵风场造出异方差来分辨：
+      · 若阵风场其实没起作用 ⇒ 整轮 X38-b 是空跑（R12 的经典坑）
+      · 若 wind_amp=0 与原来不等价 ⇒ 破坏了 X38 原结论的可比性
+    ⇒ 两边都要钉死。
+    """
+    from wmlab.envs import make_env
+
+    def _roll(env_id_sigma, amp, n=3000, seed=0):
+        e = make_env("uav-track", seed=seed, noise_std=0.15, wind_amp=amp,
+                     max_steps=200)
+        e.reset(seed=seed)
+        out = []
+        for t in range(n):
+            r = e.step(np.zeros(2, dtype=np.float32))
+            out.append(float(e.sigma_at(e.uav_p)))
+            if r.terminated or r.truncated:
+                e.reset(seed=seed + t)
+        return np.asarray(out)
+
+    # (a) wind_amp=0 ⇒ 逐位等于 noise_std（同方差，与原环境完全一致）
+    s0 = _roll("uav-track", 0.0)
+    assert np.allclose(s0, 0.15, atol=0, rtol=0), \
+        f"wind_amp=0 未退化：sigma 范围 [{s0.min()}, {s0.max()}]"
+    assert float(s0.std()) == 0.0, "wind_amp=0 时真实 σ 必须无变化"
+
+    # (b) 幅度单调：amp 越大 ⇒ 真实 σ 的 CV 越大（剂量—反应曲线的前提）
+    cvs = []
+    for amp in (1.0, 2.0, 4.0):
+        s = _roll("uav-track", amp)
+        cvs.append(float(s.std() / s.mean()))
+        assert s.min() >= 0.15 - 1e-12, f"amp={amp} 出现了低于 σ0 的点（场公式错）"
+        assert s.max() <= 0.15 * (1.0 + amp) + 1e-12, \
+            f"amp={amp} 出现了高于 σ0(1+amp) 的点（场公式错）"
+    assert cvs[0] < cvs[1] < cvs[2], f"CV 不随 amp 单调增：{cvs}"
+
+    # (c) 同一个位置必须给同一个 σ（阵风场是**静态**的，不是随机噪声）
+    e = make_env("uav-track", seed=0, noise_std=0.15, wind_amp=2.0, max_steps=200)
+    p = np.array([1.3, -2.7])
+    a1 = float(e.sigma_at(p))
+    a2 = float(e.sigma_at(p))
+    assert a1 == a2, "同一位置的 σ 必须相同（阵风场是状态的函数，不是随机项）"
+    # 不同位置必须真的不同（否则场是常数）
+    b = float(e.sigma_at(np.array([4.9, 3.1])))
+    assert abs(a1 - b) > 1e-3, f"不同位置的 σ 相同（场退化为常数）：{a1} vs {b}"
+
+
 def main() -> int:
     tests = [(k, v) for k, v in sorted(globals().items())
              if k.startswith("test_") and callable(v)]

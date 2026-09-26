@@ -98,6 +98,11 @@ def parse_args():
     p.add_argument("--tag", default="24_triggered_scheduling")
     p.add_argument("--pers", default=None)
     p.add_argument("--quick", action="store_true")
+    p.add_argument("--p3-only", action="store_true",
+                   help="★ X38-b：只跑「训练 + P1 解析 + P3 条件信息量」，"
+                        "跳过耗时的闭环 P2/P4 网格（约从 16 min 降到 3 min）")
+    p.add_argument("--wind-amp", type=float, default=None,
+                   help="★ X38-b：状态依赖阵风场幅度（0 = 逐位退化为原同方差环境）")
     return p.parse_args()
 
 
@@ -225,9 +230,16 @@ def main():
           "  P2 闭环同向  P3 ρ_cond≥0.3 且 AUC_cond≥0.6")
 
     # ============================================================ 1) 训练
+    # ★ X38-b：阵风场幅度（状态依赖噪声）。优先级：命令行 > 配置 > 0（同方差）。
+    wind_amp = float(args.wind_amp if args.wind_amp is not None
+                     else cfg["env"].get("wind_amp", 0.0))
     env = make_env(cfg["env"]["id"], seed=seed,
                    noise_std=float(cfg["env"]["noise_std"]),
-                   max_steps=int(cfg["env"]["max_steps"]))
+                   max_steps=int(cfg["env"]["max_steps"]),
+                   wind_amp=wind_amp)
+    print(f"[24]   环境：{env.name}（wind_amp={wind_amp:g}"
+          + (" ⇒ **异方差**，X38-b 边界档" if wind_amp > 0 else " ⇒ 同方差，X38 原档")
+          + "）")
     cc = cfg["controller"]
     ctrl = PDRelativeController(dt=env.dt, omega_n=float(cc["omega_n"]),
                                 zeta=float(cc["zeta"]), kappa=float(env.kappa),
@@ -252,7 +264,8 @@ def main():
     ev_seed = seed + int(cfg["data"]["eval_seed_offset"])
     ev_env = make_env(cfg["env"]["id"], seed=ev_seed,
                       noise_std=float(cfg["env"]["noise_std"]),
-                      max_steps=int(cfg["env"]["max_steps"]))
+                      max_steps=int(cfg["env"]["max_steps"]),
+                      wind_amp=wind_amp)
     eval_eps = collect_controlled_episodes(ev_env, ctrl,
                                            n_episodes=max(30, n_ep // 3), seed=ev_seed,
                                            max_steps=int(cfg["env"]["max_steps"]))
@@ -355,118 +368,121 @@ def main():
         print("[24]     ⇒ ❌ P1(b) U 形不成立（至少一档 K 上限的最优落在端点）")
     p1_verdict["shape"] = shape_rows
 
-    # ============================================================ 3) Part B：闭环 P2
-    print("[24] " + "-" * 78)
-    print("[24] Part B · P2（真闭环）：同 tx_rate 下比 est_nmse 与任务指标")
-    online_seed = seed + int(cfg["data"].get("online_seed_offset", 2000))
-    meas_steps = int(cfg["task"]["measured_steps"])
-    rows = []
-    for per in pers:
-        for T in T_list:
-            tail_mass = float(periodic_age_tail(per, T, KC))
-            if tail_mass > max_tail:
-                continue
-            r = run_closed_loop_control(
-                env, model, ctrl, periodic_lossy_schedule(T, per),
-                n_episodes=n_task_ep, seed=online_seed,
-                max_steps=meas_steps, device=device, estimator="model",
-                var_g=var_g, label=f"periodic/T={T}",
-                tail_frac=float(cfg["task"]["tail_frac"]), warmup_steps=WARMUP)
-            rows.append(_mkrow("periodic", per, T, r, tail_mass, KC,
-                               _age_mc("periodic", per, T, n_task_ep, meas_steps), meas_steps=meas_steps))
-        for K in K_list:
-            tail_mass = float(threshold_age_tail(K, per, KC))
-            if tail_mass > max_tail:
-                continue
-            r = run_closed_loop_control(
-                env, model, ctrl, threshold_lossy_schedule(K, per),
-                n_episodes=n_task_ep, seed=online_seed,
-                max_steps=meas_steps, device=device, estimator="model",
-                var_g=var_g, label=f"threshold/K={K}",
-                tail_frac=float(cfg["task"]["tail_frac"]), warmup_steps=WARMUP)
-            rows.append(_mkrow("threshold", per, K, r, tail_mass, KC,
-                               _age_mc("threshold", per, K, n_task_ep, meas_steps), meas_steps=meas_steps))
-    for r in rows:
-        ana = r["age_analytic"]
-        print(f"[24]   PER={r['per']:<4g} {r['policy']:<9s} 旋钮={r['knob']:<3d} "
-              f"tx_rate={r['tx_rate']:.4f} E[age]={r['mean_age']:6.2f} "
-              f"(MC {r['age_mc']:6.2f}" +
-              (f"/闭式 {ana:6.2f})" if np.isfinite(ana) else ")      ") +
-              f" | NMSE={r['est_nmse']:.5f} "
-              f"距离={r['mean_dist_tail']:6.3f}m 逃逸={r['escape_rate']:.3f}")
+    # ★ X38-b：--p3-only 时整段 Part B 跳过（16 min -> 3 min）
+    if not args.p3_only:
+        # ============================================================ 3) Part B：闭环 P2
+        print("[24] " + "-" * 78)
+        print("[24] Part B · P2（真闭环）：同 tx_rate 下比 est_nmse 与任务指标")
+        online_seed = seed + int(cfg["data"].get("online_seed_offset", 2000))
+        meas_steps = int(cfg["task"]["measured_steps"])
+        rows = []
+        for per in pers:
+            for T in T_list:
+                tail_mass = float(periodic_age_tail(per, T, KC))
+                if tail_mass > max_tail:
+                    continue
+                r = run_closed_loop_control(
+                    env, model, ctrl, periodic_lossy_schedule(T, per),
+                    n_episodes=n_task_ep, seed=online_seed,
+                    max_steps=meas_steps, device=device, estimator="model",
+                    var_g=var_g, label=f"periodic/T={T}",
+                    tail_frac=float(cfg["task"]["tail_frac"]), warmup_steps=WARMUP)
+                rows.append(_mkrow("periodic", per, T, r, tail_mass, KC,
+                                   _age_mc("periodic", per, T, n_task_ep, meas_steps), meas_steps=meas_steps))
+            for K in K_list:
+                tail_mass = float(threshold_age_tail(K, per, KC))
+                if tail_mass > max_tail:
+                    continue
+                r = run_closed_loop_control(
+                    env, model, ctrl, threshold_lossy_schedule(K, per),
+                    n_episodes=n_task_ep, seed=online_seed,
+                    max_steps=meas_steps, device=device, estimator="model",
+                    var_g=var_g, label=f"threshold/K={K}",
+                    tail_frac=float(cfg["task"]["tail_frac"]), warmup_steps=WARMUP)
+                rows.append(_mkrow("threshold", per, K, r, tail_mass, KC,
+                                   _age_mc("threshold", per, K, n_task_ep, meas_steps), meas_steps=meas_steps))
+        for r in rows:
+            ana = r["age_analytic"]
+            print(f"[24]   PER={r['per']:<4g} {r['policy']:<9s} 旋钮={r['knob']:<3d} "
+                  f"tx_rate={r['tx_rate']:.4f} E[age]={r['mean_age']:6.2f} "
+                  f"(MC {r['age_mc']:6.2f}" +
+                  (f"/闭式 {ana:6.2f})" if np.isfinite(ana) else ")      ") +
+                  f" | NMSE={r['est_nmse']:.5f} "
+                  f"距离={r['mean_dist_tail']:6.3f}m 逃逸={r['escape_rate']:.3f}")
 
-    # ★ S_f 与年龄闭式在闭环里也要成立（容差用 3×SE，与 X35 同口径）
-    chk = [r for r in rows if np.isfinite(r["age_dev_sigma"])]
-    devs = np.array([r["age_dev_sigma"] for r in chk], dtype=float)
-    wb = np.array([r["age_window_bias"] for r in chk
-                   if r["age_window_bias"] is not None], dtype=float)
-    print(f"[24]   S_f/年龄：{len(chk)}/{len(rows)} 点可比（utrigger 无闭式 ⇒ 不计），"
-          f"|偏差| 中位 {np.median(np.abs(devs)):.2f}σ 最大 {np.abs(devs).max():.2f}σ")
-    if wb.size:
-        print(f"[24]     有限窗口偏差（MC−解析）中位 {np.median(wb):+.4f} 步 "
-              f"最大 {np.abs(wb).max():.4f} ⇒ 这是偏差不是噪声，已用 MC 作参照抵消")
-    # ★ 删失点（episode 提前终止 ⇒ 长年龄被系统性切掉）只可能把均值**拉低**
-    #   ⇒ 只做单侧断言（X35 已确立的口径）：负向不报警，正向仍报警。
-    n_cens = sum(1 for r in chk if r["censored"])
-    if n_cens:
-        print(f"[24]     删失点 {n_cens}/{len(chk)}（ep_frac<0.98）⇒ 只做单侧断言")
-    bad = [r for r in chk
-           if (abs(r["age_dev_sigma"]) > 3.0
-               if not r["censored"] else r["age_dev_sigma"] > 3.0)]
-    for r in bad:
-        print(f"[24]     ⚠ 超 3σ：{r['policy']} PER={r['per']} "
-              f"旋钮={r['knob']} {r['age_dev_sigma']:+.2f}σ "
-              f"(实测 {r['mean_age']:.3f} vs MC {r['age_mc']:.3f}"
-              f"{'，删失点单侧' if r['censored'] else ''})")
-    print(f"[24]   S_f/年龄结论：{len(chk) - len(bad)}/{len(chk)} 点通过"
-          f"{'（全部通过 ⇒ 两种策略的年龄闭式在闭环里都成立）' if not bad else ''}")
+        # ★ S_f 与年龄闭式在闭环里也要成立（容差用 3×SE，与 X35 同口径）
+        chk = [r for r in rows if np.isfinite(r["age_dev_sigma"])]
+        devs = np.array([r["age_dev_sigma"] for r in chk], dtype=float)
+        wb = np.array([r["age_window_bias"] for r in chk
+                       if r["age_window_bias"] is not None], dtype=float)
+        print(f"[24]   S_f/年龄：{len(chk)}/{len(rows)} 点可比（utrigger 无闭式 ⇒ 不计），"
+              f"|偏差| 中位 {np.median(np.abs(devs)):.2f}σ 最大 {np.abs(devs).max():.2f}σ")
+        if wb.size:
+            print(f"[24]     有限窗口偏差（MC−解析）中位 {np.median(wb):+.4f} 步 "
+                  f"最大 {np.abs(wb).max():.4f} ⇒ 这是偏差不是噪声，已用 MC 作参照抵消")
+        # ★ 删失点（episode 提前终止 ⇒ 长年龄被系统性切掉）只可能把均值**拉低**
+        #   ⇒ 只做单侧断言（X35 已确立的口径）：负向不报警，正向仍报警。
+        n_cens = sum(1 for r in chk if r["censored"])
+        if n_cens:
+            print(f"[24]     删失点 {n_cens}/{len(chk)}（ep_frac<0.98）⇒ 只做单侧断言")
+        bad = [r for r in chk
+               if (abs(r["age_dev_sigma"]) > 3.0
+                   if not r["censored"] else r["age_dev_sigma"] > 3.0)]
+        for r in bad:
+            print(f"[24]     ⚠ 超 3σ：{r['policy']} PER={r['per']} "
+                  f"旋钮={r['knob']} {r['age_dev_sigma']:+.2f}σ "
+                  f"(实测 {r['mean_age']:.3f} vs MC {r['age_mc']:.3f}"
+                  f"{'，删失点单侧' if r['censored'] else ''})")
+        print(f"[24]   S_f/年龄结论：{len(chk) - len(bad)}/{len(chk)} 点通过"
+              f"{'（全部通过 ⇒ 两种策略的年龄闭式在闭环里都成立）' if not bad else ''}")
 
-    # --- 等 tx_rate 插值比较 ---
-    cmp_rows = []
-    for per in pers:
-        pp = sorted([r for r in rows if r["policy"] == "periodic"
-                     and abs(r["per"] - per) < 1e-12], key=lambda r: r["tx_rate"])
-        tt = sorted([r for r in rows if r["policy"] == "threshold"
-                     and abs(r["per"] - per) < 1e-12], key=lambda r: r["tx_rate"])
-        if len(pp) < 2 or len(tt) < 2:
-            continue
-        lo = max(min(r["tx_rate"] for r in pp), min(r["tx_rate"] for r in tt))
-        hi = min(max(r["tx_rate"] for r in pp), max(r["tx_rate"] for r in tt))
-        if not (hi > lo * 1.0001):
-            continue
-        grid = np.exp(np.linspace(np.log(lo), np.log(hi), 9))
-        for met, better in (("est_nmse", "low"), ("mean_dist_tail", "low")):
-            xp = np.array([r["tx_rate"] for r in pp])
-            yp = np.array([r[met] for r in pp])
-            xt = np.array([r["tx_rate"] for r in tt])
-            yt = np.array([r[met] for r in tt])
-            if np.any(~np.isfinite(yp)) or np.any(~np.isfinite(yt)):
+        # --- 等 tx_rate 插值比较 ---
+        cmp_rows = []
+        for per in pers:
+            pp = sorted([r for r in rows if r["policy"] == "periodic"
+                         and abs(r["per"] - per) < 1e-12], key=lambda r: r["tx_rate"])
+            tt = sorted([r for r in rows if r["policy"] == "threshold"
+                         and abs(r["per"] - per) < 1e-12], key=lambda r: r["tx_rate"])
+            if len(pp) < 2 or len(tt) < 2:
                 continue
-            vp = np.interp(grid, xp, yp)
-            vt = np.interp(grid, xt, yt)
-            with np.errstate(divide="ignore", invalid="ignore"):
-                ratio = np.where(np.isfinite(vp) & (vp > 1e-18), vt / np.maximum(vp, 1e-18),
-                                 np.nan)
-            ratio = ratio[np.isfinite(ratio)]
-            if ratio.size == 0:
+            lo = max(min(r["tx_rate"] for r in pp), min(r["tx_rate"] for r in tt))
+            hi = min(max(r["tx_rate"] for r in pp), max(r["tx_rate"] for r in tt))
+            if not (hi > lo * 1.0001):
                 continue
-            cmp_rows.append({"per": per, "metric": met, "n_grid": int(ratio.size),
-                             "rate_lo": float(lo), "rate_hi": float(hi),
-                             "ratio_median": float(np.median(ratio)),
-                             "ratio_min": float(ratio.min()),
-                             "ratio_max": float(ratio.max()),
-                             "n_threshold_better": int((ratio < 1.0).sum())})
-    for c in cmp_rows:
-        print(f"[24] ★ P2[{c['metric']}] PER={c['per']:<4g} "
-              f"阈值/周期 中位 {c['ratio_median']:.3f} "
-              f"（{c['n_threshold_better']}/{c['n_grid']} 个率点上阈值更优，"
-              f"区间 {c['rate_lo']:.3f}–{c['rate_hi']:.3f}）")
+            grid = np.exp(np.linspace(np.log(lo), np.log(hi), 9))
+            for met, better in (("est_nmse", "low"), ("mean_dist_tail", "low")):
+                xp = np.array([r["tx_rate"] for r in pp])
+                yp = np.array([r[met] for r in pp])
+                xt = np.array([r["tx_rate"] for r in tt])
+                yt = np.array([r[met] for r in tt])
+                if np.any(~np.isfinite(yp)) or np.any(~np.isfinite(yt)):
+                    continue
+                vp = np.interp(grid, xp, yp)
+                vt = np.interp(grid, xt, yt)
+                with np.errstate(divide="ignore", invalid="ignore"):
+                    ratio = np.where(np.isfinite(vp) & (vp > 1e-18), vt / np.maximum(vp, 1e-18),
+                                     np.nan)
+                ratio = ratio[np.isfinite(ratio)]
+                if ratio.size == 0:
+                    continue
+                cmp_rows.append({"per": per, "metric": met, "n_grid": int(ratio.size),
+                                 "rate_lo": float(lo), "rate_hi": float(hi),
+                                 "ratio_median": float(np.median(ratio)),
+                                 "ratio_min": float(ratio.min()),
+                                 "ratio_max": float(ratio.max()),
+                                 "n_threshold_better": int((ratio < 1.0).sum())})
+        for c in cmp_rows:
+            print(f"[24] ★ P2[{c['metric']}] PER={c['per']:<4g} "
+                  f"阈值/周期 中位 {c['ratio_median']:.3f} "
+                  f"（{c['n_threshold_better']}/{c['n_grid']} 个率点上阈值更优，"
+                  f"区间 {c['rate_lo']:.3f}–{c['rate_hi']:.3f}）")
 
     # ============================================================ 4) Part C：P3 条件信息量
     print("[24] " + "-" * 78)
     print("[24] Part C · P3（核心）：给定 age=h 后，累积不确定度 U 还剩多少信息？")
     H = int(dz.get("probe_horizon", 32))
     n_samples = int(cfg["eval"]["n_samples"])
+    p3_extra: dict = {}
     o0, acts, tgts = _sample_windows(eval_eps, H, n_samples, seed=seed + 7,
                                      t0_min=WARMUP)
     U = _rollout_sigma(model, o0, acts, device)                       # (N, H)
@@ -489,6 +505,39 @@ def main():
     if u_cv < 0.01:
         print("[24]   ★★ S_e 未通过：U 几乎是常数 ⇒ P3 的任何结果都是"
               "「没训练出来」，不是「σ 无用」。本号到此为止，不许拿 P3 下结论。")
+
+    # ============================================================ ★ X38-b：σ 头**校准**的直接检验
+    # ★★ X38 的 P3 只给了"U 与误差的相关"。但"U 只是 age 的替身"有两个可能来源：
+    #   (a) 环境本身**同方差** ⇒ 根本没什么可学（X38 那 7.1% 可能就是这个）
+    #   (b) 环境是异方差的，但 **σ 头没学会**状态依赖
+    # 区分办法：拿**环境 ground-truth 的单步 σ**（`env.sigma_at(pos)`，X38-b 新增；
+    # wind_amp=0 时恒等于 noise_std ⇒ 逐位退化）与模型预测的单步 σ 直接比。
+    gt_fn = getattr(env, "sigma_at", None)
+    if callable(gt_fn):
+        s_true = np.asarray([float(gt_fn(np.asarray(o[:2], dtype=np.float64)))
+                             for o in o0], dtype=np.float64)
+        cv_true = float(s_true.std() / max(s_true.mean(), 1e-18))
+        # ★ R14：真实 σ 为常数时相关系数**无定义** ⇒ 报 NaN 而不是报 0（0 会被读成"完全不相关"）
+        rho_cal = (_pearson(sigma_step.astype(np.float64), s_true)
+                   if cv_true > 1e-12 else float("nan"))
+        rho_txt = (f"{rho_cal:+.4f}" if np.isfinite(rho_cal)
+                   else "NaN（真实 σ 为常数 ⇒ 相关系数无定义）")
+        print(f"[24]   ★ X38-b σ 校准：环境真实单步 σ 的 CV={cv_true:.4f}"
+              f"（wind_amp={float(getattr(env, 'wind_amp', 0.0)):g}）"
+              f"｜模型预测 σ 的 CV={s_cv:.4f}"
+              f"｜**ρ(σ_pred, σ_true) = {rho_txt}**")
+        if cv_true < 0.01:
+            print("[24]     ⇒ 本环境**同方差**（真实 σ 无变化）⇒ σ 头的 CV 只可能来自拟合噪声"
+                  "；X38 的 P3 **必须**加「本场景」限定。")
+        elif rho_cal >= 0.3:
+            print("[24]     ⇒ ★ σ 头**真的学到了**状态依赖（能预报真实 σ）"
+                  "⇒ 若此时 ρ_cond 仍 ≈0，则负面结论**可以**推广。")
+        else:
+            print("[24]     ⇒ ⚠ 环境**是**异方差的，但 σ 头**没学出来**（ρ_calib < 0.3）"
+                  "⇒ X38 的 P3 只能归因为「没训出来」，**不许**推广。")
+        p3_extra["sigma_calib"] = {"cv_true": cv_true, "cv_pred": float(s_cv),
+                                   "rho_calib": float(rho_cal),
+                                   "wind_amp": float(getattr(env, "wind_amp", 0.0))}
 
     thr = float(cfg["eval"]["err_threshold"])
     rho_all = _pearson(U.reshape(-1), err.reshape(-1))
@@ -517,12 +566,20 @@ def main():
     print(f"[24] ★ P3：不条件 ρ(U, err) = {rho_all:+.3f}   "
           f"⇒ 给定 age=h 后 条件 ρ 中位 = {rho_cond:+.3f}、条件 AUC 中位 = {auc_cond:.3f}")
     cvs = np.array([x["u_cv_cond"] for x in per_h], dtype=float)
+    # ★★ 判定"U 是不是 age 的替身"**不许**用「CV_cond vs 0.5×CV(U)」这种拍系数
+    #    （第 20 次自证伪）：U 是 h 步累积量 ⇒ CV(U) 被 h 那一维撑大，
+    #    0.5 这个阈值在 wind_amp=4 档把 CV_cond=0.539 也判成"接近常数"（实际并不）。
+    #    正确的参照是**单步 σ 的 CV**：条件后剩下的若 ≈ 单步 σ 的抖动 ⇒ 真的退化；
+    #    明显大于 ⇒ U 里确实累积了状态依赖成分。
+    keep = float(np.median(cvs)) / max(u_cv, 1e-18)
+    vs_step = float(np.median(cvs)) / max(s_cv, 1e-18)
     print(f"[24]   条件内 U 变异：CV_cond 中位 {np.median(cvs):.4f}"
-          f"（不条件 CV={u_cv:.4f}）⇒ "
-          + ("★ U 在给定 h 后**几乎不退化为常数** ⇒ ρ_cond≈0 是「有方差但无预测力」，"
-             "比「U 是 age 替身」更强的负面结论"
-             if np.median(cvs) > 0.5 * u_cv else
-             "U 在给定 h 后接近常数 ⇒ ρ_cond≈0 属「U 是 age 的替身」"))
+          f"（不条件 CV={u_cv:.4f} ⇒ 保留 {keep:.3f}；"
+          f"单步 σ 的 CV={s_cv:.4f} ⇒ CV_cond/单步 = {vs_step:.2f}×）"
+          + ("★ U 在给定 h 后**没有**退化（残余变异 > 单步 σ 的抖动）"
+             if vs_step > 1.2 else
+             "U 在给定 h 后基本退化为 h 的函数（残余变异 ≈ 单步 σ 的抖动）"))
+    # ★ 最终判定交给**直接校准量** ρ(σ_pred, σ_true)，不再由这条启发式下结论
     if np.isfinite(rho_cond) and abs(rho_cond) < 0.1 and np.isfinite(auc_cond) \
             and auc_cond < 0.6:
         print("[24]   ★★ 判据落空 ⇒ **U 只是 age 的替身** ⇒ "
@@ -533,6 +590,33 @@ def main():
     else:
         print("[24]   ⚠ 落在中间地带（既没达 0.3/0.6，也没掉到 0.1/0.6 以下）"
               "⇒ **不得下结论**，P4 只作探索性对照，不作为主张依据。")
+
+    # ============================================================ ★ X38-b 快捷出口
+    # X38-b 只关心「σ 头在异方差环境下能不能学到状态依赖 ⇒ ρ_cond 是否上升」，
+    # 不需要闭环 P2/P4 那 96+48 个工作点（16 min）⇒ 到此为止，落一个只含 P1/P3 的 JSON。
+    if args.p3_only:
+        payload_b = {
+            "experiment": "X38-b：状态依赖噪声（阵风场）下，σ 头能否学到异方差？",
+            "env": {"id": cfg["env"]["id"],
+                    "noise_std": float(cfg["env"]["noise_std"]),
+                    "wind_amp": float(wind_amp)},
+            "var_g": var_g,
+            "P1_verdict": p1_verdict,
+            "P3_conditional": {"rho_unconditional": float(rho_all),
+                               "rho_conditional_median": float(rho_cond),
+                               "auc_conditional_median": float(auc_cond),
+                               "u_cv": float(u_cv), "sigma_step_cv": float(s_cv),
+                               "u_cv_conditional_median": float(np.median(cvs)),
+                               "per_h": per_h, **p3_extra},
+        }
+        # ★ 文件名必须带 wind_amp：否则 4 个剂量档互相覆盖，只剩最后一个（剂量—反应曲线就没了）
+        tag = args.tag + f"_wind{wind_amp:g}"
+        jpath = os.path.join(out, tag + ".json")
+        with open(jpath, "w", encoding="utf-8") as f:
+            json.dump(jsonable(payload_b), f, ensure_ascii=False, indent=2)
+        print(f"[24] ★ X38-b 产物：{jpath}  ({time.time() - t0:.0f}s)")
+        env.close()
+        return
 
     # ============================================================ 4b) Part D：P4 不确定性触发
     print("[24] " + "-" * 78)
@@ -727,7 +811,7 @@ def main():
                            "rho_conditional_median": float(rho_cond),
                            "auc_conditional_median": float(auc_cond),
                            "u_cv": float(u_cv), "sigma_step_cv": float(s_cv),
-                           "per_h": per_h},
+                           "per_h": per_h, **p3_extra},
         "caveat": ("★ P1/P2（周期 vs 年龄阈值）**不是新贡献**：Sun–Polyanskiy–"
                    "Uysal-Biyikoglu（arXiv:1701.06734 / 1707.02531）已在采样率约束下"
                    "证明阈值策略最优并显式比较过 uniform。本号只作复现 + 移到闭环控制场景。"

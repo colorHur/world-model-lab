@@ -45,10 +45,16 @@ class UavTrackAdapter(EnvAdapter):
     omega: float = 0.4          # 目标角速度 (rad/s)
     escape_radius: float = 25.0 # 跟丢半径 (m)
 
-    def __init__(self, seed: int = 0, noise_std: float = 0.0, max_steps: int = 200):
+    # 阵风场的空间周期（m）：σ(p) = σ0·(1 + amp·g(p))
+    wind_period: float = 12.0
+
+    def __init__(self, seed: int = 0, noise_std: float = 0.0, max_steps: int = 200,
+                 wind_amp: float = 0.0):
         self.noise_std = float(noise_std)
+        self.wind_amp = float(wind_amp)
         self.max_steps = int(max_steps)
-        self.name = f"UavTrack-v0(sigma={self.noise_std:g})"
+        self.name = (f"UavTrack-v0(sigma={self.noise_std:g}"
+                     f"{'' if self.wind_amp == 0 else f',wind={self.wind_amp:g}'})")
         self.obs_dim = 6
         self.act_dim = 2
         self.is_discrete = False
@@ -83,11 +89,31 @@ class UavTrackAdapter(EnvAdapter):
         tp = self.target_pos(self.tgt_phase)
         return np.concatenate([self.uav_p, self.uav_v, tp]).astype(np.float32)
 
+    # ---------- ★ X38-b：状态依赖的阵风场（异方差的唯一来源）----------
+    def gust_factor(self, pos: np.ndarray) -> float:
+        """位置 p 处的阵风放大系数 ∈ [1, 1+wind_amp]。
+
+        设计要点（跑前定死，不许事后改）：
+          · 只用**位置**（不用速度/时间）⇒ 阵风场在环境中是**静态**的，
+            σ 头有足够信息从观测里把它学出来；
+          · 光滑正弦场 ⇒ 不需要很强的函数逼近能力；
+          · `wind_amp = 0` 时**逐位退化**为原同方差环境（自检 ㊳）。
+        """
+        if self.wind_amp == 0.0:
+            return 1.0
+        k = 2.0 * np.pi / self.wind_period
+        g = 0.5 * (1.0 + float(np.sin(k * pos[0]) * np.sin(k * pos[1])))
+        return 1.0 + self.wind_amp * g
+
+    def sigma_at(self, pos: np.ndarray) -> float:
+        """该位置的**真实**单步噪声标准差（X38-b 的 ground truth）。"""
+        return self.noise_std * self.gust_factor(pos)
+
     def step(self, action) -> StepResult:
         a = np.clip(np.asarray(action, dtype=np.float64).reshape(2),
                     -self.a_max, self.a_max)
-        w = (self._rng.normal(0.0, self.noise_std, size=2)
-             if self.noise_std > 0 else np.zeros(2))
+        sg = self.sigma_at(self.uav_p)
+        w = (self._rng.normal(0.0, sg, size=2) if sg > 0 else np.zeros(2))
         self.uav_p, self.uav_v = self.step_det(
             np.concatenate([self.uav_p, self.uav_v]), a, noise=w)
         self.tgt_phase += self.omega * self.dt
