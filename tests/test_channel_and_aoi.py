@@ -43,6 +43,19 @@
   ㉘ ★ 周期本身造成年龄地板（X34）    —— 不丢包时 E[age]=(T−1)/2；同时是 R12 检查
   ㉙ ★ 离线 payload_fn 只作用于起点（X33）—— 恒等⇒逐位一致；量化⇒必须变化
   ㉚ ★ 完美信道下两 head 逐位相同（X33）—— 每步都到⇒从不调用预测；同龄对照的地基
+  ㉛ ★★ 尾部质量 P(age>K) 的**方向**（X34-b2）—— 随 q 单调增；★ 我曾把注释里的方向写反，
+                                          是这条单调性断言抓出来的
+  ㉜ ★★ `periodic_age_var` 闭式 + **SE 地板**（X34-b2）—— 解释"容差不能拍百分比"
+  ㉝ ★★ 突发信道周期发送的年龄闭式必须退化到已知答案（X36）
+  ㉞ ★ 突发调度仿真的年龄直方图必须收敛到新闭式（X36）—— 不是自洽就算过
+  ㉟ ★★ 年龄阈值触发的年龄闭式退化到两个已知答案（X38）
+  ㊱ ★★ 等预算下阈值 E[age] ≤ 周期且比值呈 **U 形**（X38）
+  ㊲ ★ 阈值 schedule 有状态 / 可 reset / age<K 时不尝试（X38）
+  ㊳ ★★ 状态依赖阵风场真的异方差 + `wind_amp=0` 逐位退化（X38-b）
+  ㊴ ★ R12：闭环里的 `payload_fn`（量化器）**真的接进去了**（X35 T4）
+                                        —— ★ 原误标 ㉜（与 `periodic_age_var` 撞号），按"只追加"改 ㊴
+  ㊵ ★★ 等预算配对的**公共窗口守卫**（X40）—— 5% 跨度的窗口必须判"不可评估"，
+                                        否则 9 个网格点会挤在同一段里造出假头条
 """
 
 from __future__ import annotations
@@ -958,7 +971,7 @@ def test_periodic_age_closed_form():
 
 
 def test_closed_loop_payload_fn_is_wired():
-    """㉜ ★★ R12：闭环控制里的 `payload_fn`（量化器）**真的接进去了**（X35 的 T4）。
+    """㊴ ★★ R12：闭环控制里的 `payload_fn`（量化器）**真的接进去了**（X35 的 T4）。
 
     为什么非测不可：X35 的全部结论都建立在"量化误差进入闭环"上。
     `payload_fn` 在 `control.run_closed_loop_control` 里只有一行
@@ -1491,6 +1504,82 @@ def test_uav_wind_field_is_state_dependent_and_degenerates():
     # 不同位置必须真的不同（否则场是常数）
     b = float(e.sigma_at(np.array([4.9, 3.1])))
     assert abs(a1 - b) > 1e-3, f"不同位置的 σ 相同（场退化为常数）：{a1} vs {b}"
+
+
+# ------------------------------------------------- ㊵ 等预算配对的窗口守卫
+def _expect_raise(exc_type, fn, what):
+    """断言 `fn()` 抛 `exc_type`；**抛错类型不对** 与 **什么都没抛** 分开报。"""
+    try:
+        fn()
+    except exc_type:
+        return
+    except Exception as other:  # noqa: BLE001
+        raise AssertionError(
+            f"{what}：抛的是 {type(other).__name__}（{other}），不是 {exc_type.__name__}")
+    raise AssertionError(f"{what}：什么都没抛 —— 守卫失效")
+
+
+def test_pairing_window_guard_rejects_degenerate_overlap():
+    """㊵ ★★ X40：等预算配对的**公共窗口守卫**必须拒绝"退化窗口"。
+
+    ⚠️ 为什么值得一条回归测试（真实代价：一个**差点写出去的假头条**）：
+      X40 首跑守卫写成 `hi > lo * 1.0001`，于是 PER=0.7 档拿到窗口
+      `[0.1502, 0.1584]` —— **只有 5% 速率跨度** —— 照样在其上插值出 9 个网格点，
+      打印「**9/9 更优**」。看着像预写 H1 成立；实际那 9 个点全挤在同一段里，
+      **不是 9 个独立速率点**。⇒ 守卫改为 `hi >= lo * 1.5` 且每族 ≥ 3 点。
+
+    锁五件事：
+      (a) 那个 5% 跨度的窗口必须 raise `WindowNotEvaluable`（返回/静默跳过都不算）
+      (b) 每族可比点数 < 3 必须 raise
+      (c) 正常窗口通过，且 [lo,hi] = 各族**交集**（左端 max、右端 min，不是并集）
+      (d) 坏输入（空族 / 非正 / 未升序 / 只给一族）必须 raise `ValueError` ——
+          ★ 不许把"输入坏了"混同于"窗口太窄"，否则坏数据会被当成
+          "这一档不可评估"而被静默跳过（R14 精神：报错优于给假数字）
+      (e) `expo_grid` 真的覆盖窗口两端且对数等距（相邻比恒定）
+    """
+    from wmlab.eval.pairing import (WindowNotEvaluable, expo_grid,
+                                    overlap_window)
+
+    # (a) X40 实测的退化窗口：0.1584 / 0.1502 = 1.054×
+    degenerate = {"periodic": [0.1502, 0.1540, 0.1584],
+                  "threshold": [0.1000, 0.1502, 0.1584, 0.1700]}
+    _expect_raise(WindowNotEvaluable,
+                  lambda: overlap_window(degenerate, min_range=1.5, min_pts=3),
+                  "5% 跨度的窗口")
+
+    # (b) 每族点数不足（threshold 只有 2 点 ⇒ 9 个网格点只能靠插值编出来）
+    thin = {"periodic": [0.10, 0.20, 0.40],
+            "threshold": [0.10, 0.40]}
+    _expect_raise(WindowNotEvaluable,
+                  lambda: overlap_window(thin, min_range=1.5, min_pts=3),
+                  "每族只有 2 点")
+
+    # (c) 正常窗口：交集而非并集
+    ok = {"periodic": [0.02, 0.05, 0.12, 0.30],
+          "threshold": [0.05, 0.10, 0.25, 0.60]}
+    lo, hi = overlap_window(ok, min_range=1.5, min_pts=3)
+    assert abs(lo - 0.05) < 1e-12, f"lo 应取各族最小值的 max（0.05），实际 {lo}"
+    assert abs(hi - 0.30) < 1e-12, f"hi 应取各族最大值的 min（0.30），实际 {hi}"
+    assert hi >= lo * 1.5 - 1e-12
+
+    # (d) 坏输入 ⇒ ValueError（与"窗口太窄"分开报）
+    _expect_raise(ValueError, lambda: overlap_window(
+        {"a": [], "b": [1.0, 2.0, 4.0]}), "空族")
+    _expect_raise(ValueError, lambda: overlap_window(
+        {"a": [0.0, 1.0, 2.0], "b": [1.0, 2.0, 4.0]}), "含 0 的 tx_rate")
+    _expect_raise(ValueError, lambda: overlap_window(
+        {"a": [2.0, 1.0, 0.5], "b": [1.0, 2.0, 4.0]}), "x 未升序")
+    _expect_raise(ValueError, lambda: overlap_window(
+        {"a": [1.0, 2.0, 4.0]}), "只给一族（谈不上等预算比较）")
+
+    # (e) 网格覆盖两端 + 对数等距
+    grid = expo_grid(lo, hi, 9)
+    assert len(grid) == 9
+    assert abs(grid[0] - lo) < 1e-12 and abs(grid[-1] - hi) < 1e-12, \
+        f"网格没覆盖到两端：{grid[0]} … {grid[-1]} vs [{lo}, {hi}]"
+    ratios = [b / a for a, b in zip(grid, grid[1:])]
+    assert max(ratios) - min(ratios) < 1e-9, f"网格不是对数等距：{ratios}"
+    _expect_raise(ValueError, lambda: expo_grid(lo, hi, 1), "n=1")
 
 
 def main() -> int:

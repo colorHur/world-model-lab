@@ -340,8 +340,17 @@ def run_closed_loop_control(
                 age += 1
 
             # ★ 把「当前估计的累积不确定度」交给调度器（供 P4 的触发策略读）
+            # ★★ X40：同时交出当前 **age** —— 残差触发 `U − Û(age)` 需要先把 age 条件掉。
+            #   只给 U 不给 age，调度器就只能做全局阈值（而 ρ(U,age)=0.994 ⇒ 那必然
+            #   塌成年龄阈值，X39 的 P4' 就是这么作废的）。接线检查见 S_g。
             if u_state is not None:
                 u_state["U"] = float(np.sqrt(max(u2, 0.0)))
+                u_state["age"] = int(age)
+                # ★ X40 诊断：可选逐步 trace（(age, U)），**默认关闭**（None 时不进热循环）
+                #   用途：核对「闭环 U|age」与「离线 Û(age)」是否同口径（R12）
+                tr = u_state.get("_trace")
+                if tr is not None:
+                    tr.append((int(age), float(u_state["U"])))
 
             # ---- 记账：est（对 obs_t 的估计） vs 真值 ----
             d = est - true_next

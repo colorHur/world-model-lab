@@ -78,6 +78,8 @@ from wmlab.control import (PDRelativeController, collect_controlled_episodes,
                            run_closed_loop_control)
 from wmlab.data import split_episodes, transitions_from_episodes
 from wmlab.envs import make_env
+from wmlab.eval.pairing import (WindowNotEvaluable, expo_grid,  # noqa: F401
+                               overlap_window)
 from wmlab.eval.tracking import (periodic_age_pmf, periodic_age_tail,
                                  periodic_lossy_schedule, periodic_mean_age,
                                  threshold_age_pmf, threshold_age_tail,
@@ -87,6 +89,53 @@ from wmlab.models.prob_world_model import GaussianWorldModel
 from wmlab.train import train_world_model
 from wmlab.utils import count_params, get_device, load_config, output_dir, set_seed
 from wmlab.utils.plot import PALETTE, apply_style, save_fig
+
+
+# ★★ 等预算配对的**公共守卫**（2026-09-29 修正，两处配对路径共用）
+#   (1) `diverged` 必须对**所有被比较的族**统一施加
+#       （原先只有 P4 路径筛、P2 路径不筛 ⇒ 口径不对称；离线复查：X38 的 P2 一字不变，
+#        wind=4 的 P2 有 6/10 行小幅变化 0.827→0.813 / 0.618→0.642 / 0.445→0.475）
+#   (2) 配对窗口必须够宽：原守卫 `hi > lo*1.0001` **太松** ——
+#       X40 的 PER=0.7 档靠 `[0.1502, 0.1584]`（**5% 速率跨度**）造出了
+#       「9/9 更优」的**假头条**（9 个网格点全挤在同一段 ⇒ 不是 9 个独立点）。
+MIN_RATE_RANGE = 1.5      # 窗口 hi/lo 下限
+MIN_FAMILY_PTS = 3        # 每族至少几个可比点
+
+
+def _sim_hybrid(K: int, tau: float, per: float, U_pool: np.ndarray,
+                u_hat: np.ndarray, u_scale: np.ndarray,
+                n: int, seed: int) -> tuple[float, float]:
+    """★ S_h：混合触发的**纯调度**仿真（U 从离线条件分布**重采样**，不含控制/环境）。
+
+    用途只有一个：把三条退化逐位钉死（R12「拿已知答案验量级」）——
+      τ=+∞ ⇒ 恒等纯年龄阈值 `threshold_lossy_schedule(K, per)`
+      K=1   ⇒ 恒等 T=1（每步都发）
+      τ=−∞  ⇒ 恒等 T=1
+    ⚠️ U 逐步独立重采样 ⇒ **忽略了 U 的自相关** ⇒ 本仿真只用于退化检查，
+      **不得用于报"混合策略的 E[age]"**（那要真闭环，见主流程）。
+    """
+    rng = np.random.default_rng(seed)
+    p = float(min(max(per, 0.0), 1.0))
+    n_h = int(u_hat.shape[0])
+    age = 0
+    tot = 0.0
+    ntx = 0
+    for t in range(1, n + 1):
+        U = 0.0
+        if age > 0:
+            U = float(U_pool[rng.integers(U_pool.shape[0]),
+                             min(max(age, 1), n_h) - 1])
+        fire = age >= int(K)
+        if not fire:
+            h = min(max(age, 1), n_h)
+            fire = ((U - float(u_hat[h - 1])) / float(u_scale[h - 1])) >= float(tau)
+        if fire and rng.random() >= p:
+            age = 0
+            ntx += 1
+        else:
+            age += 1
+        tot += age
+    return tot / n, ntx / n
 
 
 def parse_args():
@@ -103,6 +152,12 @@ def parse_args():
                         "跳过耗时的闭环 P2/P4 网格（约从 16 min 降到 3 min）")
     p.add_argument("--wind-amp", type=float, default=None,
                    help="★ X38-b：状态依赖阵风场幅度（0 = 逐位退化为原同方差环境）")
+    p.add_argument("--pol", default="utrigger",
+                   choices=["utrigger", "resid", "hybrid"],
+                   help="★ X40：不确定性触发的**触发量**。"
+                        "utrigger = 全局阈值 U≥thr（X38/X39）；"
+                        "resid = 纯残差 z≥τ（诊断用，会撤掉安全网）；"
+                        "hybrid = age≥K 或 z≥τ（决定性：残差只准加速）")
     return p.parse_args()
 
 
@@ -216,6 +271,9 @@ def main():
     out = output_dir(cfg)
     t0 = time.time()
 
+    # ★ X40：触发量族名（"utrigger" / "resid"）。三族比较的第三族随此切换。
+    UT = str(args.pol)
+
     pers = [float(x) for x in dz["per_list"]]
     T_list = [int(x) for x in dz["period_list"]]
     K_list = [int(x) for x in dz["threshold_list"]]
@@ -224,7 +282,11 @@ def main():
     n_task_ep = int(cfg["task"]["n_episodes"])
 
     print("[24] " + "=" * 78)
-    print("[24] ★ X38 触发式调度：等传输预算下 周期 / 年龄阈值 / 不确定性触发")
+    print("[24] ★ X38/X40 触发式调度：等传输预算下 周期 / 年龄阈值 / 不确定性触发")
+    _pol_desc = {"resid": "纯残差 z≥τ，先条件掉 age（会撤掉安全网）",
+                 "hybrid": "混合 age≥K 或 z≥τ（残差只准加速，安全网 K 不动）"}.get(
+                     UT, "全局阈值 U≥thr")
+    print(f"[24]   触发量族 = {UT}（{_pol_desc}）")
     print(f"[24]   PER ∈ {pers}    T ∈ {T_list}    K ∈ {K_list}")
     print("[24]   预写：P1 等预算阈值 E[age] ≤ 周期（PER=0 恒等、U 形）"
           "  P2 闭环同向  P3 ρ_cond≥0.3 且 AUC_cond≥0.6")
@@ -440,16 +502,21 @@ def main():
         cmp_rows = []
         for per in pers:
             pp = sorted([r for r in rows if r["policy"] == "periodic"
-                         and abs(r["per"] - per) < 1e-12], key=lambda r: r["tx_rate"])
+                         and abs(r["per"] - per) < 1e-12
+                         and not r.get("diverged", False)], key=lambda r: r["tx_rate"])
             tt = sorted([r for r in rows if r["policy"] == "threshold"
-                         and abs(r["per"] - per) < 1e-12], key=lambda r: r["tx_rate"])
-            if len(pp) < 2 or len(tt) < 2:
+                         and abs(r["per"] - per) < 1e-12
+                         and not r.get("diverged", False)], key=lambda r: r["tx_rate"])
+            try:
+                lo, hi = overlap_window(
+                    {"periodic": [r["tx_rate"] for r in pp],
+                     "threshold": [r["tx_rate"] for r in tt]},
+                    min_range=MIN_RATE_RANGE, min_pts=MIN_FAMILY_PTS)
+            except WindowNotEvaluable as e:
+                # ★ 不许静默跳过：把原因打出来（静默会被读成"这一档没问题"）
+                print(f"[24]   ⚠ P2 该档不可评估：PER={per:g} —— {e}")
                 continue
-            lo = max(min(r["tx_rate"] for r in pp), min(r["tx_rate"] for r in tt))
-            hi = min(max(r["tx_rate"] for r in pp), max(r["tx_rate"] for r in tt))
-            if not (hi > lo * 1.0001):
-                continue
-            grid = np.exp(np.linspace(np.log(lo), np.log(hi), 9))
+            grid = np.array(expo_grid(lo, hi, 9))
             for met, better in (("est_nmse", "low"), ("mean_dist_tail", "low")):
                 xp = np.array([r["tx_rate"] for r in pp])
                 yp = np.array([r[met] for r in pp])
@@ -634,46 +701,110 @@ def main():
     #     也方便直接看出"实际年龄/名义年龄"这个比值是否失控（σ 头睡着的信号）。
     h_stars = [int(x) for x in dz.get("u_h_star_list", [1, 2, 3, 4, 6, 8, 12, 16])]
     h_stars = [h for h in h_stars if 1 <= h <= H]
-    u_thrs = [float(np.median(U[:, h - 1])) for h in h_stars]
-    print("[24]   阈值按「名义触发年龄 h*」标定（thr = 离线 U(h*) 的中位数）："
-          + "  ".join(f"h*={h}:{v:.4f}" for h, v in zip(h_stars, u_thrs)))
+    # ★★ X40：触发量二选一（`--pol` 切），**唯一差别是「有没有先把 age 条件掉」**
+    #   "utrigger"（X38/X39）：thr = median(U(h*)) —— 按名义年龄标定 ⇒ 数学上≈年龄阈值
+    #   "resid"    （X40）    ：τ  = 分位点(U − Û(age)) —— 先条件掉 age，吃条件信息
+    u_hat = None
+    u_scale = None
+    hybrid_spec: list[tuple[int, float]] = []
+    if args.pol in ("resid", "hybrid"):
+        # ★★ z 分数标准化（第一版用原始残差 ⇒ 尺度随 age 变 ⇒ 冒烟给 4.77× 假结果）
+        u_hat = np.median(U, axis=0)                        # (H,) Û(age) 条件中位数
+        mad = np.median(np.abs(U - u_hat[None, :]), axis=0)  # 条件 MAD（抗尾）
+        u_scale = np.maximum(1.4826 * mad, 1e-6)            # → 稳健标准差
+        z_pool = ((U - u_hat[None, :]) / u_scale[None, :]).reshape(-1)
+        tau_qs = [float(x) for x in dz.get("resid_quantiles",
+                                           [0.6, 0.7, 0.8, 0.85, 0.9])]
+        tau_vals = [float(np.quantile(z_pool, q)) for q in tau_qs]
+        if args.pol == "resid":
+            knobs = [int(round(q * 100)) for q in tau_qs]
+            u_thrs = list(tau_vals)
+            print("[24]   纯残差触发：τ 取 **z 分数** (U−Û(age))/Ŝ(age) 的分位点："
+                  + "  ".join(f"q{q:g}:{v:+.3f}" for q, v in zip(tau_qs, tau_vals))
+                  + f"   （Ŝ=条件 MAD×1.4826，中位 {float(np.median(u_scale)):.4f}）")
+        else:
+            hy_k = [int(x) for x in dz.get("hybrid_K_list", [4, 8, 16])]
+            hy_q = [float(x) for x in dz.get("hybrid_tau_quantiles", [0.7, 0.9])]
+            hybrid_spec = [(k, float(np.quantile(z_pool, q))) for k in hy_k for q in hy_q]
+            knobs = [k for k, _ in hybrid_spec]
+            u_thrs = [t for _, t in hybrid_spec]
+            print("[24]   混合触发：age≥K 或 z≥τ（**残差只准加速**，安全网 K 不动）")
+            print("[24]     K ∈ " + str(hy_k) + "   z 分位 " + str(hy_q)
+                  + " ⇒ τ = " + ", ".join(f"{t:+.3f}" for _, t in hybrid_spec))
+            print("[24]     退化钉死（S_h）：τ=+∞ ⇒ ≡纯年龄阈值；K=1 或 τ=−∞ ⇒ ≡T=1")
+            # ★ S_h：三条退化必须逐位成立（拿已知答案验量级，R12）
+            _K0, _per0 = int(hy_k[0]), float(pers[0])
+            a_inf, _ = _sim_hybrid(_K0, float("inf"), _per0, U, u_hat, u_scale,
+                                   40000, seed + 91)
+            a_thr = float(threshold_mean_age(_K0, _per0))
+            a_k1, _ = _sim_hybrid(1, -1e9, _per0, U, u_hat, u_scale, 40000, seed + 92)
+            a_ninf, _ = _sim_hybrid(_K0, -1e9, _per0, U, u_hat, u_scale,
+                                    40000, seed + 93)
+            a_t1 = float(periodic_mean_age(_per0, 1))
+            print(f"[24]     S_h：τ=+∞ ⇒ E[age] {a_inf:.4f} vs 纯阈值闭式 {a_thr:.4f}"
+                  f"（相对差 {abs(a_inf - a_thr) / max(a_thr, 1e-9):.2%}）")
+            if abs(a_inf - a_thr) > max(0.05, 0.03 * a_thr):
+                raise AssertionError(
+                    f"★ S_h 未通过：τ=+∞ 未退化为纯年龄阈值（{a_inf:.4f} vs {a_thr:.4f}）")
+            if abs(a_k1 - a_t1) > max(0.05, 0.03 * a_t1) or \
+                    abs(a_ninf - a_t1) > max(0.05, 0.03 * a_t1):
+                raise AssertionError(
+                    f"★ S_h 未通过：K=1 / τ=−∞ 未退化为 T=1"
+                    f"（{a_k1:.4f} / {a_ninf:.4f} vs {a_t1:.4f}）")
+            print(f"[24]     S_h：K=1 ⇒ {a_k1:.4f}、τ=−∞ ⇒ {a_ninf:.4f}"
+                  f" vs T=1 闭式 {a_t1:.4f} ⇒ 三条退化全部通过 ✓")
+    else:
+        knobs = list(h_stars)
+        u_thrs = [float(np.median(U[:, h - 1])) for h in h_stars]
+        print("[24]   阈值按「名义触发年龄 h*」标定（thr = 离线 U(h*) 的中位数）："
+              + "  ".join(f"h*={h}:{v:.4f}" for h, v in zip(h_stars, u_thrs)))
     n_div = 0
     for per in pers:
-        for qi, (h_star, thr) in enumerate(zip(h_stars, u_thrs)):
-            state = {"U": 0.0}
-            sch = _utrig_schedule(thr, per, state)
+        for knob, thr in zip(knobs, u_thrs):
+            state = {"U": 0.0, "age": 0}
+            sch = (_resid_schedule(thr, per, state, u_hat, u_scale)
+                   if args.pol == "resid" else
+                   _hybrid_schedule(knob, thr, per, state, u_hat, u_scale)
+                   if args.pol == "hybrid" else
+                   _utrig_schedule(thr, per, state))
             r = run_closed_loop_control(
                 env, model, ctrl, sch, n_episodes=n_task_ep, seed=online_seed,
                 max_steps=meas_steps, device=device, estimator="model",
-                var_g=var_g, label=f"utrigger/thr={thr:.4f}",
+                var_g=var_g, label=f"{UT}/{args.pol}={thr:.4f}",
                 tail_frac=float(cfg["task"]["tail_frac"]), warmup_steps=WARMUP,
                 u_state=state)
             # ★ 发散点（阈值太高 ⇒ 几乎不发送 ⇒ rollout 炸掉）：记下来但**不进比较**
-            diverged = (float(r["est_nmse"]) > 1.0 or float(r["mean_age"]) > KC)
-            n_div += int(diverged)
-            row = _mkrow("utrigger", per, h_star, r, float("nan"), KC,
+            #   ★ X39 修正：判定已上移到 `_mkrow`，对**三族统一**施加（不再只作用于 utrigger）
+            row = _mkrow(UT, per, knob, r, float("nan"), KC,
                          (float("nan"), float("nan")), u_thr=float(thr),
                          meas_steps=meas_steps)
-            row["diverged"] = bool(diverged)
-            # ★ 名义 vs 实际：比值远大于 1 ⇒ 闭环里 σ 长得比离线慢 ⇒ "σ 头睡着"
-            row["age_over_hstar"] = float(r["mean_age"]) / float(h_star)
+            n_div += int(row["diverged"])
+            # ★ 名义 vs 实际（仅全局阈值有意义；残差触发的旋钮不是年龄，记 NaN）
+            row["age_over_hstar"] = (float(r["mean_age"]) / float(knob)
+                                     if args.pol != "resid" else float("nan"))
+            row["trigger"] = args.pol
             rows.append(row)
     env.close()
     if n_div:
-        print(f"[24]   ⚠ {n_div}/{len(pers) * len(u_thrs)} 个 U 触发点发散"
+        print(f"[24]   ⚠ {n_div}/{len(pers) * len(u_thrs)} 个 {UT} 触发点发散"
               f"（NMSE>1 或 E[age]>K={KC}）⇒ 已从等预算比较中剔除，不计入结论")
     for r in rows:
-        if r["policy"] == "utrigger":
-            print(f"[24]   PER={r['per']:<4g} utrigger   h*={r['knob']:<3d} "
-                  f"thr={r['u_thr']:.4f} tx_rate={r['tx_rate']:.4f} "
-                  f"E[age]={r['mean_age']:6.2f} (=名义 {r['age_over_hstar']:.2f}×) | "
+        if r["policy"] == UT:
+            _ex = (f"(=名义 {r['age_over_hstar']:.2f}×) "
+                   if np.isfinite(r["age_over_hstar"]) else "")
+            _kb = (f"K={r['knob']:<3d} τ={r['u_thr']:+.3f}" if args.pol == "hybrid"
+                   else (f"τ={r['u_thr']:+.3f}   " if args.pol == "resid"
+                         else f"h*={r['knob']:<3d} thr={r['u_thr']:+.4f}"))
+            print(f"[24]   PER={r['per']:<4g} {UT:<9s} {_kb} "
+                  f"tx_rate={r['tx_rate']:.4f} "
+                  f"E[age]={r['mean_age']:6.2f} {_ex}| "
                   f"NMSE={r['est_nmse']:.5f} 距离={r['mean_dist_tail']:6.3f}m "
                   f"逃逸={r['escape_rate']:.3f}"
                   + ("   ← 发散，剔除" if r.get("diverged") else ""))
     # ★ R12：U 阈值必须真的接线（改阈值必须改变发送率），否则整个 P4 在空跑
     rates_by_per = {}
     for per in pers:
-        sub = [r for r in rows if r["policy"] == "utrigger" and abs(r["per"] - per) < 1e-12]
+        sub = [r for r in rows if r["policy"] == UT and abs(r["per"] - per) < 1e-12]
         if sub:
             rates_by_per[per] = (min(r["tx_rate"] for r in sub),
                                  max(r["tx_rate"] for r in sub))
@@ -692,14 +823,15 @@ def main():
                            and abs(r["per"] - per) < 1e-12
                            and not r.get("diverged", False)],
                           key=lambda r: r["tx_rate"])
-                for p in ("periodic", "threshold", "utrigger")}
-        if any(len(v) < 2 for v in fams.values()):
+                for p in ("periodic", "threshold", UT)}
+        try:
+            lo, hi = overlap_window(
+                {p: [r["tx_rate"] for r in v] for p, v in fams.items()},
+                min_range=MIN_RATE_RANGE, min_pts=MIN_FAMILY_PTS)
+        except WindowNotEvaluable as e:
+            print(f"[24]   ⚠ 该档不可评估：PER={per:g} —— {e}")
             continue
-        lo = max(min(r["tx_rate"] for r in v) for v in fams.values())
-        hi = min(max(r["tx_rate"] for r in v) for v in fams.values())
-        if not (hi > lo * 1.0001):
-            continue
-        grid = np.exp(np.linspace(np.log(lo), np.log(hi), 9))
+        grid = np.array(expo_grid(lo, hi, 9))
         for met in ("est_nmse", "mean_dist_tail"):
             vals = {}
             for p, v in fams.items():
@@ -712,7 +844,7 @@ def main():
             if len(vals) != 3:
                 continue
             with np.errstate(divide="ignore", invalid="ignore"):
-                r_ut = vals["utrigger"] / np.maximum(vals["threshold"], 1e-18)
+                r_ut = vals[UT] / np.maximum(vals["threshold"], 1e-18)
                 r_tt = vals["threshold"] / np.maximum(vals["periodic"], 1e-18)
             r_ut = r_ut[np.isfinite(r_ut)]
             r_tt = r_tt[np.isfinite(r_tt)]
@@ -732,8 +864,14 @@ def main():
               f"（{c['threshold_better_n']}/{c['n_grid']} 更优）")
 
     # ============================================================ 5) 图
+    # ★★ 图标题必须**跟着本次运行走**。原先硬编码 "X38 触发式调度" ⇒ X39/X40 的产物图
+    #    全顶着 X38 的名字，**图与实验对不上**（`payload["experiment"]` 早就是派生的，图漏了）。
+    #    payload 里仍保留更详细的那句描述，这里只负责「这张图是哪一次运行」。
+    _fam = {"utrigger": "X38", "resid": "X40-纯残差", "hybrid": "X40"}.get(args.pol, "X38")
+    exp_title = (f"{_fam} 触发式调度（trigger={args.pol}，wind_amp={wind_amp:g}）："
+                 "等传输预算下 周期 / 年龄阈值 / 不确定性触发")
     fig, axes = plt.subplots(2, 3, figsize=(17.5, 9.5))
-    fig.suptitle("X38 触发式调度：等传输预算下 周期 / 年龄阈值 / 不确定性触发", fontsize=11)
+    fig.suptitle(exp_title, fontsize=11)
 
     ax = axes[0, 0]
     for per in pers:
@@ -749,7 +887,7 @@ def main():
     ax = axes[0, 1]
     for pol, col, mk in (("periodic", PALETTE["blue"], "o"),
                          ("threshold", PALETTE["red"], "s"),
-                         ("utrigger", PALETTE["purple"], "^")):
+                         (UT, PALETTE["purple"], "^")):
         sub = [r for r in rows if r["policy"] == pol]
         if sub:
             ax.plot([r["tx_rate"] for r in sub], [r["est_nmse"] for r in sub],
@@ -797,11 +935,22 @@ def main():
     ax.set_title("⑥ 误差与 U 随年龄的增长（形状对比）")
     ax.legend(fontsize=8); ax.grid(alpha=0.3)
 
-    save_fig(fig, os.path.join(out, "24_triggered_scheduling.png"))
+    # ★★ 产物名必须跟着 tag / wind_amp 走。
+    #    【2026-09-29 实测事故】这里原先硬编码 `24_triggered_scheduling`，而 `--tag` 只在
+    #    `--p3-only` 分支生效 ⇒ 一次 `--quick --wind-amp 4` 冒烟就把 X38 的完整
+    #    JSON/PNG（09-27 的 143.9 KB 证据）覆盖成了 41.4 KB 的 quick 产物。
+    #    ⇒ amp=0 仍得 `24_triggered_scheduling.*`（保持文档引用不变）；amp>0 自动加后缀。
+    _stem = args.tag + (f"_wind{wind_amp:g}" if wind_amp > 0 else "")
+    save_fig(fig, os.path.join(out, _stem + ".png"))
     plt.close(fig)
 
     payload = {
-        "experiment": "X38 触发式调度：等传输预算下 周期 / 年龄阈值 / 不确定性触发",
+        "experiment": {"resid": "X40 纯残差触发 z≥τ（诊断：会撤掉安全网）",
+                       "hybrid": "X40 混合触发 age≥K 或 z≥τ（残差只准加速）",
+                       }.get(args.pol,
+                             "X38 触发式调度：等传输预算下 周期 / 年龄阈值 / 不确定性触发"),
+        "trigger": args.pol,
+        "wind_amp": float(wind_amp),
         "config": {k: cfg[k] for k in ("env", "controller", "design", "eval", "task")},
         "obs_dim": int(obs_dim), "var_g": var_g,
         "P1_analytic": p1_rows, "P1_verdict": p1_verdict,
@@ -816,11 +965,17 @@ def main():
                    "Uysal-Biyikoglu（arXiv:1701.06734 / 1707.02531）已在采样率约束下"
                    "证明阈值策略最优并显式比较过 uniform。本号只作复现 + 移到闭环控制场景。"
                    "★ tx_rate 是**送达率**，不是尝试率（两者只差因子 s，配对关系相同）。"
-                   "★ 只用逐包独立丢包，不含突发信道。"),
+                   "★ 只用逐包独立丢包，不含突发信道。"
+                   "★★ `diverged`（NMSE>1 或 E[age]>max_age_K）**对三族统一施加**"
+                   "（2026-09-29 修正：原先只在 utrigger 分支算 ⇒ 口径不对称）。"
+                   "★★ trigger='utrigger' 的阈值是 `thr=median(U[:,h*-1])`（按名义年龄标定），"
+                   "而闭环 ρ(U,age)=0.9941 ⇒ **它数学上就≈年龄阈值**，不能用来检验"
+                   "「U 有无边际价值」；要检验请用 trigger='hybrid'。"),
     }
-    with open(os.path.join(out, "24_triggered_scheduling.json"), "w", encoding="utf-8") as f:
+    jpath = os.path.join(out, _stem + ".json")
+    with open(jpath, "w", encoding="utf-8") as f:
         json.dump(jsonable(payload), f, ensure_ascii=False, indent=2)
-    print(f"[24] 产物：{os.path.join(out, '24_triggered_scheduling.png')} / .json  "
+    print(f"[24] 产物：{os.path.join(out, _stem + '.png')} / {jpath}  "
           f"({time.time() - t0:.0f}s)")
 
 
@@ -847,6 +1002,95 @@ def _utrig_schedule(threshold_u: float, loss_prob: float, state: dict) -> object
 
     _f.reset = _reset                                   # type: ignore[attr-defined]
     _f.__name__ = f"utrig(thr={thr:.4f},p={p})"
+    return _f
+
+
+def _resid_schedule(tau: float, loss_prob: float, state: dict,
+                    u_hat: np.ndarray, u_scale: np.ndarray) -> object:
+    """★ X40：**残差（z 分数）触发** —— 只有 `(U − Û(age)) / Ŝ(age) ≥ τ` 时才尝试发送。
+
+    与 X38/X39 的**全局阈值**触发的唯一差别：**先把 age 条件掉**。
+
+    ★ 为什么必须做（X39 实测的硬动机）：闭环里 `ρ(U, age) = 0.9941`
+      ⇒ 全局阈值 `U ≥ thr` 在数学上**就是**一个年龄阈值（X39 的 thr 甚至是
+      「按名义年龄 h* 标定」的）⇒ 它**在原理上无法利用** P3 测到的条件信息
+      （ρ_cond=0.347、AUC_cond=0.601 是**给定 age 之后**的残余信息）。
+
+    ★★ 为什么必须**标准化**（第一版踩的坑，直接记下来）：先用「原始残差
+      U − Û(age) 的全局分位点」当 τ ⇒ 冒烟直接给 U触发/年龄阈值 NMSE **4.77×**
+      （0/9 更优）。根因不是"信号无用"，而是**残差的尺度随 age 变**：
+      小 h 的残差量级本来就小、大 h 的本来就大 ⇒ 一个全局 τ 在**小 h 处等于
+      永不触发、在大 h 处等于几乎总触发** ⇒ 实际退化成"只在老年龄才发"
+      （与代码里早记过的 U 阈值「坑 2：尺度不均」是同一个坑）。
+      ⇒ 改成 **z 分数** `(U − Û(age)) / Ŝ(age)`，Ŝ = 条件 MAD（1.4826×）。
+        这样 τ 无量纲、可跨 age 比，才是真正的"给定年龄后，U 是否异常高"。
+
+    `u_hat[h]` / `u_scale[h]` = 离线 U 在年龄 h 处的**条件中位数 / 条件 MAD**（形状 (H,)）。
+    `state` 由 `run_closed_loop_control` 每步写入 `U` 与 `age`（control.py 已接线）。
+    """
+    t_ = float(tau)
+    p = float(min(max(loss_prob, 0.0), 1.0))
+    n_h = int(u_hat.shape[0])
+
+    def _f(t: int, rng: np.random.Generator) -> bool:
+        U = float(state.get("U", 0.0))
+        age = int(state.get("age", 0))
+        h = min(max(age, 1), n_h)              # age=0（刚收到）⇒ 用 h=1 的基准；U 也已归零
+        z = (U - float(u_hat[h - 1])) / float(u_scale[h - 1])
+        if z < t_:
+            return False
+        return bool(rng.random() >= p)
+
+    def _reset(rng: np.random.Generator | None = None) -> None:
+        state["U"] = 0.0
+        state["age"] = 0
+
+    _f.reset = _reset                                   # type: ignore[attr-defined]
+    _f.__name__ = f"resid(tau={t_:.4f},p={p})"
+    return _f
+
+
+def _hybrid_schedule(K: int, tau: float, loss_prob: float, state: dict,
+                     u_hat: np.ndarray, u_scale: np.ndarray) -> object:
+    """★ X40（决定性版本）：**混合触发** —— `age ≥ K` **或** `z(age) ≥ τ`。
+
+    ★ 为什么纯残差触发（`_resid_schedule`）不算决定性测试：
+      冒烟实测它在**同率下 E[age] 7.9–14.6 vs 年龄阈值 4.0**（更差），
+      机制是「低 U 轨迹被**无限期**推迟发送」—— 而低 U 恰恰是模型**自信**的地方，
+      自信≠正确（P3 的 AUC 只有 0.601）⇒ 误差在那里累积。
+      ⇒ 这是**「残差信息净有害」**的证据，但**不是「残差信息无边际价值」**的证据：
+        前者把安全网也一并撤了，两件事混在一起。
+
+    ★★ 混合触发把两件事分开：**年龄阈值 K 是安全网（保证不塌），残差 τ 只能**加速**。
+      ⇒ 与**纯年龄阈值（同 K）** 在**等预算**下比：
+          混合更优 ⇒ U 有**正的边际价值**（能提前把该发的发出去）
+          混合不优 ⇒ U 的边际价值为 0 或负 ⇒ **X38 的负面结论升级为「与实现无关」**
+
+    三条退化（S_h 自检钉死）：
+      τ = +∞ ⇒ 恒等于纯年龄阈值 K
+      K = 1  ⇒ 恒等于每步都发（T=1）
+      τ = −∞ ⇒ 恒等于 T=1
+    """
+    K_ = int(K)
+    t_ = float(tau)
+    p = float(min(max(loss_prob, 0.0), 1.0))
+    n_h = int(u_hat.shape[0])
+
+    def _f(t: int, rng: np.random.Generator) -> bool:
+        age = int(state.get("age", 0))
+        if age < K_:                       # 未到安全网 ⇒ 看残差是否要求**提前**
+            h = min(max(age, 1), n_h)
+            z = (float(state.get("U", 0.0)) - float(u_hat[h - 1])) / float(u_scale[h - 1])
+            if z < t_:
+                return False
+        return bool(rng.random() >= p)
+
+    def _reset(rng: np.random.Generator | None = None) -> None:
+        state["U"] = 0.0
+        state["age"] = 0
+
+    _f.reset = _reset                                   # type: ignore[attr-defined]
+    _f.__name__ = f"hybrid(K={K_},tau={t_:.3f},p={p})"
     return _f
 
 
@@ -937,7 +1181,15 @@ def _mkrow(policy: str, per: float, knob: int, r: dict, tail_mass: float,
     #   （X35 已确立的口径）⇒ 这类点只做**单侧**断言，不做双侧。
     ep_frac = float(r["mean_ep_len"]) / max(float(max(int(meas_steps), 1)), 1)
     censored = bool(ep_frac < 0.98)
+    # ★★ X39 口径修正（2026-09-29）：`diverged` 必须**三族同标准**。
+    #   原实现只在 utrigger 分支里算（旧第 652 行）⇒ 配对比较只剔 utrigger 的发散点、
+    #   却把 threshold 的发散点留在曲线里（PER=0.3/K=32 的 NMSE=1040 就在里面）
+    #   ⇒ **口径不对称**。已离线复核影响：
+    #     X38（同方差）三族 0 发散 ⇒ 对 X38 零影响；
+    #     X39（异方差）periodic 4 / threshold 14 / utrigger 8 ⇒ 对称化后 P4' 仍不成立。
+    diverged = bool(float(r["est_nmse"]) > 1.0 or float(r["mean_age"]) > KC)
     return {"policy": policy, "per": float(per), "knob": int(knob),
+            "diverged": diverged,
             "u_thr": (None if u_thr is None else float(u_thr)),
             "label": label,
             "tail_mass": float(tail_mass),
