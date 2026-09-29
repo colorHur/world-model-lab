@@ -56,6 +56,8 @@
                                         —— ★ 原误标 ㉜（与 `periodic_age_var` 撞号），按"只追加"改 ㊴
   ㊵ ★★ 等预算配对的**公共窗口守卫**（X40）—— 5% 跨度的窗口必须判"不可评估"，
                                         否则 9 个网格点会挤在同一段里造出假头条
+  ㊶ ★ X41 剂量档的"任务价值"必须**跨 PER 取中位**（不是取极值 / 首个）——
+                                        同一批数据取最大报 1.147、取中位报 1.065，报哪个决定结论强弱
 """
 
 from __future__ import annotations
@@ -1580,6 +1582,43 @@ def test_pairing_window_guard_rejects_degenerate_overlap():
     ratios = [b / a for a, b in zip(grid, grid[1:])]
     assert max(ratios) - min(ratios) < 1e-9, f"网格不是对数等距：{ratios}"
     _expect_raise(ValueError, lambda: expo_grid(lo, hi, 1), "n=1")
+
+
+# ------------------------------------------------- ㊶ X41 剂量—反应的聚合口径
+def test_dose_aggregation_uses_cross_per_median():
+    """㊶ ★★ X41（2026-09-29）：剂量档的"任务价值"必须**跨 PER 取中位**。
+
+    为什么值得钉死：X40 的四个 PER 档距离比是 `[1.147, 1.094, 1.023, 1.035]` ——
+    取**最大**报 1.147（读成"差 15%"）、取**首个**也报 1.147、取**中位**报 **1.0648**（"差 6%"）。
+    报哪个**直接决定结论的强弱**；"取最大"等于拿最差档当代表，是**选择性汇报**。
+    ★ 反面断言 `1.023 < dist < 1.147` 就是为了让"退化成取极值"这件事**测不过**。
+
+    (b) 两类指标必须各取自己那一列 —— `metric` 名字写错会**静默丢档**
+    （本轮真踩过：把 `mean_dist_tail` 写成 `dist`，距离比直接显示 n/a 而没报错）。
+    (c) 空表不得崩，也不得编数。
+    """
+    from wmlab.eval.pairing import aggregate_p4
+
+    rows = ([{"metric": "mean_dist_tail", "utrigger_over_threshold_median": v}
+             for v in (1.147, 1.094, 1.023, 1.035)]
+            + [{"metric": "est_nmse", "utrigger_over_threshold_median": v}
+               for v in (4.107, 1.820, 1.907, 2.276)])
+
+    dist, nmse, n = aggregate_p4(rows)
+    assert n == 4, f"参与聚合的档数应为 4，实得 {n}"
+    assert abs(dist - 1.0648) < 1e-3, f"距离比应为跨 PER 中位 1.0648，实得 {dist}"
+    assert abs(nmse - 2.0915) < 1e-3, f"NMSE 比应为跨 PER 中位 2.0915，实得 {nmse}"
+    assert 1.023 < dist < 1.147, f"退化成了取极值：{dist}"
+
+    # (b) 只有一类指标时，另一类必须是 None、不能拿这类的数去顶
+    d2, n2, c2 = aggregate_p4(
+        [{"metric": "mean_dist_tail", "utrigger_over_threshold_median": 1.0}])
+    assert (d2, n2, c2) == (1.0, None, 1), f"metric 分流不对：{(d2, n2, c2)}"
+
+    # (c) 缺失 / 空表
+    assert aggregate_p4([]) == (None, None, 0)
+    assert aggregate_p4([{"metric": "mean_dist_tail"}]) == (None, None, 0), \
+        "字段缺失时应返回 None，不许把 None 当数参与中位"
 
 
 def main() -> int:

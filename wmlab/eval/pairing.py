@@ -73,3 +73,30 @@ def expo_grid(lo: float, hi: float, n: int = 9) -> list[float]:
         raise ValueError("n 至少 2")
     a, b = math.log(lo), math.log(hi)
     return [math.exp(a + (b - a) * i / (n - 1)) for i in range(n)]
+
+
+# ------------------------------------------------------------------ P4 聚合口径
+DIST_METRIC = "mean_dist_tail"   # 任务指标：稳态跟踪距离（尾部均值）
+NMSE_METRIC = "est_nmse"         # 代理指标：估计误差（X35 已证它**不能**当任务代理）
+
+
+def aggregate_p4(rows) -> tuple:
+    """把 `P4_matched_rate` 的 rows 聚成 `(距离比中位, NMSE 比中位, 参与档数)`。
+
+    比值字段是 `utrigger_over_threshold_median` = 不确定性触发 ÷ 年龄阈值（**<1 ⇒ U 更优**）。
+
+    ★★ 口径（回归测试 ㊶ 锁死）：**跨 PER 取中位**，不是取最大 / 最小 / 首个。
+    为什么必须钉死：X40 的四个 PER 档比值是 `[1.147, 1.094, 1.023, 1.035]` ——
+    取**最大**会报 **1.147**（"差 15%"），取**首个**也报 1.147，取**中位**报 **1.0648**（"差 6%"）。
+    **报哪个直接决定结论的强弱**；"取最大"等于拿最差档当代表，是一种**选择性汇报**。
+    """
+    import statistics
+    dists = [r["utrigger_over_threshold_median"] for r in rows
+             if r.get("metric") == DIST_METRIC
+             and r.get("utrigger_over_threshold_median") is not None]
+    nmses = [r["utrigger_over_threshold_median"] for r in rows
+             if r.get("metric") == NMSE_METRIC
+             and r.get("utrigger_over_threshold_median") is not None]
+    dist = float(statistics.median(dists)) if dists else None
+    nmse = float(statistics.median(nmses)) if nmses else None
+    return dist, nmse, len(dists)
