@@ -1621,6 +1621,151 @@ def test_dose_aggregation_uses_cross_per_median():
         "字段缺失时应返回 None，不许把 None 当数参与中位"
 
 
+# ------------------------------------------------- ㊷ X42 共形信封的构件
+def test_conformal_pava_and_quantile():
+    """㊷ ★★ X42（2026-09-29）：PAVA 与有限样本共形分位数的**构件级**断言。
+
+    为什么分开测构件：信封 = PAVA + 分位数 + 归一化，三者任一错，症状都只表现为
+    "覆盖率不对" —— 一个**看不出根因**的症状。构件级断言才能定位。
+
+    (a) PAVA：非降、**保均值**（加权和）、单元素/全等退化；
+    (b) 分位数阶 = ⌈(n+1)(1−α)⌉（Vovk）；**不许**用 numpy 默认的 `linear` 插值分位
+        （那会给出一个在样本之间"插"出来的数，失去有限样本保证）；
+    (c) ★ K2（R14）：非有限输入必须 raise —— `nan <= 阈值` 恒为 False，
+        静默通过会产出**看着合理**的错答案。
+    """
+    from wmlab.eval.conformal import _pava, conformal_quantile
+
+    # (a) 经典 PAVA：3,1,2 ⇒ 合并前两个块 ⇒ 2,2,2（非降、和 = 6）
+    out = _pava(np.array([3.0, 1.0, 2.0]))
+    assert np.all(np.diff(out) >= -1e-12), f"PAVA 结果未非降：{out}"
+    assert abs(out.sum() - 6.0) < 1e-12, f"PAVA 未保均值：{out}"
+    assert np.allclose(out, [2.0, 2.0, 2.0]), f"PAVA 值不对：{out}"
+    # 加权：把 [3,1] 按权重 [1,10] 合并 ⇒ 13/11 ≈ 1.1818 ≤ 2 ⇒ 不再违反
+    w = _pava(np.array([3.0, 1.0, 2.0]), np.array([1.0, 10.0, 1.0]))
+    assert np.all(np.diff(w) >= -1e-12), f"加权 PAVA 未非降：{w}"
+    assert abs(w[1] - (3.0 + 10.0 * 1.0) / 11.0) < 1e-12, f"加权均值不对：{w}"
+    assert np.allclose(_pava(np.array([5.0])), [5.0]), "单元素退化"
+    assert np.allclose(_pava(np.array([2.0, 2.0, 2.0])), [2.0, 2.0, 2.0]), "全等退化"
+
+    # (b) 阶 = ⌈(n+1)(1−α)⌉：n=100、α=0.1 ⇒ ⌈90.9⌉ = 91 ⇒ 第 91 小 = 90.0
+    q, clipped = conformal_quantile(np.arange(100, dtype=float), 0.1)
+    assert abs(q - 90.0) < 1e-12 and not clipped, f"阶不对：q={q}, clipped={clipped}"
+    # n=10、α=0.001 ⇒ ⌈11×0.999⌉ = 11 > 10 ⇒ 截断取最大值，且必须**如实标记**
+    q2, c2 = conformal_quantile(np.arange(10, dtype=float), 0.001)
+    assert c2 is True and abs(q2 - 9.0) < 1e-12, f"截断标记不对：q={q2}, c={c2}"
+
+    # (c) K2：NaN/Inf 一律 raise（不许静默）
+    for bad in (np.array([1.0, np.nan, 3.0]), np.array([1.0, np.inf, 3.0])):
+        try:
+            conformal_quantile(bad, 0.1)
+        except FloatingPointError:
+            pass
+        else:
+            raise AssertionError(f"★ K2 未通过：含非有限值的分数被静默接受 {bad}")
+
+
+# ------------------------------------------------- ㊸ X42 归一化不可省（K1）
+def test_conformal_normalization_is_required():
+    """㊸ ★★ X42（2026-09-29）：**逐年龄归一化 Ŝ(h) 不可省** —— 否则信封退化。
+
+    ★ 这是本号设计里最容易"看起来没问题"的一处：
+      共形分位数本身就是**边缘**保证 ⇒ 不归一化**照样**能满足边缘覆盖率
+      （下面 (b) 就是在断言这件事）—— 但小年龄处的信封会被大年龄的残差量级
+      **抬到远高于本地散布**，于是"Ê ≥ tol"在**所有年龄**都成立 ⇒ 触发规则退化，
+      **整个 X42 会在不自知的情况下空跑**。
+    ⇒ 断言方式选**决策相关量**：在固定 tol 下，「逐年龄触发率」的跨度。
+      归一化版必须存在**内部**的判据转折（最年轻年龄几乎不触发、最老年龄几乎总触发）；
+      未归一化版在最年轻年龄就已经≈全触发。
+
+    (c) ĝ 对 u 单调不减（PAVA 保证）—— 否则"U 越大越该发"这个语义就断了。
+    """
+    from wmlab.eval.conformal import envelope, fit_envelope
+
+    rng = np.random.default_rng(20260929)
+    H, N = 8, 4000
+    hs = np.arange(1, H + 1, dtype=float)
+    base = 0.05 * 1.5 ** (hs - 1)          # 误差随年龄增长
+    spread = 0.02 * 1.8 ** (hs - 1)        # ★ 异方差：散布跨 22 倍
+    u = rng.normal(size=(N, H))
+    err = (base[None, :] + spread[None, :] * (0.8 * u + rng.normal(size=(N, H))))
+    tab = fit_envelope(err[:2000], u[:2000], alpha=0.1, n_knots=6)
+
+    tol = 0.30
+    hs_grid = np.tile(hs[None, :], (2000, 1))
+    rate_norm = (envelope(tab, hs_grid, u[2000:]) >= tol).mean(axis=0)
+    tab_raw = dict(tab)
+    tab_raw["s_h"] = np.ones(H)            # ★ 撤掉归一化，其余逐位不变
+    tab_raw["q"] = tab["q_unnorm"]
+    rate_raw = (envelope(tab_raw, hs_grid, u[2000:]) >= tol).mean(axis=0)
+
+    # (a) 归一化版：判据转折必须在**内部**
+    assert rate_norm[0] < 0.2, f"归一化版在最年轻年龄就已触发 {rate_norm[0]:.2f}"
+    assert rate_norm[-1] > 0.8, f"归一化版在最老年龄仍未触发 {rate_norm[-1]:.2f}"
+    # (b) 未归一化版：最年轻年龄即退化（这正是 K1 的症状）
+    assert rate_raw[0] > 0.9, \
+        f"★ K1 未复现：未归一化版在 h=1 的触发率只有 {rate_raw[0]:.2f}" \
+        f"（说明本用例的异方差强度不足以暴露该坑，需调大 spread 而不是放宽断言）"
+    # 边缘覆盖率：**两者都**接近目标 ⇒ 说明"边缘保证"本身不足以拦住 K1
+    for name, tb in (("归一化", tab), ("未归一化", tab_raw)):
+        m = (err[2000:] <= envelope(tb, hs_grid, u[2000:])).mean()
+        assert abs(m - 0.9) < 0.06, f"{name}版边缘覆盖率 {m:.3f} 偏离目标 0.9 过多"
+
+    # (c) ĝ 对 u 单调不减
+    for h in range(H):
+        nk = int(tab["n_keep"][h])
+        v = tab["knots_v"][h, :nk]
+        assert np.all(np.diff(v) >= -1e-12), f"h={h + 1} 的 ĝ 对 u 非单调：{v}"
+    uu = np.linspace(-3, 3, 41)
+    e_h = envelope(tab, np.full_like(uu, 3.0), uu)
+    assert np.all(np.diff(e_h) >= -1e-12), "信封对 u 非单调"
+
+
+# ------------------------------------------------- ㊹ X42 分块产物的覆盖守卫
+def test_conformal_merge_requires_all_per_chunks():
+    """㊹ ★★ X42（2026-09-29）：**分块跑**之后，少一个 PER 档必须在聚合前被拦下。
+
+    ★ 为什么这是一等的检查：X42 的完整网格在本机**单次跑不完**
+      （后台任务 10 min 硬上限，实测两臂都在 10m01s 被终止、连日志都没写），
+      ⇒ 改成**按 PER 分块**跑。分块本身数值等价（`scripts/26` 顶部有论证），
+      但它引入了一个**新的静默失败模式**：某块没跑成 ⇒ 跨 PER 取中位时**分母变小**
+      ⇒ 结论悄悄变强/变弱，而输出**看着完全正常**。
+    ⇒ 断言：缺一档必须 raise；全档齐了才返回覆盖信息；`est_nmse` 单指标的行
+      **不算**数（否则只有 SE 的行会让"覆盖"看着齐、实际距离指标缺档）。
+    """
+    from wmlab.eval.conformal import check_per_coverage
+
+    full = [{"per": p, "metric": "mean_dist_tail", "utrigger_over_threshold_median": 1.0}
+            for p in (0.0, 0.1, 0.3)]
+    assert check_per_coverage(full, [0.0, 0.1, 0.3])["n_per_evaluated"] == 3
+
+    # (a) 缺一档 ⇒ 必须 raise（这就是"某一块没跑成"）
+    try:
+        check_per_coverage(full[:2], [0.0, 0.1, 0.3])
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError("★ 缺 PER 档时没有 raise ⇒ 会在部分档上静默聚合")
+
+    # (b) 只有 est_nmse 的行不得抵充距离指标（口径错配会让"覆盖"看着齐）
+    try:
+        check_per_coverage([{"per": p, "metric": "est_nmse",
+                             "utrigger_over_threshold_median": 1.0} for p in (0.0, 0.1, 0.3)],
+                           [0.0, 0.1, 0.3])
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError("★ 只有 est_nmse 的行被当成覆盖达标了")
+
+    # (c) 空输入也不得默默通过
+    try:
+        check_per_coverage([], [0.0])
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError("★ 空表没有 raise")
+
+
 def main() -> int:
     tests = [(k, v) for k, v in sorted(globals().items())
              if k.startswith("test_") and callable(v)]

@@ -78,6 +78,9 @@ from wmlab.control import (PDRelativeController, collect_controlled_episodes,
                            run_closed_loop_control)
 from wmlab.data import split_episodes, transitions_from_episodes
 from wmlab.envs import make_env
+from wmlab.eval.conformal import coverage as conf_coverage
+from wmlab.eval.conformal import envelope as conf_envelope
+from wmlab.eval.conformal import fit_envelope
 from wmlab.eval.pairing import (WindowNotEvaluable, expo_grid,  # noqa: F401
                                overlap_window)
 from wmlab.eval.tracking import (periodic_age_pmf, periodic_age_tail,
@@ -153,11 +156,18 @@ def parse_args():
     p.add_argument("--wind-amp", type=float, default=None,
                    help="★ X38-b：状态依赖阵风场幅度（0 = 逐位退化为原同方差环境）")
     p.add_argument("--pol", default="utrigger",
-                   choices=["utrigger", "resid", "hybrid"],
-                   help="★ X40：不确定性触发的**触发量**。"
+                   choices=["utrigger", "resid", "hybrid", "conformal"],
+                   help="★ X40/X42：不确定性触发的**触发量**。"
                         "utrigger = 全局阈值 U≥thr（X38/X39）；"
                         "resid = 纯残差 z≥τ（诊断用，会撤掉安全网）；"
-                        "hybrid = age≥K 或 z≥τ（决定性：残差只准加速）")
+                        "hybrid = age≥K 或 z≥τ（决定性：残差只准加速）；"
+                        "conformal = age≥K 或 Ê_α(age,U)≥tol（★ X42：共形校准的误差信封）")
+    p.add_argument("--conf-target", default="pos", choices=["pos", "nmse"],
+                   help="★ X42：共形信封标定的**误差量**。"
+                        "nmse = 全维归一化 NMSE（与 X38/X40 的估计误差同口径）；"
+                        "pos = **位置维**归一化误差（= 控制器实际吃进去的那个量，任务对齐）")
+    p.add_argument("--conf-alpha", type=float, default=0.1,
+                   help="★ X42：共形分位数水平 α（覆盖率目标 1−α）")
     return p.parse_args()
 
 
@@ -658,6 +668,152 @@ def main():
         print("[24]   ⚠ 落在中间地带（既没达 0.3/0.6，也没掉到 0.1/0.6 以下）"
               "⇒ **不得下结论**，P4 只作探索性对照，不作为主张依据。")
 
+    # ============================================================ ★★ X42：共形误差信封
+    # ★★ 动机（X41 §12.5 的「下一步」）：X40/X41 的结论只能写成「**未经校准的**自报不确定度
+    #    没有边际任务价值」。C30（arXiv:2607.01537）用 calibrated rollout-drift envelope
+    #    在等预算下赢过 expected-belief 调度 ⇒ 本轮把自报量换成**有覆盖保证**的校准量。
+    #
+    # ★★ 但**先把 C30 读准**（2026-09-29 核原文，纠正 X41 里的过度转述）：C30 自己写明
+    #    *"in the short-horizon frozen VN-JEPA regime, empirical **conformal horizons match**
+    #    the deployed clock on validity and budget"* ⇒ **朴素共形并没有赢**。
+    #    ⇒ 「换成共形就有价值」是**没有根据的预期**，本号的任务是**把它测出来**。
+    #
+    # ★★ 概念限定（决定本号能说什么、不能说什么）：共形只给**边缘**覆盖保证
+    #    `P(e ≤ Ê) ≥ 1−α`，**不制造排序能力**。若 U|h 的排序力（AUC≈0.674）本来就不转化
+    #    为任务收益，校准**不会**凭空创造收益 ⇒ H0 是**先验上完全可能**的结果。
+    #
+    # ★ 三个坑（K1/K2/K3）见 `wmlab/eval/conformal.py` 文件头；K1/K2 已由自检 ㊷㊸ 钉死。
+    conf_tab = None
+    conf_diag: dict = {}
+    if args.pol == "conformal":
+        calib_off = int(cfg["data"].get("calib_seed_offset", 3000))
+        n_cal = int(dz.get("calib_samples", 4096))
+        want_usable = int(dz.get("calib_episodes", 24))
+        if args.quick:
+            n_cal, want_usable = min(n_cal, 768), min(want_usable, 12)
+        # ★★ 冒烟实测（2026-09-29，一次真事故）：**先把 episode 筛选出来再切分**。
+        #   第一版直接 `collect(n)` 然后 `// 2` 切分 ⇒ wind_amp=16 时 `_sample_windows`
+        #   抛「没有可用窗口」。根因：**PD 控制器在 amp=16 的阵风下大量跟丢**，
+        #   实测 seed_off=3000/n=8 的 8 条里只有 **1 条**长度 > WARMUP+H+1=417
+        #   （中位长度只有 169）⇒ 一半的标定集是空的。
+        #   ★ 这不是标定集的局部问题：**凡是 `t0_min=WARMUP` 的探针（X38-b/X39/X41 的 P3）
+        #     都在"熬过 400 步"的子集上算**，短 episode 一步都不贡献 —— 幸存者偏差，
+        #     已在引用限定里如实登记。
+        #   ★ 另一个教训：**别在单个种子上赌**。改成跨多个种子批次收集、边收边筛。
+        usable: list = []
+        n_batch, k_batch, n_raw = 12, 0, 0
+        while len(usable) < want_usable and k_batch < 24:
+            off = calib_off + 100 * k_batch
+            c_env = make_env(cfg["env"]["id"], seed=off,
+                             noise_std=float(cfg["env"]["noise_std"]),
+                             max_steps=int(cfg["env"]["max_steps"]),
+                             wind_amp=wind_amp)
+            c_ctrl = PDRelativeController(dt=c_env.dt, omega_n=float(cc["omega_n"]),
+                                          zeta=float(cc["zeta"]), kappa=float(c_env.kappa),
+                                          a_max=float(c_env.a_max))
+            eps_ = collect_controlled_episodes(
+                c_env, c_ctrl, n_episodes=n_batch, seed=off,
+                max_steps=int(cfg["env"]["max_steps"]))
+            c_env.close()
+            n_raw += len(eps_)
+            # ★ 只留"熬过预热 + 还装得下一个 H 窗口"的 episode
+            usable += [e for e in eps_ if int(e["length"]) - H - 1 > WARMUP]
+            k_batch += 1
+        if len(usable) < 6:
+            raise AssertionError(
+                f"★ X42：可用标定 episode 只有 {len(usable)} 条"
+                f"（收 {n_raw} 条，要求每条长度 > {WARMUP + H + 1}）⇒ "
+                "episode 级 fit/留出切分做不了；**不许**降级成全量标定（那会失去覆盖性检验）")
+        # ★ K3：**按 episode 切**，不按窗口切（窗口在 episode 内强自相关；
+        #   随机切窗口会让标定与留出共享相邻步 ⇒ 覆盖率被高估）
+        n_half = len(usable) // 2
+        dims = slice(0, 2) if args.conf_target == "pos" else slice(None)
+        e_parts, u_parts = {}, {}
+        ep_seed = seed + 77
+        for half, half_eps, n_half_s in (("fit", usable[:n_half], n_cal),
+                                         ("test", usable[n_half:], max(n_cal // 2, 256))):
+            o0c, actc, tgtc = _sample_windows(half_eps, H, n_half_s,
+                                              seed=ep_seed, t0_min=WARMUP)
+            u_parts[half] = _rollout_sigma(model, o0c, actc, device)
+            with torch.no_grad():
+                zz = model.encode(torch.as_tensor(o0c, dtype=torch.float32, device=device))
+                aa = torch.as_tensor(actc, dtype=torch.float32, device=device)
+                pdc = []
+                for h in range(H):
+                    zz = model.next_latent(zz, aa[:, h])
+                    pdc.append(model.decode(zz).detach().cpu().numpy())
+            pdc = np.stack(pdc, axis=1)
+            de = (pdc - tgtc) ** 2
+            e_parts[half] = de[:, :, dims].mean(axis=2) / max(var_g, 1e-18)
+        conf_tab = fit_envelope(e_parts["fit"], u_parts["fit"],
+                                alpha=float(args.conf_alpha),
+                                n_knots=int(dz.get("conf_knots", 8)))
+        cov = conf_coverage(e_parts["test"], u_parts["test"], conf_tab)
+        # ★ S_c2：ĝ 随年龄不减（误差随年龄增长这条常识必须体现在拟合里）
+        g_med = np.array([float(np.median(conf_tab["knots_v"][h,
+                                                              :int(conf_tab["n_keep"][h])]))
+                          for h in range(H)])
+        n_drop = int((np.diff(g_med) < -1e-9).sum())
+        # ★ tol 阶梯：**预先登记**（锚在配置里既有的 err_threshold=0.05，×2 阶梯）
+        tol_list = [float(x) for x in dz.get("conf_tol_list", [0.05, 0.1, 0.2, 0.4])]
+        # 每个 tol 的"隐含交叉年龄"：仅靠年龄就会触发的最早步（供可解释性核对）
+        u_med_mid = np.array([float(np.median(u_parts["fit"][:, h])) for h in range(H)])
+        cross = []
+        for tol in tol_list:
+            grid_h = np.arange(1, H + 1, dtype=float)
+            e_curve = conf_envelope(conf_tab, grid_h, u_med_mid)
+            hit = np.nonzero(e_curve >= tol)[0]
+            cross.append(int(hit[0]) + 1 if hit.size else -1)
+        conf_diag = {"alpha": float(args.conf_alpha), "target": args.conf_target,
+                     "calib_seed_offsets": [calib_off + 100 * j for j in range(k_batch)],
+                     "n_calib_episodes_raw": int(n_raw),
+                     "n_calib_episodes_usable": int(len(usable)),
+                     "n_fit_episodes": int(n_half),
+                     "n_test_episodes": int(len(usable) - n_half),
+                     "usable_ep_len_median": float(np.median(
+                         [int(e["length"]) for e in usable])),
+                     "n_fit": int(conf_tab["n_fit"]), "q": float(conf_tab["q"]),
+                     "q_clipped": bool(conf_tab["clipped"]),
+                     "q_unnorm": float(conf_tab["q_unnorm"]),
+                     "s_h": conf_tab["s_h"].tolist(),
+                     "g_age_median": g_med.tolist(),
+                     "n_age_monotone_violations": n_drop,
+                     "coverage": cov, "tol_list": tol_list,
+                     "implied_cross_age": cross,
+                     "u_med_fit": u_med_mid.tolist(),
+                     "note": ("共形只给**边缘**覆盖保证；本表逐年龄覆盖率用于判断"
+                              "该信封能否在本设定下迁移（K3：episode 级切分）。")}
+        print(f"[24]   ★ X42 共形信封：target={args.conf_target} α={args.conf_alpha:g} "
+              f"| 标定集 {k_batch} 批 × {n_batch} 条（seed 偏移 "
+              f"{conf_diag['calib_seed_offsets'][0]}…+100）收回 {n_raw} 条，"
+              f"**熬过预热**的可用 {len(usable)} 条"
+              f"（长度中位 {conf_diag['usable_ep_len_median']:.0f}）"
+              f"⇒ fit {n_half} / 留出 {len(usable) - n_half} 条")
+        print(f"[24]     Q_α={conf_tab['q']:.4f}（未归一化对照 {conf_tab['q_unnorm']:.4f}"
+              f" ⇒ Ŝ(h) 的归一化把尺度从 {conf_tab['q_unnorm']:.3f} 压到 "
+              f"{conf_tab['q']:.3f}）"
+              + ("  ⚠ Q 被样本量截断" if conf_tab["clipped"] else ""))
+        print(f"[24]     S_c1 覆盖性（留出集，目标 {cov['target']:.2f}）："
+              f"边缘 {cov['marginal']:.4f}｜逐年龄 中位 {cov['per_age_median']:.4f} "
+              f"最小 {cov['per_age_min']:.4f}（3σ 容差 ±{cov['tol_3sigma']:.4f}）")
+        print(f"[24]     S_c2 ĝ 随年龄单调：违约 {n_drop}/{H - 1} 段"
+              f"｜ĝ 中位 {g_med[0]:.4f}→{g_med[-1]:.4f}（h=1→{H}）")
+        print("[24]     tol 阶梯与**隐含交叉年龄**（仅靠年龄就会触发的最早步）："
+              + "  ".join(f"tol={t:g}@{c if c > 0 else '>H'}"
+                          for t, c in zip(tol_list, cross)))
+        # ★★ S_c1 是**硬门**：校准本身没兑现 ⇒ 后面的调度结论一律不许下
+        if cov["marginal"] < cov["target"] - cov["tol_3sigma"]:
+            raise AssertionError(
+                f"★ S_c1 未通过：留出集边缘覆盖率 {cov['marginal']:.4f} < "
+                f"目标 {cov['target']:.4f} − 3σ {cov['tol_3sigma']:.4f}"
+                " ⇒ 该信封在本设定下不可迁移，X42 的调度结论全部作废（不许照报）")
+        if conf_tab["clipped"]:
+            print("[24]     ⚠ Q_α 被样本量截断 ⇒ 覆盖率退化为 1（恒覆盖），"
+                  "本节结论只能作**上界**用")
+        if n_drop:
+            print(f"[24]     ⚠ S_c2 有 {n_drop} 段 ĝ 随年龄下降 ⇒ 先查标定集是否有"
+                  "分布漂移，别急着解释")
+
     # ============================================================ ★ X38-b 快捷出口
     # X38-b 只关心「σ 头在异方差环境下能不能学到状态依赖 ⇒ ρ_cond 是否上升」，
     # 不需要闭环 P2/P4 那 96+48 个工作点（16 min）⇒ 到此为止，落一个只含 P1/P3 的 JSON。
@@ -676,6 +832,9 @@ def main():
                                "u_cv_conditional_median": float(np.median(cvs)),
                                "per_h": per_h, **p3_extra},
         }
+        # ★ X42：`--p3-only` 也把共形标定/覆盖性诊断落盘（冒烟即可验证全链路）
+        if conf_diag:
+            payload_b["conformal"] = conf_diag
         # ★ 文件名必须带 wind_amp：否则 4 个剂量档互相覆盖，只剩最后一个（剂量—反应曲线就没了）
         tag = args.tag + f"_wind{wind_amp:g}"
         jpath = os.path.join(out, tag + ".json")
@@ -707,7 +866,42 @@ def main():
     u_hat = None
     u_scale = None
     hybrid_spec: list[tuple[int, float]] = []
-    if args.pol in ("resid", "hybrid"):
+    if args.pol == "conformal":
+        # ★★ X42：旋钮 = 安全网年龄 K × **误差容限 tol**。
+        #   ★ 与 X40 的**唯一**差别是触发统计量：X40 卡的是「U 在给定年龄下是否异常」
+        #     （分位点标定的 τ，是个**调度旋钮**）；X42 卡的是「**校准后的误差上界**是否
+        #     超过容限」（tol，是**任务量纲**）。规则结构逐字相同：`age≥K 或 触发`。
+        if conf_tab is None:
+            raise AssertionError("★ X42：--pol conformal 必须先生成共形信封")
+        knobs = [int(x) for x in dz.get("hybrid_K_list", [2, 4, 8, 16, 32])]
+        tol_list = [float(x) for x in conf_diag["tol_list"]]
+        u_thrs = [t for k in knobs for t in tol_list]
+        knobs = [k for k in knobs for _ in tol_list]
+        print(f"[24]   共形触发：age≥K 或 Ê_α(age,U)≥tol"
+              f"（Ê 已按 (h, U) 条件化；α={args.conf_alpha:g}，目标量={args.conf_target}）")
+        print(f"[24]     K ∈ {sorted(set(knobs))}   tol ∈ {tol_list}"
+              f"  ⇒ {len(knobs)} 个工作点")
+        print("[24]     退化钉死（S_h'）：tol=+∞ ⇒ ≡纯年龄阈值；K=1 或 tol=−∞ ⇒ ≡T=1")
+        _K0, _per0 = int(knobs[0]), float(pers[0])
+        a_inf, _ = _sim_conformal(_K0, float("inf"), _per0, U, conf_tab,
+                                  40000, seed + 91)
+        a_thr = float(threshold_mean_age(_K0, _per0))
+        a_k1, _ = _sim_conformal(1, -1e9, _per0, U, conf_tab, 40000, seed + 92)
+        a_ninf, _ = _sim_conformal(_K0, -1e9, _per0, U, conf_tab, 40000, seed + 93)
+        a_t1 = float(periodic_mean_age(_per0, 1))
+        print(f"[24]     S_h'：tol=+∞ ⇒ E[age] {a_inf:.4f} vs 纯阈值闭式 {a_thr:.4f}"
+              f"（相对差 {abs(a_inf - a_thr) / max(a_thr, 1e-9):.2%}）")
+        if abs(a_inf - a_thr) > max(0.05, 0.03 * a_thr):
+            raise AssertionError(
+                f"★ S_h' 未通过：tol=+∞ 未退化为纯年龄阈值（{a_inf:.4f} vs {a_thr:.4f}）")
+        if abs(a_k1 - a_t1) > max(0.05, 0.03 * a_t1) or \
+                abs(a_ninf - a_t1) > max(0.05, 0.03 * a_t1):
+            raise AssertionError(
+                f"★ S_h' 未通过：K=1 / tol=−∞ 未退化为 T=1"
+                f"（{a_k1:.4f} / {a_ninf:.4f} vs {a_t1:.4f}）")
+        print(f"[24]     S_h'：K=1 ⇒ {a_k1:.4f}、tol=−∞ ⇒ {a_ninf:.4f}"
+              f" vs T=1 闭式 {a_t1:.4f} ⇒ 三条退化全部通过 ✓")
+    elif args.pol in ("resid", "hybrid"):
         # ★★ z 分数标准化（第一版用原始残差 ⇒ 尺度随 age 变 ⇒ 冒烟给 4.77× 假结果）
         u_hat = np.median(U, axis=0)                        # (H,) Û(age) 条件中位数
         mad = np.median(np.abs(U - u_hat[None, :]), axis=0)  # 条件 MAD（抗尾）
@@ -759,13 +953,20 @@ def main():
         print("[24]   阈值按「名义触发年龄 h*」标定（thr = 离线 U(h*) 的中位数）："
               + "  ".join(f"h*={h}:{v:.4f}" for h, v in zip(h_stars, u_thrs)))
     n_div = 0
+    conf_trace = None
     for per in pers:
         for knob, thr in zip(knobs, u_thrs):
             state = {"U": 0.0, "age": 0}
+            # ★ X42 口径核对：对**第一个**工作点开逐步 trace，事后比
+            #   「闭环 U|age」与「离线标定 U|age」是否同分布（R12：参数真的接线了吗）
+            if args.pol == "conformal" and conf_trace is None:
+                state["_trace"] = []
             sch = (_resid_schedule(thr, per, state, u_hat, u_scale)
                    if args.pol == "resid" else
                    _hybrid_schedule(knob, thr, per, state, u_hat, u_scale)
                    if args.pol == "hybrid" else
+                   _conformal_schedule(knob, thr, per, state, conf_tab)
+                   if args.pol == "conformal" else
                    _utrig_schedule(thr, per, state))
             r = run_closed_loop_control(
                 env, model, ctrl, sch, n_episodes=n_task_ep, seed=online_seed,
@@ -784,6 +985,9 @@ def main():
                                      if args.pol != "resid" else float("nan"))
             row["trigger"] = args.pol
             rows.append(row)
+            if args.pol == "conformal" and conf_trace is None \
+                    and state.get("_trace") is not None:
+                conf_trace = state["_trace"]
     env.close()
     if n_div:
         print(f"[24]   ⚠ {n_div}/{len(pers) * len(u_thrs)} 个 {UT} 触发点发散"
@@ -793,8 +997,10 @@ def main():
             _ex = (f"(=名义 {r['age_over_hstar']:.2f}×) "
                    if np.isfinite(r["age_over_hstar"]) else "")
             _kb = (f"K={r['knob']:<3d} τ={r['u_thr']:+.3f}" if args.pol == "hybrid"
-                   else (f"τ={r['u_thr']:+.3f}   " if args.pol == "resid"
-                         else f"h*={r['knob']:<3d} thr={r['u_thr']:+.4f}"))
+                   else (f"K={r['knob']:<3d} tol={r['u_thr']:g}"
+                         if args.pol == "conformal"
+                         else (f"τ={r['u_thr']:+.3f}   " if args.pol == "resid"
+                               else f"h*={r['knob']:<3d} thr={r['u_thr']:+.4f}")))
             print(f"[24]   PER={r['per']:<4g} {UT:<9s} {_kb} "
                   f"tx_rate={r['tx_rate']:.4f} "
                   f"E[age]={r['mean_age']:6.2f} {_ex}| "
@@ -815,6 +1021,66 @@ def main():
             "u_state 没接进 control.py，整个 P4 在空跑")
     print(f"[24]   S_g（R12）：{n_wired}/{len(rates_by_per)} 个 PER 档上改 U 阈值"
           f"使发送率变化 >5% ⇒ 不确定性触发已接线 ✓")
+
+    # ★★ X42 S_c4：**这一臂到底在不在动**（R12 的对象换成"整个策略族"）。
+    #   冒烟实测：K=8 时 tol=0.2 / 0.4 的 tx_rate 与**同 K 纯年龄阈值**逐位相同
+    #   ⇒ 那些工作点是"安全网 K 主导、信封从未提前触发"。
+    #   若这种点在整族里占多数，则 H1/H0 的比较实际上在比"两个年龄阈值"，
+    #   **结论会被读错**（把"信封没生效"读成"信封无价值"）⇒ 必须机器数出来。
+    conf_active = None
+    if args.pol == "conformal":
+        thr_map = {(r["per"], r["knob"]): r["tx_rate"]
+                   for r in rows if r["policy"] == "threshold"}
+        n_kdom = n_tot = 0
+        for r in rows:
+            if r["policy"] != UT:
+                continue
+            base = thr_map.get((r["per"], r["knob"]))
+            if base is None:
+                continue
+            n_tot += 1
+            if abs(float(r["tx_rate"]) - float(base)) <= 1e-9:
+                n_kdom += 1
+        conf_active = {"n_work_points": int(n_tot), "n_k_dominated": int(n_kdom),
+                       "frac_active": (1.0 - n_kdom / max(n_tot, 1)),
+                       "note": ("K 主导 = 该工作点上共形信封从未比安全网 K 更早触发；"
+                                "此时该点等价于纯年龄阈值，不构成对 H1 的证据")}
+        print(f"[24]   ★ S_c4：共形触发相对**同 K 纯年龄阈值**真的改变了发送率的比例 = "
+              f"{conf_active['frac_active']:.2f}（{n_tot - n_kdom}/{n_tot} 个可比工作点）"
+              + ("  ⇒ ⚠ 多数工作点被安全网 K 主导 ⇒ 该族的比较**大部分**在比两个年龄阈值，"
+                 "H1 只能按**剩下那部分**工作点下结论"
+                 if conf_active["frac_active"] < 0.4 else "  ⇒ 信封确实在起作用 ✓"))
+
+    # ★★ X42 口径核对（R12 的同一句话，对象换成"标定集"）：
+    #   信封是在**离线** rollout 上学出来的（U 由真观测序列累积），
+    #   而闭环里的 U 由**漂移中的估计**累积 ⇒ 两者可以不同分布。
+    #   若不同分布，信封在闭环上就**没有覆盖保证**（可交换性被破坏）⇒ 必须如实报。
+    conf_align = None
+    if conf_trace:
+        tr = np.asarray(conf_trace, dtype=float)
+        off = np.asarray(conf_diag.get("u_med_fit", []), dtype=float)
+        al_rows, ratios = [], []
+        for h_ref in (1, 2, 4, 8, 16):
+            m = tr[:, 0] == h_ref
+            if int(m.sum()) >= 20 and h_ref <= off.size:
+                cm, om = float(np.median(tr[m, 1])), float(off[h_ref - 1])
+                al_rows.append({"h": h_ref, "n": int(m.sum()),
+                                "u_med_closed": cm, "u_med_offline": om,
+                                "ratio": cm / max(om, 1e-12)})
+                ratios.append(cm / max(om, 1e-12))
+        if ratios:
+            r_arr = np.asarray(ratios, dtype=float)
+            conf_align = {"per_h": al_rows,
+                          "ratio_median": float(np.median(r_arr)),
+                          "ratio_min": float(r_arr.min()),
+                          "ratio_max": float(r_arr.max())}
+            print(f"[24]   ★ X42 口径核对（闭环 U|age 中位 ÷ 离线 U|age 中位）："
+                  + "  ".join(f"h={r['h']}:{r['ratio']:.3f}" for r in al_rows))
+            if not (0.8 <= float(np.median(r_arr)) <= 1.25):
+                print("[24]     ⚠⚠ 两者差 >25% ⇒ 闭环 U 不在标定分布内 ⇒ "
+                      "共形覆盖保证在闭环上**不成立**，本号只能作**探索性**对照（必须写进引用限定）")
+            else:
+                print("[24]     ✓ 闭环与离线同量级（±25% 内）⇒ 标定可迁移")
 
     # --- 三方等预算对比（在同一 tx_rate 网格上插值）---
     cmp3 = []
@@ -842,6 +1108,13 @@ def main():
                     break
                 vals[p] = np.interp(grid, x, y)
             if len(vals) != 3:
+                # ★ 2026-09-29 补：这里原先是**静默 continue** ⇒ 输出里少一行，
+                #   会被读成"这一档没问题"（铁律 17 ⑥：不可评估必须把**原因**打进 stdout）。
+                #   实测本轮的触发路径是 `overlap_window` 的显式异常（有打印），
+                #   但这条静默路径是**潜伏**的：只要某族某一列出现非有限值就会吃掉一整档。
+                print(f"[24]   ⚠ 该档 {met} 不可评估：PER={per:g} —— "
+                      f"三族中有族的「{met}」列含非有限值（len(vals)={len(vals)}≠3）"
+                      " ⇒ 跳过该条，**不计入结论**")
                 continue
             with np.errstate(divide="ignore", invalid="ignore"):
                 r_ut = vals[UT] / np.maximum(vals["threshold"], 1e-18)
@@ -867,7 +1140,8 @@ def main():
     # ★★ 图标题必须**跟着本次运行走**。原先硬编码 "X38 触发式调度" ⇒ X39/X40 的产物图
     #    全顶着 X38 的名字，**图与实验对不上**（`payload["experiment"]` 早就是派生的，图漏了）。
     #    payload 里仍保留更详细的那句描述，这里只负责「这张图是哪一次运行」。
-    _fam = {"utrigger": "X38", "resid": "X40-纯残差", "hybrid": "X40"}.get(args.pol, "X38")
+    _fam = {"utrigger": "X38", "resid": "X40-纯残差", "hybrid": "X40",
+            "conformal": "X42"}.get(args.pol, "X38")
     exp_title = (f"{_fam} 触发式调度（trigger={args.pol}，wind_amp={wind_amp:g}）："
                  "等传输预算下 周期 / 年龄阈值 / 不确定性触发")
     fig, axes = plt.subplots(2, 3, figsize=(17.5, 9.5))
@@ -944,18 +1218,71 @@ def main():
     save_fig(fig, os.path.join(out, _stem + ".png"))
     plt.close(fig)
 
+    # ★★ X42：共形诊断图（单独一张，别把主图塞满）—— 一图看清"信封长什么样"
+    if conf_tab is not None:
+        fig2, ax2 = plt.subplots(1, 3, figsize=(16.5, 4.6))
+        fig2.suptitle(f"X42 共形误差信封（target={conf_diag['target']}，"
+                      f"α={conf_diag['alpha']:g}，wind_amp={wind_amp:g}，"
+                      f"trigger={args.pol}）", fontsize=11)
+        hh = np.arange(1, H + 1)
+        # ① 留出集逐年龄覆盖率（S_c1）
+        pa = np.asarray(conf_diag["coverage"]["per_age"], dtype=float)
+        ax2[0].bar(hh, pa, color=PALETTE["blue"], alpha=0.8)
+        ax2[0].axhline(conf_diag["coverage"]["target"], color=PALETTE["red"], ls="--",
+                       lw=1.2, label=f"目标 {conf_diag['coverage']['target']:.2f}")
+        ax2[0].set_ylim(0, 1.02)
+        ax2[0].set_xlabel("age h（步）"); ax2[0].set_ylabel("实测覆盖率")
+        ax2[0].set_title("① S_c1：留出集逐年龄覆盖率（共形只保**边缘**）")
+        ax2[0].legend(fontsize=8); ax2[0].grid(alpha=0.3)
+        # ② 信封曲线（U 取三个分位）+ tol 线
+        uf = np.asarray(conf_diag["u_med_fit"], dtype=float)
+        u_sd = np.asarray(conf_tab["s_h"], dtype=float)
+        for q, ls in ((0.1, ":"), (0.5, "-"), (0.9, "--")):
+            uq = uf + (0.0 if q == 0.5 else (u_sd * (1.2816 if q == 0.9 else -1.2816)))
+            ax2[1].plot(hh, conf_envelope(conf_tab, hh.astype(float), uq),
+                        ls, color=PALETTE["purple"], alpha=0.9,
+                        label=f"U @ q{q:g}")
+        for tol in conf_diag["tol_list"]:
+            ax2[1].axhline(tol, color=PALETTE["green"], lw=0.9, alpha=0.6)
+        ax2[1].set_yscale("log")
+        ax2[1].set_xlabel("age h（步）"); ax2[1].set_ylabel("校正后误差上界 $\\hat E_\\alpha$")
+        ax2[1].set_title("② 信封随年龄的增长（横线 = tol 阶梯）")
+        ax2[1].legend(fontsize=7.5); ax2[1].grid(alpha=0.3)
+        # ③ 触发边界：给定 h，U 要多大才会触发
+        for k, tol in enumerate(conf_diag["tol_list"]):
+            us = []
+            for h in range(H):
+                nk = int(conf_tab["n_keep"][h])
+                ku = conf_tab["knots_u"][h, :nk]
+                kv = conf_tab["knots_v"][h, :nk] + conf_tab["s_h"][h] * conf_tab["q"]
+                hit = np.nonzero(kv >= tol)[0]
+                us.append(float(ku[hit[0]]) if hit.size else np.nan)
+            ax2[2].plot(hh, us, "o-", ms=3, alpha=0.85, label=f"tol={tol:g}")
+        ax2[2].set_xlabel("age h（步）"); ax2[2].set_ylabel("触发所需的最小 U")
+        ax2[2].set_title("③ 触发边界 $u^*(h)$（越低 = 越容易提前发）")
+        ax2[2].legend(fontsize=7.5); ax2[2].grid(alpha=0.3)
+        fig2.tight_layout(rect=(0, 0, 1, 0.94))
+        save_fig(fig2, os.path.join(out, _stem + "_conf.png"))
+        plt.close(fig2)
+
     payload = {
         "experiment": {"resid": "X40 纯残差触发 z≥τ（诊断：会撤掉安全网）",
                        "hybrid": "X40 混合触发 age≥K 或 z≥τ（残差只准加速）",
+                       "conformal": "X42 共形校准触发 age≥K 或 Ê_α(age,U)≥tol"
+                                    "（把自报 σ 换成有覆盖保证的误差上界）",
                        }.get(args.pol,
                              "X38 触发式调度：等传输预算下 周期 / 年龄阈值 / 不确定性触发"),
         "trigger": args.pol,
+        "conf_target": (args.conf_target if args.pol == "conformal" else None),
         "wind_amp": float(wind_amp),
         "config": {k: cfg[k] for k in ("env", "controller", "design", "eval", "task")},
         "obs_dim": int(obs_dim), "var_g": var_g,
         "P1_analytic": p1_rows, "P1_verdict": p1_verdict,
         "P2_closed_loop": rows, "P2_matched_rate": cmp_rows,
         "P4_u_thresholds": u_thrs, "P4_matched_rate": cmp3,
+        "conformal": (conf_diag if conf_diag else None),
+        "conformal_alignment": conf_align,
+        "conformal_active": conf_active,
         "P3_conditional": {"rho_unconditional": float(rho_all),
                            "rho_conditional_median": float(rho_cond),
                            "auc_conditional_median": float(auc_cond),
@@ -970,7 +1297,21 @@ def main():
                    "（2026-09-29 修正：原先只在 utrigger 分支算 ⇒ 口径不对称）。"
                    "★★ trigger='utrigger' 的阈值是 `thr=median(U[:,h*-1])`（按名义年龄标定），"
                    "而闭环 ρ(U,age)=0.9941 ⇒ **它数学上就≈年龄阈值**，不能用来检验"
-                   "「U 有无边际价值」；要检验请用 trigger='hybrid'。"),
+                   "「U 有无边际价值」；要检验请用 trigger='hybrid'。"
+                   + ("  ★★ trigger='conformal'（X42）：触发量 = **共形校准的误差上界**"
+                      " `Ê_α(h,U)=ĝ(h,U)+Ŝ(h)Q_α`（ĝ = 逐年龄 PAVA 单调拟合，"
+                      "Q_α = 分数 (e−ĝ)/Ŝ 的 ⌈(n+1)(1−α)⌉ 阶统计量）。"
+                      "★ 共形只给**边缘**覆盖保证（`P(e≤Ê)≥1−α`），**不制造排序能力** "
+                      "⇒ 若 U|h 的排序力本就不转化为任务收益，校准不会凭空创造收益。"
+                      "★ 标定集是**独立 episode**（seed+3000）且**按 episode 切** fit/留出"
+                      "（K3：窗口在 episode 内强自相关，随机切会高估覆盖率）。"
+                      "★ S_c1（留出集覆盖率）是**硬门**：不达标则本号结论全部作废。"
+                      "★ tol 阶梯 {0.05,0.1,0.2,0.4} 锚在配置既有的 err_threshold=0.05，"
+                      "**跑前登记**；它是**任务量纲**、与环境尺度绑定，跨场景必须重标。"
+                      "★ C30（arXiv:2607.01537）自己写明其短视界档"
+                      "『empirical conformal horizons **match** the deployed clock』"
+                      "⇒ 『换成共形就有价值』是**没有根据的预期**，本号只负责测出来。"
+                      if args.pol == "conformal" else "")),
     }
     jpath = os.path.join(out, _stem + ".json")
     with open(jpath, "w", encoding="utf-8") as f:
@@ -1092,6 +1433,79 @@ def _hybrid_schedule(K: int, tau: float, loss_prob: float, state: dict,
     _f.reset = _reset                                   # type: ignore[attr-defined]
     _f.__name__ = f"hybrid(K={K_},tau={t_:.3f},p={p})"
     return _f
+
+
+def _conformal_schedule(K: int, tol: float, loss_prob: float, state: dict,
+                        tab: dict) -> object:
+    """★ X42：**共形信封触发** —— `age ≥ K` **或** `Ê_α(age, U) ≥ tol`。
+
+    ★ 与 X40 `_hybrid_schedule` 的**唯一**差别 = 触发统计量：
+        X40：`z = (U − Û(age))/Ŝ(age) ≥ τ`，τ 取 **z 池的分位点**
+             ⇒ 「给定年龄后，U 是否**异常**高」（尺度锚在**调度**上）
+        X42：`Ê_α(age, U) ≥ tol`，Ê = **共形校准的归一化误差上界**
+             ⇒ 「按校准后的上界，误差是否**要超容限**」（尺度锚在**任务**上）
+      规则结构（安全网 K + 只准加速）逐字相同 ⇒ 这是**只换统计量**的消融。
+
+    ★ 为什么 tol 是任务量纲而不是分位点：X40 的 τ 是**调出来的旋钮**，
+      换个环境就没意义；tol 是「能容忍多大误差」，可以与环境无关地先写死。
+      代价：tol 与场景尺度绑定 ⇒ 跨场景比较时必须重标（已在引用限定里写明）。
+
+    ★ 退化（S_h' 钉死）：tol=+∞ ⇒ 恒等纯年龄阈值；K=1 或 tol=−∞ ⇒ 恒等 T=1。
+    """
+    K_ = int(K)
+    t_ = float(tol)
+    p = float(min(max(loss_prob, 0.0), 1.0))
+    n_h = int(tab["H"])
+
+    def _f(t: int, rng: np.random.Generator) -> bool:
+        age = int(state.get("age", 0))
+        if age < K_:
+            h = min(max(age, 1), n_h)
+            e_hat = float(conf_envelope(tab, np.array([h]),
+                                        np.array([float(state.get("U", 0.0))]))[0])
+            if e_hat < t_:
+                return False
+        return bool(rng.random() >= p)
+
+    def _reset(rng: np.random.Generator | None = None) -> None:
+        state["U"] = 0.0
+        state["age"] = 0
+
+    _f.reset = _reset                                   # type: ignore[attr-defined]
+    _f.__name__ = f"conformal(K={K_},tol={t_:g},p={p})"
+    return _f
+
+
+def _sim_conformal(K: int, tol: float, per: float, U_pool: np.ndarray, tab: dict,
+                   n: int, seed: int) -> tuple[float, float]:
+    """★ S_h'：共形触发的**纯调度**仿真（U 从离线池逐步**独立重采样**）。
+
+    ⚠️ 与 `_sim_hybrid` 同一限制：独立重采样**忽略了 U 的自相关**
+      ⇒ 只用于**退化检查**（tol=+∞ ⇒ 纯阈值；K=1 / tol=−∞ ⇒ T=1），
+      **不得**用于报"共形策略的 E[age]"（那要真闭环）。
+    """
+    rng = np.random.default_rng(seed)
+    p = float(min(max(per, 0.0), 1.0))
+    n_h = int(tab["H"])
+    age = 0
+    tot = 0.0
+    ntx = 0
+    for t in range(1, n + 1):
+        U = 0.0
+        if age > 0:
+            U = float(U_pool[rng.integers(U_pool.shape[0]),
+                             min(max(age, 1), n_h) - 1])
+        fire = age >= int(K)
+        if not fire:
+            h = min(max(age, 1), n_h)
+            fire = float(conf_envelope(tab, np.array([h]), np.array([U]))[0]) >= float(tol)
+        if fire and rng.random() >= p:
+            age = 0
+            ntx += 1
+        else:
+            age += 1
+        tot += age
+    return tot / n, ntx / n
 
 
 def _sim_threshold(K: int, per: float, n: int, seed: int) -> tuple[float, float]:

@@ -82,11 +82,24 @@ design:
   hybrid_tau_quantiles: [0.5, 0.7, 0.9]
   # P3 探针的最长视界
   probe_horizon: 32
+  # ★★ X42 共形误差信封（`--pol conformal`）：`Ê_α(h,U)=ĝ(h,U)+Ŝ(h)Q_α`
+  #   ★ K3：标定集必须与评测集**episode 级不相交**，且 fit/留出**按 episode 切**
+  #     （窗口在 episode 内强自相关，随机切窗口会高估覆盖率）
+  #   ★★ 2026-09-29 冒烟实测：amp=16 时 **PD 控制器大量跟丢**，seed=3000 的 8 条里
+  #      只有 1 条长度 > WARMUP+probe_horizon+1=417（中位长度 169）⇒
+  #      **必须"先筛可用 episode、再切分"**，且要**跨多个种子批次**收集（别在单个种子上赌）。
+  #      下面两个数是"**可用**条数"的目标，不是收集条数。
+  conf_knots: 8                 # 每个年龄的 u 节点数（分位箱 + PAVA 单调化）
+  conf_tol_list: [0.05, 0.1, 0.2, 0.4]   # ★ **跑前登记**：锚在 eval.err_threshold=0.05 的 ×2 阶梯
+  calib_episodes: 20            # 目标「可用」episode 数（一半 fit、一半留出）
+  calib_samples: 4096           # fit 半边的 rollout 窗口数（留出半边取一半）
 
 data:
   n_episodes: 120
   eval_seed_offset: 1000
   online_seed_offset: 2000
+  # ★ X42：共形标定集的种子偏移（与训练 seed=0、评测 +1000、闭环 +2000 三路都不相交）
+  calib_seed_offset: 3000
 
 model:
   # ★ 必须是 GaussianWorldModel（要有 σ 头，P3 需要它）⇒ latent_dim 由本文件给
