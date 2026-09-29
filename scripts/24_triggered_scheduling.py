@@ -81,6 +81,11 @@ from wmlab.envs import make_env
 from wmlab.eval.conformal import coverage as conf_coverage
 from wmlab.eval.conformal import envelope as conf_envelope
 from wmlab.eval.conformal import fit_envelope
+from wmlab.eval.oracle import fit_age_cond as oracle_fit_age_cond
+from wmlab.eval.oracle import z_oracle as oracle_z
+from wmlab.eval.oracle import z_pool as oracle_z_pool
+from wmlab.eval.oracle import align_age_medians as oracle_align_fn
+from wmlab.eval.oracle import ORACLE_TRACE_COL
 from wmlab.eval.pairing import (WindowNotEvaluable, expo_grid,  # noqa: F401
                                overlap_window)
 from wmlab.eval.tracking import (periodic_age_pmf, periodic_age_tail,
@@ -156,18 +161,25 @@ def parse_args():
     p.add_argument("--wind-amp", type=float, default=None,
                    help="★ X38-b：状态依赖阵风场幅度（0 = 逐位退化为原同方差环境）")
     p.add_argument("--pol", default="utrigger",
-                   choices=["utrigger", "resid", "hybrid", "conformal"],
-                   help="★ X40/X42：不确定性触发的**触发量**。"
+                   choices=["utrigger", "resid", "hybrid", "conformal", "oracle"],
+                   help="★ X40/X42/X43：不确定性触发的**触发量**。"
                         "utrigger = 全局阈值 U≥thr（X38/X39）；"
                         "resid = 纯残差 z≥τ（诊断用，会撤掉安全网）；"
                         "hybrid = age≥K 或 z≥τ（决定性：残差只准加速）；"
-                        "conformal = age≥K 或 Ê_α(age,U)≥tol（★ X42：共形校准的误差信封）")
+                        "conformal = age≥K 或 Ê_α(age,U)≥tol（★ X42：共形校准的误差信封）；"
+                        "oracle = age≥K 或 z_or≥τ（★ X43：**真值误差**的逐年龄 z 分数，"
+                        "特权量 ⇒ 只作「误差类触发量」的可达上界，不可部署）")
     p.add_argument("--conf-target", default="pos", choices=["pos", "nmse"],
                    help="★ X42：共形信封标定的**误差量**。"
                         "nmse = 全维归一化 NMSE（与 X38/X40 的估计误差同口径）；"
                         "pos = **位置维**归一化误差（= 控制器实际吃进去的那个量，任务对齐）")
     p.add_argument("--conf-alpha", type=float, default=0.1,
                    help="★ X42：共形分位数水平 α（覆盖率目标 1−α）")
+    p.add_argument("--oracle-target", default="res", choices=["res", "pos"],
+                   help="★ X43：oracle 触发量用的**真值误差**量。"
+                        "res = 全维（6/6）归一化误差（与 X38/X40/X41/X42-nmse 同口径）；"
+                        "pos = **位置维**（2/6）归一化误差（= 控制器实际吃进去的量，"
+                        "与 X42 的 pos 臂同口径）")
     return p.parse_args()
 
 
@@ -294,7 +306,9 @@ def main():
     print("[24] " + "=" * 78)
     print("[24] ★ X38/X40 触发式调度：等传输预算下 周期 / 年龄阈值 / 不确定性触发")
     _pol_desc = {"resid": "纯残差 z≥τ，先条件掉 age（会撤掉安全网）",
-                 "hybrid": "混合 age≥K 或 z≥τ（残差只准加速，安全网 K 不动）"}.get(
+                 "hybrid": "混合 age≥K 或 z≥τ（残差只准加速，安全网 K 不动）",
+                 "conformal": "混合 age≥K 或 Ê_α(age,U)≥tol（共形校准误差上界）",
+                 "oracle": "混合 age≥K 或 z_or≥τ（**真值误差**，特权 ⇒ 只作可达上界）"}.get(
                      UT, "全局阈值 U≥thr")
     print(f"[24]   触发量族 = {UT}（{_pol_desc}）")
     print(f"[24]   PER ∈ {pers}    T ∈ {T_list}    K ∈ {K_list}")
@@ -814,6 +828,124 @@ def main():
             print(f"[24]     ⚠ S_c2 有 {n_drop} 段 ĝ 随年龄下降 ⇒ 先查标定集是否有"
                   "分布漂移，别急着解释")
 
+    # ============================================================ ★★ X43：oracle（特权）触发量
+    # ★★ 动机（看板「下一步」第 2 项）：X38–X42 一路在换**触发统计量**（U → 残差 → 共形上界），
+    #    边际任务价值始终是 0。剩下的问题只有一个：**是不是「统计量还不够好」？**
+    #    ⇒ 用**真值误差**（仿真器内部的 ground truth）当触发量，量出「误差类触发量」的**可达上界**。
+    #
+    # ★★ 先纠一处前提（字面实现会退化成同义反复，0% 价值）：
+    #    看板原文写的是「用**环境真值的逐年龄误差分布**当完美触发量」。
+    #    若照字面实现 `Ê^or(h) = 真值误差在年龄 h 处的条件 α 分位`，该量**只依赖 h**
+    #    ⇒ `Ê^or(h) ≥ tol  ⟺  h ≥ h*` ⇒ **恒等于年龄阈值** ⇒ 比值恒为 1.000。
+    #    那不是发现，是**同义反复**（等于说"年龄阈值等于年龄阈值"）。
+    #    ⇒ 本号改用**非退化**版本：把**已实现的**（realized）真值误差按年龄归一化成
+    #      z 分数 `z_or = (e_t − m(h))/Ŝ(h)`，规则结构**逐字**照抄 X40/X42：
+    #         `age ≥ K 或 z_or ≥ τ`（安全网 K 不动、触发只准加速）⇒ 只换统计量。
+    #
+    # ★ 概念边界（决定本号能说什么、不能说什么）：oracle 用真值 ⇒ **不可部署**，只是
+    #   **可达上界**；它上界的是「**误差类触发量**」这一族。⇒ 若 oracle 也赢不了年龄阈值，
+    #   则**瓶颈不在触发量的信息量**（要么在任务侧、要么「误差」本身不是好目标）。
+    #   ⚠️ 它**不**上界「用别的可观测量做**预测性**触发」（例如知道真值阵风场 ⇒
+    #      提前知道哪一段误差会长得快）—— 那一类需要**另一个** oracle，写进引用限定。
+    #
+    # ★★ 归一化必须有（O1，自检 ㊻）：真值误差的量级随 h 增长 ⇒ 全局阈值会退化成
+    #    "只在老年龄才发"（X40 坑 2 的**第三次**复现）。m(h)/Ŝ(h) 从**同一套离线标定集**取，
+    #    且与在线量**逐位同量纲**（都是 mean(平方误差)/var_g —— R12）。
+    #
+    # ★ 有意**重复** X42 的标定段（不抽公共函数）：X42 的证据是**已提交的分块 JSON**，
+    #   改动它自己的代码路径会让"可复现"这句话失去锚点。本文件本来就按 X 号分块自足
+    #   （resid/hybrid/conformal 三块已互相平行）⇒ 重复是**守约定**的取舍；
+    #   "抽成可复用调度基线库"与"oracle 上界"并列为下一步（记在看板）。
+    or_tab = None
+    or_diag: dict = {}
+    if args.pol == "oracle":
+        calib_off = int(cfg["data"].get("calib_seed_offset", 3000))
+        n_cal = int(dz.get("calib_samples", 4096))
+        want_usable = int(dz.get("calib_episodes", 24))
+        if args.quick:
+            n_cal, want_usable = min(n_cal, 768), min(want_usable, 12)
+        # ★ 同 X42：**先筛可用 episode，再切分**（amp=16 下 PD 大量跟丢 ⇒ 一半标定集是空的）
+        usable_or: list = []
+        n_batch, k_batch, n_raw = 12, 0, 0
+        while len(usable_or) < want_usable and k_batch < 24:
+            off = calib_off + 100 * k_batch
+            c_env = make_env(cfg["env"]["id"], seed=off,
+                             noise_std=float(cfg["env"]["noise_std"]),
+                             max_steps=int(cfg["env"]["max_steps"]),
+                             wind_amp=wind_amp)
+            c_ctrl = PDRelativeController(dt=c_env.dt, omega_n=float(cc["omega_n"]),
+                                          zeta=float(cc["zeta"]), kappa=float(c_env.kappa),
+                                          a_max=float(c_env.a_max))
+            eps_ = collect_controlled_episodes(
+                c_env, c_ctrl, n_episodes=n_batch, seed=off,
+                max_steps=int(cfg["env"]["max_steps"]))
+            c_env.close()
+            n_raw += len(eps_)
+            usable_or += [e for e in eps_ if int(e["length"]) - H - 1 > WARMUP]
+            k_batch += 1
+        if len(usable_or) < 6:
+            raise AssertionError(
+                f"★ X43：可用标定 episode 只有 {len(usable_or)} 条（收 {n_raw} 条，"
+                f"要求每条长度 > {WARMUP + H + 1}）⇒ episode 级切分做不了")
+        n_half_or = len(usable_or) // 2
+        dims_or = slice(0, 2) if args.oracle_target == "pos" else slice(None)
+        e_or: dict = {}
+        ep_seed_or = seed + 77
+        for half, half_eps, n_half_s in (("fit", usable_or[:n_half_or], n_cal),
+                                         ("test", usable_or[n_half_or:],
+                                          max(n_cal // 2, 256))):
+            o0c, actc, tgtc = _sample_windows(half_eps, H, n_half_s,
+                                              seed=ep_seed_or, t0_min=WARMUP)
+            with torch.no_grad():
+                zz = model.encode(torch.as_tensor(o0c, dtype=torch.float32, device=device))
+                aa = torch.as_tensor(actc, dtype=torch.float32, device=device)
+                pdc = []
+                for h in range(H):
+                    zz = model.next_latent(zz, aa[:, h])
+                    pdc.append(model.decode(zz).detach().cpu().numpy())
+            pdc = np.stack(pdc, axis=1)
+            de = (pdc - tgtc) ** 2
+            e_or[half] = de[:, :, dims_or].mean(axis=2) / max(var_g, 1e-18)
+        or_tab = oracle_fit_age_cond(e_or["fit"])
+        tau_qs_or = [float(x) for x in dz.get("oracle_tau_quantiles", [0.6, 0.7, 0.8, 0.9])]
+        z_fit_or = oracle_z_pool(e_or["fit"], or_tab)
+        tau_vals_or = [float(np.quantile(z_fit_or.reshape(-1), q)) for q in tau_qs_or]
+        or_diag = {
+            "target": args.oracle_target,
+            "dim_index": ("pos(2/6)" if args.oracle_target == "pos" else "all(6/6)"),
+            "calib_seed_offsets": [calib_off + 100 * j for j in range(k_batch)],
+            "n_calib_episodes_raw": int(n_raw),
+            "n_calib_episodes_usable": int(len(usable_or)),
+            "n_fit_episodes": int(n_half_or),
+            "n_test_episodes": int(len(usable_or) - n_half_or),
+            "usable_ep_len_median": float(np.median([int(e["length"]) for e in usable_or])),
+            "m": or_tab["m"].tolist(), "s": or_tab["s"].tolist(),
+            "n_s_floored": int(or_tab["n_s_floored"]),
+            "s_floor": float(or_tab["s_floor"]),
+            "tau_quantiles": tau_qs_or, "tau_vals": tau_vals_or,
+            "z_fit_median": float(np.median(z_fit_or)),
+            "z_test_abs_median": float(np.median(
+                np.abs(oracle_z_pool(e_or["test"], or_tab)))),
+            "note": ("oracle 用**真值误差**（特权）⇒ 只作**可达上界**，不可部署；"
+                     "上界对象 = 「误差类触发量」这一族（任何从当前估计误差出发的调度器，"
+                     "信息量都不超过它）。⚠ 不覆盖「用别的可观测量做**预测性**触发」"
+                     "那一类（需另设 oracle）。"),
+        }
+        print(f"[24]   ★ X43 oracle 触发量：target={args.oracle_target}"
+              f"（{or_diag['dim_index']}）｜标定集 {k_batch} 批 × {n_batch} 条"
+              f"（seed 偏移 {or_diag['calib_seed_offsets'][0]}…+100）收回 {n_raw} 条，"
+              f"**熬过预热**的可用 {len(usable_or)} 条"
+              f"（长度中位 {or_diag['usable_ep_len_median']:.0f}）"
+              f"⇒ fit {n_half_or} / 留出 {len(usable_or) - n_half_or} 条")
+        print(f"[24]     m(h)（真值误差的条件中位）：{or_tab['m'][0]:.5f}(h=1) → "
+              f"{or_tab['m'][-1]:.5f}(h={H})｜Ŝ(h) 中位 {or_tab['s_median']:.5f}"
+              f"｜Ŝ 落地板 {or_tab['n_s_floored']}/{H} 个年龄")
+        print(f"[24]     τ 阶梯（z 池分位点）："
+              + "  ".join(f"q{q:g}:{v:+.3f}" for q, v in zip(tau_qs_or, tau_vals_or)))
+        print("[24]     ★ 前提纠正：看板原文的「真值逐年龄误差分布」**字面实现会退化成"
+              "同义反复**（只依赖 h ⇒ 恒等于年龄阈值，比值≡1.000）⇒ 本号改用"
+              "**已实现误差的逐年龄 z 分数**（非退化版本）。")
+
     # ============================================================ ★ X38-b 快捷出口
     # X38-b 只关心「σ 头在异方差环境下能不能学到状态依赖 ⇒ ρ_cond 是否上升」，
     # 不需要闭环 P2/P4 那 96+48 个工作点（16 min）⇒ 到此为止，落一个只含 P1/P3 的 JSON。
@@ -866,6 +998,9 @@ def main():
     u_hat = None
     u_scale = None
     hybrid_spec: list[tuple[int, float]] = []
+    # ★ X43：oracle 的旋钮同样存成 (K, τ) 对；`or_key` 是 control.py 里写出的**哪个真值量**
+    oracle_spec: list[tuple[int, float]] = []
+    or_key = "oracle_pos" if args.oracle_target == "pos" else "oracle_err"
     if args.pol == "conformal":
         # ★★ X42：旋钮 = 安全网年龄 K × **误差容限 tol**。
         #   ★ 与 X40 的**唯一**差别是触发统计量：X40 卡的是「U 在给定年龄下是否异常」
@@ -900,6 +1035,41 @@ def main():
                 f"★ S_h' 未通过：K=1 / tol=−∞ 未退化为 T=1"
                 f"（{a_k1:.4f} / {a_ninf:.4f} vs {a_t1:.4f}）")
         print(f"[24]     S_h'：K=1 ⇒ {a_k1:.4f}、tol=−∞ ⇒ {a_ninf:.4f}"
+              f" vs T=1 闭式 {a_t1:.4f} ⇒ 三条退化全部通过 ✓")
+    elif args.pol == "oracle":
+        # ★★ X43：旋钮 = 安全网年龄 K × z_or 的分位点 τ（与 X40 同构）。
+        #   与 X40 的**唯一**差别 = 触发统计量的**信息来源**：
+        #     X40：`z = (U − Û(age))/Ŝ(age)`，U = 模型**自报**的累积不确定度；
+        #     X43：`z_or = (e − m(age))/Ŝ(age)`，e = **真值**误差（特权）。
+        #   ⇒ 这是"只换信息源"的消融；规则结构 `age≥K 或 z≥τ` 逐字相同。
+        or_k = [int(x) for x in dz.get("oracle_K_list", [4, 8, 16])]
+        oracle_spec = [(k, float(np.quantile(z_fit_or.reshape(-1), q)))
+                       for k in or_k for q in tau_qs_or]
+        knobs = [k for k, _ in oracle_spec]
+        u_thrs = [t for _, t in oracle_spec]
+        print("[24]   oracle 触发：age≥K 或 z_or≥τ（**真值误差只准加速**，安全网 K 不动）")
+        print("[24]     K ∈ " + str(or_k) + "   z 分位 " + str(tau_qs_or)
+              + " ⇒ τ = " + ", ".join(f"{t:+.3f}" for _, t in oracle_spec))
+        print("[24]     ⚠ 这是**特权量**（用 ground truth）⇒ 只作**可达上界**，不可部署")
+        # ★ S_o2：三条退化必须逐位成立（拿已知答案验量级，R12）
+        _K0, _per0 = int(or_k[0]), float(pers[0])
+        a_inf, _ = _sim_oracle(_K0, float("inf"), _per0, e_or["fit"], or_tab,
+                               40000, seed + 91)
+        a_thr = float(threshold_mean_age(_K0, _per0))
+        a_k1, _ = _sim_oracle(1, -1e9, _per0, e_or["fit"], or_tab, 40000, seed + 92)
+        a_ninf, _ = _sim_oracle(_K0, -1e9, _per0, e_or["fit"], or_tab, 40000, seed + 93)
+        a_t1 = float(periodic_mean_age(_per0, 1))
+        print(f"[24]     S_o2：τ=+∞ ⇒ E[age] {a_inf:.4f} vs 纯阈值闭式 {a_thr:.4f}"
+              f"（相对差 {abs(a_inf - a_thr) / max(a_thr, 1e-9):.2%}）")
+        if abs(a_inf - a_thr) > max(0.05, 0.03 * a_thr):
+            raise AssertionError(
+                f"★ S_o2 未通过：τ=+∞ 未退化为纯年龄阈值（{a_inf:.4f} vs {a_thr:.4f}）")
+        if abs(a_k1 - a_t1) > max(0.05, 0.03 * a_t1) or \
+                abs(a_ninf - a_t1) > max(0.05, 0.03 * a_t1):
+            raise AssertionError(
+                f"★ S_o2 未通过：K=1 / τ=−∞ 未退化为 T=1"
+                f"（{a_k1:.4f} / {a_ninf:.4f} vs {a_t1:.4f}）")
+        print(f"[24]     S_o2：K=1 ⇒ {a_k1:.4f}、τ=−∞ ⇒ {a_ninf:.4f}"
               f" vs T=1 闭式 {a_t1:.4f} ⇒ 三条退化全部通过 ✓")
     elif args.pol in ("resid", "hybrid"):
         # ★★ z 分数标准化（第一版用原始残差 ⇒ 尺度随 age 变 ⇒ 冒烟给 4.77× 假结果）
@@ -954,6 +1124,7 @@ def main():
               + "  ".join(f"h*={h}:{v:.4f}" for h, v in zip(h_stars, u_thrs)))
     n_div = 0
     conf_trace = None
+    or_trace = None
     for per in pers:
         for knob, thr in zip(knobs, u_thrs):
             state = {"U": 0.0, "age": 0}
@@ -961,12 +1132,21 @@ def main():
             #   「闭环 U|age」与「离线标定 U|age」是否同分布（R12：参数真的接线了吗）
             if args.pol == "conformal" and conf_trace is None:
                 state["_trace"] = []
+            # ★★ X43：oracle 量必须**显式开启**才算（默认零开销、零影响 ——
+            #   与 X40 加 `age` 是同一手法）；同时开逐步 trace，事后核对
+            #   「闭环真值误差|age」与「离线 m(h)」是否同量级（否则 τ 的分位点含义不可迁移）
+            if args.pol == "oracle":
+                state["_oracle"] = True
+                if or_trace is None:
+                    state["_otrace"] = []
             sch = (_resid_schedule(thr, per, state, u_hat, u_scale)
                    if args.pol == "resid" else
                    _hybrid_schedule(knob, thr, per, state, u_hat, u_scale)
                    if args.pol == "hybrid" else
                    _conformal_schedule(knob, thr, per, state, conf_tab)
                    if args.pol == "conformal" else
+                   _oracle_schedule(knob, thr, per, state, or_tab, or_key)
+                   if args.pol == "oracle" else
                    _utrig_schedule(thr, per, state))
             r = run_closed_loop_control(
                 env, model, ctrl, sch, n_episodes=n_task_ep, seed=online_seed,
@@ -988,6 +1168,9 @@ def main():
             if args.pol == "conformal" and conf_trace is None \
                     and state.get("_trace") is not None:
                 conf_trace = state["_trace"]
+            if args.pol == "oracle" and or_trace is None \
+                    and state.get("_otrace") is not None:
+                or_trace = state["_otrace"]
     env.close()
     if n_div:
         print(f"[24]   ⚠ {n_div}/{len(pers) * len(u_thrs)} 个 {UT} 触发点发散"
@@ -999,8 +1182,12 @@ def main():
             _kb = (f"K={r['knob']:<3d} τ={r['u_thr']:+.3f}" if args.pol == "hybrid"
                    else (f"K={r['knob']:<3d} tol={r['u_thr']:g}"
                          if args.pol == "conformal"
-                         else (f"τ={r['u_thr']:+.3f}   " if args.pol == "resid"
-                               else f"h*={r['knob']:<3d} thr={r['u_thr']:+.4f}")))
+                         else (f"K={r['knob']:<3d} τ={r['u_thr']:+.3f}"
+                               if args.pol == "oracle"
+                               else (f"τ={r['u_thr']:+.3f}   "
+                                     if args.pol == "resid"
+                                     else f"h*={r['knob']:<3d} "
+                                          f"thr={r['u_thr']:+.4f}"))))
             print(f"[24]   PER={r['per']:<4g} {UT:<9s} {_kb} "
                   f"tx_rate={r['tx_rate']:.4f} "
                   f"E[age]={r['mean_age']:6.2f} {_ex}| "
@@ -1051,6 +1238,32 @@ def main():
                  "H1 只能按**剩下那部分**工作点下结论"
                  if conf_active["frac_active"] < 0.4 else "  ⇒ 信封确实在起作用 ✓"))
 
+    # ★★ X43：同一句话（R12 的对象 = 整个策略族）对 oracle 再说一次 ——
+    #   若多数工作点被安全网 K 主导，则该族的比较大部分在比"两个年龄阈值"，
+    #   会把"oracle 没生效"读成"oracle 无价值"。
+    oracle_active = None
+    if args.pol == "oracle":
+        thr_map = {(r["per"], r["knob"]): r["tx_rate"]
+                   for r in rows if r["policy"] == "threshold"}
+        n_kdom = n_tot = 0
+        for r in rows:
+            if r["policy"] != UT:
+                continue
+            base = thr_map.get((r["per"], r["knob"]))
+            if base is None:
+                continue
+            n_tot += 1
+            if abs(float(r["tx_rate"]) - float(base)) <= 1e-9:
+                n_kdom += 1
+        oracle_active = {"n_work_points": int(n_tot), "n_k_dominated": int(n_kdom),
+                         "frac_active": (1.0 - n_kdom / max(n_tot, 1)),
+                         "note": ("K 主导 = 该工作点上 oracle 触发从未比安全网 K 更早触发；"
+                                  "此时该点等价于纯年龄阈值，不构成对 O1/O0 的证据")}
+        print(f"[24]   ★ S_o4：oracle 触发相对**同 K 纯年龄阈值**真的改变了发送率的比例 = "
+              f"{oracle_active['frac_active']:.2f}（{n_tot - n_kdom}/{n_tot} 个可比工作点）"
+              + ("  ⇒ ⚠ 多数工作点被安全网 K 主导 ⇒ 该族比较**大部分**在比两个年龄阈值"
+                 if oracle_active["frac_active"] < 0.4 else "  ⇒ oracle 确实在起作用 ✓"))
+
     # ★★ X42 口径核对（R12 的同一句话，对象换成"标定集"）：
     #   信封是在**离线** rollout 上学出来的（U 由真观测序列累积），
     #   而闭环里的 U 由**漂移中的估计**累积 ⇒ 两者可以不同分布。
@@ -1081,6 +1294,31 @@ def main():
                       "共形覆盖保证在闭环上**不成立**，本号只能作**探索性**对照（必须写进引用限定）")
             else:
                 print("[24]     ✓ 闭环与离线同量级（±25% 内）⇒ 标定可迁移")
+
+    # ★★ X43 口径核对（R12：量纲/分布能不能迁移）：
+    #   z 的归一化基准 (m(h), Ŝ(h)) 来自**离线** rollout，而闭环里的真值误差由
+    #   **漂移中的估计**产生 ⇒ 两者可以不同分布。若不同分布，τ 的"分位点含义"
+    #   就失去了标定意义 ⇒ 必须如实报（与 X42 的 U 对齐检查同款）。
+    oracle_align = None
+    if or_trace:
+        # ★★ 取数列必须**接线**（2026-09-29 同一条量纲错误犯了两次）：
+        #   ① `_otrace` 第一版只有一列（6 维量）⇒ pos 臂拿 6 维量比位置维基准 `m_pos(h)`；
+        #   ② 补了第三列之后，`col` 变量算了却**忘了接进取数行**（仍硬编码 `tr[:, 1]`）
+        #      ⇒ 症状与 ① **逐位相同**（改了却"没变"）。
+        #   构件已搬到 `wmlab/eval/oracle.py::align_age_medians`，由自检 **㊽** 锁死
+        #   "喂 col=2 就必须返回 col=2 的比值"。**比值结论不受影响**（P4 不读 trace）。
+        oracle_align = oracle_align_fn(
+            or_trace, or_tab["m"], col=ORACLE_TRACE_COL[args.oracle_target])
+        if oracle_align:
+            print("[24]   ★ X43 口径核对（闭环真值误差|age 中位 ÷ 离线 m(h)，"
+                  f"取第 {oracle_align['col']} 列）："
+                  + "  ".join(f"h={r['h']}:{r['ratio']:.3f}"
+                              for r in oracle_align["per_h"]))
+            if not (0.5 <= float(oracle_align["ratio_median"]) <= 2.0):
+                print("[24]     ⚠⚠ 两者差 >2× ⇒ 闭环误差不在标定分布内 ⇒ τ 的分位点含义"
+                      "**不可迁移**，本号只能作**探索性**对照（必须写进引用限定）")
+            else:
+                print("[24]     ✓ 闭环与离线同量级（2× 内）⇒ z 的归一化基准可迁移")
 
     # --- 三方等预算对比（在同一 tx_rate 网格上插值）---
     cmp3 = []
@@ -1141,7 +1379,7 @@ def main():
     #    全顶着 X38 的名字，**图与实验对不上**（`payload["experiment"]` 早就是派生的，图漏了）。
     #    payload 里仍保留更详细的那句描述，这里只负责「这张图是哪一次运行」。
     _fam = {"utrigger": "X38", "resid": "X40-纯残差", "hybrid": "X40",
-            "conformal": "X42"}.get(args.pol, "X38")
+            "conformal": "X42", "oracle": "X43"}.get(args.pol, "X38")
     exp_title = (f"{_fam} 触发式调度（trigger={args.pol}，wind_amp={wind_amp:g}）："
                  "等传输预算下 周期 / 年龄阈值 / 不确定性触发")
     fig, axes = plt.subplots(2, 3, figsize=(17.5, 9.5))
@@ -1265,15 +1503,60 @@ def main():
         save_fig(fig2, os.path.join(out, _stem + "_conf.png"))
         plt.close(fig2)
 
+    # ★★ X43：oracle 诊断图（单独一张）—— 一图看清「特权量的分布长什么样、能不能迁移」
+    if or_tab is not None:
+        fig3, ax3 = plt.subplots(1, 3, figsize=(16.5, 4.6))
+        fig3.suptitle(f"X43 oracle trigger check (target={args.oracle_target}, "
+                      f"wind_amp={wind_amp:g}, trigger={args.pol})", fontsize=11)
+        hh = np.arange(1, H + 1)
+        mo = np.asarray(or_tab["m"], dtype=float)
+        so = np.asarray(or_tab["s"], dtype=float)
+        ax3[0].plot(hh, mo, "-", color=PALETTE["purple"], label="median m(h)")
+        ax3[0].fill_between(hh, np.maximum(mo - so, 1e-12), mo + so,
+                            color=PALETTE["purple"], alpha=0.2, label="m +/- s  (robust)")
+        ax3[0].set_yscale("log")
+        ax3[0].set_xlabel("age h (steps)")
+        ax3[0].set_ylabel("true error (NMSE units)")
+        ax3[0].set_title("1. offline conditional error m(h), s(h)")
+        ax3[0].legend(fontsize=8); ax3[0].grid(alpha=0.3)
+        # [2] 条件异方差：s(h)/m(h)（误差的相对散布随年龄怎么变）
+        ax3[1].plot(hh, so / np.maximum(mo, 1e-18), "o-", color=PALETTE["blue"], ms=3)
+        ax3[1].set_xlabel("age h (steps)")
+        ax3[1].set_ylabel("CV of true error = s(h)/m(h)")
+        ax3[1].set_title("2. conditional spread of the oracle quantity")
+        ax3[1].grid(alpha=0.3)
+        # [3] 口径核对：闭环真值误差 |age ÷ 离线 m(h)
+        if oracle_align and oracle_align.get("per_h"):
+            hr = [r["h"] for r in oracle_align["per_h"]]
+            rr = [r["ratio"] for r in oracle_align["per_h"]]
+            ax3[2].bar([str(x) for x in hr], rr, color=PALETTE["green"], alpha=0.85)
+            ax3[2].axhline(1.0, color="k", ls=":", lw=1)
+            ax3[2].axhspan(0.5, 2.0, color="orange", alpha=0.10)
+            ax3[2].set_xlabel("age h (steps)")
+            ax3[2].set_ylabel("closed-loop median / offline m(h)")
+            ax3[2].set_title(f"3. calibration transfer (median "
+                             f"{oracle_align['ratio_median']:.2f})")
+        else:
+            ax3[2].text(0.05, 0.5, "no oracle trace", transform=ax3[2].transAxes)
+            ax3[2].set_title("3. calibration transfer")
+        ax3[2].grid(alpha=0.3)
+        fig3.tight_layout(rect=(0, 0, 1, 0.94))
+        save_fig(fig3, os.path.join(out, _stem + "_oracle.png"))
+        plt.close(fig3)
+
     payload = {
         "experiment": {"resid": "X40 纯残差触发 z≥τ（诊断：会撤掉安全网）",
                        "hybrid": "X40 混合触发 age≥K 或 z≥τ（残差只准加速）",
                        "conformal": "X42 共形校准触发 age≥K 或 Ê_α(age,U)≥tol"
                                     "（把自报 σ 换成有覆盖保证的误差上界）",
+                       "oracle": "X43 **oracle（特权）**触发 age≥K 或 z_or≥τ"
+                                 "（把 U 换成**真值误差**的逐年龄 z 分数 ⇒ 「误差类触发量」"
+                                 "的可达上界；不可部署）",
                        }.get(args.pol,
                              "X38 触发式调度：等传输预算下 周期 / 年龄阈值 / 不确定性触发"),
         "trigger": args.pol,
         "conf_target": (args.conf_target if args.pol == "conformal" else None),
+        "oracle_target": (args.oracle_target if args.pol == "oracle" else None),
         "wind_amp": float(wind_amp),
         "config": {k: cfg[k] for k in ("env", "controller", "design", "eval", "task")},
         "obs_dim": int(obs_dim), "var_g": var_g,
@@ -1283,6 +1566,9 @@ def main():
         "conformal": (conf_diag if conf_diag else None),
         "conformal_alignment": conf_align,
         "conformal_active": conf_active,
+        "oracle": (or_diag if or_diag else None),
+        "oracle_alignment": oracle_align,
+        "oracle_active": oracle_active,
         "P3_conditional": {"rho_unconditional": float(rho_all),
                            "rho_conditional_median": float(rho_cond),
                            "auc_conditional_median": float(auc_cond),
@@ -1311,7 +1597,21 @@ def main():
                       "★ C30（arXiv:2607.01537）自己写明其短视界档"
                       "『empirical conformal horizons **match** the deployed clock』"
                       "⇒ 『换成共形就有价值』是**没有根据的预期**，本号只负责测出来。"
-                      if args.pol == "conformal" else "")),
+                      if args.pol == "conformal" else "")
+                   + ("  ★★ trigger='oracle'（X43）：触发量 = **真值误差**的逐年龄 z 分数 "
+                      "`z_or=(e−m(h))/Ŝ(h)`，规则 `age≥K 或 z_or≥τ` 与 X40/X42 逐字同构。"
+                      "★★ **oracle 用真值 ⇒ 不可部署**，它只是「**误差类触发量**」这一族的"
+                      "**可达上界**（任何从当前估计误差出发的调度器，信息量都不超过它）；"
+                      "⚠ 它**不**上界「用别的可观测量做**预测性**触发」（如知道真值阵风场）"
+                      "—— 那一类需另设 oracle。"
+                      "★★ **跑前纠正一处前提**：看板原定的「用真值**逐年龄误差分布**当触发量」"
+                      "字面实现**只依赖 h** ⇒ 恒等于年龄阈值（比值≡1.000，**同义反复**，"
+                      "不是发现）⇒ 本号改用**已实现误差**的 z 分数（非退化版本）。"
+                      "★ e 的量纲 = `mean(平方误差)/var_g`，**与离线标定逐位一致**（R12，"
+                      "否则量纲错配的症状看起来像「信号无效」）；m/Ŝ 来自**独立 episode**"
+                      "（seed+3000）的离线 rollout，与评测/闭环种子均不相交。"
+                      "★ 归一化不可省（O1，自检 ㊻）：全局阈值会退化成「只在老年龄才发」。"
+                      if args.pol == "oracle" else "")),
     }
     jpath = os.path.join(out, _stem + ".json")
     with open(jpath, "w", encoding="utf-8") as f:
@@ -1499,6 +1799,85 @@ def _sim_conformal(K: int, tol: float, per: float, U_pool: np.ndarray, tab: dict
         if not fire:
             h = min(max(age, 1), n_h)
             fire = float(conf_envelope(tab, np.array([h]), np.array([U]))[0]) >= float(tol)
+        if fire and rng.random() >= p:
+            age = 0
+            ntx += 1
+        else:
+            age += 1
+        tot += age
+    return tot / n, ntx / n
+
+
+def _oracle_schedule(K: int, tau: float, loss_prob: float, state: dict,
+                     tab: dict, key: str) -> object:
+    """★ X43：**oracle（特权）触发** —— `age ≥ K` **或** `z_or(age) ≥ τ`。
+
+    ★ 与 X40 `_hybrid_schedule` 的**唯一**差别 = 触发统计量的**信息来源**：
+        X40：`z = (U − Û(age))/Ŝ(age)`，U = 世界模型**自报**的累积不确定度；
+        X43：`z_or = (e − m(age))/Ŝ(age)`，e = **真值**误差（`control.py` 写入的 `key`）。
+      规则结构逐字相同（安全网 K 不动、触发只准**加速**）⇒ 这是"只换信息源"的消融。
+
+    ★★ 概念边界：`e` 是**特权量**（需要 ground truth）⇒ 本策略**不可部署**，
+      它只是「任何从当前估计误差出发的调度器」的**性能上界**（见 `wmlab/eval/oracle.py`）。
+
+    ★ 归一化不可省（O1）：真值误差量级随 age 增长 ⇒ 全局阈值会退化成
+      "只在老年龄才发"（X40 坑 2 的**第三次**复现）。`tab["m"/"s"]` 来自离线标定集，
+      且与在线量**逐位同量纲**（NMSE = mean(平方误差)/var_g —— R12）。
+
+    ★ 退化（S_o2 钉死）：τ=+∞ ⇒ 恒等纯年龄阈值 K；K=1 / τ=−∞ ⇒ 恒等 T=1。
+    """
+    K_ = int(K)
+    t_ = float(tau)
+    p = float(min(max(loss_prob, 0.0), 1.0))
+    n_h = int(tab["H"])
+
+    def _f(t: int, rng: np.random.Generator) -> bool:
+        age = int(state.get("age", 0))
+        if age < K_:
+            h = min(max(age, 1), n_h)
+            # ★ O2（R14）：非有限触发量直接抛 —— `nan >= τ` 恒为 False，
+            #   静默通过会把"发散"读成"永不触发"（与 X42 的 K2 同一个坑）
+            z = oracle_z(float(state.get(key, 0.0)), h, tab)
+            if z < t_:
+                return False
+        return bool(rng.random() >= p)
+
+    def _reset(rng: np.random.Generator | None = None) -> None:
+        state["U"] = 0.0
+        state["age"] = 0
+        if "oracle_err" in state:
+            state["oracle_err"] = 0.0
+        if "oracle_pos" in state:
+            state["oracle_pos"] = 0.0
+
+    _f.reset = _reset                                   # type: ignore[attr-defined]
+    _f.__name__ = f"oracle(K={K_},tau={t_:.3f},key={key})"
+    return _f
+
+
+def _sim_oracle(K: int, tau: float, per: float, E_pool: np.ndarray, tab: dict,
+                n: int, seed: int) -> tuple[float, float]:
+    """★ S_o2：oracle 触发的**纯调度**仿真（真值误差从离线矩阵逐步独立重采样）。
+
+    ⚠️ 与 `_sim_hybrid` 同一限制：独立重采样**忽略了误差的自相关**
+      ⇒ 只用于**退化检查**（τ=+∞ ⇒ 纯阈值；K=1 / τ=−∞ ⇒ T=1），
+      **不得**用于报"oracle 策略的 E[age]"（那要真闭环）。
+    """
+    rng = np.random.default_rng(seed)
+    p = float(min(max(per, 0.0), 1.0))
+    n_h = int(tab["H"])
+    age = 0
+    tot = 0.0
+    ntx = 0
+    for t in range(1, n + 1):
+        e = 0.0
+        if age > 0:
+            e = float(E_pool[rng.integers(E_pool.shape[0]),
+                             min(max(age, 1), n_h) - 1])
+        fire = age >= int(K)
+        if not fire:
+            h = min(max(age, 1), n_h)
+            fire = oracle_z(e, h, tab) >= float(tau)
         if fire and rng.random() >= p:
             age = 0
             ntx += 1

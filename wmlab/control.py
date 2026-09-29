@@ -249,6 +249,11 @@ def run_closed_loop_control(
                  ★ 为什么用 dict 而不是回调：`Schedule` 的签名只有 `(t, rng)`，
                    拿不到 tracker 内部状态 ⇒ 用一个**共享可变容器**做单向传递，
                    比改签名干净，也不破坏既有调用点。
+                 ★★ X43 追加：若 `u_state["_oracle"]` 为真，**额外**写
+                   `u_state["oracle_err"]` / `["oracle_pos"]`（真值误差，NMSE 量纲）
+                   —— 这是**特权量**（oracle 触发用的**可达上界**，不可部署）。
+                   默认不写（零开销、零影响），且与 `U`/`age` 同一位置写出。
+                   可选 `u_state["_otrace"]=[]` 收逐步 `(age, oracle_err)`（默认关闭）。
         var_g: 观测 pooled 方差，用于把估计误差归一成 NMSE（与 X2/X14 同口径）
         warmup_steps: ★★ **预热步数**（隔离"初始捕获"瞬态）。
 
@@ -308,6 +313,11 @@ def run_closed_loop_control(
         u2 = 0.0
         if u_state is not None:
             u_state["U"] = 0.0
+            # ⭐ X43：oracle 量也归零。预热段每步都送真值 ⇒ est ≡ 真值 ⇒ 误差恒为 0，
+            #   所以被测段开头的"当前估计误差"就是 0（接线检查见自检 ㊺）。
+            if u_state.get("_oracle"):
+                u_state["oracle_err"] = 0.0
+                u_state["oracle_pos"] = 0.0
         while t < max_steps:
             a = controller.act(est)                 # est ≈ obs_t（age 已知）
             res = env.step(a)
@@ -355,6 +365,29 @@ def run_closed_loop_control(
             # ---- 记账：est（对 obs_t 的估计） vs 真值 ----
             d = est - true_next
             err_sq_sum += float(np.mean(d * d))
+            # ---- ⭐ X43：把**真值误差**交给调度器（oracle 触发量的唯一来源）----
+            #   ★★ 这是**特权信息**（需要 ground truth）⇒ 只作**可达上界**，
+            #      不是可部署策略（见 `wmlab/eval/oracle.py` 模块头）。
+            #   ★★ 量纲必须与离线标定**逐位一致**（R12）：
+            #      这里写 `mean(平方误差)/var_g`（NMSE 量纲），与 `scripts/24`
+            #      的 `e_parts` 完全相同；任何一边换成 RMSE / 未归一化距离，
+            #      z=(e−m(h))/Ŝ(h) 就会被量纲错配顶飞，而症状看起来像"信号无效"。
+            #   ★ 只在显式开启时才算（默认零开销、零影响 —— 与 X40 加 age 同一手法）。
+            #   ★ 与 `U`/`age` 同一位置写出：三者描述的是**同一个 est** ⇒ 下一步的
+            #      触发决策读到的 (age, U, oracle_err) 是自洽的。
+            if u_state is not None and u_state.get("_oracle"):
+                u_state["oracle_err"] = float(np.mean(d * d)) / max(float(var_g), 1e-18)
+                u_state["oracle_pos"] = (float(np.mean(d[:2] * d[:2]))
+                                         / max(float(var_g), 1e-18))
+                otr = u_state.get("_otrace")
+                if otr is not None:
+                    # ★ 三元组（age, 6 维量, 位置维量）—— **两列都要**。
+                    #   踩过的坑（2026-09-29）：只记 6 维量时，`--oracle-target pos` 的
+                    #   口径核对会拿 **6 维** 闭环误差去比 **位置维** 离线基准
+                    #   （量纲错配）⇒ 实测把本该 ≈1.0 的比值读成 **7.29**，
+                    #   症状看起来像"标定不可迁移"。只有把两列都记下来才能对账。
+                    otr.append((int(age), float(u_state["oracle_err"]),
+                                float(u_state["oracle_pos"])))
             dist = float(np.linalg.norm(true_next[0:2] - true_next[4:6]))
             dists.append(dist)
             ep_dist.append(dist)

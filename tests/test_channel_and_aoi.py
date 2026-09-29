@@ -1766,6 +1766,221 @@ def test_conformal_merge_requires_all_per_chunks():
         raise AssertionError("★ 空表没有 raise")
 
 
+# ------------------------------------------------- ㊺ X43 oracle 真值误差的接线
+def test_oracle_true_error_is_exposed_and_matches_metric():
+    """㊺ ★★ X43（2026-09-29）：`u_state["_oracle"]` 接线的**逐位**检查。
+
+    三条断言，都不是"看着对"，都是恒等式：
+      (a) **未开启** `_oracle` ⇒ **不写** `oracle_*` 键
+          —— 默认路径必须零影响、零开销（与 X40 加 `age` 同一约束）；
+      (b) 开启 + T=1（每步送真值）⇒ 真值误差**恒为 0**（est ≡ 真值）；
+      (c) ★ 开启 + 单步全丢包 ⇒ `oracle_err` **逐位等于**该次运行的 `est_nmse`
+          —— 这是**量纲一致性**（R12）的机器证明。量纲错配的症状看起来像
+          "信号无效"（z 被顶飞 ⇒ 触发率异常），只有恒等式能把它抓出来。
+    """
+    from wmlab.models.prob_world_model import GaussianWorldModel
+
+    env = make_env("uav-track", seed=0, noise_std=0.15, max_steps=60)
+    ctrl = PDRelativeController(dt=env.dt, omega_n=2.5, zeta=1.0,
+                                kappa=float(env.kappa), a_max=float(env.a_max))
+    torch.manual_seed(0)
+    model = GaussianWorldModel(6, 2, latent_dim=8, hidden=16, discrete_act=False)
+    dev = torch.device("cpu")
+    common = dict(n_episodes=1, seed=7, device=dev, estimator="model",
+                  var_g=1.0)
+
+    # (a) 不开启 ⇒ 不许写出 oracle 键
+    st_off: dict = {}
+    run_closed_loop_control(env, model, ctrl, periodic_schedule(4),
+                            max_steps=10, warmup_steps=5, u_state=st_off, **common)
+    assert "oracle_err" not in st_off and "oracle_pos" not in st_off, \
+        "★ 未开启 _oracle 却写出了 oracle_* ⇒ 默认路径被污染（零影响被破坏）"
+
+    # (b) 开启 + T=1 ⇒ 恒为 0
+    st_on: dict = {"_oracle": True}
+    r1 = run_closed_loop_control(env, model, ctrl, periodic_schedule(1),
+                                 max_steps=10, warmup_steps=5, u_state=st_on, **common)
+    assert r1["est_nmse"] == 0.0, f"T=1 的 est_nmse 应为 0，实际 {r1['est_nmse']:.3e}"
+    assert st_on["oracle_err"] == 0.0 and st_on["oracle_pos"] == 0.0, \
+        (f"★ T=1 时 oracle 量应恒为 0，实际 err={st_on['oracle_err']:.3e} "
+         f"pos={st_on['oracle_pos']:.3e}")
+
+    # (c) 单步全丢包 ⇒ oracle_err 与 est_nmse 逐位一致（量纲接线）
+    st_l: dict = {"_oracle": True, "_otrace": []}
+    r2 = run_closed_loop_control(env, model, ctrl, periodic_schedule(10 ** 9),
+                                 max_steps=1, warmup_steps=0, u_state=st_l, **common)
+    assert r2["n_tx"] == 0 and r2["n_steps"] == 1, \
+        f"★ 单步全丢包的设定没生效（n_tx={r2['n_tx']}, n_steps={r2['n_steps']}）"
+    assert abs(float(st_l["oracle_err"]) - float(r2["est_nmse"])) < 1e-12, \
+        (f"★ oracle_err {st_l['oracle_err']:.12e} ≠ est_nmse {r2['est_nmse']:.12e}"
+         " ⇒ 在线口径与离线 `mean(平方误差)/var_g` 不同量纲（R12）")
+    assert np.isfinite(float(st_l["oracle_pos"])) and float(st_l["oracle_pos"]) > 0.0, \
+        f"★ oracle_pos 非法：{st_l['oracle_pos']}"
+    # (d) ★★ `_otrace` 必须是**三元组**且量纲自洽：
+    #   踩过的坑（2026-09-29 真事故）：只记 6 维量 ⇒ `--oracle-target pos` 的口径核对
+    #   会拿 6 维闭环误差去比位置维离线基准 ⇒ 把本该 ≈1.0 的比值读成 **7.29**，
+    #   症状看起来像"标定不可迁移"（而比值结论其实不受影响）。⇒ 两列都必须在场。
+    assert len(st_l["_otrace"]) == 1, f"trace 应有 1 条，实际 {len(st_l['_otrace'])}"
+    row = st_l["_otrace"][0]
+    assert len(row) == 3, f"★ `_otrace` 必须是 (age, 6维, 位置维) 三元组，实际 {row}"
+    tr_arr = np.asarray(st_l["_otrace"], dtype=float)
+    assert abs(tr_arr[0, 1] - float(st_l["oracle_err"])) < 1e-12, \
+        "★ trace 第 2 列与 u_state['oracle_err'] 不一致"
+    assert abs(tr_arr[0, 2] - float(st_l["oracle_pos"])) < 1e-12, \
+        ("★ trace 第 3 列与 u_state['oracle_pos'] 不一致 ⇒ pos 臂的口径核对会量纲错配"
+         "（实测把 1.0 读成 7.29）")
+    env.close()
+
+
+# ------------------------------------------------- ㊻ X43 逐年龄归一化不可省（O1）
+def test_oracle_age_normalization_is_required():
+    """㊻ ★★ X43（2026-09-29）：**逐年龄归一化 Ŝ(h) 不可省** —— 否则 X43 静默空跑。
+
+    ★ 症状为什么难发现：未归一化的「真值误差 + 全局阈值」**照样**能跑、照样有触发率、
+      照样出一张曲线图 —— 但它的触发决策实际上是**年龄的单调函数**（误差量级随 h 增长），
+      ⇒ 在闭环里恒等于年龄阈值（比值≈1.000）⇒ 会把"实验退化成同义反复"读成
+      "oracle 也无价值"（两个结论天差地别）。
+    ⇒ 断言方式选**决策相关量**（与 ㊸ 同一精神）：
+        未归一化版：**逐年龄**触发率的跨度极大（最年轻≈0、最老≈1）⇒ 决策≈年龄的函数；
+        归一化版  ：逐年龄触发率基本平（每个年龄都 ≈ 名义比例）⇒ 决策带**年龄内**信息。
+    (c) O3：整列常数（MAD≡0）⇒ Ŝ 落地板且 z 仍有限（不许 inf）。
+    """
+    from wmlab.eval.oracle import fit_age_cond, z_pool
+
+    rng = np.random.default_rng(20260930)
+    H, N = 12, 6000
+    hs = np.arange(1, H + 1, dtype=float)
+    base = 0.02 * 1.55 ** (hs - 1)          # 真值误差随年龄增长（跨 ~90 倍）
+    err = base[None, :] * (1.0 + 0.35 * rng.normal(size=(N, H)))
+    tab = fit_age_cond(err[:3000])
+
+    # (a) 未归一化：全局阈值 ⇒ 触发率是年龄的单调函数（跨度接近 1）
+    thr_raw = float(np.quantile(err[:3000], 0.70))
+    rate_raw = (err[3000:] >= thr_raw).mean(axis=0)
+    span_raw = float(rate_raw.max() - rate_raw.min())
+    assert span_raw > 0.9, (
+        f"★ O1 未复现：未归一化版的逐年龄触发率跨度只有 {span_raw:.2f}"
+        " —— 说明本用例的误差增长不够强，应调大 base 的增长率，而**不是**放宽断言")
+
+    # (b) 归一化：条件 z 的阈值 ⇒ 逐年龄触发率基本平（年龄内信息被保住）
+    thr_z = float(np.quantile(z_pool(err[:3000], tab), 0.70))
+    rate_z = (z_pool(err[3000:], tab) >= thr_z).mean(axis=0)
+    span_z = float(rate_z.max() - rate_z.min())
+    assert span_z < 0.25, f"归一化版逐年龄触发率跨度仍有 {span_z:.2f}（应基本平）"
+    assert abs(float(rate_z.mean()) - 0.30) < 0.05, \
+        f"归一化版整体触发率 {rate_z.mean():.3f} 偏离名义 0.30 过多"
+
+    # (c) O3：整列常数 ⇒ Ŝ 全部落地板，且 z 仍然有限
+    tab2 = fit_age_cond(np.tile(base, (50, 1)))
+    assert tab2["n_s_floored"] == H, \
+        f"整列常数时 Ŝ 应全部落地板，实际 {tab2['n_s_floored']}/{H}"
+    z2 = z_pool(np.tile(base, (50, 1)), tab2)
+    assert np.all(np.isfinite(z2)), "★ O3：Ŝ 无地板 ⇒ z 出现 inf"
+
+
+# ------------------------------------------------- ㊼ X43 非有限值必须 raise（O2）
+def test_oracle_rejects_non_finite():
+    """㊼ ★★ X43（2026-09-29）：O2（R14）—— 非有限值**必须 raise**。
+
+    ★ 同一个坑的第三次：`nan <= 阈值` / `nan >= 阈值` **恒为 False**
+      ⇒ 静默把"发散"读成"没超阈 / 没触发"，产出**看着完全合理**的错答案
+      （X2/X3 的 NaN 坑、X42 的 K2 都栽在这上面）。
+    另测两条**形状**错配：一维输入 / 列数不符 —— 它们会退化成
+    "拿错年龄的基准去归一化"，症状同样是"信号无效"而不是报错。
+    """
+    from wmlab.eval.oracle import fit_age_cond, z_oracle, z_pool
+
+    ok = np.ones((10, 4), dtype=float)
+    bad_nan = ok.copy()
+    bad_nan[3, 2] = np.nan
+    bad_inf = ok.copy()
+    bad_inf[0, 0] = np.inf
+    for name, bad in (("NaN", bad_nan), ("Inf", bad_inf)):
+        try:
+            fit_age_cond(bad)
+        except FloatingPointError:
+            pass
+        else:
+            raise AssertionError(f"★ O2 未通过：标定集含 {name} 却被静默接受")
+
+    tab = fit_age_cond(ok)
+    try:
+        z_oracle(float("nan"), 1, tab)
+    except FloatingPointError:
+        pass
+    else:
+        raise AssertionError("★ O2 未通过：非有限的触发量被静默接受（会恒判'不触发'）")
+    try:
+        z_pool(bad_nan, tab)
+    except FloatingPointError:
+        pass
+    else:
+        raise AssertionError("★ O2 未通过：z_pool 的非有限输入被静默接受")
+
+    # 形状错配（会静默拿错年龄的基准）
+    try:
+        fit_age_cond(np.ones(10))
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("★ 一维输入应 raise（否则拿错年龄的基准去归一化）")
+    try:
+        z_pool(np.ones((10, 3)), tab)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("★ z_pool 的列数与 tab['H'] 不符时应 raise")
+
+
+# ------------------------------------------------- ㊽ X43 口径核对必须取对列（R12）
+def test_oracle_alignment_uses_target_column():
+    """㊽ ★★ X43（2026-09-29）：`align_age_medians` 必须**真的**按 `col` 取数。
+
+    ★ 这条锁一个「**同一条错误犯了两次**」的坑：
+      ① `_otrace` 第一版只有一列（6 维量）⇒ pos 臂拿 6 维量去比位置维基准 `m_pos(h)`；
+      ② 补上第三列之后，列号变量 `col` **算了却忘了接进取数行**（仍硬编码 `trace[:, 1]`）
+         ⇒ 症状与 ① **逐位相同**（"我改过了，怎么没变"）。
+      症状长什么样：把本该 ≈1.0 的比值读成 ≈10×，**看起来像"标定不可迁移"，不像报错**。
+    """
+    from wmlab.eval.oracle import align_age_medians, ORACLE_TRACE_COL
+
+    # 造一个假 trace：第 1 列（6 维量）比第 2 列（位置维量）大 10×
+    n, H = 200, 8
+    tr = np.stack([np.ones(n), np.full(n, 0.010), np.full(n, 0.001)], axis=1)
+    m_pos = np.full(H, 0.001)   # 与第 2 列同量纲 ⇒ col=2 应得 ≈1.0
+    m_res = np.full(H, 0.010)   # 与第 1 列同量纲 ⇒ col=1 应得 ≈1.0
+
+    a2 = align_age_medians(tr, m_pos, col=ORACLE_TRACE_COL["pos"])
+    assert a2 is not None and abs(a2["ratio_median"] - 1.0) < 1e-9, \
+        (f"★ col=2 必须用第 2 列算比值（≈1.0），实际 {a2 and a2['ratio_median']}"
+         " ⇒ **取数列没接线**（2026-09-29 第二次踩的正是这个坑）")
+    assert a2["col"] == 2, "★ 返回里必须自报用的是哪一列（事后可对账）"
+    a1 = align_age_medians(tr, m_res, col=ORACLE_TRACE_COL["res"])
+    assert a1 is not None and abs(a1["ratio_median"] - 1.0) < 1e-9, \
+        f"★ col=1 必须用第 1 列算比值（≈1.0），实际 {a1 and a1['ratio_median']}"
+    # ★ 反向断言：**故意取错列**必须得到 ≈10 —— 证明这条测试真的有分辨力
+    a_bad = align_age_medians(tr, m_pos, col=ORACLE_TRACE_COL["res"])
+    assert abs(a_bad["ratio_median"] - 10.0) < 1e-9, \
+        ("★ 取错列时比值应 ≈10（量纲错配的样子）；若仍是 ≈1 说明测试本身没有分辨力")
+
+    for name, bad, exc in (("只有 2 列（旧格式）", tr[:, :2], AssertionError),
+                           ("非法列号 col=0", tr, ValueError)):
+        try:
+            align_age_medians(bad, m_pos, col=(0 if name.startswith("非法") else 2))
+        except exc:
+            pass
+        else:
+            raise AssertionError(f"★ {name} 应 raise，否则会静默拿错列去比基准")
+    bad_nan = tr.copy()
+    bad_nan[0, 2] = np.nan
+    try:
+        align_age_medians(bad_nan, m_pos, col=2)
+    except FloatingPointError:
+        pass
+    else:
+        raise AssertionError("★ O2（R14）：trace 含 NaN 必须 raise，不许静默跳过")
+
+
 def main() -> int:
     tests = [(k, v) for k, v in sorted(globals().items())
              if k.startswith("test_") and callable(v)]
