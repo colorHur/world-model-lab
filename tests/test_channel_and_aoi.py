@@ -1981,6 +1981,103 @@ def test_oracle_alignment_uses_target_column():
         raise AssertionError("★ O2（R14）：trace 含 NaN 必须 raise，不许静默跳过")
 
 
+# ------------------------------------------------- ㊾ X44 时刻表必须"恰好 N 个且合法"
+def test_x44_plan_times_fixed_budget_and_legality():
+    """㊾ ★ X44（2026-10-04）：`plan_times` 必须产出**恰好 n_tx 个**合法时刻。
+
+    X44 的全部结论都建在「**唯一自变量是时刻**」上 ⇒ 预算必须逐位相等。
+    这条测试锁两个**真踩过的坑**（都入账）：
+      ① 网格起点写成 0 ⇒ `run_closed_loop_control` 首次查询调度在 **t=1**、
+         `t=0` 永不出现 ⇒ 相位各档差 1 次发送（症状长得像"时机有影响"）；
+      ② jitter 从 1 起 ⇒ 负抖动把首个时刻推到 **−1** ⇒ 越界。
+    """
+    from wmlab.eval.timing import (TIMING_MODES, n_tx_budget, plan_times,
+                                   timing_dispersion)
+
+    n_steps = 120
+    for T in (2, 4, 8, 16):
+        N = n_tx_budget(T, n_steps)
+        assert N >= 1, f"T={T}: 预算必须 ≥1"
+        jmax = (T - 1) // 2
+        cases = [("phase", list(range(T))),
+                 ("jitter", list(range(jmax + 1))),
+                 ("random", [0, 1, 2])]
+        for mode, params in cases:
+            for p in params:
+                ts = plan_times(mode, T, p, n_steps, N, pattern_seed=p + 1)
+                assert len(ts) == N, f"{mode}/{p}: 时刻数 {len(ts)} ≠ 预算 {N}"
+                assert len(set(ts)) == N, f"{mode}/{p}: 时刻有重复 ⇒ 预算被削"
+                assert all(1 <= x < n_steps for x in ts), \
+                    f"{mode}/{p}: 越界 [{min(ts)}, {max(ts)}]（须在 [1,{n_steps})）"
+                assert all(ts[k] < ts[k + 1] for k in range(N - 1)), \
+                    f"{mode}/{p}: 时刻未严格递增（预算语义被破坏）"
+
+    # 离散度（本实验的**纯净自变量**）：周期任意相位=0；抖动/随机 >0 且递升
+    for T in (8, 16):
+        N = n_tx_budget(T, n_steps)
+        assert timing_dispersion(plan_times("phase", T, 3, n_steps, N)) == 0.0, \
+            "★ 周期的间隔恒为 T ⇒ CV 必须恰好 0（相位不该改变离散度）"
+        jm = (T - 1) // 2
+        assert timing_dispersion(plan_times("jitter", T, jm, n_steps, N)) > 0.0
+        assert (timing_dispersion(plan_times("random", T, 0, n_steps, N))
+                > timing_dispersion(plan_times("jitter", T, 1, n_steps, N))), \
+            "★ 完全随机时机的离散度应大于小抖动"
+
+    # 恒等档：phase Δ=T ≡ phase Δ=0；jitter j=0 ≡ phase Δ=0（否则 S_t3 无意义）
+    for T in (4, 8, 16):
+        N = n_tx_budget(T, n_steps)
+        b = plan_times("phase", T, 0, n_steps, N)
+        assert plan_times("phase", T, T, n_steps, N) == b, "★ 相位周期性自洽失败"
+        assert plan_times("jitter", T, 0, n_steps, N) == b, "★ jitter j=0 应 ≡ 周期"
+
+    # 非法输入必须 raise（不许静默给一个"看起来对"的表 —— R14）
+    N8 = n_tx_budget(8, n_steps)
+    bad_calls = [
+        ("未知 mode", lambda: plan_times("bogus", 8, 0, n_steps, N8)),
+        ("jitter 超过 (T−1)//2（会乱序）",
+         lambda: plan_times("jitter", 8, (8 - 1) // 2 + 1, n_steps, N8)),
+        ("jitter 为负", lambda: plan_times("jitter", 8, -1, n_steps, N8)),
+        ("n_tx=0", lambda: plan_times("phase", 8, 0, n_steps, 0)),
+    ]
+    for name, fn in bad_calls:
+        try:
+            fn()
+        except (ValueError, AssertionError):
+            pass
+        else:
+            raise AssertionError(f"★ [{name}] 必须 raise，否则预算会被静默改掉")
+    assert set(TIMING_MODES) == {"phase", "jitter", "random"}
+
+
+# ------------------------------------------------- ㊿ X44 反算区间必须含 t=1
+def test_x44_expected_attempts_uses_t_ge_1():
+    """㊿ ★★ X44：`expected_attempts` 的区间必须是 **`1 ≤ t ≤ L`**（不是 `t < L`）。
+
+    ★ 这是**同一条时序坑**（`t += 1` 在 `schedule(t, rng)` 之前）的另一处表现，
+      也是代价最大的那个：第一版用 `t < L`，基准档反算 101 vs 实测 **93**
+      —— 差 8 = 8 集各丢一次"t=0 那次"。若不做这条反算检查，
+      这个**差 1 的预算偏差**会被读成"相位改变了发送次数"（一个不存在的时机效应）。
+    ★ 反向断言（没有它，测试可能只是"跟着实现一起错"）：
+      故意用错区间必须得到**不同的**数。
+    """
+    from wmlab.eval.timing import expected_attempts
+
+    times = [1, 9, 17]
+    # (a) 恰好落在集内：{1,9,17} 都在 [1,17] ⇒ 3 次
+    assert expected_attempts(times, [17]) == 3
+    # (b) **提前终止**的短集：L=5 ⇒ 只有 t=1 落在 [1,5] ⇒ 1 次
+    assert expected_attempts(times, [5]) == 1
+    # (c) 多集求和：1 + 3
+    assert expected_attempts(times, [5, 17]) == 1 + 3
+    # (d) 反向断言：错区间 `t < L` 必须给出**不同**的数（证明本测试有分辨力）
+    wrong = sum(sum(1 for x in times if x < L) for L in [17])
+    assert wrong == 2 and wrong != expected_attempts(times, [17]), \
+        "★ 若错区间与正确区间结果相同，说明这条测试没有分辨力"
+    # (e) t=1 必须被算进去（起点不是 0）
+    assert expected_attempts([1], [1]) == 1, "★ t=1 必须计入（调度首查在 t=1）"
+    assert expected_attempts([0], [120]) == 0, "★ t=0 永不出现 ⇒ 不应计入"
+
+
 def main() -> int:
     tests = [(k, v) for k, v in sorted(globals().items())
              if k.startswith("test_") and callable(v)]
