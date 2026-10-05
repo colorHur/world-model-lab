@@ -228,6 +228,7 @@ def run_closed_loop_control(
     warmup_steps: int = 0,
     payload_fn: Callable[[np.ndarray], np.ndarray] | None = None,
     u_state: dict | None = None,
+    return_traces: bool = False,
 ) -> dict:
     """★ 闭环控制仿真：**估计状态驱动控制器，控制器改变真实轨迹**。
 
@@ -256,6 +257,15 @@ def run_closed_loop_control(
                    可选 `u_state["_otrace"]=[]` 收逐步 `(age, oracle_err)`（默认关闭）。
         var_g: 观测 pooled 方差，用于把估计误差归一成 NMSE（与 X2/X14 同口径）
         warmup_steps: ★★ **预热步数**（隔离"初始捕获"瞬态）。
+        return_traces: ★ X45（2026-10-06）**可选**：为真时额外返回 `ep_dists`
+                 —— **逐集逐点**的任务距离序列（`ep_dists[e][i]` 对应第 e 集、被测段
+                 第 `i` 步，即时刻 `t = i+1`）。默认 False ⇒ **零开销**（不分配、
+                 不影响任何既有返回量）。
+                 ★ 用途：让**指标口径**从**同一次**闭环里离线重算（tail / core / full），
+                   把「相位效应」与「口径 × 首尾静默」分离（X45 的核心手法）。
+                 ★ 为什么必须**同一份 trace**算多口径：重跑一次闭环会因 rng 消耗路径
+                   不同而得到**不同轨迹** ⇒ 不同口径必须在**同一次运行**里比较，
+                   否则差异里混进了"重跑噪声"（X44 用 PER=0 封死的正是这类混淆）。
 
     ★★ 为什么必须有 warmup（2026-09-22 冒烟实测发现，差点当成 bug）
     ------------------------------------------------------------------
@@ -285,6 +295,7 @@ def run_closed_loop_control(
     ages: list[int] = []
     ep_lens: list[int] = []
     tail_dists: list[float] = []
+    ep_dists_all: list[list[float]] = []     # ★ X45：仅在 return_traces 时填充（默认空）
     n_warmup_escape = 0
 
     for i in range(n_episodes):
@@ -400,6 +411,8 @@ def run_closed_loop_control(
             if res.truncated:
                 break
         ep_lens.append(t)
+        if return_traces:        # ★ X45：逐点 dist（与被测段逐位对齐）⇒ 多口径离线重算
+            ep_dists_all.append([float(x) for x in ep_dist])
         n_escape += int(escaped)
         if ep_dist:      # 稳态跟踪误差：只取每集**最后 tail_frac** 段（排除起始瞬态）
             k = max(1, int(round(len(ep_dist) * tail_frac)))
@@ -437,6 +450,8 @@ def run_closed_loop_control(
         "ep_lens": [int(x) for x in ep_lens],
         "warmup_steps": int(warmup_steps),
         "n_warmup_escape": int(n_warmup_escape),
+        # ★ X45：逐点 dist（`ep_dists[e][i]` ⇔ 第 e 集、时刻 t=i+1）；默认 None ⇒ 零开销
+        "ep_dists": (ep_dists_all if return_traces else None),
     }
 
 

@@ -138,3 +138,153 @@ def subsample(lo: int, hi: int, max_n: int) -> list[int]:
     n = min(int(max_n), int(hi) - int(lo) + 1)
     vals = np.unique(np.round(np.linspace(lo, hi, n)).astype(int)).tolist()
     return [int(v) for v in vals]
+
+
+# ======================================================================== X45
+# ★ X45（2026-10-06）：把 X44 的「相位免疫」判据拆开 —— 到底是**真实相位效应**，
+#   还是「相位 → 首尾静默分配」×「指标只看最后 25%」的**耦合假象**？
+#
+# ★★ 为什么不能靠「把窗口做成循环」来修（X44 §8 的建议，经推导**达不到目的**）：
+#   设窗口 [1, M]、M = K·T，时刻表是周期 T 的均匀网格与窗口的交集（恰好 K 个点）。
+#   则恒有
+#        头部静默 (t₁−1) + 尾部静默 (M−t_K) = M − 1 − (K−1)·T = T − 1        (†)
+#   与相位**无关**。⇒ 循环化只是把 (T−1, 0) 重新分配给 (0, T−1)，**两者之和不变**；
+#   边界效应没被消除，只是从尾部搬到了头部。
+#   ⇒ 真正的自变量是**指标口径**：`tail`（最后 25%）吃尾部静默，
+#     而 `core`（去掉首段与尾段）与静默无关。见 `scripts/29_*`。
+#   ★ 反过来说：只要指标**只取尾部**，相位就与它强耦合 —— 这不是 bug，是**口径**。
+
+
+def boundary_silence(times: list[int], window: int) -> tuple[int, int]:
+    """★ X45：时刻表在窗口 `[1, window]` 里留下的 **(头部静默, 尾部静默)**。
+
+    = `(min(t) − 1, window − max(t))`。
+
+    ★★ 恒等式 (†)（本号的数学基础）：当 `window = K·T` 且 `times` 是周期 T 的
+       均匀网格与窗口的交集（恰好 K 个点）时，`head + tail ≡ T − 1`，**与相位无关**。
+       ⇒ 「窗口做成循环」**不能**消除边界效应（见模块头）。
+    ★ 输入必须严格递增：乱序会让 `min/max` 仍然对、但语义已坏 ⇒ 直接 raise，
+      不给"看起来对"的数（R14）。
+    """
+    ts = [int(x) for x in times]
+    if not ts:
+        raise ValueError("时刻表为空")
+    if any(ts[k + 1] <= ts[k] for k in range(len(ts) - 1)):
+        raise ValueError("时刻表必须**严格递增**（乱序 ⇒ 边界语义坏掉，不许静默继续）")
+    w = int(window)
+    if ts[0] < 1:
+        raise ValueError(f"首时刻必须 ≥1（调度首次被查询在 t=1）：{ts[0]}")
+    if ts[-1] > w:
+        raise ValueError(f"时刻超出窗口：max={ts[-1]} > window={w}")
+    return (ts[0] - 1, w - ts[-1])
+
+
+def cyclic_grid(period: int, window: int, phase: int) -> list[int]:
+    """`plan_times` 的**循环版**：周期 T 的网格**平移 phase 后环绕**整个窗口。
+
+    即 `t_k = 1 + ((k·T + phase) mod window)`，取 `k = 0 … window/T − 1`。
+
+    ★ 用途（X45）：**用数值证据坐实「循环化不消除边界效应」** ——
+      对任意 phase，`boundary_silence` 都满足 `head + tail = T − 1`（自检 [51]）。
+      换言之它**保留了「相位驱动边界分配」这个自由度**，所以不能用来做分离。
+    ★ `window` 必须是 `period` 的整数倍：否则各相位的点数不等 ⇒ 预算随相位变
+      （那就是 X44 花了大力气封死的混淆变量）。
+    """
+    T = int(period)
+    M = int(window)
+    if T < 1:
+        raise ValueError(f"period 必须 ≥1，收到 {period}")
+    if M <= 0:
+        raise ValueError(f"window 必须 ≥1，收到 {window}")
+    if M % T != 0:
+        raise ValueError(
+            f"window={M} 必须是 period={T} 的整数倍（否则各相位的点数不等 ⇒ 预算随相位变）")
+    K = M // T
+    ph = int(phase) % T
+    ts = sorted(1 + ((k * T + ph) % M) for k in range(K))
+    if len(set(ts)) != K:
+        raise AssertionError(f"★ 循环网格出现重复时刻（T={T}, M={M}, phase={ph}）")
+    if any(not (1 <= x <= M) for x in ts):
+        raise AssertionError(f"★ 循环网格越界 [1,{M}]：{[min(ts), max(ts)]}")
+    return ts
+
+
+def core_slice(ep_len: int, times: list[int]) -> tuple[int, int] | None:
+    """★ X45：**「去边界」口径**在该集上的 0-based 索引区间 `[lo, hi)`。
+
+    定义：保留被测段里 **`[t₂, t_K)`** 这一段 —— 即**丢掉首段** `[t₁, t₂)`
+    （含头部静默 `t₁−1`）与**末段** `[t_K, M]`（含尾部静默 `M−t_K`），
+    只留**完整中间周期**。
+
+    ★ **不是 `[t₂, t_{K−1})`**：那个写法对只有 3 个时刻的集是**空区间**
+      （自检 [52] 首跑就是这么炸的 —— 幸亏写成了断言而不是"看似合理"的数）。
+    ★ 索引换算：`ep_dists[e][i]` 对应时刻 `t = i+1`（见 control.py 的记账位置）
+      ⇒ 时刻 t ⇔ 索引 t−1。
+    ★ 该集**有效时刻 < 3 个**（提前终止太早）⇒ 返回 `None`（**该集不参与** core 口径，
+      而不是用短段凑一个数 —— 那会把"集太短"混进"口径差异"）。
+    ★ 与 `tail` 口径的分工：`tail`（最后 25%）**吃尾部静默**；`core` 与静默无关。
+      两者在同一次运行上比较 ⇒ 可把相位效应归因到边界（X45 的核心手法）。
+    """
+    ts = [int(x) for x in times if 1 <= int(x) <= int(ep_len)]
+    if len(ts) < 3:
+        return None
+    return (ts[1] - 1, ts[-1] - 1)
+
+
+def metric_over(traces: list[list[float]], times: list[int], window: int,
+                kind: str, tail_frac: float = 0.25,
+                margin: int = 0) -> tuple[float, int]:
+    """★ X45：从**同一份逐点 trace** 算指定口径的**跨集平均**距离。
+
+    Returns:
+        (值, 参与集数)。全部集都不合格 ⇒ `(nan, 0)`（**不抛**，由调用方判定）。
+
+    kind:
+      · `"full"` —— 每集全段均值（含首尾静默）
+      · `"tail"` —— 每集**最后 `tail_frac`**（**= X44 的 `mean_dist_tail`**，
+                    接线检查：它必须与 `run_closed_loop_control` 报的值逐位一致）
+      · `"core"` —— 每集**去掉首段与末段**（`core_slice`）；不合格的集**跳过**。
+                    ⚠ **位置随相位平移** ⇒ 与 `tail` 的差异里同时含"去边界"与"换位置"两项。
+      · `"core_fixed"` —— 每集**去掉固定 `margin` 步**的首尾（`[margin, len−margin)`）。
+                    **位置与相位无关** ⇒ 只去掉固定边界，用于**把"位置平移"这个混杂
+                    从 `core` 里剥出来**（X45 诊断：若 core_fixed ≪ core 则 core 的
+                    偏差主要来自位置平移这个伪影，而不是相位本身）。
+
+    ★ 为什么三口径必须来自**同一次运行**：重跑会因 rng 消耗路径不同得到不同轨迹
+      ⇒ 跨运行比较会把"重跑噪声"混进"口径差异"（X44 用 PER=0 封死的同类混淆）。
+    """
+    if kind not in ("full", "tail", "core", "core_fixed"):
+        raise ValueError(f"未知口径 kind={kind!r}")
+    if kind == "core_fixed" and int(margin) <= 0:
+        raise ValueError("core_fixed 必须给 margin > 0（否则它与 full 逐位相同）")
+    times = [int(x) for x in times]
+    if times and any(x < 1 or x > int(window) for x in times):
+        raise ValueError(
+            f"时刻表与窗口不符：window={window}, times∈[{min(times)},{max(times)}]"
+            "（⇒ 口径会与静默对不上，不许静默继续）")
+    vals: list[float] = []
+    for tr in traces:
+        if not tr:
+            continue
+        if kind == "full":
+            vals.append(float(np.mean(tr)))
+        elif kind == "tail":
+            k = max(1, int(round(len(tr) * float(tail_frac))))
+            vals.append(float(np.mean(tr[-k:])))
+        elif kind == "core":
+            sl = core_slice(len(tr), times)
+            if sl is None:
+                continue
+            lo, hi = sl
+            hi = min(hi, len(tr))          # 防御：hi 不该超长，超了也不静默取空段
+            if hi <= lo:
+                continue
+            vals.append(float(np.mean(tr[lo:hi])))
+        else:                              # core_fixed
+            m = int(margin)
+            if len(tr) <= 2 * m:
+                continue
+            vals.append(float(np.mean(tr[m:len(tr) - m])))
+    if not vals:
+        return (float("nan"), 0)
+    return (float(np.mean(vals)), len(vals))

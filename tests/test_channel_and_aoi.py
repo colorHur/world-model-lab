@@ -2078,6 +2078,122 @@ def test_x44_expected_attempts_uses_t_ge_1():
     assert expected_attempts([0], [120]) == 0, "★ t=0 永不出现 ⇒ 不应计入"
 
 
+# ------------------------------------------------- [51] X45 首尾静默恒等式（循环化不解耦）
+def test_x45_boundary_silence_identity():
+    """[51] ★★ X45（2026-10-06）：`boundary_silence` 与**尾部静默的相位依赖**。
+
+    ★ 这是 X45 **决定"换指标口径而不是换窗口"** 的全部数学依据。
+      对周期 T 的均匀网格与窗口的交集，**尾部静默随相位的变化幅度恒为 T−1**：
+        · 线性表（X44 用）：tail 从 `2T−1`（Δ=0）降到 `T`（Δ=T−1）；
+        · 循环表（X44 §8 建议）：tail 从 `T−1`（Δ=0）降到 `0`（Δ=T−1）；
+        · **两者幅度都 = T−1 ⇒ 「把窗口做成循环」只把基线挪了 T，解耦为零。**
+      （差 `T` 的来源：线性表比循环**少发一次**，`n_tx_budget = (M−T)//T` vs `M//T`。）
+    ★ 反向断言：两种表的 tail 都必须**真的随 Δ 变**，否则本测试没有分辨力。
+    """
+    from wmlab.eval.timing import (boundary_silence, cyclic_grid, n_tx_budget,
+                                   plan_times)
+
+    # (a) 循环网格的恒等式：head + tail ≡ T−1（与相位无关）
+    M = 288                                  # 同时是 4/8/16 的整数倍
+    for T in (4, 8, 16):
+        for ph in range(T):
+            h, tl = boundary_silence(cyclic_grid(T, M, ph), M)
+            assert h + tl == T - 1, \
+                f"★ 循环网格 T={T} phase={ph}: head+tail={h+tl} ≠ T−1={T-1}"
+
+    # (b) ★ 核心证据（**同一窗口 M=288**）：线性与循环的 tail 都随 Δ 递减，
+    #     且**变化幅度完全相同（都是 T−1）**⇒ 循环化不能减小相位对尾部指标的耦合
+    T = 8
+    Nlin = n_tx_budget(T, M)                 # 线性比循环少发一次（N = K−1）
+    lin_t = [boundary_silence(plan_times("phase", T, d, M, Nlin), M)[1]
+             for d in (0, T - 1)]
+    cyc_t = [boundary_silence(cyclic_grid(T, M, d), M)[1] for d in (0, T - 1)]
+    assert lin_t == [2 * T - 1, T], f"★ 线性 tail 应为 (2T−1)→T，实测 {lin_t}"
+    assert cyc_t == [T - 1, 0], f"★ 循环 tail 应为 (T−1)→0，实测 {cyc_t}"
+    assert (lin_t[0] - lin_t[1]) == (cyc_t[0] - cyc_t[1]) == T - 1, \
+        "★ 两种窗口的「尾部静默随相位的变化幅度」都 = T−1 ⇒ 循环化不解耦"
+
+    # (c) 循环网格与线性表**不是**同一个东西（防止"循环化"当成等价替换）
+    assert cyclic_grid(T, M, 0) != plan_times("phase", T, 0, M, Nlin), \
+        "★ 循环网格与线性表的点数不同（K vs K−1）⇒ 预算也不同"
+
+    # (d) 非法输入必须 raise（不给"看起来对"的数 —— R14）
+    bad = [
+        ("空表", lambda: boundary_silence([], 100)),
+        ("乱序", lambda: boundary_silence([5, 3], 100)),
+        ("越界", lambda: boundary_silence([1, 101], 100)),
+        ("首时刻 <1", lambda: boundary_silence([0, 5], 100)),
+        ("window 非 T 整数倍", lambda: cyclic_grid(8, 300, 0)),
+        ("period=0", lambda: cyclic_grid(0, 288, 0)),
+    ]
+    for name, fn in bad:
+        try:
+            fn()
+        except (ValueError, AssertionError):
+            pass
+        else:
+            raise AssertionError(f"★ [{name}] 必须 raise")
+
+
+# ------------------------------------------------- [52] X45 多口径必须"同一次运行"，core 真去边界
+def test_x45_multi_metric_and_core_slice():
+    """[52] ★ X45：`core_slice` 的边界与 `metric_over` 的三口径。
+
+    ★ 为什么口径必须来自**同一次运行**：重跑闭环会因 rng 消耗路径不同得到不同轨迹
+      ⇒ 跨运行比较会把"重跑噪声"混进"口径差异"（X44 用 PER=0 封死的同类混淆）。
+    ★ 反向断言：`core` 必须**真的丢点**（与 `full` 逐位相同 ⇒ mask 没接线）。
+    """
+    import numpy as np
+    from wmlab.eval.timing import core_slice, metric_over
+
+    # (a) core 区间 = `[t₂, t_{K−1})` 的 0-based 索引（t ⇔ i+1）
+    assert core_slice(20, [1, 9, 17]) == (8, 16), "★ core 区间应为 [t₂, t_{K−1})"
+    # (b) 有效时刻 <3 ⇒ 跳过（提前终止太早；不许用短段凑数）
+    assert core_slice(20, [1, 9]) is None
+    assert core_slice(5, [1, 9, 17]) is None, "★ 时刻超出该集长度 ⇒ 有效点 <3 ⇒ 跳过"
+
+    # (c) 三口径在构造 trace 上的预期值（dist = i+1 ⇒ 可手算）
+    tr = [float(i + 1) for i in range(20)]
+    traces, times = [tr, tr], [1, 9, 17]
+    full, n_f = metric_over(traces, times, 20, "full")
+    core, n_c = metric_over(traces, times, 20, "core")
+    tail, n_t = metric_over(traces, times, 20, "tail", tail_frac=0.25)
+    assert n_f == n_c == n_t == 2, f"★ 参与集数应为 2（实测 {n_f}/{n_c}/{n_t}）"
+    assert abs(full - 10.5) < 1e-12, f"★ full = mean(1..20) = 10.5，实测 {full}"
+    assert abs(core - float(np.mean(tr[8:16]))) < 1e-12, "★ core = mean(9..16)"
+    k = max(1, int(round(20 * 0.25)))
+    assert abs(tail - float(np.mean(tr[-k:]))) < 1e-12, "★ tail = 最后 25%"
+    # ★ 反向断言：core ≠ full（否则 mask 没接线）
+    assert abs(core - full) > 1e-9, "★ core 与 full 相同 ⇒ core mask 没接线"
+
+    # (c') core_fixed：位置**固定**、只去固定 margin 步（诊断"位置平移"混杂）
+    cf, n_cf = metric_over(traces, times, 20, "core_fixed", margin=3)
+    assert n_cf == 2, f"★ core_fixed 参与集数应为 2（实测 {n_cf}）"
+    assert abs(cf - float(np.mean(tr[3:17]))) < 1e-12, "★ core_fixed = [margin, len−margin)"
+    try:
+        metric_over(traces, times, 20, "core_fixed", margin=0)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("★ core_fixed 的 margin=0 必须 raise（否则与 full 等同 ⇒ 死参数）")
+
+    # (d) 不合格集必须被**跳过**、且计数正确
+    traces2 = [tr, [1.0, 2.0]]               # 第二集仅 2 点 ⇒ 有效时刻 <3
+    core2, n_c2 = metric_over(traces2, times, 20, "core")
+    assert n_c2 == 1, f"★ 不合格集应被跳过（实测参与 {n_c2} 集）"
+    assert abs(core2 - float(np.mean(tr[8:16]))) < 1e-12
+
+    # (e) 未知口径必须 raise；空输入返回 (nan, 0) 而不是抛
+    try:
+        metric_over(traces, times, 20, "bogus")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("★ 未知口径必须 raise")
+    v, n = metric_over([], [], 20, "full")
+    assert n == 0 and v != v, "★ 空输入应返回 (nan, 0)"
+
+
 def main() -> int:
     tests = [(k, v) for k, v in sorted(globals().items())
              if k.startswith("test_") and callable(v)]
