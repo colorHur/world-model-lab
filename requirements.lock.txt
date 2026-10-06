@@ -3,7 +3,8 @@
 # ----------------------------------------------------------------------------
 # 来源：干净隔离 venv 实测导出（不是本机 conda 大环境的全量 freeze）
 #   Python 3.11.16 | torch 2.14.1+cpu | 平台 win32 (CPU-only，本机无独显)
-#   导出方式：<venv>\Scripts\python.exe -m pip freeze
+#   导出方式：<venv>\Scripts\python.exe -m pip list --format=freeze
+#     （★ 不用 pip freeze：它**默认排除** pip/setuptools/wheel ⇒ 会漏掉 torch 依赖的 setuptools）
 # 共 27 个包 = 6 个直接依赖（对应 requirements.txt）+ 21 个传递依赖。
 #
 # 复现方式（torch 的 +cpu 后缀**只**存在于 PyTorch 官方 CPU 索引 ⇒ 必须加索引）：
