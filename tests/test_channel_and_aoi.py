@@ -2194,6 +2194,223 @@ def test_x45_multi_metric_and_core_slice():
     assert n == 0 and v != v, "★ 空输入应返回 (nan, 0)"
 
 
+# ------------------------------------------------- [53] 调度族注册表：可部署性进代码
+def test_scheduling_registry_marks_deployability():
+    """[53] ★★ 调度基线库（v0.1）：六族齐全，且**可部署性被写进代码**（约束 C3）。
+
+    ★ 为什么这条要进自检：X43 的 oracle 用**真值**误差 ⇒ **不可部署**。
+      如果它只靠"文档里写了"来约束，早晚会有人在别处把它当"可达上界"引用
+      （本仓库 2026-10-04 的 P0 修正正是在收拾这类措辞漂移）。
+      ⇒ 把 `deployable=False` 钉进 `REGISTRY`，让"引用 oracle 必须带限定"变成**代码事实**。
+    """
+    from wmlab.eval import scheduling
+
+    assert tuple(scheduling.FAMILIES) == ("periodic", "threshold", "selfreport",
+                                          "conformal", "oracle", "timing"), \
+        f"★ 六族清单被改动：{scheduling.FAMILIES}"
+    assert len(scheduling.REGISTRY) == len(scheduling.FAMILIES)
+    for fam in scheduling.FAMILIES:
+        sp = scheduling.REGISTRY[fam]
+        assert sp.family == fam and sp.knob and sp.note, f"★ {fam} 的 Spec 不完整"
+    # C3：oracle 必须标成不可部署 / 诊断用
+    assert scheduling.REGISTRY["oracle"].deployable is False
+    assert scheduling.REGISTRY["oracle"].diagnostic is True
+    for fam in ("periodic", "threshold", "selfreport", "conformal", "timing"):
+        assert scheduling.REGISTRY[fam].deployable is True, f"★ {fam} 应为可部署"
+        assert scheduling.REGISTRY[fam].diagnostic is False
+    # 信号相关族 = 需要 state / tab 的那三族（必须与常量表一致）
+    assert scheduling.SIGNAL_DEPENDENT == frozenset(
+        {"selfreport", "conformal", "oracle"})
+    for fam in scheduling.SIGNAL_DEPENDENT:
+        assert "state" in scheduling.REGISTRY[fam].needs, \
+            f"★ {fam} 既然信号相关，就必须声明 needs 里有 state"
+
+    # 未知族必须 raise
+    try:
+        scheduling.build("bogus", loss_prob=0.0)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("★ 未知族必须 raise")
+
+    # ★ 缺必需素材必须 raise —— **不许用默认值代替**（缺 state 会跑出"永不触发"的假结果）
+    for fam, kw in (("selfreport", {"threshold_u": 0.5}),
+                    ("conformal", {"tol": 0.1, "K": 4}),
+                    ("oracle", {"tau": 1.0, "K": 4, "tab": {"H": 8}}),
+                    ("timing", {"mode": "phase", "period": 8, "param": 0, "n_steps": 100})):
+        try:
+            scheduling.build(fam, loss_prob=0.0, **kw)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"★ 族 {fam} 缺必需素材却没 raise")
+
+
+# ------------------------------------------------- [54] 送达语义：不能重复扣损
+def test_scheduling_delivery_semantics_single_loss():
+    """[54] ★★ `simulate_schedule` 不得二次扣损 —— 用**两个已知答案**卡死。
+
+    ★ 背景（真踩过）：`periodic_lossy_schedule` / `threshold_lossy_schedule`
+      **内部已经**消耗随机数判丢包，返回值就是"本步是否送达"。
+      若外层再加一次 `rng.random() >= p`，`p=0.7` 会被静默算成 `p=0.91`，
+      而曲线**看起来仍然完全合理**（单调、平滑、量级像样）—— 这正是本仓库
+      反复复现的那类"看起来对的错"。
+    ⇒ 两条互相独立的断言，缺一不可：
+      (a) **退化点**：`periodic(T=1)` 的送达率必须 ≈ `1−p`（= `lossy` 的 i.i.d. 结果）；
+          若扣两次，这里会得到 `(1−p)²` ⇒ 差一个数量级。
+      (b) **整条曲线**：`threshold` 的 E[age] 必须落在闭式 ±4σ 内（批量均值标准误）。
+    """
+    from wmlab.eval import scheduling
+    from wmlab.eval.tracking import threshold_mean_age
+
+    n = 100000
+    # (a) 退化点：tx_rate ≈ 1−p（解析容差 = 4σ，σ 由 Bernoulli 方差给出）
+    for p in (0.3, 0.7):
+        r = scheduling.simulate_schedule(
+            scheduling.build("periodic", loss_prob=p, period=1), n, 12345)
+        tol = 4.0 * math.sqrt((1 - p) * p / n)
+        assert abs(r["tx_rate"] - (1 - p)) < tol, \
+            (f"★ p={p}: tx_rate={r['tx_rate']:.6f} 应 ≈ 1−p={1 - p:.6f}（±{tol:.5f}）；"
+             "若≈(1−p)² 则说明**丢包被扣了两次**")
+        assert abs(r["tx_rate"] - (1 - p) ** 2) > 10 * tol, \
+            "★ 反向断言：tx_rate 不得等于 (1−p)²（那是重复扣损的特征值）"
+    # (b) 整条闭式曲线（4σ 判据；容差取自批量均值标准误，不拍百分比）
+    for p in (0.3, 0.7):
+        for K in (0, 2, 6, 12):
+            r = scheduling.simulate_schedule(
+                scheduling.build("threshold", loss_prob=p, threshold=K), n, 12345)
+            ratio = scheduling.check_tolerance(
+                abs(r["mean_age"] - threshold_mean_age(K, p)), r["mean_age_se"])
+            assert ratio <= 1.0, \
+                (f"★ threshold(p={p},K={K})：E[age]={r['mean_age']:.4f} vs 闭式"
+                 f" {threshold_mean_age(K, p):.4f}，judge={ratio:.2f}>1（4σ）")
+
+
+# ------------------------------------------------- [55] timing：预算逐位相等（X44 前提）
+def test_scheduling_timing_budget_identical():
+    """[55] ★★ timing 族：同一 T 下**所有扰动**的发送次数**逐位相等**（X44 前提）。
+
+    ★ 为什么这条必须独立成测试：X44 的全部结论（"只动时刻、不动预算"）都建立在
+      预算相等上；一旦某个模式多发/少发一次，"预算效应"就会冒充"时机效应"，
+      而症状是**结论看起来完全合理**。
+    ★ 顺带把 X44 的另一个坑也钉住：调度首次被查询在 **t=1**（`t=0` 永不出现）。
+    """
+    from wmlab.eval import scheduling
+    from wmlab.eval.timing import n_tx_budget, plan_times, timing_dispersion
+
+    n, T = 100000, 8
+    N = n_tx_budget(T, n)
+    nt, ages, ses, cvs = [], [], [], []
+    for mode, params in (("phase", range(T)), ("jitter", range((T - 1) // 2 + 1)),
+                         ("random", range(3))):
+        for prm in params:
+            ts = plan_times(mode, T, prm, n, N)
+            assert min(ts) >= 1, f"★ {mode}({prm}) 出现 t<1 的时刻：{min(ts)}"
+            s = scheduling.build("timing", loss_prob=0.0, mode=mode, period=T,
+                                 param=prm, n_steps=n, n_tx=N)
+            r = scheduling.simulate_schedule(s, n, 12345)
+            nt.append(r["n_tx"])
+            ages.append(r["mean_age"])
+            ses.append(r["mean_age_se"])
+            cvs.append(timing_dispersion(ts))
+    assert len(set(nt)) == 1, f"★ 预算不随扰动相等（实测 n_tx 取值 {sorted(set(nt))}）"
+    assert nt[0] == N, f"★ n_tx={nt[0]} ≠ n_tx_budget={N}"
+    # PER=0 ⇒ age 在 0…T−1 上均匀 ⇒ E[age] = (T−1)/2（相位不改变它，抖动/随机才改）
+    for prm, age, se in zip(range(T), ages, ses):
+        if se == se and se > 0:
+            assert abs(age - (T - 1) / 2.0) <= 4.0 * se, \
+                f"★ 相位 {prm} 的 E[age]={age:.4f} 应 ≈(T−1)/2={(T - 1) / 2}"
+    # ★ 反向断言：离散度真的随模式分层（否则"时机"这个自变量没接线）
+    assert cvs[0] == 0.0, "★ 相位档的间隔 CV 必须为 0（间隔恒为 T）"
+    assert max(cvs) > 0.0, "★ 抖动/随机档的间隔 CV 必须 > 0（否则没接线）"
+
+
+# ------------------------------------------------- [56] 等预算配对守卫 + 信号相关族禁跑
+def test_scheduling_pairing_guard_and_signal_dependent_refusal():
+    """[56] ★★ 两条"防假结论"的硬闸门。
+
+    (a) **信号相关族不得空跑**：`selfreport`/`conformal`/`oracle` 需要闭环写入的 state，
+        空跑里 `U ≡ 0` ⇒ 恒定不触发。必须 **raise**，不许返回一个"看起来像结论"的数。
+    (b) **等预算配对的窗口守卫**：跨度过窄（点挤在同一段里）⇒ 必须判"不可评估"，
+        不是插值出 9 个网格点再报"9/9 更优"（X40 真实踩过）。
+    """
+    from wmlab.eval import pairing, scheduling
+
+    n = 2000
+    # (a) 三族信号相关族必须 raise（用空 dict 当 state 也不行）
+    for fam, kw in (("selfreport", {"threshold_u": 0.5, "state": {}}),
+                    ("conformal", {"tol": 0.1, "K": 4, "state": {}, "tab": {"H": 8}}),
+                    ("oracle", {"tau": 1.0, "K": 4, "state": {}, "tab": {"H": 8},
+                                "truth_key": "oracle_err"})):
+        s = scheduling.build(fam, loss_prob=0.0, **kw)
+        try:
+            scheduling.simulate_schedule(s, n, 0)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"★ {fam} 是信号相关族，空跑必须 raise（不许静默返回数）")
+
+    def mk(family, xs, ys):
+        return [scheduling.Row(family=family, knob_axis="k", knob_value=float(i),
+                               loss_prob=0.0, seed=0, tx_rate=float(x),
+                               mean_age=float(y), metric="mean_age",
+                               metric_value=float(y), n_eval=1)
+                for i, (x, y) in enumerate(zip(xs, ys))]
+
+    # (b1) 合法窗口 ⇒ 给出比值，且比值必须**朝已知方向**（构造：a 恒 = 2×b）
+    a = mk("periodic", [0.1, 0.2, 0.4, 0.8], [1.0, 2.0, 3.0, 4.0])
+    b = mk("threshold", [0.1, 0.2, 0.4, 0.8], [0.5, 1.0, 1.5, 2.0])
+    res = scheduling.equal_budget_pair(a, b, metric="mean_age")
+    assert abs(res["ratio_median"] - 2.0) < 1e-9, \
+        f"★ 构造比值应为 2.0，实测 {res['ratio_median']}"
+    # (b2) 跨度过窄 ⇒ 必须 WindowNotEvaluable（不许插值出 9 个点）
+    a2 = mk("periodic", [0.1000, 0.1010, 0.1020, 0.1030], [1.0, 2.0, 3.0, 4.0])
+    b2 = mk("threshold", [0.1000, 0.1010, 0.1020, 0.1030], [0.5, 1.0, 1.5, 2.0])
+    try:
+        scheduling.equal_budget_pair(a2, b2, metric="mean_age")
+    except pairing.WindowNotEvaluable:
+        pass
+    else:
+        raise AssertionError("★ 5% 跨度的窗口必须判『不可评估』（X40 的假头条就是这么来的）")
+    # (b3) 点数不足 ⇒ 也必须判不可评估
+    a3, b3 = mk("periodic", [0.1, 0.5], [1.0, 2.0]), mk("threshold", [0.1, 0.5], [1.0, 2.0])
+    try:
+        scheduling.equal_budget_pair(a3, b3, metric="mean_age")
+    except pairing.WindowNotEvaluable:
+        pass
+    else:
+        raise AssertionError("★ 每族只有 2 个点（< min_pts=3）必须判不可评估")
+    # (b4) 发散 / 不可用的样本必须被剔除，不许混进均值（过滤后仍要够 min_pts）
+    xs5, ys5 = [0.1, 0.2, 0.4, 0.6, 0.8], [1.0, 2.0, 3.0, 4.0, 5.0]
+    a4 = mk("periodic", xs5, ys5)
+    b4 = mk("threshold", xs5, ys5)
+    b4[1].metric_value = None           # 该点不可用
+    b4[4].diverged = 3                  # 该档有发散
+    res4 = scheduling.equal_budget_pair(a4, b4, metric="mean_age")
+    assert res4["n_a"] == 5 and res4["n_b"] == 3, \
+        f"★ 不可用+发散的点必须被剔除（实测 n_a={res4['n_a']} n_b={res4['n_b']}）"
+
+    # (b5) ★★ 指标在**最大预算端退化为 0**（K=0/T=1 ⇒ 每步送达 ⇒ age 恒 0）
+    #      ⇒ 网格必须被**收缩**到两族都 >0 的区域，且收缩必须被报出来
+    a5 = mk("periodic", [0.125, 0.25, 0.5, 1.0], [3.5, 1.5, 0.5, 0.0])
+    b5 = mk("threshold", [0.125, 0.25, 0.5, 1.0], [4.0, 2.0, 0.5, 0.0])
+    res5 = scheduling.equal_budget_pair(a5, b5, metric="mean_age")
+    assert res5["n_grid_used"] < res5["n_grid_raw"], \
+        "★ 末点退化为 0 ⇒ 网格必须收缩（否则比值在那一端无定义）"
+    assert all(v > 0 for v in res5["a"]) and all(v > 0 for v in res5["b"]), \
+        "★ 收缩后网格上两族指标都必须 >0"
+    assert res5["hi"] < res5["hi_raw"], "★ 收缩后的上界必须严格低于原始上界"
+    #     收缩后不足 min_pts ⇒ 必须判不可评估（不许静默丢掉 0 点后照报中位）
+    a6 = mk("periodic", [0.25, 0.30, 0.7, 1.0], [1.0, 0.0, 0.0, 0.0])
+    b6 = mk("threshold", [0.25, 0.30, 0.7, 1.0], [1.0, 0.0, 0.0, 0.0])
+    try:
+        scheduling.equal_budget_pair(a6, b6, metric="mean_age")
+    except pairing.WindowNotEvaluable:
+        pass
+    else:
+        raise AssertionError("★ 收缩后网格点 < min_pts 时必须判不可评估（不许静默丢点照报）")
+
+
 def main() -> int:
     tests = [(k, v) for k, v in sorted(globals().items())
              if k.startswith("test_") and callable(v)]
