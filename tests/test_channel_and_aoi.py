@@ -58,6 +58,29 @@
                                         否则 9 个网格点会挤在同一段里造出假头条
   ㊶ ★ X41 剂量档的"任务价值"必须**跨 PER 取中位**（不是取极值 / 首个）——
                                         同一批数据取最大报 1.147、取中位报 1.065，报哪个决定结论强弱
+  ㊷ ★ X42 共形信封的构件（PAVA 保序回归 + 分位点）
+  ㊸ ★ X42 逐年龄归一化不可省（K1）—— 全局阈值会退化成"只在老年龄才发"
+  ㊹ ★ X42 分块产物必须合并**全部** chunk（覆盖守卫）
+  ㊺ ★★ X43 oracle 真值误差真的接线 —— T=1 恒为 0；全丢包时 `oracle_err` 逐位 = `est_nmse`
+  ㊻ ★ X43 逐年龄归一化不可省（O1）
+  ㊼ ★ X43 非有限值必须 raise（O2）
+  ㊽ ★★ X43 口径核对必须取对列（R12）—— ★ 含反向断言：取错列必须给 ≈10 ⇒ 证明测试有分辨力
+  ㊾ ★ X44 时刻表必须"恰好 N 个且合法"（有界抖动不打乱顺序）
+  ㊿ ★★ X44 反算区间必须含 t=1 —— ★ 调度首次查询在 t=1（t=0 永不出现）；
+                                       差 1 的预算偏差会被误读成"时机效应"
+  [51] ★★ X45 首尾静默恒等式（循环化只挪基线、零解耦）
+  [52] ★ X45 多口径必须"同一次运行"，core 真去边界
+  —— ★ **圈码 1–50 已用尽，此后一律用方括号数字 `[nn]`（只追加、不复用）** ——
+  [53] ★★ 调度族注册表：**可部署性写进代码**（约束 C3）
+  [54] ★★ 送达语义：不得二次扣损 —— 用**两个已知答案**卡死
+  [55] ★★ timing 族：同 T 下所有扰动的发送次数**逐位相等**（X44 的前提）
+  [56] ★★ 等预算配对守卫 + 信号相关族禁跑（两条"防假结论"的硬闸门）
+  [57] ★ `clipped_surrogate` = X5(离散) 与 X9(连续) **共用的唯一一行 PPO 核心**；
+                                       已知答案 + 反向断言（min 代替 max 必须不同）
+  [58] ★ `log(1−tanh²u)`：既要数值稳定（|u|=20 有限），又要**真的是雅可比**（数值微分）
+  [59] ★★ **想象训练的奖励地基**：解析重建 ≡ gymnasium 实测 + 反向断言（越界用未 clip 必须不同）
+                                       + CartPole 必须 raise（不许静默返回 1.0）
+  [60] ★ 想象 rollout 的接线（R12）：Z 序列逐位 = `model.rollout_latent(...)`；末端 bootstrap 有限
 """
 
 from __future__ import annotations
@@ -2409,6 +2432,207 @@ def test_scheduling_pairing_guard_and_signal_dependent_refusal():
         pass
     else:
         raise AssertionError("★ 收缩后网格点 < min_pts 时必须判不可评估（不许静默丢点照报）")
+
+
+# ------------------------------------------------- [57] PPO 裁剪代理：已知答案 + 反向断言
+def test_clipped_surrogate_known_answer_and_reverse_assertion():
+    """[57] ★ `clipped_surrogate` 是 **X5（离散）与 X9（连续）共用的唯一一行 PPO 核心**。
+
+    抽成纯函数（2026-10-09）就是为了让它**可以被单独卡死**。两条：
+
+    (a) **已知答案**：手算 `max(−A·r, −A·clamp(r))` 必须逐位一致，且两个分支
+        （A>0 取截断支 / A<0 取未截断支）都要覆盖 —— 只覆盖一支等于没测。
+    (b) **反向断言**：故意用 `min` 代替 `max`，必须给出**不同**的数。
+        没有反向断言，测试很可能只是"跟着实现一起错"
+        （这是本项目自证伪账本里反复出现的一族）。
+    """
+    import torch
+
+    from wmlab.agents import clipped_surrogate
+
+    eps = 0.2
+    lo, hi = 1.0 - eps, 1.0 + eps
+
+    def hand(logp_new, logp_old, adv):
+        ratio = float(torch.exp(torch.tensor(logp_new - logp_old)))
+        r_clip = min(max(ratio, lo), hi)
+        return max(-adv * ratio, -adv * r_clip), ratio
+
+    cases = [
+        (0.5, 0.0, 2.0),     # A>0, ratio=1.6487>hi ⇒ 截断支胜出（悲观界）
+        (0.5, 0.0, -2.0),    # A<0, 同一 ratio      ⇒ 未截断支胜出
+        (-0.5, 0.0, 2.0),    # A>0, ratio=0.6065<lo ⇒ 截断支胜出
+        (0.05, 0.0, -3.0),   # ratio=1.051 在区间内 ⇒ 两支相同
+    ]
+    for logp_new, logp_old, adv in cases:
+        want, ratio = hand(logp_new, logp_old, adv)
+        got = float(clipped_surrogate(torch.tensor([logp_new]), torch.tensor([logp_old]),
+                                      torch.tensor([adv]), eps))
+        assert abs(got - want) < 1e-6, \
+            f"★ ratio={ratio:.4f} adv={adv}: 手算 {want:.6f} vs 实现 {got:.6f}"
+        # (b) 反向断言：换 min 必须给出不同的数（构造 clip 生效的角）
+        if abs(ratio - min(max(ratio, lo), hi)) > 1e-9:
+            wrong = min(-adv * ratio, -adv * min(max(ratio, lo), hi))
+            assert abs(wrong - want) > 1e-6, \
+                f"★ 反向断言失效：ratio={ratio:.4f} 处 min/max 同值，这个用例没有分辨力"
+
+
+# ------------------------------------------------- [58] tanh squash：数值稳定 + 雅可比正确
+def test_squash_correction_stable_and_jacobian_correct():
+    """[58] ★ `log(1 − tanh²u)` —— 既要**数值稳定**，又要**真的是雅可比**。
+
+    (a) **稳定性**：|u| = 20 时结果必须**有限**。
+        直接写 `torch.log(1 - torch.tanh(u)**2)` 在 float32 下 u≳9 时 = −inf
+        ⇒ 整条 loss 变 NaN（而 NaN 会被"NaN <= 阈值 ≡ False"静默吃掉，见铁律 9）。
+    (b) **正确性**：与定义式在小 u 上一致。
+    (c) ★ **独立路径**（不经过本函数）：对 `a = s·tanh(u)` 做**数值微分**，
+        则 `log|da/du|` 必须等于 `log s + squash_correction(u)`。
+        数值微分是外部事实，解析式是我方产物 —— 两者对上才算"这一项接对了线"。
+    """
+    import numpy as np
+    import torch
+
+    from wmlab.agents import squash_correction
+
+    # (a) 稳定
+    u_big = torch.tensor([20.0, -20.0, 12.0, -12.0])
+    val = squash_correction(u_big)
+    assert torch.isfinite(val).all(), f"★ |u| 大时必须有限，实测 {val.tolist()}"
+    #     直接写法确实会炸 —— 这是反向断言（证明这条测试有分辨力）
+    direct = torch.log(1.0 - torch.tanh(u_big) ** 2)
+    assert not torch.isfinite(direct).all(), \
+        "★ 反向断言失效：直接的 log(1-tanh²) 本应下溢成 -inf，说明用例的 |u| 还不够大"
+
+    # (b) 与定义式在小 u 上一致
+    u_small = torch.linspace(-3.0, 3.0, 61, dtype=torch.float64)
+    ref = torch.log(1.0 - torch.tanh(u_small) ** 2)
+    assert torch.allclose(squash_correction(u_small), ref, atol=1e-9), \
+        "★ 解析式与 log(1-tanh²) 不一致"
+
+    # (c) 数值微分验雅可比（另一条路径）
+    s = 2.0
+    for u0 in (-2.0, -0.5, 0.3, 1.7):
+        h = 1e-6
+        da = (s * np.tanh(u0 + h) - s * np.tanh(u0 - h)) / (2 * h)      # 数值 da/du
+        lhs = float(np.log(abs(da)))
+        rhs = float(np.log(s) + squash_correction(torch.tensor([u0])).item())
+        assert abs(lhs - rhs) < 1e-6, \
+            f"★ u={u0}: 数值 log|da/du| = {lhs:.8f} vs 解析 {rhs:.8f}"
+
+
+# ------------------------------------------------- [59] 解析奖励 ≡ gymnasium 实测
+def test_pendulum_analytic_reward_matches_gym():
+    """[59] ★★ **想象训练的奖励地基**（X9 的全部前提）。
+
+    世界模型没有 reward 头 ⇒ 想象轨迹的奖励只能从**想象出的观测**解析重建。
+    本测试卡死三件事：
+
+    (a) 随机 (obs, u) 下重建 reward ≡ gymnasium 实测（含真实 `step` 的物理演化）
+    (b) **反向断言**：u 越界时必须按 `clip(u, ±2)` 计算 ——
+        用未 clip 的 u 必须给出**不同**的数（否则"clip 语义"这条根本没被测到）
+    (c) CartPole 必须 **raise**：它的奖励恒为 1 ⇒ 想象轨迹之间回报无差异 ⇒
+        想象训练在该环境上不适用。**不许静默返回一串 1.0 跑出一张好看的曲线。**
+    """
+    import numpy as np
+
+    from wmlab.envs import make_env
+
+    env = make_env("Pendulum-v1", seed=0)
+    assert env.has_analytic_reward, "★ Pendulum 必须声明支持解析奖励"
+
+    # (a)
+    rng = np.random.default_rng(0)
+    o = env.reset(seed=0)
+    worst = 0.0
+    for _ in range(300):
+        u = rng.uniform(env.act_low, env.act_high)
+        res = env.step(u)
+        worst = max(worst, abs(env.analytic_reward(o, float(np.asarray(u).reshape(-1)[0]))
+                               - res.reward))
+        o = env.reset(seed=int(rng.integers(1_000_000))) if res.done else res.obs
+    assert worst < 1e-5, f"★ 解析重建与 gym 实测不一致：max|Δ| = {worst:.3e}"
+
+    # (b) 反向断言：越界动作
+    o = env.reset(seed=1)
+    res = env.step(np.array([3.5], dtype=np.float32))
+    from wmlab.envs.classic import _pendulum_reward_from_obs
+    d_clip = abs(_pendulum_reward_from_obs(o, 3.5) - res.reward)
+    # 手工用未 clip 的 u 复算
+    th = np.arctan2(o[1], o[0])
+    r_noclip = -((((th + np.pi) % (2 * np.pi)) - np.pi) ** 2 + 0.1 * o[2] ** 2
+                 + 0.001 * 3.5 ** 2)
+    assert d_clip < 1e-5, f"★ clip 语义错：|Δ| = {d_clip:.3e}"
+    assert abs(r_noclip - res.reward) > 1e-3, \
+        "★ 反向断言失效：未 clip 的 u 本应给出明显不同的 reward"
+
+    # (c) CartPole 必须 raise
+    env2 = make_env("CartPole-v1", seed=0)
+    assert not env2.has_analytic_reward, "★ CartPole 不得声明支持解析奖励"
+    try:
+        env2.analytic_reward(np.zeros(env2.obs_dim, dtype=np.float32), 0)
+    except NotImplementedError:
+        pass
+    else:
+        raise AssertionError("★ CartPole 的 analytic_reward 必须 raise（不许静默返回 1.0）")
+
+
+# ------------------------------------------------- [60] 想象 rollout 的接线检查
+def test_imagination_gae_and_latent_rollout_wiring():
+    """[60] ★ 想象训练的两条"接线了吗"（R12）。
+
+    (a) `compute_gae_2d` 与 `compute_gae`（1D）**逐条逐位一致** —— 前者是后者的
+        批量向量化；不一致就说明 B 维 / H 维被搞混（静默错位，比崩溃危险）。
+    (b) `imagine_batch` 产出的潜状态序列必须**真的是世界模型的滚动**：
+        `Z[:, 1:]` 必须逐位等于 `model.rollout_latent(Z[:, :1], A[:, :-1])`。
+        若不等，说明"想象"里混进了别的更新路径 —— 而它在图上完全看不出来。
+    """
+    import numpy as np
+    import torch
+
+    from wmlab.agents import ContinuousActorCritic, compute_gae, compute_gae_2d, imagine_batch
+    from wmlab.models import MLPWorldModel
+
+    # (a) GAE 1D vs 2D
+    rng = np.random.default_rng(0)
+    B, H = 3, 7
+    rew = rng.normal(size=(B, H)).astype(np.float32)
+    val = rng.normal(size=(B, H)).astype(np.float32)
+    last = rng.normal(size=B).astype(np.float32)
+    adv2, ret2 = compute_gae_2d(rew, val, last, 0.99, 0.95)
+    for b in range(B):
+        a1, r1 = compute_gae(rew[b], val[b], float(last[b]), 0.99, 0.95)
+        # 注意：compute_gae 内部对 1D 结果做了优势归一化，故这里比较**未归一化**的 ret
+        assert np.allclose(ret2[b], r1, atol=1e-5), \
+            f"★ 第 {b} 条：1D 与 2D 的 ret 不一致（{ret2[b][:3]} vs {r1[:3]}）"
+
+    # (b) 想象确实是潜空间滚动
+    obs_dim, act_dim, latent = 3, 1, 8
+    model = MLPWorldModel(obs_dim, act_dim, latent_dim=latent, hidden=16, discrete_act=False)
+    actor = ContinuousActorCritic(latent, act_dim, hidden=16, act_scale=2.0)
+    pool = rng.normal(size=(64, obs_dim)).astype(np.float32)
+    rollout, info = imagine_batch(model, actor, pool, n_starts=4, horizon=5,
+                                 reward_fn=lambda o, a: -np.sum(o ** 2, axis=-1),
+                                 device=torch.device("cpu"),
+                                 rng=np.random.default_rng(1), gamma=0.99, lam=0.95)
+    B2, H2 = info["n_starts"], info["horizon"]
+    Z = rollout.x.reshape(B2, H2, latent)
+    A = rollout.a.reshape(B2, H2, act_dim)
+    with torch.no_grad():
+        zs = model.rollout_latent(torch.as_tensor(Z[:, 0, :]),          # z0 必须是 2 维 (B, latent)
+                                  torch.as_tensor(A[:, :-1, :]))
+    assert np.array_equal(zs.numpy(), Z[:, 1:, :]), \
+        "★ 想象的 Z 序列不是 model.rollout_latent 的结果（说明滚动路径不是唯一的那条）"
+    # 起点必须是**真实观测的编码**（不是随机潜状态）。
+    # ★ 用**同一个 rng seed** 独立重放"起点采样"这一步即可逐位比对 ——
+    #   imagine_batch 里 numpy rng **只**用于那一次 integers 调用，之后走 torch 全局 RNG。
+    idx = np.random.default_rng(1).integers(0, pool.shape[0], size=B2)
+    with torch.no_grad():
+        z0_ref = model.encode(torch.as_tensor(pool[idx]))
+    assert np.array_equal(z0_ref.numpy(), Z[:, 0, :]), \
+        "★ 起点 z0 必须来自 encode(真实 obs)，且采样路径必须一致"
+    # 末端 bootstrap 必须真的用了 V(z_H)（否则 Pendulum 的截断会被当成终止）
+    assert np.isfinite(rollout.ret).all() and np.isfinite(rollout.adv).all(), \
+        "★ GAE 输出出现非有限值（NaN/Inf 不得静默通过，铁律 9）"
 
 
 def main() -> int:

@@ -12,7 +12,7 @@
 
 ```bash
 python scripts/00_check_env.py            # 环境自检（含中文字体链路），15 项
-python tests/test_channel_and_aoi.py      # ★ 74 项回归自检（不依赖 pytest）
+python tests/test_channel_and_aoi.py      # ★ 78 项回归自检（不依赖 pytest）
 python scripts/30_scheduling_baselines.py --n 50000 --tmax 16   # 调度基线库 v0.1，无模型、秒级~分钟级
 ```
 
@@ -96,7 +96,7 @@ venv3\Scripts\python.exe -m pip install --no-cache-dir numpy matplotlib pyyaml t
 
 | 判据 | 期望 | 出自 |
 |---|---|---|
-| 74 项自检 | `74/74 passed` | `tests/test_channel_and_aoi.py` |
+| 78 项自检 | `78/78 passed` | `tests/test_channel_and_aoi.py` |
 | 环境自检 | 15 项全过，含中文字体链路 | `scripts/00_check_env.py` |
 | 调度基线闭式对账 | 最差 `diff/(5·SE) ≤ 1`，99 个点 | `scripts/30_scheduling_baselines.py` |
 | 调度基线退化 | `periodic(T=1)` / `threshold(K=0)` 的 `tx_rate−1 = 0` | 同上 |

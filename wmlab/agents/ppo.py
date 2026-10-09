@@ -238,6 +238,29 @@ def collect_rollout(env, net: ActorCritic, n_steps: int, gamma: float, lam: floa
 
 
 # --------------------------------------------------------------------------- 更新
+def clipped_surrogate(logp_new: torch.Tensor, logp_old: torch.Tensor,
+                      adv: torch.Tensor, clip_eps: float) -> torch.Tensor:
+    """PPO 的裁剪代理目标（**取负**，因为 optimizer 只会下降）。
+
+        ratio       = exp(logp_new − logp_old)
+        L^CLIP      = mean( max( −A·ratio , −A·clip(ratio, 1−ε, 1+ε) ) )
+
+    ★ 为什么抽成**纯函数**（2026-10-09，X9）
+    --------------------------------------
+    `max(...)` 这一行是 PPO 的**全部**核心（推导 (3)）。X9 的想象训练用的是
+    连续动作（Gaussian + tanh squash），log-prob 的算法完全不同 ——
+    但**这一行完全相同**。若不抽出来，就会变成两份实现；
+    一旦有人只改一处，X5（离散）与 X9（连续）就不再可比（同 `train.py` 的教训）。
+
+    ⇒ 抽出来后两处调用同一个函数，并用 [57] 的反向断言卡死它
+      （喂已知 ratio/adv 手算 `max(min)`，**故意写错分支必须给不同数**）。
+    """
+    ratio = torch.exp(logp_new - logp_old)
+    pg1 = -adv * ratio
+    pg2 = -adv * torch.clamp(ratio, 1.0 - clip_eps, 1.0 + clip_eps)
+    return torch.max(pg1, pg2).mean()
+
+
 def ppo_update(net: ActorCritic, opt: torch.optim.Optimizer, r: Rollout, *,
                device: torch.device, update_epochs: int, minibatch_size: int,
                clip_eps: float, vf_coef: float, ent_coef: float,
@@ -259,14 +282,12 @@ def ppo_update(net: ActorCritic, opt: torch.optim.Optimizer, r: Rollout, *,
             mb = torch.as_tensor(idx[s:s + minibatch_size], dtype=torch.int64, device=device)
             logp, entropy, value = net.evaluate(obs[mb], act[mb])
 
-            # 推导 (2)：重要性比
+            # 推导 (2)：重要性比（仍保留，供下面的诊断量 approx_kl / clip_frac 用）
             ratio = torch.exp(logp - logp_old[mb])
-            a_mb = adv[mb]
 
-            # 推导 (3)：clip 双分支 + min ⇒ 悲观下界
-            pg1 = -a_mb * ratio
-            pg2 = -a_mb * torch.clamp(ratio, 1.0 - clip_eps, 1.0 + clip_eps)
-            policy_loss = torch.max(pg1, pg2).mean()
+            # 推导 (3)：clip 双分支 + max ⇒ 悲观下界
+            # ★ 与 X9 的**连续动作版**共用同一个纯函数（见 clipped_surrogate 的说明）
+            policy_loss = clipped_surrogate(logp, logp_old[mb], adv[mb], clip_eps)
 
             # 推导 (5)：价值项下降（正号）、熵项上升（负号）
             value_loss = 0.5 * ((value - ret[mb]) ** 2).mean()
