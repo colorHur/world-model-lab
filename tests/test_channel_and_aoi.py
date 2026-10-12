@@ -2635,6 +2635,148 @@ def test_imagination_gae_and_latent_rollout_wiring():
         "★ GAE 输出出现非有限值（NaN/Inf 不得静默通过，铁律 9）"
 
 
+# ------------------------------------------------- [61] GAE 边界：截断 / 终止 / 掩码错位
+def test_continuous_gae_boundary_known_answer():
+    """[61] ★★ 连续 PPO 的**优势估计边界**（2026-10-12 修正 GAE 掩码后新增）。
+
+    旧版有两个实质缺陷，本测试用**手算已知答案**逐条卡死：
+      (a) **只记 `terminated`**：Pendulum 永不 terminated ⇒ 掩码恒 1 ⇒ GAE 递推
+          **跨 episode 不断** ⇒ 每集末尾的优势混进下一集的信息。
+      (b) **掩码一步错位**：递推里下一次迭代用到了**下一条 transition** 的掩码。
+
+    γ=λ=1、r 全 1、v 全 0、last_value=0 时 GAE 只手算即可：
+
+      A) 无终止              ⇒ adv = [4, 3, 2, 1]
+      B) t=1 处截断(boot=10) ⇒ adv = [12, 11, 2, 1]
+         （δ1 = r1 + γ·10 − v1 = 11，且与后续完全解耦）
+      C) t=1 处真终止        ⇒ adv = [2, 1, 2, 1]
+         （δ1 = r1 − v1 = 1，不 bootstrap）
+
+    ★ 反向断言：**忽略 done 掩码**、以及**把截断当终止**，都必须给出与正解不同的数 ——
+      否则这条测试只是在"跟着实现一起错"（本项目自证伪账本里反复出现的一族）。
+    """
+    import numpy as np
+
+    from wmlab.agents import compute_gae
+
+    ones, zeros = np.ones(4), np.zeros(4)
+    kw = dict(normalize=False)          # 关掉归一化才能与手算对位
+
+    advA, _ = compute_gae(ones, zeros, 0.0, 1.0, 1.0, **kw)
+    assert np.allclose(advA, [4, 3, 2, 1]), f"★ A（无终止）实测 {advA}"
+
+    advB, _ = compute_gae(ones, zeros, 0.0, 1.0, 1.0,
+                          done=[0, 1, 0, 0], bootstrap=[0, 10, 0, 0], **kw)
+    assert np.allclose(advB, [12, 11, 2, 1]), f"★ B（截断自举）实测 {advB}"
+
+    advC, _ = compute_gae(ones, zeros, 0.0, 1.0, 1.0,
+                          done=[0, 1, 0, 0], bootstrap=[0, 0, 0, 0], **kw)
+    assert np.allclose(advC, [2, 1, 2, 1]), f"★ C（真终止）实测 {advC}"
+
+    # ★ 反向断言 1：B 与 C 唯一的差别就是 bootstrap ⇒ 若实现忽略它，两者必然相等
+    assert not np.allclose(advB, advC), \
+        "★ 反向断言失效：截断与终止给出了相同优势 —— bootstrap 根本没接线"
+    # ★ 反向断言 2：忽略 done（= 旧版对 Pendulum 的行为）必须不同于 C
+    assert not np.allclose(advA, advC), \
+        "★ 反向断言失效：丢掉 done 掩码后结果不变 —— 掩码没接线"
+
+
+# ------------------------------------------------- [62] 完整 log_prob：密度必须归一化
+def test_continuous_log_prob_density_normalizes():
+    """[62] ★★ squash 后的 log π(a) 必须是**真密度**：∫π(a)da ≡ 1。
+
+    ★ 为什么 [58] 不够：[58] 只卡 **squash_correction**（雅可比那一项），
+      **不检查常数项**。而 2026-10-12 复查发现 `log_prob` 曾**多减一个 `log 2`**
+      ⇒ 单维动作密度只有正确值的 **1/2**（∫ = 0.5）—— [58] 全绿也照样漏掉。
+
+    做法：在 u 网格上算 `π(a(u))·|da/du|`（换元后的密度），梯形积分应为 1。
+    这里的 `|da/du|` 用**外部解析式** `s·(1−tanh²u)`，不经过被测函数。
+
+    ★ 反向断言：整体乘 1/2 ⇒ 积分 0.5（证明这条测试对**常数项**有分辨力）。
+    """
+    import torch
+
+    from wmlab.agents import ContinuousActorCritic
+
+    s = 2.0
+    net = ContinuousActorCritic(obs_dim=3, act_dim=1, hidden=8, act_scale=s)
+    mean = torch.tensor([0.4], dtype=torch.float64)
+    std = torch.tensor([0.7], dtype=torch.float64)
+
+    u = torch.linspace(-12.0, 12.0, 400001, dtype=torch.float64)
+    lp = net.log_prob(u.unsqueeze(-1), mean, std).sum(-1)     # 单维动作：sum 即本身
+    jac = s * (1.0 - torch.tanh(u) ** 2)                      # |da/du|（外部解析式）
+    total = float(torch.trapezoid(torch.exp(lp) * jac, u))
+    assert abs(total - 1.0) < 1e-3, \
+        f"★ log π(a) 不是归一化密度：∫π(a)da = {total:.6f}（应为 1）"
+
+    # ★ 反向断言：多减一个 log 2（= 旧版 bug）⇒ 积分正好 0.5
+    wrong = float(torch.trapezoid(torch.exp(lp) * 0.5 * jac, u))
+    assert abs(wrong - 0.5) < 1e-3, \
+        "★ 反向断言失效：半密度积分不为 0.5，这条测试没有分辨力"
+
+    # ★ 端点稳定性（与 [58] 同族的数值要求）
+    assert torch.isfinite(lp).all(), "★ log π(a) 出现非有限值（NaN/Inf 不得静默通过）"
+
+
+# ------------------------------------------------- [63] 截断后 reset：自举不许用下一集
+def test_collect_rollout_truncation_bootstraps_with_episode_end_obs():
+    """[63] ★★ 「截断后 reset」不能把**下一集初始状态**的价值当自举（端到端）。
+
+    旧版 `collect_rollout_continuous` 在 done 后立刻 `env.reset()`，收尾时用
+    **reset 之后的新初始观测**算 `last_value` ⇒ 末步自举指向下一集。
+    本测试用一个**数值完全可控的 stub**（episode 定长、全程仅 truncated）把整条链
+    （step → done 记账 → 截断自举 → GAE）跑一遍，与手算对账。
+
+    构造：episode 长 3，obs = [当前步数]，reward 恒 1，value(obs) = obs[0]。
+      n_steps = 3 ⇒ 三步同属一集，第 3 步 truncated，截断观测 = [3]，新初始 = [0]。
+      正确（γ=λ=1）：eff_r = [1, 1, 1+1·3] ⇒ adv = [6,4,2]、ret = adv + value = [6,5,4]。
+      旧版（掩码全 1 + 用 reset 后 obs）⇒ ret = [3,2,1]。
+
+    ★ 反向断言：结果必须**不等于**旧版那一组。
+    """
+    import numpy as np
+    import torch
+
+    from wmlab.agents import collect_rollout_continuous
+    from wmlab.envs.base import StepResult
+
+    class _StubEnv:
+        obs_dim, act_dim, is_discrete, name = 1, 1, False, "stub"
+        act_low = np.array([-1.0], dtype=np.float32)
+        act_high = np.array([1.0], dtype=np.float32)
+
+        def __init__(self, L=3):
+            self._L, self._t = int(L), 0
+
+        def reset(self, seed=None):
+            self._t = 0
+            return np.zeros(1, dtype=np.float32)
+
+        def step(self, action):
+            self._t += 1
+            return StepResult(obs=np.array([float(self._t)], dtype=np.float32),
+                              reward=1.0, terminated=False, truncated=self._t >= self._L)
+
+    class _StubNet:
+        """value = obs[0]；其余输出对 GAE 无影响。"""
+        def act_np(self, x_np, device, deterministic=False):
+            v = float(np.asarray(x_np, dtype=np.float32).reshape(-1)[0])
+            z = np.zeros(1, dtype=np.float32)
+            return z, z, 0.0, v, 0.0
+
+    r = collect_rollout_continuous(_StubEnv(L=3), _StubNet(), n_steps=3,
+                                   gamma=1.0, lam=1.0,
+                                   device=torch.device("cpu"))
+    assert np.allclose(r.value, [0, 1, 2]), f"★ value 序列 {r.value}"
+    assert np.allclose(r.done, [0, 0, 1]), f"★ done 序列 {r.done}（第 3 步应结束）"
+    assert np.allclose(r.ret, [6, 5, 4]), \
+        f"★ 截断自举错：ret = {r.ret}（正确 [6,5,4]；用下一集初始状态会得 [3,2,1]）"
+    # ★ 反向断言：旧版那一组必须不同
+    assert not np.allclose(r.ret, [3, 2, 1]), \
+        "★ 反向断言失效：结果与『用 reset 后观测自举』的旧行为相同"
+
+
 def main() -> int:
     tests = [(k, v) for k, v in sorted(globals().items())
              if k.startswith("test_") and callable(v)]

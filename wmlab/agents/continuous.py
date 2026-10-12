@@ -149,9 +149,18 @@ class ContinuousActorCritic(nn.Module):
         注意入参是 **u（未 squash 的动作）** 而不是 a：
         更新阶段要重算 log-prob，而从 a 反解 u = atanh(a/s) 在 |a|→s 时数值爆炸；
         直接存 u 则完全精确（这也是 Rollout 里存 u 而不只存 a 的原因）。
+
+        ★★ 2026-10-12 修正（第 31 次复查）：本行**曾经多减一个 `_LOG2`** ⇒ 单维
+        动作密度只有正确值的 1/2（`∫π(a)da = 0.5`，实测见自检 [62]）；这与上面
+        推导 (2) 写死的公式**互相矛盾**，属"代码背离自己的推导"。后果分级
+        （不许夸大成"它导致了训练失败"）：它在 PPO 的概率比里**逐点抵消**
+        （`ratio = exp(logp_new − logp_old)`），所以**不能**用它解释 X9 的失败；
+        真正受影响的是**绝对 log-prob** —— 任何把它当密度用的下游（行为克隆的
+        似然、离线 RL 的重要性权重、perplexity 类诊断）都会系统性偏。已由自检
+        [62] 的密度归一化锁死。
         """
         base = Normal(mean, std).log_prob(u)
-        return base - _LOG2 - np.log(self.act_scale) - squash_correction(u)
+        return base - np.log(self.act_scale) - squash_correction(u)
 
     def entropy(self, mean: torch.Tensor, std: torch.Tensor) -> torch.Tensor:
         """未 squash 的高斯熵（近似，见推导 (3)）。(B, act_dim)"""
@@ -198,6 +207,11 @@ class ContinuousRollout:
     ★ 同时存 `u`（未 squash）与 `a`（squash 后）：
       - `a` 给**世界模型**用（它是世界模型见过的动作空间）
       - `u` 给**log-prob 重算**用（推导 (2) 的入参必须是 u）
+
+    ★ `done`（2026-10-12 新增）：诊断用 —— 记下每个 transition 之后 episode 是否
+      结束（`terminated | truncated`）。它**不参与** update（GAE 在采集时已算完），
+      留着是为了让"边界在哪"**可被检查**，而不是只能靠推。想象 rollout（无 episode
+      概念）保持 `None`。
     """
 
     x: np.ndarray          # (T, d)   状态（真实环境里是 obs，想象里是 z）
@@ -209,31 +223,61 @@ class ContinuousRollout:
     adv: np.ndarray        # (T,)  GAE，已归一化
     ret: np.ndarray        # (T,)  adv + value
     ep_returns: list       # 本批内完整结束的 episode 回报（仅真实环境有；想象里为空）
+    done: np.ndarray | None = None   # (T,) 该步之后 episode 是否结束（terminated|truncated）
 
 
 def compute_gae(reward: np.ndarray, value: np.ndarray, last_value: float,
-                gamma: float, lam: float, terminated: np.ndarray | None = None) -> tuple:
+                gamma: float, lam: float, done: np.ndarray | None = None,
+                bootstrap: np.ndarray | None = None,
+                normalize: bool = True) -> tuple:
     """GAE(γ, λ)（推导 (4)）。
 
-    ★ done 的两种语义（X5 的同一处分叉）：
-      `terminated`（真终止）→ 不 bootstrap；truncated（到步数上限）→ **要** bootstrap V(s_T)。
-      Pendulum **永远不会 terminated**（只有 TimeLimit 截断）⇒ 调用方传 None，
-      表示"全程 nonterminal"，最后一步用 `last_value` 兜底。
+    ★★ 三个掩码参数（2026-10-12 修正：旧版只收 `terminated`，**且有一处索引错位**）
+    ------------------------------------------------------------------------------
+    `done[t] = True` ⇒ **t 步之后 episode 结束** —— `terminated`（真终止）与
+    `truncated`（到步数上限）**都算**。GAE 在此**断开**：δ_t 不含 γ·V(s_{t+1})，
+    且递推项 A_{t+1} 不进 A_t（下一集是另一条马尔可夫链，混进来就是偏差）。
+
+    `bootstrap[t]` ⇒ 仅对 `done[t]=True` 的步生效，填该步的**自举价值**：
+        - `truncated`（Pendulum 的唯一情形）：填 **V(截断前最后一个观测)**。
+          ★ 必须用**截断时刻的观测 s_{t+1}**，**不能**用 `env.reset()` 之后的新
+          初始状态 —— 后者属于下一集，与第 t 步的回报无关。
+        - `terminated`：填 0（此后无回报）。默认 `None` ⇒ 全 0。
+
+    等价即时奖励 `eff_r[t] = r[t] + γ·bootstrap[t]·done[t]`，于是
+
+        δ_t = eff_r[t] + γ·V(s_{t+1})·(1−done[t]) − V(s_t)
+        A_t = δ_t + γ·λ·(1−done[t])·A_{t+1}
+
+    其中 `V(s_{t+1})` 取 `value[t+1]`（t < T−1）或 `last_value`（t = T−1）；
+    **末步若 `done=True`，`last_value` 被 `(1−done)` 乘掉 ⇒ 不影响结果**（无需特判）。
+
+    默认（`done=None, bootstrap=None`）⇒ 全程 nonterminal：与旧版在
+    `terminated=None` 时**逐位一致**，也与 `compute_gae_2d`（想象，无掩码）语义一致。
+
+    `normalize=True`（默认）对 adv 做零均值单位方差（推导 (6).1）；`ret` 一律用
+    **未归一化**的 adv 组装。
     """
     T = len(reward)
-    if terminated is None:
-        nonterm = np.ones(T, dtype=np.float32)
-    else:
-        nonterm = (1.0 - np.asarray(terminated, dtype=np.float32))
+    r = np.asarray(reward, dtype=np.float32)
+    v = np.asarray(value, dtype=np.float32)
+    d = (np.zeros(T, dtype=np.float32) if done is None
+         else np.asarray(done, dtype=np.float32).reshape(T))
+    b = (np.zeros(T, dtype=np.float32) if bootstrap is None
+         else np.asarray(bootstrap, dtype=np.float32).reshape(T))
+    nt = 1.0 - d                                    # nonterminal 掩码
+    eff_r = r + gamma * b * d                       # 截断自举折进等价即时奖励
+
     adv = np.zeros(T, dtype=np.float32)
     last = 0.0
-    next_v, next_nt = float(last_value), (0.0 if (terminated is not None and terminated[-1]) else 1.0)
+    next_v = float(last_value)                      # t = T−1 时它就是 V(s_T)
     for t in reversed(range(T)):
-        delta = reward[t] + gamma * next_v * next_nt - value[t]
-        adv[t] = last = delta + gamma * lam * next_nt * last
-        next_v, next_nt = value[t], nonterm[t]
-    ret = adv + value
-    if T > 1:
+        delta = eff_r[t] + gamma * next_v * nt[t] - v[t]
+        last = delta + gamma * lam * nt[t] * last
+        adv[t] = last
+        next_v = v[t]                               # ★ 本步的 s_t 即下一步的 s_{t+1}
+    ret = adv + v
+    if normalize and T > 1:
         adv = (adv - adv.mean()) / (adv.std() + 1e-8)   # 推导 (6).1
     return adv, ret
 
@@ -330,7 +374,26 @@ def collect_rollout_continuous(env, net: ContinuousActorCritic, n_steps: int,
                                gamma: float, lam: float, device: torch.device,
                                x_fn=None, max_episode_steps: int | None = None,
                                seed: int | None = None) -> ContinuousRollout:
-    """在**真实环境**里采 n_steps 步（H2 的真实 PPO 对照臂用）。"""
+    """在**真实环境**里采 n_steps 步（H2 的真实 PPO 对照臂用）。
+
+    ★★ 截断语义（2026-10-12 修正 —— 旧版有两个实质缺陷，已由自检 [61][63] 卡死）
+    -----------------------------------------------------------------------------
+    1. **旧版只记 `terminated`**，而 Pendulum **永不 terminated**（只有 TimeLimit
+       截断）⇒ GAE 的掩码恒为 1 ⇒ **递推跨 episode 不断** ⇒ 每集末尾的优势里混进
+       了**下一集的奖励与初始状态价值**。现改为 `done = terminated | truncated`。
+    2. **旧版在 done 后立刻 `env.reset()`**，收尾时拿 reset 之后的**新初始观测**
+       算 `last_value` ⇒ 末步自举用的是**下一集初始状态**的价值。现在：
+       - 每个 `done` 步的自举值单独记进 `bootstrap[t]`：`truncated` 用**该步返回的
+         观测 `res.obs`（= 截断时刻的观测）**，`terminated` 留 0；
+       - `last_value` 一律取**最后一个 transition 的 next 观测**的价值。
+
+    于是「一集结束就 reset」与「优势估计不跨集」这两件事同时成立 ——
+    它们**不是**互斥的（旧版正是在这里混淆了）。
+
+    `seed`（可选）：给定后**每次 reset 都传 `seed + 已结束的 episode 数`** ⇒ 整条
+    rollout 可复现。★ 旧版只在**首帧**用 seed，后续 episode 的 reset 依赖全局 RNG
+    ⇒ 真实臂上「同种子重跑逐位一致」这条其实**不成立**（多种子对比会掺进额外噪声）。
+    """
     x_fn = x_fn if x_fn is not None else (lambda o: o)
     A = env.act_dim
     x_buf = np.zeros((n_steps, 0), dtype=np.float32)
@@ -339,11 +402,14 @@ def collect_rollout_continuous(env, net: ContinuousActorCritic, n_steps: int,
     logp_buf = np.zeros(n_steps, dtype=np.float32)
     val_buf = np.zeros(n_steps, dtype=np.float32)
     rew_buf = np.zeros(n_steps, dtype=np.float32)
-    term_buf = np.zeros(n_steps, dtype=np.float32)
+    done_buf = np.zeros(n_steps, dtype=np.float32)     # ★ terminated | truncated
+    boot_buf = np.zeros(n_steps, dtype=np.float32)     # ★ 截断步的自举价值 V(s_{t+1})
 
     ep_returns: list[float] = []
     cur_ret = 0.0
+    n_eps = 0
     o = env.reset() if seed is None else env.reset(seed=seed)
+    o_next = o
     for t in range(n_steps):
         x = np.asarray(x_fn(o), dtype=np.float32)
         if t == 0:
@@ -353,17 +419,26 @@ def collect_rollout_continuous(env, net: ContinuousActorCritic, n_steps: int,
         logp_buf[t], val_buf[t] = logp, v
         res = env.step(a.astype(np.float32))
         rew_buf[t] = res.reward
-        term_buf[t] = float(res.terminated)
+        done_buf[t] = float(res.done)
         cur_ret += float(res.reward)
+        o_next = np.asarray(res.obs, dtype=np.float32)          # s_{t+1}
         if res.done:
             ep_returns.append(cur_ret)
             cur_ret = 0.0
-            o = env.reset()
+            if not res.terminated:
+                # ★ truncated：自举价值取**截断时刻的观测** s_{t+1}，而不是 reset 之后的
+                boot_buf[t] = float(net.act_np(
+                    np.asarray(x_fn(o_next), dtype=np.float32), device)[3])
+            n_eps += 1
+            o = env.reset() if seed is None else env.reset(seed=seed + n_eps)
         else:
-            o = res.obs
+            o = o_next
 
-    x_last = np.asarray(x_fn(o), dtype=np.float32)
+    # ★ last_value = V(最后一个 transition 的 next 观测)。末步非 done ⇒ 它就是 V(s_T)；
+    #   末步 done ⇒ GAE 里 (1−done) 把它乘掉，不影响结果。
+    x_last = np.asarray(x_fn(o_next), dtype=np.float32)
     last_v = float(net.act_np(x_last, device)[3])
-    adv, ret = compute_gae(rew_buf, val_buf, last_v, gamma, lam, terminated=term_buf)
+    adv, ret = compute_gae(rew_buf, val_buf, last_v, gamma, lam,
+                           done=done_buf, bootstrap=boot_buf)
     return ContinuousRollout(x_buf, u_buf, a_buf, logp_buf, val_buf, rew_buf,
-                             adv, ret, ep_returns)
+                             adv, ret, ep_returns, done_buf)

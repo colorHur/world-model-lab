@@ -206,7 +206,14 @@ def run_imagination_arm(model, env, obs_pool, horizon, args, device, seed):
 
 
 def run_real_arm(env, args, device, seed, n_updates):
-    """真实环境 PPO 对照臂（同样的每轮样本数与轮数）。"""
+    """真实环境 PPO 对照臂（同样的每轮样本数与轮数）。
+
+    ★ 2026-10-12：rollout 的 reset 种子改为**逐轮确定**（`seed·100003 + u`）——
+      (a) 整条 rollout 可复现（旧版只有**首帧**用 seed，后续 episode 的 reset
+          吃全局 RNG ⇒「同种子逐位一致」在真实臂上其实不成立）；
+      (b) 不同的训练 `seed` 得到**不同的环境流** ⇒ 多种子对比里的方差才是
+          "学习器方差"，而不是"两次跑同一批 episode"。
+    """
     max_steps = int(args.config_max_steps)
     torch.manual_seed(seed)
     actor = ContinuousActorCritic(env.obs_dim, env.act_dim, hidden=HIDDEN,
@@ -223,7 +230,8 @@ def run_real_arm(env, args, device, seed, n_updates):
             g["lr"] = LR * frac
 
         r = collect_rollout_continuous(env, actor, int(args.samples_per_update),
-                                       GAMMA, LAM, device, x_fn=ifn)
+                                       GAMMA, LAM, device, x_fn=ifn,
+                                       seed=int(seed) * 100_003 + int(u))
         st = continuous_ppo_update(actor, opt, r, device=device,
                                    update_epochs=EPOCHS_PER_UPDATE,
                                    minibatch_size=MINIBATCH, clip_eps=CLIP_EPS,

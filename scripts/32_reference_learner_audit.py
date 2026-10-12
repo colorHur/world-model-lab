@@ -10,23 +10,34 @@ X9（想象训练）跑完得到一个"全员平坦"的结果 —— 但**对照
 
 ★ 方法论（来自第 30 次自证伪，见课题空间 `成果台账.md`）
 ------------------------------------------------------
-    任何 A/B 方法比较，跑前必须登记：
+    本仓库的 A/B 流程要求：跑 A/B 方法比较前先登记
         「参照臂须先过『比 trivial 基线好 X』的门槛，否则实验 **作废(VOID)**，不是负结论(NEGATIVE)」。
-    本脚本就是这条门槛的执行器：它**只回答一件事** ——
-        **给定配置下，参照学习器（真实环境 PPO）到底会不会学？**
+    ★ 这条是**本仓库的流程纪律**，**不是**"一切 A/B 比较的普适规则"（2026-10-12 收窄）——
+      它只保证"拿去比的参照确实会学"，别的项目未必要照搬。
 
-判定
-----
-    随机基线 per-step = μ_random（本脚本同口径实测）。
-    VALID   : 末次 per-step >= μ_random + `--margin` 且 与轮次的 Pearson r >= 0.5
-    VOID    : 否则 ⇒ **任何基于该参照的 A/B 比较都不能下结论**。
+判定（v0.2 · 2026-10-12 改口径）
+-------------------------------
+    随机基线 per-step = μ_random（本脚本同口径实测，评测种子固定）。
+    VALID : **每个训练种子**的「**末 k 次评测的均值**」都 ≥ μ_random + `--margin`
+    VOID  : 否则 ⇒ **任何基于该参照的 A/B 比较都不能下结论**。
+
+    ★ 为什么换成这个（v0.1 是"末次 ≥ bar **且** Pearson r ≥ 0.5"，两头都不稳）：
+      1. **末次单点**受波动影响 ⇒ 改**末 k 次**（`--last-k`，默认 5）的均值。
+      2. **单种子**分不清"真学会了"与"这一次运气好" ⇒ 改**多种子**（`--seeds`，
+         默认 0,1,2），每种子都要过线。
+      3. **Pearson r 不当判据**：它是**形状**量，不是"过/不过"的门槛。反例两个方向
+         都有 —— 快速学会后长期平台的学习器，r 会被平台期噪声**压低而误杀**；
+         缓慢线性上升但**远没到线**的学习器，r 反而可能很高。⇒ r 只打印、不判。
+      4. 评测种子**固定且与训练种子无关**（`run_real_arm` 用 `20_000 + update`，不含
+         训练种子）⇒ 各种子面对**同一批**评测回合，配对差值才有意义。
 
 用法
 ----
-    python scripts/32_reference_learner_audit.py                      # 默认 800 轮
-    python scripts/32_reference_learner_audit.py --updates 200
-    python scripts/32_reference_learner_audit.py --reward-scale 0.1   # 只缩放奖励（薄包装）
-    python scripts/32_reference_learner_audit.py --config configs/pendulum.yaml
+    python scripts/32_reference_learner_audit.py                         # 3 种子 × 800 轮
+    python scripts/32_reference_learner_audit.py --seeds 0,1,2,3,4
+    python scripts/32_reference_learner_audit.py --updates 20 --seeds 0  # 冒烟
+    python scripts/32_reference_learner_audit.py --reward-scale 0.1
+    python scripts/32_reference_learner_audit.py --margin 2.0 --last-k 8
 
 ★ 单实现纪律
 ------------
@@ -110,11 +121,13 @@ def parse_args():
     p = argparse.ArgumentParser(description="参照学习器有效性审计（真实 PPO on Pendulum）")
     p.add_argument("--config", default="configs/pendulum.yaml")
     p.add_argument("--tag", default="32_reference_learner_audit")
-    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--seed", type=int, default=0, help="只用于基线取样；评测种子由 run_real_arm 内部固定")
     p.add_argument("--device", default=None)
-    p.add_argument("--updates", type=int, default=800, help="参照臂的训练轮数（每轮 512 步）")
+    p.add_argument("--seeds", default="0,1,2", help="训练种子列表（逗号分隔）")
+    p.add_argument("--updates", type=int, default=800, help="每种子的训练轮数（每轮 512 步）")
     p.add_argument("--eval-every", type=int, default=25)
     p.add_argument("--n-eval", type=int, default=10)
+    p.add_argument("--last-k", type=int, default=5, help="判定用的「末 k 次评测」")
     p.add_argument("--margin", type=float, default=1.5,
                    help="「比随机基线好多少」才算 VALID（per-step，原单位）")
     p.add_argument("--reward-scale", type=float, default=1.0,
@@ -150,6 +163,7 @@ def main():
     out = output_dir(cfg)
     max_steps = int(cfg["env"].get("max_steps", 200))
     scale = float(args.reward_scale)
+    seeds = [int(s) for s in str(args.seeds).split(",") if str(s).strip()]
 
     x9mod = _load_x9_arm_module()
     env_raw = make_env(cfg["env"]["id"], seed=int(args.seed))
@@ -158,73 +172,125 @@ def main():
     # 基线也在**同一缩放下**测，然后折算回原单位
     base = random_baseline(env, int(args.n_eval), 30_000, max_steps)
     base_per_step = base["per_step_mean"] / scale
-    print(f"[32] 参照有效性审计  env={cfg['env']['id']}  reward_scale={scale}  "
-          f"updates={args.updates}×512")
+    bar = base_per_step + float(args.margin)
+    print(f"[32] 参照有效性审计 v0.2（多种子 + 末 k 均值；r 只做诊断）")
+    print(f"[32] env={cfg['env']['id']}  reward_scale={scale}  "
+          f"seeds={seeds}  updates={args.updates}×512  last_k={args.last_k}")
     print(f"[32] 随机基线 return={base['return_mean'] * 1.0:.1f} (缩放单位) "
-          f"=> per-step(原单位) {base_per_step:.3f}")
+          f"=> per-step(原单位) {base_per_step:.3f}；VALID 门槛 = {bar:.3f}")
 
     arm_args = SimpleNamespace(samples_per_update=512, eval_every=int(args.eval_every),
                                n_eval=int(args.n_eval), config_max_steps=max_steps)
-    t0 = time.time()
-    _, hist, _ = x9mod.run_real_arm(env, arm_args, device, seed=2000,
-                                    n_updates=int(args.updates))
+    runs = {}
+    for sd in seeds:
+        t0 = time.time()
+        _, hist, _ = x9mod.run_real_arm(env, arm_args, device,
+                                        seed=2000 + 1000 * sd, n_updates=int(args.updates))
+        # 折算回原单位
+        v = np.asarray([z for z in hist["real_per_step"] if not np.isnan(z)],
+                       dtype=float) / scale
+        sig = np.asarray(hist["std"], dtype=float)
+        x = np.arange(v.size, dtype=float)
+        k = int(min(int(args.last_k), v.size))
+        runs[sd] = {
+            "seed": sd,
+            "per_step": [float(z) for z in v],
+            "sigma": [float(z) for z in sig],
+            "last_k": k,
+            "last_k_mean": float(v[-k:].mean()),
+            "first_k_mean": float(v[:k].mean()),
+            "last": float(v[-1]), "best": float(v.max()),
+            "delta_vs_base": float(v[-k:].mean() - base_per_step),
+            "slope_per_eval": float(np.polyfit(x, v, 1)[0]) if v.size > 2 else float("nan"),
+            "pearson_r": float(np.corrcoef(x, v)[0, 1]) if v.size > 2 else float("nan"),
+            "seconds": float(time.time() - t0),
+            "env_steps": int(args.updates) * 512,
+        }
+        r = runs[sd]
+        print(f"[32] seed={sd:3d}  末k均值 {r['last_k_mean']:+.3f} "
+              f"(Δ vs 基线 {r['delta_vs_base']:+.3f})  last {r['last']:+.3f}  "
+              f"best {r['best']:+.3f}  r {r['pearson_r']:+.3f}  [{r['seconds']:.0f}s]")
     env.close()
-    print(f"[32] 参照臂用时 {time.time() - t0:.0f}s  "
-          f"（真环境步数 {int(args.updates) * 512}）")
 
-    # 折算回原单位
-    v = np.asarray([z for z in hist["real_per_step"] if not np.isnan(z)], dtype=float) / scale
-    x = np.arange(v.size, dtype=float)
-    r = float(np.corrcoef(x, v)[0, 1]) if v.size > 2 else float("nan")
-    slope = float(np.polyfit(x, v, 1)[0]) if v.size > 2 else float("nan")
-    bar = base_per_step + float(args.margin)
-    valid = bool((v[-1] >= bar) and (r >= 0.5))
+    lk = np.asarray([runs[s]["last_k_mean"] for s in seeds], dtype=float)
+    dlt = np.asarray([runs[s]["delta_vs_base"] for s in seeds], dtype=float)
+    rr = np.asarray([runs[s]["pearson_r"] for s in seeds], dtype=float)
+    mean_lk = float(lk.mean())
+    std_lk = float(lk.std(ddof=1)) if lk.size > 1 else 0.0
+    all_above = bool((dlt > 0).all())
+    valid = bool((mean_lk >= bar) and all_above)
+    verdict = "VALID" if valid else "VOID"
 
-    print(f"[32] per-step(原单位): first {v[0]:+.3f}  last {v[-1]:+.3f}  "
-          f"best {v.max():+.3f}  slope {slope:+.5f}/eval  r {r:+.3f}")
-    print(f"[32] 门槛 = 随机基线 {base_per_step:+.3f} + margin {args.margin} = {bar:+.3f}")
-    print("[32] ================= 参照有效性判定 =================")
+    print("[32] ================= 参照有效性判定（多种子）================")
+    print(f"[32] 末 {args.last_k} 次均值：跨种子 {mean_lk:+.3f} ± {std_lk:.3f} (n={lk.size})"
+          f"；门槛 {bar:+.3f}")
+    print(f"[32] 配对差值（每种子末k均值 − 基线）：{np.round(dlt, 3).tolist()}")
+    print(f"[32] 方向一致性（所有种子都 > 基线）：{all_above}")
+    print(f"[32] 诊断项（**不参与判定**）：Pearson r = {np.round(rr, 3).tolist()}"
+          f"（形状量；快速学会后长期平台会把 r 压低，故不当门槛）")
     if valid:
-        print("[32] VALID   —— 参照臂自己会学 ⇒ 可以据此解释 A/B 比较")
+        print("[32] VALID   —— 参照臂在**所有**训练种子下都自己会学 ⇒ 可据此解释 A/B 比较")
     else:
         print("[32] **VOID** —— 参照臂没过随机线 ⇒ **任何基于它的 A/B 比较都不能下结论**")
         print("[32] 注意：这是「作废(VOID)」，**不是**「负结论(NEGATIVE)」—— 两者必须分开报")
 
     summary = {
-        "experiment": "reference-learner audit (script 32)",
-        "env": cfg["env"]["id"], "seed": int(args.seed), "device": str(device.type),
-        "reward_scale": scale, "n_updates": int(args.updates),
-        "samples_per_update": 512, "env_steps": int(args.updates) * 512,
+        "experiment": "reference-learner audit (script 32, v0.2 multi-seed)",
+        "env": cfg["env"]["id"], "device": str(device.type),
+        "reward_scale": scale,
+        "seeds": seeds,
+        "n_updates": int(args.updates),
+        "samples_per_update": 512,
+        "env_steps_per_seed": int(args.updates) * 512,
+        "last_k": int(args.last_k),
         "random_baseline_per_step": base_per_step,
-        "per_step_series": [float(z) for z in v],
-        "first": float(v[0]), "last": float(v[-1]), "best": float(v.max()),
-        "slope_per_eval": slope, "pearson_r": r,
-        "margin": float(args.margin), "bar": bar, "valid": valid,
-        "verdict": "VALID" if valid else "VOID",
-        "note": ("VOID = 参照臂无效 ⇒ 基于它的 A/B 比较作废；这不是『方法无效』的负结论。"
+        "margin": float(args.margin), "bar": bar,
+        "mean_last_k_over_seeds": mean_lk, "std_last_k_over_seeds": std_lk,
+        "paired_deltas_vs_base": [float(z) for z in dlt],
+        "all_seeds_above_base": all_above,
+        "pearson_r_per_seed": [float(z) for z in rr],
+        "pearson_r_is_diagnostic_only": True,
+        "valid": valid, "verdict": verdict,
+        "runs": {str(s): runs[s] for s in seeds},
+        "note": ("v0.2 判据 = 每个训练种子的末 k 次评测均值都 ≥ 随机基线 + margin；"
+                 "评测种子固定且与训练种子无关（20_000 + update）。"
+                 "Pearson r 仅作诊断：它是形状量，快速学会后长期平台会把它压低 ⇒ 不当门槛。"
+                 "VOID = 参照臂无效 ⇒ 基于它的 A/B 比较作废；这不是『方法无效』的负结论。"
                  "本审计复用 scripts/31 的 run_real_arm（单实现纪律）。"),
     }
     js = out / f"{args.tag}.json"
     js.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
 
+    # ---------------------------------------------------------------- 出图
     fig, axes = plt.subplots(1, 2, figsize=(12.5, 4.3))
     ax = axes[0]
-    ax.plot(x, v, "o-", ms=3, lw=1.4, color=PALETTE["blue"], label="reference (real PPO)")
+    for sd in seeds:
+        v = np.asarray(runs[sd]["per_step"], dtype=float)
+        ax.plot(np.arange(v.size), v, "o-", ms=2.5, lw=1.1, alpha=0.5, label=f"seed {sd}")
+    vmean = np.mean([np.asarray(runs[sd]["per_step"], dtype=float) for sd in seeds], axis=0)
+    ax.plot(np.arange(vmean.size), vmean, "-", lw=2.4, color=PALETTE["blue"],
+            label="mean over seeds")
     ax.axhline(base_per_step, color=PALETTE["grey"], ls=":", lw=1.5,
                label=f"random policy ({base_per_step:.2f})")
     ax.axhline(bar, color=PALETTE["red"], ls="--", lw=1.4,
                label=f"VALID bar ({bar:.2f} = base + {args.margin})")
+    kk = min(int(args.last_k), vmean.size)
+    ax.axvspan(vmean.size - kk - 0.5, vmean.size - 0.5, color=PALETTE["red"], alpha=0.08)
     ax.set_xlabel("PPO update"); ax.set_ylabel("true-env reward/step (original units)")
-    ax.set_title(f"(1) reference learner: does it clear the random bar?  [{summary['verdict']}]")
+    ax.set_title(f"(1) reference learner across {len(seeds)} seeds  [{verdict}]")
     ax.legend(fontsize=8); ax.grid(alpha=0.25)
+
     ax = axes[1]
-    ax.plot(hist["update"], hist["std"], "-", color=PALETTE["purple"], lw=1.4)
+    for sd in seeds:
+        ax.plot(np.asarray(runs[sd]["sigma"], dtype=float), "-", lw=1.2, alpha=0.6,
+                label=f"seed {sd}")
     ax.set_xlabel("PPO update"); ax.set_ylabel("policy sigma")
-    ax.set_title("(2) policy sigma (moves, but no return gain)")
-    ax.grid(alpha=0.25)
-    fig.suptitle(f"wmlab script 32 · reference-learner audit · {cfg['env']['id']} · "
-                 f"reward_scale={scale} · updates={args.updates} · "
-                 f"env_steps={int(args.updates) * 512}", fontsize=10)
+    ax.set_title("(2) policy sigma per seed")
+    ax.legend(fontsize=8); ax.grid(alpha=0.25)
+
+    fig.suptitle(f"wmlab script 32 v0.2 · reference-learner audit · {cfg['env']['id']} · "
+                 f"reward_scale={scale} · seeds={seeds} · updates={args.updates} · "
+                 f"last_k={args.last_k}", fontsize=10)
     fig.tight_layout(rect=(0, 0, 1, 0.94))
     png = save_fig(fig, out / f"{args.tag}.png")
     plt.close(fig)
