@@ -254,6 +254,12 @@ def main():
     dlt = np.asarray([runs[s]["delta_vs_base"] for s in seeds], dtype=float)
     pdlt = np.asarray([runs[s]["paired_delta_vs_base"] for s in seeds], dtype=float)
     rr = np.asarray([runs[s]["pearson_r"] for s in seeds], dtype=float)
+    # ★ 不变式（把"配对"这个名字钉死）：两臂共用评测初值 ⇒
+    # `mean(逐回合配对差值)` 与 `末 k 均值之差` 必须（近）相等。
+    # 不成立就说明"配对"名不副实 ⇒ 直接报错（R14：报错优于给假数字）。
+    if not np.allclose(pdlt, dlt, rtol=0.0, atol=1e-9):
+        raise AssertionError(
+            f"'paired' delta and delta-of-means disagree: {pdlt} vs {dlt}")
     # ★★ 判定走**单一真源**（wmlab/eval/audit.py），不再在脚本里另写一套
     valid, det = reference_learner_verdict(lk, bar)
     verdict = "VALID" if valid else "VOID"
@@ -297,7 +303,10 @@ def main():
         "mean_last_k_over_seeds": det["mean_last_k_over_seeds"],
         "std_last_k_over_seeds": det["std_last_k_over_seeds"],
         "paired_deltas_vs_base": [float(z) for z in pdlt],
-        "unpaired_delta_of_means": [float(z) for z in dlt],
+        # ★ 一致性检查项（**不是**"非配对对照"）：两臂共用评测初值 ⇒
+        # `mean(逐回合配对差值) ≡ 策略末k均值 − 基线均值`（恒等式）⇒ 必与上一项相等。
+        # 旧名 `unpaired_delta_of_means` 已废弃（只有 v0.2 才真的非配对），避免"名字 ≠ 事实"。
+        "delta_of_means_same_eval_seeds": [float(z) for z in dlt],
         "pearson_r_per_seed": [float(z) for z in rr],
         "pearson_r_is_diagnostic_only": True,
         "valid": valid, "verdict": verdict,
