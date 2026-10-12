@@ -81,6 +81,15 @@
   [59] ★★ **想象训练的奖励地基**：解析重建 ≡ gymnasium 实测 + 反向断言（越界用未 clip 必须不同）
                                        + CartPole 必须 raise（不许静默返回 1.0）
   [60] ★ 想象 rollout 的接线（R12）：Z 序列逐位 = `model.rollout_latent(...)`；末端 bootstrap 有限
+  [61] ★★ 连续 GAE 的**边界**：终止掩码必须用**本步** `nt[t]`（不是 t+1，旧版一步错位）；
+                                       截断要 bootstrap **截断时刻观测**的价值 —— 含两条反向断言
+  [62] ★★ `log_prob` 的**密度归一化**：`∫π(a)da = 1` —— 反向断言：多减 `log2` ⇒ 积分必须 **0.5**
+  [63] ★★ 截断后 reset 不得把**下一集初始状态**当自举（端到端 stub，ret 必须 [6,5,4] 而非 [3,2,1]）
+  [64] ★★ 参照审计**判定规则单一**（代码 = 文档 = 测试）—— 反向断言：`[0.1,0.1,4.4]`、bar=1.5
+                                       必须 VOID（"跨种子均值"口径会误判 VALID）
+  [65] ★★ PPO 的 minibatch 打乱必须来自**传入的生成器**（不受全局 numpy 状态影响）——
+                                       反向断言：不同 rng 种子必须给不同结果
+  [66] ★★ 配对评测：给定 `seeds` ⇒ 每集 reset 用它（反向断言：`seeds` 必须覆盖默认 `seed+i`）
 """
 
 from __future__ import annotations
@@ -2775,6 +2784,157 @@ def test_collect_rollout_truncation_bootstraps_with_episode_end_obs():
     # ★ 反向断言：旧版那一组必须不同
     assert not np.allclose(r.ret, [3, 2, 1]), \
         "★ 反向断言失效：结果与『用 reset 后观测自举』的旧行为相同"
+
+
+# ------------------------------------------------- [64] 参照审计判定：单一规则 + 反向断言
+def test_reference_learner_verdict_single_rule():
+    """[64] ★★ 参照审计的判定规则必须**单一**（代码 = 文档 = 测试）且**保守**。
+
+    2026-10-12 复盘：`scripts/32` 的代码判「跨种子均值过线 **且** 每个种子改善 >0」，
+    而它的 docstring / JSON 写「每个种子都过线」⇒ 同一份产物**两个不自洽的判定**。
+    本用例把规则钉死在 `wmlab/eval/audit.py` 这**唯一一处**。
+
+    ★ 反向断言：用户给的 `[0.1, 0.1, 4.4]`、bar=1.5 **必须判 VOID**
+      —— 而"跨种子均值"口径（均值 1.533 ≥ 1.5）会判 VALID ⇒ 证明测试有分辨力。
+    """
+    import numpy as np
+
+    from wmlab.eval import reference_learner_verdict
+
+    v, d = reference_learner_verdict([2.0, 2.5, 1.6], 1.5)
+    assert v is True and d["n_clearing_bar"] == 3, d
+
+    v, d = reference_learner_verdict([2.0, -0.2, 1.6], 1.5)
+    assert v is False and d["per_seed_clears_bar"] == [True, False, True], d
+
+    # 边界：恰好等于 bar ⇒ 过线（规则用 `>=`）
+    v, d = reference_learner_verdict([1.5, 1.5, 1.5], 1.5)
+    assert v is True, d
+
+    # ★ 反向断言：均值口径会判过线，本规则必须 VOID
+    arr = [0.1, 0.1, 4.4]
+    v, d = reference_learner_verdict(arr, 1.5)
+    assert v is False, f"★ 规则失效：[0.1,0.1,4.4] 被误判为 VALID（{d}）"
+    assert float(np.mean(arr)) >= 1.5, "★ 反向断言前提不成立：均值本应过线"
+
+    # 非有限 / 空 ⇒ raise（R14：不许静默通过）
+    for bad in ([float("nan")], [float("inf")], []):
+        try:
+            reference_learner_verdict(bad, 0.0)
+            raise AssertionError(f"★ {bad} 未 raise")
+        except ValueError:
+            pass
+
+
+# ------------------------------------------------- [65] minibatch 打乱必须走独立生成器
+def test_continuous_ppo_update_shuffle_is_isolated_from_global_rng():
+    """[65] ★★ PPO 的 minibatch 打乱必须来自**传入的生成器**，与全局 numpy 状态无关。
+
+    2026-10-12 第 33 次复查：旧版 `continuous_ppo_update` 用**全局**
+    `np.random.permutation`，而训练入口只重设 torch 种子 ⇒ 全局 numpy 状态在多个
+    训练种子间连续推进 ⇒ **同一个种子单独跑 / 排在列表第二位跑会不同**（顺序依赖）。
+
+    构造：固定初值的网络 + 固定 rollout，跑两次 —— **同 rng 种子、不同全局 numpy 状态**。
+      - 正确实现 ⇒ 两次结果**逐位相同**（全局状态无关）。
+      - ★ 反向断言：**不同 rng 种子** ⇒ 结果必须**不同**（否则说明打乱根本没走 rng，
+        本测试就只是"恒等"）。
+    """
+    import copy
+
+    import numpy as np
+    import torch
+
+    from wmlab.agents import (ContinuousActorCritic, ContinuousRollout,
+                              continuous_ppo_update)
+
+    torch.manual_seed(0)
+    base = ContinuousActorCritic(4, 1, hidden=8, act_scale=2.0)
+
+    T = 32
+    g = np.random.default_rng(1)
+    r = ContinuousRollout(
+        x=g.normal(size=(T, 4)).astype(np.float32),
+        u=g.normal(size=(T, 1)).astype(np.float32),
+        a=np.zeros((T, 1), dtype=np.float32),
+        logp=g.normal(size=T).astype(np.float32),
+        value=g.normal(size=T).astype(np.float32),
+        reward=g.normal(size=T).astype(np.float32),
+        adv=g.normal(size=T).astype(np.float32),
+        ret=g.normal(size=T).astype(np.float32),
+        ep_returns=[], done=None)
+
+    def _run(rng_seed, global_seed):
+        net = copy.deepcopy(base)
+        opt = torch.optim.SGD(net.parameters(), lr=0.05)
+        np.random.seed(global_seed)                 # ★ 故意扰动全局状态
+        st = continuous_ppo_update(
+            net, opt, r, device=torch.device("cpu"),
+            update_epochs=2, minibatch_size=8, clip_eps=0.2,
+            vf_coef=0.5, ent_coef=0.01, max_grad_norm=0.5,
+            rng=np.random.default_rng(rng_seed))
+        p = torch.cat([q.detach().reshape(-1) for q in net.parameters()])
+        return p, st["policy_loss"]
+
+    p_a, _ = _run(0, 111)
+    p_b, _ = _run(0, 999)
+    assert torch.allclose(p_a, p_b), \
+        "★ 隔离失效：同 rng 种子、不同全局状态，更新结果不同（仍受全局 RNG 影响）"
+
+    # ★ 反向断言：换 rng 种子必须给出不同结果（证明打乱真的来自 rng）
+    p_c, _ = _run(7, 111)
+    assert not torch.allclose(p_a, p_c, atol=1e-7), \
+        "★ 反向断言失效：不同 rng 种子结果相同 ⇒ 打乱没有走传入的生成器"
+
+
+# ------------------------------------------------- [66] 配对评测：固定初值种子必须接线
+def test_evaluate_policy_continuous_uses_explicit_eval_seeds():
+    """[66] ★★ 配对评测：给定 `seeds` 时每集 reset 用 `seeds[i]`。
+
+    旧版随机基线用 `30_000+i`、PPO 用 `20_000+update` ⇒ 两边**初始条件不同**，
+    "配对差值"其实是两个不同场景均值之差。本测试用一个**记录 reset 种子**的 stub env
+    证明：① 传 `seeds` ⇒ 严格按它 reset；★ 反向断言：传 `seed=70` 但 `seeds=[500..]`
+    ⇒ 必须用 `seeds`（不是 70+i）。
+    """
+    import numpy as np
+    import torch
+
+    from wmlab.agents import evaluate_policy_continuous
+    from wmlab.envs.base import StepResult
+
+    class _RecEnv:
+        obs_dim, act_dim, is_discrete, name = 1, 1, False, "rec"
+        act_low = np.array([-1.0], dtype=np.float32)
+        act_high = np.array([1.0], dtype=np.float32)
+
+        def __init__(self):
+            self.seen = []
+            self._t = 0
+
+        def reset(self, seed=None):
+            self.seen.append(seed)
+            self._t = 0
+            return np.zeros(1, dtype=np.float32)
+
+        def step(self, action):
+            self._t += 1
+            return StepResult(obs=np.array([float(self._t)], dtype=np.float32),
+                              reward=-1.0, terminated=False, truncated=self._t >= 2)
+
+    class _StubNet:
+        def act_np(self, x_np, device, deterministic=True):
+            z = np.zeros(1, dtype=np.float32)
+            return z, z, 0.0, 0.0, 0.0
+
+    env = _RecEnv()
+    evaluate_policy_continuous(env, _StubNet(), lambda o: o, 3, torch.device("cpu"),
+                               max_steps=2, seed=70, seeds=[500, 501, 502])
+    assert env.seen == [500, 501, 502], f"★ 未按显式 seeds reset：{env.seen}"
+
+    # ★ 反向断言：不给 seeds ⇒ 退回 seed + i（证明 seeds 真的覆盖了默认）
+    env2 = _RecEnv()
+    evaluate_policy_continuous(env2, _StubNet(), lambda o: o, 3, torch.device("cpu"),
+                               max_steps=2, seed=70)
+    assert env2.seen == [70, 71, 72], f"★ 默认回退错：{env2.seen}"
 
 
 def main() -> int:

@@ -287,11 +287,24 @@ def continuous_ppo_update(net: ContinuousActorCritic, opt: torch.optim.Optimizer
                           r: ContinuousRollout, *, device: torch.device,
                           update_epochs: int, minibatch_size: int, clip_eps: float,
                           vf_coef: float, ent_coef: float,
-                          max_grad_norm: float) -> dict:
+                          max_grad_norm: float,
+                          rng: np.random.Generator | None = None) -> dict:
     """与 `ppo_update` 逐行同构，只把 log-prob 换成连续版（推导 (5) 同式）。
 
     ★ 裁剪代理目标调用的是**同一个** `clipped_surrogate`（不是复制一份）——
       这样 X5（离散）与 X9（连续）在"PPO 的核心那一行"上不可能漂移。
+
+    ★★ `rng`（2026-10-12 新增 —— 第 33 次复查提出的"随机源未受控"）
+    ------------------------------------------------------------------
+    旧版 minibatch 打乱用 **`np.random.permutation`**（全局 numpy RNG）。而训练入口
+    （`scripts/31:run_real_arm`）**只重设了 torch 种子** ⇒ 全局 numpy 状态在
+    **多个训练种子之间连续推进** ⇒ 同一个种子"单独跑"与"排在列表第二位跑"可能
+    得到**不同结果**（顺序依赖）。
+    ⇒ 现在把打乱交给**调用方传入的独立生成器**：`idx = rng.permutation(n)`。
+      调用方为每个训练 run 建一个 `np.random.default_rng(seed)` ⇒
+      结果**只由该 run 的 seed 决定，与运行顺序无关**。
+    ⚠️ 默认 `rng=None` ⇒ 退回 `np.random.default_rng()`（**非复现**），
+      只为不破坏既有调用；**正式跑一律显式传**独立生成器。
     """
     x = torch.as_tensor(r.x, dtype=torch.float32, device=device)
     u = torch.as_tensor(r.u, dtype=torch.float32, device=device)
@@ -299,12 +312,13 @@ def continuous_ppo_update(net: ContinuousActorCritic, opt: torch.optim.Optimizer
     adv = torch.as_tensor(r.adv, dtype=torch.float32, device=device)
     ret = torch.as_tensor(r.ret, dtype=torch.float32, device=device)
 
+    rng = np.random.default_rng() if rng is None else rng
     n = x.shape[0]
     stats = {"policy_loss": 0.0, "value_loss": 0.0, "entropy": 0.0,
              "approx_kl": 0.0, "clip_frac": 0.0, "std": 0.0, "n_minibatch": 0}
 
     for _ in range(update_epochs):
-        idx = np.random.permutation(n)
+        idx = rng.permutation(n)
         for s in range(0, n, minibatch_size):
             mb = torch.as_tensor(idx[s:s + minibatch_size], dtype=torch.int64, device=device)
             logp, ent, value = net.evaluate(x[mb], u[mb])
@@ -339,7 +353,8 @@ def continuous_ppo_update(net: ContinuousActorCritic, opt: torch.optim.Optimizer
 def evaluate_policy_continuous(env, net: ContinuousActorCritic, x_fn,
                                n_episodes: int, device: torch.device,
                                max_steps: int | None = None, seed: int = 0,
-                               deterministic: bool = True) -> dict:
+                               deterministic: bool = True,
+                               seeds: list[int] | None = None) -> dict:
     """真环境评估。
 
     Args:
@@ -347,10 +362,21 @@ def evaluate_policy_continuous(env, net: ContinuousActorCritic, x_fn,
               真实环境 PPO 传 `lambda o: o`（策略吃观测）；
               想象训练传 `lambda o: encode(o)`（策略吃潜状态）——
               两条路都必须能被同一个评估函数评，才谈得上比较。
+        seeds: ★ 2026-10-12 新增 —— **显式的初值种子列表**。给定时第 i 集用
+              `seeds[i]`（而不是 `seed + i`）。
+              ⇒ 这样**随机基线**与**任一策略**可以在**同一批初始条件**上评测，
+              差值才是"配对差值"（否则两边面对不同初值，"改善"里混着"场景波动"）。
+              长度不足时按 `seed + i` 补齐，不静默截断。
+
+    Returns 里 `returns` / `lengths` 是**逐回合**的（不只是均值）——
+    配对差值需要**同一初值下的逐回合配对**，不能拿两个均值相减。
     """
+    ep_seeds: list[int] = []
     rets, lens = [], []
     for i in range(n_episodes):
-        o = env.reset(seed=seed + i)
+        s = int(seeds[i]) if (seeds is not None and i < len(seeds)) else int(seed + i)
+        ep_seeds.append(s)
+        o = env.reset(seed=s)
         done, R, t = False, 0.0, 0
         while not done:
             x = x_fn(o)
@@ -366,7 +392,8 @@ def evaluate_policy_continuous(env, net: ContinuousActorCritic, x_fn,
         lens.append(t)
     return {"return_mean": float(np.mean(rets)), "return_std": float(np.std(rets)),
             "return_min": float(np.min(rets)), "return_max": float(np.max(rets)),
-            "len_mean": float(np.mean(lens)), "returns": rets}
+            "len_mean": float(np.mean(lens)), "returns": rets, "lengths": lens,
+            "episode_seeds": ep_seeds}
 
 
 @torch.no_grad()

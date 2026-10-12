@@ -4,6 +4,7 @@ from .aoi import (NmseCurve, expected_nmse_analytic, geometric_age_pmf,
                   geometric_age_stats, jensen_gap, loss_prob_for_mean_age,
                   loss_prob_for_tail_risk, nmse_at_mean_age, uniform_age_pmf,
                   uniform_age_stats)
+from .audit import REFERENCE_AUDIT_RULE, reference_learner_verdict
 from .metrics import (coverage, ece, mse, nmse, per_step_mse, per_step_nmse,
                       reliable_horizon)
 from .tracking import (StateTracker, TrackingResult, lossy_schedule,
@@ -22,4 +23,6 @@ __all__ = [
     "geometric_age_stats", "uniform_age_stats",
     "expected_nmse_analytic", "nmse_at_mean_age", "jensen_gap",
     "loss_prob_for_mean_age", "loss_prob_for_tail_risk",
+    # ★ 参照学习器审计（判定规则的单一真源）
+    "reference_learner_verdict", "REFERENCE_AUDIT_RULE",
 ]

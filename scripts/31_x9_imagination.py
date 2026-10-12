@@ -77,6 +77,18 @@ EPOCHS_PER_UPDATE = 4
 LR = 3e-4
 HIDDEN = 64
 
+# ★★ 2026-10-12：**固定评测种子**（单一真源）
+#    旧版随机基线用 `30_000 + i`、PPO 评测用 `20_000 + update` ⇒ 两者面对的
+#    **初始条件不同**，"配对差值"其实是"两个不同场景均值之差"，混进了场景波动。
+#    ⇒ 现在两边都从这**同一批**种子取 ⇒ 差值才是配对差值。
+#    本常量被 `scripts/32` 复用（它按路径加载本文件），避免两处各写一个数。
+EVAL_SEED_BASE = 500_000
+
+
+def fixed_eval_seeds(n: int) -> list[int]:
+    """固定的评测初值种子列表（`EVAL_SEED_BASE + 0,1,...,n-1`）。"""
+    return [EVAL_SEED_BASE + i for i in range(int(n))]
+
 
 def parse_args():
     p = argparse.ArgumentParser(description="X9 想象训练（Pendulum）")
@@ -116,12 +128,24 @@ def identity_fn(o):
     return np.asarray(o, dtype=np.float32).reshape(-1)
 
 
-def random_policy_return(env, n_episodes, device, seed, max_steps):
-    """随机策略基线（Pendulum 上这是唯一的"什么都不学"参照）。"""
-    rng = np.random.default_rng(seed)
-    rets = []
+def random_policy_return(env, n_episodes, device, seed, max_steps, seeds=None,
+                         action_seed=None):
+    """随机策略基线（Pendulum 上这是唯一的"什么都不学"参照）。
+
+    ★★ 2026-10-12 配对化
+    ---------------------
+    - `seeds`：**显式初值种子列表**。给定时第 i 集用 `seeds[i]`（否则 `seed + i`）。
+      传 `fixed_eval_seeds(n)` ⇒ 与 PPO 评测面对**同一批初始条件**，差值才是配对的。
+    - `action_seed`：**随机动作专用**的 RNG 种子（默认取 `seed`）。
+      ★ 与初值种子**分开**：否则"为了配对去动初值"会连带改变动作序列，
+      把两件事（初值匹配 / 动作随机）搅在一起。
+    """
+    rng = np.random.default_rng(seed if action_seed is None else action_seed)
+    ep_seeds = (list(seeds) if seeds is not None
+                else [int(seed) + i for i in range(n_episodes)])
+    rets, lens = [], []
     for i in range(n_episodes):
-        o = env.reset(seed=seed + i)
+        o = env.reset(seed=int(ep_seeds[i]))
         R, done, t = 0.0, False, 0
         while not done:
             a = env.sample_action(rng)
@@ -133,17 +157,20 @@ def random_policy_return(env, n_episodes, device, seed, max_steps):
             else:
                 o = res.obs
         rets.append(R)
+        lens.append(t)
     return {"return_mean": float(np.mean(rets)), "return_std": float(np.std(rets)),
-            "returns": rets}
+            "returns": rets, "lengths": lens, "episode_seeds": ep_seeds}
 
 
 # --------------------------------------------------------------------------- 训练臂
-def run_imagination_arm(model, env, obs_pool, horizon, args, device, seed):
+def run_imagination_arm(model, env, obs_pool, horizon, args, device, seed,
+                        eval_seeds=None):
     """一条想象臂：从零开始训一个策略，主判据是真环境回报。"""
     max_steps = int(args.config_max_steps)
     n_starts = max(2, int(args.samples_per_update) // int(horizon))
-    rng = np.random.default_rng(seed)
-    torch.manual_seed(seed)
+    set_seed(int(seed))                                    # ★ 重置全部随机源
+    rng = np.random.default_rng(seed)                      # 想象采样（起点 / 噪声）
+    upd_rng = np.random.default_rng(int(seed) + 89)        # ★ minibatch 打乱专用
 
     # ★ 策略输入是**潜状态** ⇒ 维度 = latent_dim
     actor = ContinuousActorCritic(model.latent_dim, env.act_dim, hidden=HIDDEN,
@@ -172,7 +199,8 @@ def run_imagination_arm(model, env, obs_pool, horizon, args, device, seed):
                                    update_epochs=EPOCHS_PER_UPDATE,
                                    minibatch_size=MINIBATCH, clip_eps=CLIP_EPS,
                                    vf_coef=VF_COEF, ent_coef=ENT_COEF,
-                                   max_grad_norm=MAX_GRAD_NORM)
+                                   max_grad_norm=MAX_GRAD_NORM,
+                                   rng=upd_rng)
 
         imag_per_step = float(info["imag_return"]) / float(horizon)
         hist["update"].append(u)
@@ -187,7 +215,8 @@ def run_imagination_arm(model, env, obs_pool, horizon, args, device, seed):
 
         if u % int(args.eval_every) == 0 or u == 1:
             ev = evaluate_policy_continuous(env, actor, ef, int(args.n_eval), device,
-                                            max_steps=max_steps, seed=20_000 + u)
+                                            max_steps=max_steps, seed=20_000 + u,
+                                            seeds=eval_seeds)
             real_per_step = float(ev["return_mean"]) / max(float(ev["len_mean"]), 1.0)
             hist["real_return"].append(float(ev["return_mean"]))
             hist["real_per_step"].append(real_per_step)
@@ -205,7 +234,7 @@ def run_imagination_arm(model, env, obs_pool, horizon, args, device, seed):
     return actor, hist, ef
 
 
-def run_real_arm(env, args, device, seed, n_updates):
+def run_real_arm(env, args, device, seed, n_updates, eval_seeds=None):
     """真实环境 PPO 对照臂（同样的每轮样本数与轮数）。
 
     ★ 2026-10-12：rollout 的 reset 种子改为**逐轮确定**（`seed·100003 + u`）——
@@ -213,16 +242,28 @@ def run_real_arm(env, args, device, seed, n_updates):
           吃全局 RNG ⇒「同种子逐位一致」在真实臂上其实不成立）；
       (b) 不同的训练 `seed` 得到**不同的环境流** ⇒ 多种子对比里的方差才是
           "学习器方差"，而不是"两次跑同一批 episode"。
+
+    ★★ 2026-10-12 再修两处（第 33 次复查：随机源未受控 + 评测非配对）
+    ------------------------------------------------------------------
+    1. **随机源**：旧版只 `torch.manual_seed(seed)`，而 `continuous_ppo_update`
+       的 minibatch 打乱用**全局 `np.random.permutation`** ⇒ 全局 numpy 状态在
+       多个训练种子间连续推进 ⇒ **顺序依赖**。现改为 `set_seed(seed)`（重置
+       python/numpy/torch **全部**）+ 给 update 传**独立生成器** `upd_rng`。
+    2. **配对评测**：`eval_seeds` 显式传入时，评测在**与随机基线相同的初值**上进行；
+       并保存**逐回合**回报与长度 ⇒ 可算真正的配对差值。
     """
     max_steps = int(args.config_max_steps)
-    torch.manual_seed(seed)
+    set_seed(int(seed))                                     # ★ 重置全部随机源
+    upd_rng = np.random.default_rng(int(seed) + 97)         # ★ minibatch 打乱专用
     actor = ContinuousActorCritic(env.obs_dim, env.act_dim, hidden=HIDDEN,
                                  act_scale=float(np.max(env.act_high))).to(device)
     opt = torch.optim.Adam(actor.parameters(), lr=LR, eps=1e-5)
     ifn = identity_fn
 
     hist = {"update": [], "real_return": [], "real_per_step": [], "entropy": [], "std": [],
-            "policy_loss": [], "value_loss": [], "real_env_steps": 0}
+            "policy_loss": [], "value_loss": [], "real_env_steps": 0,
+            "eval_seeds": (list(eval_seeds) if eval_seeds is not None else None),
+            "eval_returns": [], "eval_lengths": []}
     t0 = time.time()
     for u in range(1, n_updates + 1):
         frac = 1.0 - (u - 1) / max(1, n_updates)
@@ -236,7 +277,8 @@ def run_real_arm(env, args, device, seed, n_updates):
                                    update_epochs=EPOCHS_PER_UPDATE,
                                    minibatch_size=MINIBATCH, clip_eps=CLIP_EPS,
                                    vf_coef=VF_COEF, ent_coef=ENT_COEF,
-                                   max_grad_norm=MAX_GRAD_NORM)
+                                   max_grad_norm=MAX_GRAD_NORM,
+                                   rng=upd_rng)             # ★ 独立生成器
         hist["real_env_steps"] += int(args.samples_per_update)
         hist["update"].append(u)
         hist["entropy"].append(st["entropy"])
@@ -246,9 +288,12 @@ def run_real_arm(env, args, device, seed, n_updates):
 
         if u % int(args.eval_every) == 0 or u == 1:
             ev = evaluate_policy_continuous(env, actor, ifn, int(args.n_eval), device,
-                                            max_steps=max_steps, seed=20_000 + u)
+                                            max_steps=max_steps, seed=20_000 + u,
+                                            seeds=eval_seeds)   # ★ 配对初值
             hist["real_return"].append(float(ev["return_mean"]))
             hist["real_per_step"].append(float(ev["return_mean"]) / max(float(ev["len_mean"]), 1.0))
+            hist["eval_returns"].append([float(z) for z in ev["returns"]])
+            hist["eval_lengths"].append([int(z) for z in ev["lengths"]])
             print(f"[31]   REAL  update {u:4d}/{n_updates}  "
                   f"real/step={hist['real_per_step'][-1]:8.3f}  "
                   f"real_R={ev['return_mean']:8.1f}  "
@@ -322,16 +367,20 @@ def main():
                              cfg["eval"].get("threshold_mode", "rel"))
     print(f"[31] ★ 本轮实测 H*（逐点口径，阈值 {thr}，val 集） = {h_star}")
 
-    # ---------- 4) 随机基线 ----------
-    base = random_policy_return(env, int(args.n_eval), device, 30_000, args.config_max_steps)
-    print(f"[31] 随机策略基线 return = {base['return_mean']:.1f} ± {base['return_std']:.1f}")
+    # ---------- 4) 随机基线（★ 固定评测初值，与各臂配对）----------
+    eval_seeds = fixed_eval_seeds(int(args.n_eval))
+    base = random_policy_return(env, int(args.n_eval), device, 30_000,
+                                args.config_max_steps, seeds=eval_seeds,
+                                action_seed=30_000)
+    print(f"[31] 随机策略基线 return = {base['return_mean']:.1f} ± {base['return_std']:.1f}"
+          f"  （评测初值 {eval_seeds[0]}..{eval_seeds[-1]}，与各臂配对）")
 
     # ---------- 5) 三条想象臂 ----------
     arms = {}
     for H in horizons:
         print(f"[31] === 想象臂 H={H} ===")
         actor, hist, _ = run_imagination_arm(model, env, all_obs, H, args, device,
-                                             seed=1000 + H)
+                                             seed=1000 + H, eval_seeds=eval_seeds)
         arms[f"imag_H{H}"] = {"horizon": H, "hist": hist,
                               "final_real": hist["real_return"][-1],
                               "final_imag": hist["imag_return"][-1]}
@@ -343,7 +392,8 @@ def main():
     if not args.no_real_arm:
         n_upd = int(args.real_updates or args.imag_updates)
         print(f"[31] === 真实 PPO 对照臂（rollout={args.samples_per_update} × {n_upd} 轮）===")
-        _, rh, _ = run_real_arm(env, args, device, seed=2000, n_updates=n_upd)
+        _, rh, _ = run_real_arm(env, args, device, seed=2000, n_updates=n_upd,
+                                eval_seeds=eval_seeds)
         real = {"hist": rh, "final_real": rh["real_return"][-1],
                 "real_env_steps": rh["real_env_steps"]}
         print(f"[31] 真实臂完成：末次 真环境={rh['real_return'][-1]:.1f}  "

@@ -12,12 +12,12 @@
 
 ```bash
 python scripts/00_check_env.py            # 环境自检（含中文字体链路），15 项
-python tests/test_channel_and_aoi.py      # ★ 81 项回归自检（不依赖 pytest）
+python tests/test_channel_and_aoi.py      # ★ 84 项回归自检（不依赖 pytest）
 python scripts/30_scheduling_baselines.py --n 50000 --tmax 16   # 调度基线库 v0.1，无模型、秒级~分钟级
 ```
 
 ★ **前两条跑通 ≠ 复现了离线口径**。它们只证明两件事：**依赖装对了**、**仓库代码在当前
-环境能跑通**（15 项 + 81/81）。而"复现"要求换机 / 换环境后**数字对得上**（§4 的判据表）。
+环境能跑通**（15 项 + 84/84）。而"复现"要求换机 / 换环境后**数字对得上**（§4 的判据表）。
 自检用的是**构造的输入**（手算已知答案、闭式对账、逐位一致性），它**不**覆盖"多步误差曲线
 在别的机器上给出同一个 H\*"这类**跨机数值一致性**。
 ★ 截至 2026-10-12，**换机独立复现仍未完成** —— 这是本仓库的已知缺口，不写成已完成。
@@ -103,13 +103,14 @@ venv3\Scripts\python.exe -m pip install --no-cache-dir numpy matplotlib pyyaml t
 
 | 判据 | 期望 | 出自 |
 |---|---|---|
-| 81 项自检 | `81/81 passed` | `tests/test_channel_and_aoi.py` |
+| 84 项自检 | `84/84 passed` | `tests/test_channel_and_aoi.py` |
 | 环境自检 | 15 项全过，含中文字体链路 | `scripts/00_check_env.py` |
 | 调度基线闭式对账 | 最差 `diff/(5·SE) ≤ 1`，99 个点 | `scripts/30_scheduling_baselines.py` |
 | 调度基线退化 | `periodic(T=1)` / `threshold(K=0)` 的 `tx_rate−1 = 0` | 同上 |
 | 调度基线已知答案 | PER=0 时 `threshold/periodic` 的 E[age] 比值 **≡ 1.0000** | 同上 |
 | 同种子重跑 | 逐位一致（`outputs/` 里的 JSON 与本文档数字对得上） | 全仓库约定 |
-| 参照学习器审计（可选，约 10 min CPU） | 判定规则可复跑：每种子末 5 次均值 ≥ 随机基线 + 1.5 ⇒ VALID；否则 VOID | `scripts/32_reference_learner_audit.py` |
+| 参照学习器审计（可选，**约 15 min CPU**） | 判定规则可复跑（单一真源）：**每个**种子末 5 次均值 ≥ 随机基线 + 1.5 ⇒ VALID；否则 VOID。随机基线与 PPO **同初值种子**（配对） | `scripts/32_reference_learner_audit.py` |
+| 训练随机源受控 | 同一训练种子**结果不随种子列表顺序改变**（自检 **[65]** + 实测 `ORDER_INDEPENDENT: True`） | 同上 |
 
 ★ **口径纪律**（本仓库最容易被违反的一条）：任何"误差"数字都必须同时写清
 **逐点还是累积 / 在哪个评测集 / 除以哪个方差 / 曲线定义（开环/观测闭环/潜闭环）**；

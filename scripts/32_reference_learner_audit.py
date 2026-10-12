@@ -15,21 +15,33 @@ X9（想象训练）跑完得到一个"全员平坦"的结果 —— 但**对照
     ★ 这条是**本仓库的流程纪律**，**不是**"一切 A/B 比较的普适规则"（2026-10-12 收窄）——
       它只保证"拿去比的参照确实会学"，别的项目未必要照搬。
 
-判定（v0.2 · 2026-10-12 改口径）
--------------------------------
-    随机基线 per-step = μ_random（本脚本同口径实测，评测种子固定）。
-    VALID : **每个训练种子**的「**末 k 次评测的均值**」都 ≥ μ_random + `--margin`
-    VOID  : 否则 ⇒ **任何基于该参照的 A/B 比较都不能下结论**。
+判定（v0.3 · 2026-10-12 统一规则 + 配对化）
+------------------------------------------
+    随机基线 per-step = μ_random（本脚本同口径实测，**初值种子与策略评测共用同一批**）。
+    bar  = μ_random + `--margin`（margin 是**事先约定的"值得关注的最小改善"**，
+           不是用标准误反推的显著性阈值）。
+    VALID: **每一个**训练种子的「**末 k 次评测均值**」都 ≥ bar
+    VOID : 否则 ⇒ **任何基于该参照的 A/B 比较都不能下结论**。
+    ⇒ ★ 规则**单一真源** = `wmlab/eval/audit.py:reference_learner_verdict`
+      （代码 / 本说明 / JSON / 测试**都从它取**，杜绝"代码按 A 判、文字按 B 写"）。
 
-    ★ 为什么换成这个（v0.1 是"末次 ≥ bar **且** Pearson r ≥ 0.5"，两头都不稳）：
-      1. **末次单点**受波动影响 ⇒ 改**末 k 次**（`--last-k`，默认 5）的均值。
-      2. **单种子**分不清"真学会了"与"这一次运气好" ⇒ 改**多种子**（`--seeds`，
-         默认 0,1,2），每种子都要过线。
-      3. **Pearson r 不当判据**：它是**形状**量，不是"过/不过"的门槛。反例两个方向
-         都有 —— 快速学会后长期平台的学习器，r 会被平台期噪声**压低而误杀**；
-         缓慢线性上升但**远没到线**的学习器，r 反而可能很高。⇒ r 只打印、不判。
-      4. 评测种子**固定且与训练种子无关**（`run_real_arm` 用 `20_000 + update`，不含
-         训练种子）⇒ 各种子面对**同一批**评测回合，配对差值才有意义。
+    ★ 为什么是"每个种子都过线"而不是"跨种子均值过线"：
+      多种子设计的全部意义就是防"某一种子运气好"；取均值会把它摊回来。
+      反例：改善 [0.1, 0.1, 4.4]、margin 1.5 ⇒ 均值 1.533**过线**，但两个种子几乎没动。
+      ⇒ 取**保守方向**（宁可真 VOID，不可假 VALID）。
+
+    ★ v0.1 → v0.3 改动（理由都在实测里，不是风格偏好）：
+      1. **末次单点 → 末 k 次均值**（`--last-k`，默认 5）：`last` 跨种子离散度是
+         `best` 的 **4.3 倍** ⇒ 单点判据本身就抖。
+      2. **单种子 → 多种子**（`--seeds`，默认 0,1,2），每种子都要过线。
+      3. **Pearson r 从判据降为诊断**：r 是**形状**量，不是"过/不过"门槛 ——
+         快速学会后长期平台的学习器，r 会被平台期**压低而误杀**
+         （100 点、首点 0、其余 99 点为 1 ⇒ r ≈ **0.172**）；
+         缓慢线性上升但**远没到线**的学习器，r 反而可能很高。两个方向都不成立。
+      4. **配对评测**：随机基线与 PPO 改用**同一批固定初值种子**
+         （`scripts/31:fixed_eval_seeds`）；保存**逐回合**回报 ⇒ 差值是真配对差值，
+         不再把"场景波动"混进"策略改善"。
+      5. **随机动作**走**独立生成器**（`action_seed`），与初值种子分离。
 
 用法
 ----
@@ -66,6 +78,7 @@ import numpy as np
 
 from wmlab.envs import make_env
 from wmlab.envs.base import StepResult
+from wmlab.eval import reference_learner_verdict
 from wmlab.utils import get_device, load_config, output_dir, set_seed
 from wmlab.utils.plot import PALETTE, apply_style, save_fig
 
@@ -135,12 +148,18 @@ def parse_args():
     return p.parse_args()
 
 
-def random_baseline(env, n_episodes, seed, max_steps):
-    """同口径随机基线（与 scripts/31 的 random_policy_return 算法一致）。"""
-    rng = np.random.default_rng(seed)
-    rets, per_step = [], []
-    for i in range(n_episodes):
-        env.reset(seed=seed + i)
+def random_baseline(env, seeds, action_seed, max_steps):
+    """同口径随机基线（与 scripts/31 的 `random_policy_return` 算法一致）。
+
+    ★ 2026-10-12 配对化：
+      - 用**显式初值种子列表** `seeds`（= PPO 评测用的同一批）⇒ 两边面对**同一批**
+        初始条件，差值才是**配对差值**；
+      - 随机动作走**独立生成器** `action_seed`（与初值种子分离）。
+    """
+    rng = np.random.default_rng(int(action_seed))
+    rets, per_step, lens = [], [], []
+    for s in seeds:
+        env.reset(seed=int(s))
         R, t, done = 0.0, 0, False
         while not done:
             a = env.sample_action(rng)
@@ -148,10 +167,12 @@ def random_baseline(env, n_episodes, seed, max_steps):
             R += float(res.reward)
             t += 1
             done = bool(res.done) or (max_steps is not None and t >= max_steps)
-        rets.append(R)
-        per_step.append(R / max(t, 1))
+        rets.append(float(R))
+        per_step.append(float(R) / max(t, 1))
+        lens.append(int(t))
     return {"return_mean": float(np.mean(rets)), "return_std": float(np.std(rets)),
-            "per_step_mean": float(np.mean(per_step))}
+            "per_step_mean": float(np.mean(per_step)),
+            "returns": rets, "per_step": per_step, "lengths": lens}
 
 
 def main():
@@ -169,15 +190,18 @@ def main():
     env_raw = make_env(cfg["env"]["id"], seed=int(args.seed))
     env = env_raw if scale == 1.0 else RewardScaledEnv(env_raw, scale)
 
-    # 基线也在**同一缩放下**测，然后折算回原单位
-    base = random_baseline(env, int(args.n_eval), 30_000, max_steps)
+    # ★ 固定评测初值（单一真源 = scripts/31）；随机基线与 PPO **共用同一批** ⇒ 配对
+    eval_seeds = x9mod.fixed_eval_seeds(int(args.n_eval))
+    base = random_baseline(env, eval_seeds, 30_000, max_steps)
     base_per_step = base["per_step_mean"] / scale
+    base_ps = np.asarray(base["per_step"], dtype=float) / scale   # 逐回合 per-step（原单位）
     bar = base_per_step + float(args.margin)
-    print(f"[32] 参照有效性审计 v0.2（多种子 + 末 k 均值；r 只做诊断）")
+    print(f"[32] 参照有效性审计 v0.3（配对初值 + 多种子 + 末 k 均值；r 只做诊断）")
     print(f"[32] env={cfg['env']['id']}  reward_scale={scale}  "
           f"seeds={seeds}  updates={args.updates}×512  last_k={args.last_k}")
-    print(f"[32] 随机基线 return={base['return_mean'] * 1.0:.1f} (缩放单位) "
-          f"=> per-step(原单位) {base_per_step:.3f}；VALID 门槛 = {bar:.3f}")
+    print(f"[32] 评测初值（随机与 PPO 共用）：{eval_seeds[0]}..{eval_seeds[-1]} "
+          f"(n={len(eval_seeds)})")
+    print(f"[32] 随机基线 per-step(原单位) {base_per_step:.3f}；VALID 门槛 = {bar:.3f}")
 
     arm_args = SimpleNamespace(samples_per_update=512, eval_every=int(args.eval_every),
                                n_eval=int(args.n_eval), config_max_steps=max_steps)
@@ -185,47 +209,63 @@ def main():
     for sd in seeds:
         t0 = time.time()
         _, hist, _ = x9mod.run_real_arm(env, arm_args, device,
-                                        seed=2000 + 1000 * sd, n_updates=int(args.updates))
-        # 折算回原单位
-        v = np.asarray([z for z in hist["real_per_step"] if not np.isnan(z)],
-                       dtype=float) / scale
+                                        seed=2000 + 1000 * sd, n_updates=int(args.updates),
+                                        eval_seeds=eval_seeds)
+        # ★ 逐回合 per-step（原单位）：与 base_ps 同长度、同顺序 ⇒ 可**配对**相减
+        ev_rets, ev_lens = hist["eval_returns"], hist["eval_lengths"]
+
+        def _ps(rets_row, lens_row):
+            return (np.asarray(rets_row, dtype=float)
+                    / np.maximum(np.asarray(lens_row, dtype=float), 1.0)) / scale
+
+        per_eval_ps = np.asarray([float(np.mean(_ps(a, b)))
+                                  for a, b in zip(ev_rets, ev_lens)], dtype=float)
+        paired_per_eval = np.asarray([float(np.mean(_ps(a, b) - base_ps))
+                                      for a, b in zip(ev_rets, ev_lens)], dtype=float)
+        n_ev = per_eval_ps.size
         sig = np.asarray(hist["std"], dtype=float)
-        x = np.arange(v.size, dtype=float)
-        k = int(min(int(args.last_k), v.size))
+        x = np.arange(n_ev, dtype=float)
+        k = int(min(int(args.last_k), n_ev))
         runs[sd] = {
             "seed": sd,
-            "per_step": [float(z) for z in v],
+            "per_step": [float(z) for z in per_eval_ps],
             "sigma": [float(z) for z in sig],
             "last_k": k,
-            "last_k_mean": float(v[-k:].mean()),
-            "first_k_mean": float(v[:k].mean()),
-            "last": float(v[-1]), "best": float(v.max()),
-            "delta_vs_base": float(v[-k:].mean() - base_per_step),
-            "slope_per_eval": float(np.polyfit(x, v, 1)[0]) if v.size > 2 else float("nan"),
-            "pearson_r": float(np.corrcoef(x, v)[0, 1]) if v.size > 2 else float("nan"),
+            "last_k_mean": float(per_eval_ps[-k:].mean()),
+            "first_k_mean": float(per_eval_ps[:k].mean()),
+            "last": float(per_eval_ps[-1]), "best": float(per_eval_ps.max()),
+            "delta_vs_base": float(per_eval_ps[-k:].mean() - base_per_step),
+            "paired_delta_vs_base": float(paired_per_eval[-k:].mean()),
+            "slope_per_eval": (float(np.polyfit(x, per_eval_ps, 1)[0])
+                               if n_ev > 2 else float("nan")),
+            "pearson_r": (float(np.corrcoef(x, per_eval_ps)[0, 1])
+                          if n_ev > 2 else float("nan")),
             "seconds": float(time.time() - t0),
             "env_steps": int(args.updates) * 512,
         }
         r = runs[sd]
         print(f"[32] seed={sd:3d}  末k均值 {r['last_k_mean']:+.3f} "
-              f"(Δ vs 基线 {r['delta_vs_base']:+.3f})  last {r['last']:+.3f}  "
-              f"best {r['best']:+.3f}  r {r['pearson_r']:+.3f}  [{r['seconds']:.0f}s]")
+              f"(Δ均值 {r['delta_vs_base']:+.3f} / 配对Δ {r['paired_delta_vs_base']:+.3f})  "
+              f"last {r['last']:+.3f}  best {r['best']:+.3f}  "
+              f"r {r['pearson_r']:+.3f}  [{r['seconds']:.0f}s]")
     env.close()
 
     lk = np.asarray([runs[s]["last_k_mean"] for s in seeds], dtype=float)
     dlt = np.asarray([runs[s]["delta_vs_base"] for s in seeds], dtype=float)
+    pdlt = np.asarray([runs[s]["paired_delta_vs_base"] for s in seeds], dtype=float)
     rr = np.asarray([runs[s]["pearson_r"] for s in seeds], dtype=float)
-    mean_lk = float(lk.mean())
-    std_lk = float(lk.std(ddof=1)) if lk.size > 1 else 0.0
-    all_above = bool((dlt > 0).all())
-    valid = bool((mean_lk >= bar) and all_above)
+    # ★★ 判定走**单一真源**（wmlab/eval/audit.py），不再在脚本里另写一套
+    valid, det = reference_learner_verdict(lk, bar)
     verdict = "VALID" if valid else "VOID"
 
-    print("[32] ================= 参照有效性判定（多种子）================")
-    print(f"[32] 末 {args.last_k} 次均值：跨种子 {mean_lk:+.3f} ± {std_lk:.3f} (n={lk.size})"
-          f"；门槛 {bar:+.3f}")
-    print(f"[32] 配对差值（每种子末k均值 − 基线）：{np.round(dlt, 3).tolist()}")
-    print(f"[32] 方向一致性（所有种子都 > 基线）：{all_above}")
+    print("[32] ================= 参照有效性判定（单一规则 · 多种子）================")
+    print(f"[32] 规则：{det['rule']}")
+    print(f"[32] 末 {args.last_k} 次均值（逐种子）：{np.round(lk, 3).tolist()}")
+    print(f"[32] 跨种子 {det['mean_last_k_over_seeds']:+.3f} ± "
+          f"{det['std_last_k_over_seeds']:.3f} (n={det['n_seeds']})；门槛 {bar:+.3f}")
+    print(f"[32] 过线种子数 {det['n_clearing_bar']}/{det['n_seeds']}"
+          f"；逐种子过线 {det['per_seed_clears_bar']}")
+    print(f"[32] 配对差值（**同初值逐回合**，末k均值）：{np.round(pdlt, 3).tolist()}")
     print(f"[32] 诊断项（**不参与判定**）：Pearson r = {np.round(rr, 3).tolist()}"
           f"（形状量；快速学会后长期平台会把 r 压低，故不当门槛）")
     if valid:
@@ -235,7 +275,7 @@ def main():
         print("[32] 注意：这是「作废(VOID)」，**不是**「负结论(NEGATIVE)」—— 两者必须分开报")
 
     summary = {
-        "experiment": "reference-learner audit (script 32, v0.2 multi-seed)",
+        "experiment": "reference-learner audit (script 32, v0.3 paired-eval multi-seed)",
         "env": cfg["env"]["id"], "device": str(device.type),
         "reward_scale": scale,
         "seeds": seeds,
@@ -243,18 +283,29 @@ def main():
         "samples_per_update": 512,
         "env_steps_per_seed": int(args.updates) * 512,
         "last_k": int(args.last_k),
+        "eval_seed_base": int(x9mod.EVAL_SEED_BASE),
+        "eval_seeds": [int(z) for z in eval_seeds],
+        "paired_evaluation": True,
+        "random_action_seed": 30_000,
         "random_baseline_per_step": base_per_step,
         "margin": float(args.margin), "bar": bar,
-        "mean_last_k_over_seeds": mean_lk, "std_last_k_over_seeds": std_lk,
-        "paired_deltas_vs_base": [float(z) for z in dlt],
-        "all_seeds_above_base": all_above,
+        "verdict_rule": det["rule"],
+        "last_k_mean_per_seed": [float(z) for z in lk],
+        "per_seed_clears_bar": det["per_seed_clears_bar"],
+        "n_clearing_bar": det["n_clearing_bar"],
+        "min_last_k_mean": det["min_last_k_mean"],
+        "mean_last_k_over_seeds": det["mean_last_k_over_seeds"],
+        "std_last_k_over_seeds": det["std_last_k_over_seeds"],
+        "paired_deltas_vs_base": [float(z) for z in pdlt],
+        "unpaired_delta_of_means": [float(z) for z in dlt],
         "pearson_r_per_seed": [float(z) for z in rr],
         "pearson_r_is_diagnostic_only": True,
         "valid": valid, "verdict": verdict,
         "runs": {str(s): runs[s] for s in seeds},
-        "note": ("v0.2 判据 = 每个训练种子的末 k 次评测均值都 ≥ 随机基线 + margin；"
-                 "评测种子固定且与训练种子无关（20_000 + update）。"
-                 "Pearson r 仅作诊断：它是形状量，快速学会后长期平台会把它压低 ⇒ 不当门槛。"
+        "note": (f"v0.3 判据（单一真源 wmlab/eval/audit.py）：{det['rule']}"
+                 "评测初值**固定**且随机基线 / PPO **共用同一批**（scripts/31:fixed_eval_seeds），"
+                 "差值按**逐回合配对**计算（保存 per-episode 回报）；随机动作走独立生成器。"
+                 "Pearson r 仅作诊断：它是形状量（快速学会后长期平台会把它压低）⇒ 不当门槛。"
                  "VOID = 参照臂无效 ⇒ 基于它的 A/B 比较作废；这不是『方法无效』的负结论。"
                  "本审计复用 scripts/31 的 run_real_arm（单实现纪律）。"),
     }
@@ -276,7 +327,7 @@ def main():
                label=f"VALID bar ({bar:.2f} = base + {args.margin})")
     kk = min(int(args.last_k), vmean.size)
     ax.axvspan(vmean.size - kk - 0.5, vmean.size - 0.5, color=PALETTE["red"], alpha=0.08)
-    ax.set_xlabel("PPO update"); ax.set_ylabel("true-env reward/step (original units)")
+    ax.set_xlabel("evaluation index"); ax.set_ylabel("true-env reward/step (original units)")
     ax.set_title(f"(1) reference learner across {len(seeds)} seeds  [{verdict}]")
     ax.legend(fontsize=8); ax.grid(alpha=0.25)
 
@@ -284,13 +335,13 @@ def main():
     for sd in seeds:
         ax.plot(np.asarray(runs[sd]["sigma"], dtype=float), "-", lw=1.2, alpha=0.6,
                 label=f"seed {sd}")
-    ax.set_xlabel("PPO update"); ax.set_ylabel("policy sigma")
+    ax.set_xlabel("evaluation index"); ax.set_ylabel("policy sigma")
     ax.set_title("(2) policy sigma per seed")
     ax.legend(fontsize=8); ax.grid(alpha=0.25)
 
-    fig.suptitle(f"wmlab script 32 v0.2 · reference-learner audit · {cfg['env']['id']} · "
-                 f"reward_scale={scale} · seeds={seeds} · updates={args.updates} · "
-                 f"last_k={args.last_k}", fontsize=10)
+    fig.suptitle(f"wmlab script 32 v0.3 · reference-learner audit (paired eval) · "
+                 f"{cfg['env']['id']} · reward_scale={scale} · seeds={seeds} · "
+                 f"updates={args.updates} · last_k={args.last_k}", fontsize=10)
     fig.tight_layout(rect=(0, 0, 1, 0.94))
     png = save_fig(fig, out / f"{args.tag}.png")
     plt.close(fig)
