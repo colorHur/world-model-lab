@@ -55,7 +55,7 @@ python scripts/06_delay_floor.py
 python scripts/07_seeds_threshold.py --quick            # 冒烟：2 种子、小 epoch
 python scripts/07_seeds_threshold.py --seeds 0 1 2 3 4
 
-# 10) 自检（84 项，不依赖 pytest；每个用例对应一次真实踩过的坑；★ 圈码 1–50 用尽后改用 [nn]）
+# 10) 自检（86 项，不依赖 pytest；每个用例对应一次真实踩过的坑；★ 圈码 1–50 用尽后改用 [nn]）
 python tests/test_channel_and_aoi.py
 
 # 11) X22：C17 的 safe horizon 在本场景**能不能实证**（12 项断言，秒级；不训练、不需 GPU）

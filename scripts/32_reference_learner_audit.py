@@ -41,6 +41,9 @@ X9（想象训练）跑完得到一个"全员平坦"的结果 —— 但**对照
       4. **配对评测**：随机基线与 PPO 改用**同一批固定初值种子**
          （`scripts/31:fixed_eval_seeds`）；保存**逐回合**回报 ⇒ 差值是真配对差值，
          不再把"场景波动"混进"策略改善"。
+         ★ v0.3.1 收紧**配对检查**：不再用 `mean(A−B)==mean(A)−mean(B)`
+         （那是个**恒等式**，对错配数组也成立），改为**直接比对两臂保存的
+         episode seed 序列**（`audit.same_seed_sequence`，值 + 顺序按位相同）。
       5. **随机动作**走**独立生成器**（`action_seed`），与初值种子分离。
 
 用法
@@ -78,7 +81,7 @@ import numpy as np
 
 from wmlab.envs import make_env
 from wmlab.envs.base import StepResult
-from wmlab.eval import reference_learner_verdict
+from wmlab.eval import reference_learner_verdict, same_seed_sequence
 from wmlab.utils import get_device, load_config, output_dir, set_seed
 from wmlab.utils.plot import PALETTE, apply_style, save_fig
 
@@ -154,9 +157,12 @@ def random_baseline(env, seeds, action_seed, max_steps):
     ★ 2026-10-12 配对化：
       - 用**显式初值种子列表** `seeds`（= PPO 评测用的同一批）⇒ 两边面对**同一批**
         初始条件，差值才是**配对差值**；
-      - 随机动作走**独立生成器** `action_seed`（与初值种子分离）。
+      - 随机动作走**独立生成器** `action_seed`（与初值种子分离）；
+      - ★ 返回 `episode_seeds`（**逐回合实际用的初值**）—— 供 `main()` 与 PPO 臂
+        保存的种子序列**按位比对**（这才是"配对"的站得住的证据，见 `audit.same_seed_sequence`）。
     """
     rng = np.random.default_rng(int(action_seed))
+    ep_seeds = [int(s) for s in seeds]
     rets, per_step, lens = [], [], []
     for s in seeds:
         env.reset(seed=int(s))
@@ -172,7 +178,8 @@ def random_baseline(env, seeds, action_seed, max_steps):
         lens.append(int(t))
     return {"return_mean": float(np.mean(rets)), "return_std": float(np.std(rets)),
             "per_step_mean": float(np.mean(per_step)),
-            "returns": rets, "per_step": per_step, "lengths": lens}
+            "returns": rets, "per_step": per_step, "lengths": lens,
+            "episode_seeds": ep_seeds}
 
 
 def main():
@@ -195,6 +202,7 @@ def main():
     base = random_baseline(env, eval_seeds, 30_000, max_steps)
     base_per_step = base["per_step_mean"] / scale
     base_ps = np.asarray(base["per_step"], dtype=float) / scale   # 逐回合 per-step（原单位）
+    base_seeds = [int(z) for z in base["episode_seeds"]]          # ★ 随机臂逐回合初值（配对证据）
     bar = base_per_step + float(args.margin)
     print(f"[32] 参照有效性审计 v0.3（配对初值 + 多种子 + 末 k 均值；r 只做诊断）")
     print(f"[32] env={cfg['env']['id']}  reward_scale={scale}  "
@@ -213,6 +221,7 @@ def main():
                                         eval_seeds=eval_seeds)
         # ★ 逐回合 per-step（原单位）：与 base_ps 同长度、同顺序 ⇒ 可**配对**相减
         ev_rets, ev_lens = hist["eval_returns"], hist["eval_lengths"]
+        ev_seeds = hist["eval_episode_seeds"]     # ★ PPO 臂每次评测**实际**用的逐回合初值
 
         def _ps(rets_row, lens_row):
             return (np.asarray(rets_row, dtype=float)
@@ -240,6 +249,8 @@ def main():
                                if n_ev > 2 else float("nan")),
             "pearson_r": (float(np.corrcoef(x, per_eval_ps)[0, 1])
                           if n_ev > 2 else float("nan")),
+            # ★ 每次评测**实际**用的逐回合初值种子（配对证据，供后续按位比对）
+            "eval_episode_seeds": [[int(z) for z in row] for row in ev_seeds],
             "seconds": float(time.time() - t0),
             "env_steps": int(args.updates) * 512,
         }
@@ -254,9 +265,17 @@ def main():
     dlt = np.asarray([runs[s]["delta_vs_base"] for s in seeds], dtype=float)
     pdlt = np.asarray([runs[s]["paired_delta_vs_base"] for s in seeds], dtype=float)
     rr = np.asarray([runs[s]["pearson_r"] for s in seeds], dtype=float)
-    # ★ 不变式（把"配对"这个名字钉死）：两臂共用评测初值 ⇒
-    # `mean(逐回合配对差值)` 与 `末 k 均值之差` 必须（近）相等。
-    # 不成立就说明"配对"名不副实 ⇒ 直接报错（R14：报错优于给假数字）。
+    # ★★ 配对检查（v0.3.1 收紧）：**唯一**站得住的证据 = 两臂逐回合初值种子**按位相同**。
+    #   旧检查 `mean(A−B) == mean(A) − mean(B)` 是个**恒等式** —— 两臂长度相同就必然
+    #   成立，**哪怕元素顺序完全错配** ⇒ 它证明不了"面对同一批初始条件"。
+    #   现改为直接比对各臂保存的 episode seed 序列（值 + 顺序）。R14：不成立直接报错。
+    for sd in seeds:
+        for j, arm_row in enumerate(runs[sd]["eval_episode_seeds"]):
+            if not same_seed_sequence(base_seeds, arm_row):
+                raise AssertionError(
+                    f"★ 配对失败：seed={sd} 第 {j} 次评测的逐回合初值 {arm_row} "
+                    f"≠ 随机基线 {base_seeds}（R14：报错优于给假数字）")
+    # 说明性一致性检查（**不是**配对证据，只是上述恒等式在两臂已配对时的数值体现）：
     if not np.allclose(pdlt, dlt, rtol=0.0, atol=1e-9):
         raise AssertionError(
             f"'paired' delta and delta-of-means disagree: {pdlt} vs {dlt}")
@@ -293,6 +312,7 @@ def main():
         "eval_seeds": [int(z) for z in eval_seeds],
         "paired_evaluation": True,
         "random_action_seed": 30_000,
+        "random_baseline_episode_seeds": [int(z) for z in base_seeds],
         "random_baseline_per_step": base_per_step,
         "margin": float(args.margin), "bar": bar,
         "verdict_rule": det["rule"],
@@ -311,9 +331,12 @@ def main():
         "pearson_r_is_diagnostic_only": True,
         "valid": valid, "verdict": verdict,
         "runs": {str(s): runs[s] for s in seeds},
+        "paired_seeds_check": "same_seed_sequence(base_seeds, arm.eval_episode_seeds[j]) 逐位为真",
         "note": (f"v0.3 判据（单一真源 wmlab/eval/audit.py）：{det['rule']}"
                  "评测初值**固定**且随机基线 / PPO **共用同一批**（scripts/31:fixed_eval_seeds），"
                  "差值按**逐回合配对**计算（保存 per-episode 回报）；随机动作走独立生成器。"
+                 "★ 配对检查 = 直接比对两臂保存的 episode seed 序列（`audit.same_seed_sequence`）"
+                 "—— 旧的 `mean(A−B)==mean(A)−mean(B)` 是恒等式，对错配数组也成立，不能当配对证据。"
                  "Pearson r 仅作诊断：它是形状量（快速学会后长期平台会把它压低）⇒ 不当门槛。"
                  "VOID = 参照臂无效 ⇒ 基于它的 A/B 比较作废；这不是『方法无效』的负结论。"
                  "本审计复用 scripts/31 的 run_real_arm（单实现纪律）。"),

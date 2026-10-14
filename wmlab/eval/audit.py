@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import numpy as np
 
-__all__ = ["reference_learner_verdict", "REFERENCE_AUDIT_RULE"]
+__all__ = ["reference_learner_verdict", "REFERENCE_AUDIT_RULE", "same_seed_sequence"]
 
 
 #: 规则的一句话陈述（脚本直接引用这句进 JSON，避免文档与实现再次分叉）
@@ -68,3 +68,30 @@ def reference_learner_verdict(per_seed_last_k_mean, bar) -> tuple[bool, dict]:
         "failing_seeds_idx": [int(i) for i in np.nonzero(~clears)[0]],
     }
     return valid, detail
+
+
+def same_seed_sequence(a, b) -> bool:
+    """两串**逐回合初值种子**是否**逐位相同**（值相同 **且** 顺序相同）。
+
+    ★ 为什么"配对评测"的检查必须是**直接比对种子序列**（2026-10-12 收紧）
+    ------------------------------------------------------------------
+    旧检查用的是 `mean(A−B) == mean(A) − mean(B)`。看上去像"配对自检"，其实是个
+    **恒等式**：只要两臂的逐回合数组**长度相同**，它**必然成立** ——
+    哪怕两臂的 episode 顺序**完全错配**（例如把两臂的种子列表整体倒序），
+    或者干脆是两组无关的等长数组，这个等式照样成立。
+    ⇒ 它证明的是"长度相等"，**不是**"面对同一批初始条件"。
+
+    真正能证明配对的，只有：把两臂**各自保存**的逐回合 seed 列表拿出来**按位比**。
+    本函数就是这个按位比，供 `scripts/32` 与自检**共用**（单一真源）。
+
+    Returns
+    -------
+    bool
+        `True` ⇔ 等长且 `int(a[i]) == int(b[i])` 对每个 `i` 成立。
+        ★ 空列表 == 空列表 ⇒ `True`（真空配对）；但调用方一般应另断言"非空"。
+    """
+    a = list(a)
+    b = list(b)
+    if len(a) != len(b):
+        return False
+    return all(int(x) == int(y) for x, y in zip(a, b))

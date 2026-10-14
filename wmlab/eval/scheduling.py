@@ -13,6 +13,9 @@
 三件硬约定
     C1 **一个调度器 = 一个 `(t, rng) -> bool`**，与 `eval.tracking.Schedule` 同型。
        状态（`age` / `U` / oracle 真值误差）由闭环 runner 写进 `state` 字典，调度器**只读不写**。
+       ★★ **缺字段 ⇒ 报错，不给默认 0**（`ClosedLoopState.require` / `MissingStateError`）：
+           `state.get(key, 0.0)` 会让"统计量没接线"静默变成"永不触发"，产出一个
+           **看起来合理**的假结果。接入验收另用 `state.reads` 检查每族**确实读到了**预期字段。
     C2 **等预算比较必须走 `pairing.overlap_window`**（点数 + 跨度两条守卫），
        且**同一批比较只准用同一个发散过滤器**。本模块**不提供**"取最大 / 取首个"。
     C3 **oracle 标 `diagnostic=True, deployable=False`**：它需要 ground truth。
@@ -47,6 +50,58 @@ from wmlab.eval.tracking import (
     threshold_lossy_schedule,
     threshold_mean_age,
 )
+
+# ============================================================ 闭环 state（缺失即报错）
+class MissingStateError(KeyError):
+    """调度器需要的闭环 state 字段不在 ⇒ **统计量没接线**。
+
+    ★ 为什么不给默认值：`state.get("U", 0.0)` 在字段缺失时静默取 0，会让触发条件
+      恒假 ⇒ 调度器"永不触发"，却产出一个**看起来合理**的结果（发送率 0、E[age] 极大）。
+      这正是"统计量没接线"被静默变成"不触发"的路径（R14 的反面）。
+    """
+
+
+class ClosedLoopState(dict):
+    """闭环调度用的 state：**只读字段缺失 ⇒ 直接报错**；并记录每字段被读取的次数。
+
+    契约（与 `Schedule` 的 `(t, rng)->bool` 同层）：
+      · **runner 每步写**：在查询调度器**之前**，把这一步的模型派生量/调度状态写进
+        state（如 `state["U"] = u`、`state["age"] = age`）。
+      · **调度器只读**：信号相关族通过 `state.require(key)` 读；缺字段即抛
+        `MissingStateError`（R14：报错优于给假数字）。
+      · **接入验收**：跑完看 `state.reads` —— 每族应至少读到它的 `.needs` 字段，
+        且读次数 ≈ 步数（证明是"每步都接线"，不是"注册了但没接"）。
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.reads: dict[str, int] = {}
+
+    def require(self, key: str):
+        if key not in self:
+            raise MissingStateError(
+                f"闭环调度缺 state[{key!r}] —— 该族需要的统计量没接线。"
+                f"  现有键：{sorted(self.keys())}。"
+                "★ 拒绝用默认 0 代替：那会把『没接线』静默变成『永不触发』。")
+        self.reads[key] = self.reads.get(key, 0) + 1
+        return self[key]
+
+
+def _req(state, key: str):
+    """读一个**必需**的 state 字段（`ClosedLoopState` 会计数；普通 dict 也能用但只报错不计数）。"""
+    if hasattr(state, "require"):
+        return state.require(key)
+    if key not in state:
+        raise MissingStateError(
+            f"闭环调度缺 state[{key!r}]（state 是普通 dict，未经过 ClosedLoopState）。"
+            f"  现有键：{sorted(state.keys())}。")
+    return state[key]
+
+
+def state_read_summary(state) -> dict:
+    """接入验收：返回 `{字段: 读取次数}`（普通 dict ⇒ 空 dict，表示"没接线计数"）。"""
+    return dict(getattr(state, "reads", {}) or {})
+
 
 # ============================================================ 族注册表（C1 + C3）
 FAMILIES = ("periodic", "threshold", "selfreport", "conformal", "oracle", "timing")
@@ -120,17 +175,20 @@ def _threshold(*, loss_prob: float, threshold: int, **_) -> Schedule:
 
 
 def _selfreport(*, loss_prob: float, threshold_u: float, state: dict, **_) -> Schedule:
-    """U ≥ thr 才尝试发。`state["U"]` 由闭环 runner 每步写入。"""
+    """U ≥ thr 才尝试发。`state["U"]` 由闭环 runner 每步写入；**缺失即报错**（不给默认 0）。"""
     thr = float(threshold_u)
     p = float(min(max(loss_prob, 0.0), 1.0))
 
     def _f(t: int, rng: np.random.Generator) -> bool:
-        if float(state.get("U", 0.0)) < thr:
+        if float(_req(state, "U")) < thr:
             return False
         return bool(rng.random() >= p)
 
     def _reset(rng: np.random.Generator | None = None) -> None:
-        state["U"] = 0.0
+        # ★ 只清模型派生量、**不给它塞默认 0** —— 否则"runner 没写 U"会被这个 0
+        #   掩盖成"永不触发"，正是本文件要堵的静默路径。
+        if hasattr(state, "pop"):
+            state.pop("U", None)
 
     _f.reset = _reset                                    # type: ignore[attr-defined]
     _f.__name__ = f"selfreport(thr={thr:.4f},p={p})"
@@ -146,18 +204,20 @@ def _conformal(*, loss_prob: float, tol: float, K: int, state: dict, tab: dict,
     n_h = int(tab["H"])
 
     def _f(t: int, rng: np.random.Generator) -> bool:
-        age = int(state.get("age", 0))
+        age = int(_req(state, "age"))
         if age < K_:
             h = min(max(age, 1), n_h)
             e_hat = float(conf_envelope(tab, np.array([h]),
-                                        np.array([float(state.get("U", 0.0))]))[0])
+                                        np.array([float(_req(state, "U"))]))[0])
             if e_hat < t_:
                 return False
         return bool(rng.random() >= p)
 
     def _reset(rng: np.random.Generator | None = None) -> None:
-        state["U"] = 0.0
-        state["age"] = 0
+        # ★ 清掉模型派生量/调度状态，不给默认值（见 _selfreport._reset 的理由）
+        if hasattr(state, "pop"):
+            state.pop("U", None)
+            state.pop("age", None)
 
     _f.reset = _reset                                    # type: ignore[attr-defined]
     _f.__name__ = f"conformal(K={K_},tol={t_:g},p={p})"
@@ -173,19 +233,20 @@ def _oracle(*, loss_prob: float, tau: float, K: int, state: dict, tab: dict,
     n_h = int(tab["H"])
 
     def _f(t: int, rng: np.random.Generator) -> bool:
-        age = int(state.get("age", 0))
+        age = int(_req(state, "age"))
         if age < K_:
             h = min(max(age, 1), n_h)
-            z = z_oracle(float(state.get(truth_key, 0.0)), h, tab)   # 非有限值内部 raise
+            z = z_oracle(float(_req(state, truth_key)), h, tab)   # 非有限值内部 raise
             if z < t_:
                 return False
         return bool(rng.random() >= p)
 
     def _reset(rng: np.random.Generator | None = None) -> None:
-        state["U"] = 0.0
-        state["age"] = 0
-        if truth_key in state:
-            state[truth_key] = 0.0
+        # ★ 清掉模型派生量/调度状态，不给默认值（见 _selfreport._reset 的理由）
+        if hasattr(state, "pop"):
+            state.pop("U", None)
+            state.pop("age", None)
+            state.pop(truth_key, None)
 
     _f.reset = _reset                                    # type: ignore[attr-defined]
     _f.__name__ = f"oracle(K={K_},tau={t_:.3f},key={truth_key})"

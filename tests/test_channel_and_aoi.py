@@ -90,6 +90,12 @@
   [65] ★★ PPO 的 minibatch 打乱必须来自**传入的生成器**（不受全局 numpy 状态影响）——
                                        反向断言：不同 rng 种子必须给不同结果
   [66] ★★ 配对评测：给定 `seeds` ⇒ 每集 reset 用它（反向断言：`seeds` 必须覆盖默认 `seed+i`）
+  [67] ★★ 配对证据 = **逐回合种子序列按位比**（`audit.same_seed_sequence`）—— 反向断言：
+                                       `mean(A−B)==mean(A)−mean(B)` 对**错配**数组也成立，
+                                       但按位比对必须判 False（这才是"配对"的站得住的检查）
+  [68] ★★ 调度库：信号相关族缺 `U`/`age`/真值误差 ⇒ **直接报错**（`MissingStateError`）——
+                                       反向断言：旧的 `state.get(key,0.0)` 口径对缺失字段**不报错**
+                                       （返回 0 ⇒ 静默"永不触发"）；接入验收用 `state.reads`
 """
 
 from __future__ import annotations
@@ -2935,6 +2941,109 @@ def test_evaluate_policy_continuous_uses_explicit_eval_seeds():
     evaluate_policy_continuous(env2, _StubNet(), lambda o: o, 3, torch.device("cpu"),
                                max_steps=2, seed=70)
     assert env2.seen == [70, 71, 72], f"★ 默认回退错：{env2.seen}"
+
+
+# ------------------------------------------------- [67] 配对证据：逐回合种子序列按位比
+def test_same_seed_sequence_is_the_real_pairing_check():
+    """[67] ★★ "配对评测"的**唯一**站得住检查 = 两臂 episode seed 序列（**值 + 顺序**）按位相同。
+
+    2026-10-12 收紧：旧检查用 `mean(A−B) == mean(A) − mean(B)` ——
+    那是个**恒等式**，只要两臂数组**等长**就必然成立，
+    **哪怕把其中一臂整体倒序**（元素集合一样，顺序全错）。⇒ 它只证"长度相等"，
+    证不了"两臂面对同一批初始条件"。
+
+    ★ 反向断言：构造一对**错配**种子（整体倒序）——
+      · `mean(A−B) == mean(A) − mean(B)` 仍成立（恒等式 ⇒ 旧检查无分辨力）；
+      · `same_seed_sequence(A, B)` 必须 **False**（这才是真检查）。
+    """
+    import numpy as np
+
+    from wmlab.eval import same_seed_sequence
+
+    a = [500000, 500001, 500002, 500003]
+    assert same_seed_sequence(a, list(a)) is True          # 同值同序
+    assert same_seed_sequence([], []) is True              # 空 == 空（真空配对）
+
+    # ★ 反向断言：整体倒序 —— 值集合相同、逐回合配对全错位
+    b = list(reversed(a))
+    assert abs((np.mean(a) - np.mean(b))
+               - float(np.mean(np.asarray(a) - np.asarray(b)))) < 1e-9, \
+        "★ 反向断言前提不成立：均值恒等式本应在错配下也成立"
+    assert same_seed_sequence(a, b) is False, \
+        "★ 按位比对失效：整体倒序的种子序列被判成了配对"
+
+    # 长度不同 / 值不同 ⇒ False
+    assert same_seed_sequence([1, 2], [1, 2, 3]) is False
+    assert same_seed_sequence([1, 2], [1, 5]) is False
+
+
+# ------------------------------------------------- [68] 调度库：缺 state 字段必须报错
+def test_scheduling_missing_state_field_raises():
+    """[68] ★★ 调度库：闭环信号相关族缺必需字段必须**直接报错**，不许静默取默认 0。
+
+    2026-10-12 堵漏：`selfreport/conformal/oracle` 原来用 `state.get(key, 0.0)`，
+    字段缺失时静默取 0 ⇒ 触发条件恒假 ⇒ 调度器"永不触发"，却产出一个**看起来合理**的
+    结果（发送率 0）。这正是"统计量没接线"被静默变成"不触发"的路径（R14 的反面）。
+    现在缺字段抛 `MissingStateError`，并用 `state.reads` 做**接入验收**。
+
+    ★ 反向断言：同样缺失字段，旧的 `state.get("U", 0.0)` 口径**不报错**（返回 0）
+      ⇒ 证明"报错"确实来自新检查，而不是本来就炸。
+    """
+    from wmlab.eval import scheduling
+    from wmlab.eval.conformal import fit_envelope
+    from wmlab.eval.oracle import fit_age_cond
+
+    # ---- selfreport：缺 U ⇒ raise ----
+    st = scheduling.ClosedLoopState()
+    sched = scheduling.build("selfreport", loss_prob=0.0, threshold_u=0.5, state=st)
+    assert st.get("U", 0.0) == 0.0          # ★ 反向断言：旧口径对缺失字段返回 0、不报错
+    try:
+        sched(1, np.random.default_rng(0))
+        raise AssertionError("★ 缺 U 未 raise ⇒ 会把『没接线』静默变成『永不触发』")
+    except scheduling.MissingStateError:
+        pass
+    # 写入 U 后可用，且读取被计数（接入验收）
+    st["U"] = 0.9
+    _ = sched(2, np.random.default_rng(0))
+    assert scheduling.state_read_summary(st) == {"U": 1}, scheduling.state_read_summary(st)
+
+    # ---- conformal：缺 age / U ⇒ raise ----
+    rng = np.random.default_rng(20260929)
+    H, N = 8, 4000
+    hs = np.arange(1, H + 1, dtype=float)
+    base = 0.05 * 1.5 ** (hs - 1)
+    spread = 0.02 * 1.8 ** (hs - 1)
+    u = rng.normal(size=(N, H))
+    err = (base[None, :] + spread[None, :] * (0.8 * u + rng.normal(size=(N, H))))
+    tab = fit_envelope(err[:2000], u[:2000], alpha=0.1, n_knots=6)
+    st2 = scheduling.ClosedLoopState(age=1)          # 只给 age，不给 U
+    sc = scheduling.build("conformal", loss_prob=0.0, tol=0.1, K=3, state=st2, tab=tab)
+    try:
+        sc(1, np.random.default_rng(0))
+        raise AssertionError("★ conformal 缺 U 未 raise")
+    except scheduling.MissingStateError:
+        pass
+    st2["U"] = 0.0
+    st2.pop("age")                                    # 只给 U，不给 age
+    try:
+        sc(2, np.random.default_rng(0))
+        raise AssertionError("★ conformal 缺 age 未 raise")
+    except scheduling.MissingStateError:
+        pass
+
+    # ---- oracle：缺真值误差键 ⇒ raise ----
+    tab_o = fit_age_cond(np.ones((10, H)))
+    st3 = scheduling.ClosedLoopState(age=1)
+    so = scheduling.build("oracle", loss_prob=0.0, tau=1.0, K=3, state=st3,
+                          tab=tab_o, truth_key="err")
+    try:
+        so(1, np.random.default_rng(0))
+        raise AssertionError("★ oracle 缺真值误差键未 raise")
+    except scheduling.MissingStateError:
+        pass
+    st3["err"] = 1.0
+    _ = so(2, np.random.default_rng(0))               # 现在可用
+    assert scheduling.state_read_summary(st3).get("err", 0) >= 1
 
 
 def main() -> int:

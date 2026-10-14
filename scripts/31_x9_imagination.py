@@ -263,7 +263,7 @@ def run_real_arm(env, args, device, seed, n_updates, eval_seeds=None):
     hist = {"update": [], "real_return": [], "real_per_step": [], "entropy": [], "std": [],
             "policy_loss": [], "value_loss": [], "real_env_steps": 0,
             "eval_seeds": (list(eval_seeds) if eval_seeds is not None else None),
-            "eval_returns": [], "eval_lengths": []}
+            "eval_returns": [], "eval_lengths": [], "eval_episode_seeds": []}
     t0 = time.time()
     for u in range(1, n_updates + 1):
         frac = 1.0 - (u - 1) / max(1, n_updates)
@@ -294,6 +294,9 @@ def run_real_arm(env, args, device, seed, n_updates, eval_seeds=None):
             hist["real_per_step"].append(float(ev["return_mean"]) / max(float(ev["len_mean"]), 1.0))
             hist["eval_returns"].append([float(z) for z in ev["returns"]])
             hist["eval_lengths"].append([int(z) for z in ev["lengths"]])
+            # ★ 逐回合**实际**初值种子（不是传入的 eval_seeds 列表本身）——
+            #   配对评测的检查靠它：脚本 32 会拿它和随机基线保存的种子序列**按位比**。
+            hist["eval_episode_seeds"].append([int(z) for z in ev["episode_seeds"]])
             print(f"[31]   REAL  update {u:4d}/{n_updates}  "
                   f"real/step={hist['real_per_step'][-1]:8.3f}  "
                   f"real_R={ev['return_mean']:8.1f}  "

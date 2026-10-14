@@ -12,15 +12,16 @@
 
 ```bash
 python scripts/00_check_env.py            # 环境自检（含中文字体链路），15 项
-python tests/test_channel_and_aoi.py      # ★ 84 项回归自检（不依赖 pytest）
+python tests/test_channel_and_aoi.py      # ★ 86 项回归自检（不依赖 pytest）
 python scripts/30_scheduling_baselines.py --n 50000 --tmax 16   # 调度基线库 v0.1，无模型、秒级~分钟级
 ```
 
 ★ **前两条跑通 ≠ 复现了离线口径**。它们只证明两件事：**依赖装对了**、**仓库代码在当前
-环境能跑通**（15 项 + 84/84）。而"复现"要求换机 / 换环境后**数字对得上**（§4 的判据表）。
+环境能跑通**（15 项 + 全部自检）。而"复现"要求换机 / 换环境后**数字对得上**（§4 的判据表）。
 自检用的是**构造的输入**（手算已知答案、闭式对账、逐位一致性），它**不**覆盖"多步误差曲线
 在别的机器上给出同一个 H\*"这类**跨机数值一致性**。
-★ 截至 2026-10-12，**换机独立复现仍未完成** —— 这是本仓库的已知缺口，不写成已完成。
+★ 截至 2026-10-15：**干净检出 + 全新环境的同机复现已完成**（`docs/REPRODUCE.md` §5，含逐位一致的核心结果）；
+**换机（外部）独立验收仍待做**（§6）—— 这是本仓库的已知缺口，不写成已完成。
 
 第三条不需要任何训练/GPU，会产出 `outputs/30_scheduling_baselines.{png,json}`
 （图已进版本库：`assets/33_scheduling_baselines.png`）。
@@ -103,15 +104,103 @@ venv3\Scripts\python.exe -m pip install --no-cache-dir numpy matplotlib pyyaml t
 
 | 判据 | 期望 | 出自 |
 |---|---|---|
-| 84 项自检 | `84/84 passed` | `tests/test_channel_and_aoi.py` |
+| 自检（当前） | 全部通过（`nn/nn passed`；**当前 86 项**） | `tests/test_channel_and_aoi.py` |
 | 环境自检 | 15 项全过，含中文字体链路 | `scripts/00_check_env.py` |
 | 调度基线闭式对账 | 最差 `diff/(5·SE) ≤ 1`，99 个点 | `scripts/30_scheduling_baselines.py` |
 | 调度基线退化 | `periodic(T=1)` / `threshold(K=0)` 的 `tx_rate−1 = 0` | 同上 |
 | 调度基线已知答案 | PER=0 时 `threshold/periodic` 的 E[age] 比值 **≡ 1.0000** | 同上 |
+| ★ 世界模型 H\*（同种子逐位可复现） | 开环 **12.945840516581065** / 闭环 **6.955816701033772**；参数量 **67,652**（`default.yaml`，seed 0，CartPole-v1） | `scripts/02_train_world_model.py`（容差 **0**） |
 | 同种子重跑 | 逐位一致（`outputs/` 里的 JSON 与本文档数字对得上） | 全仓库约定 |
-| 参照学习器审计（可选，**约 15 min CPU**） | 判定规则可复跑（单一真源）：**每个**种子末 5 次均值 ≥ 随机基线 + 1.5 ⇒ VALID；否则 VOID。随机基线与 PPO **同初值种子**（配对） | `scripts/32_reference_learner_audit.py` |
+| 参照学习器审计（可选，**约 15 min CPU**） | 判定规则可复跑（单一真源）：**每个**种子末 5 次均值 ≥ 随机基线 + 1.5 ⇒ VALID；否则 VOID。随机基线与 PPO **同初值种子**（配对），且**逐回合种子序列按位相同**（`audit.same_seed_sequence`） | `scripts/32_reference_learner_audit.py` |
 | 训练随机源受控 | 同一训练种子**结果不随种子列表顺序改变**（自检 **[65]** + 实测 `ORDER_INDEPENDENT: True`） | 同上 |
 
 ★ **口径纪律**（本仓库最容易被违反的一条）：任何"误差"数字都必须同时写清
 **逐点还是累积 / 在哪个评测集 / 除以哪个方差 / 曲线定义（开环/观测闭环/潜闭环）**；
 H\* 还要加**种子数与采样量**。同一个模型上合法的 H\* 数值可以差 2 倍以上（见 `README.md` §设计约定）。
+
+---
+
+## 5. 复现记录：干净检出 + 全新环境（2026-10-15）
+
+> ★ **这一步回答**：项目核心结果**到底依赖哪些本机状态**。
+> ★ **这是"干净复现"，不是"换机复现"** —— **同一台工位机**，但**重新克隆 + 全新 venv + 无旧缓存**。
+> 真正跨机的独立验收见 §6（**待做**）。
+
+**环境**
+
+| 项 | 值 |
+|---|---|
+| 检出 | `git clone` → `D:\repro\wmlab-clean\repo-r1`，**HEAD = `92b843c`**，工作树**无 `outputs/`**（无旧缓存） |
+| 解释器 | **全新** venv（基线 = 本机 `ai-lab` 的 Python **3.11.16**） |
+| 依赖 | `pip install -r requirements.lock.txt --extra-index-url https://download.pytorch.org/whl/cpu -i <镜像>` ⇒ **28 包**（27 锁 + pip） |
+| 版本 | torch **2.14.1+cpu**｜numpy **2.4.6**｜matplotlib **3.11.2**｜gymnasium **1.4.0** |
+| 装耗时 | 约 **3–4 min**（torch 124 MB 命中本机 pip HTTP 缓存；**纯网络下会更久**） |
+
+**四项按时序（全部 exit=0）**
+
+| # | 命令 | 耗时 | 实测 | 预期 / 容差 |
+|---|---|---|---|---|
+| ① | `python scripts/00_check_env.py` | **2.3 s** | 15 项全过 | 15 项全过（exact） |
+| ② | `python tests/test_channel_and_aoi.py` | **21.1 s** | **84/84**（`92b843c` 的项数；含本轮新增后为 86） | 全过（exact） |
+| ③ | `python scripts/02_train_world_model.py` | **42.5 s**（训练本身 **39.1 s**） | H\* 开环 **12.945840516581065** / 闭环 **6.955816701033772**；参数量 **67,652**；final loss train **4.5944e-4** / val **1.2622e-3** | ★ **与历史逐位一致**（容差 **0**） |
+| ④ | `python scripts/30_scheduling_baselines.py --n 50000 --tmax 16` | **12.7 s** | 闭式对账最差比值 **0.796**（≤1，99 点）；退化 `tx_rate−1 = 0`；`p=0` 比值中位 **1.0000** | ≤1 / `=0` / `=1.0000`（脚本内**自检即判**，不过则 `raise`） |
+
+★ **③ 最有信息量**：世界模型训练在**同种子下逐位可复现**（H\*、参数量、loss 全一致）
+⇒ 该核心结果**不依赖本机的缓存或环境残留**（至少在同一 CPU 平台 / 同 torch 版本下）。
+
+★ **④ 的比值随 PER 单调**（p=0 ⇒ **1.0000**；p=0.3 ⇒ **0.766**；p=0.7 ⇒ **0.621**）——
+与 X38「阈值随丢包率越优」一致，属**独立复现**而非新结论。
+
+★ **确实依赖本机状态的部分（如实）**：
+① `outputs/` 缓存（本复现**刻意清空** ⇒ 完整重训，训练 39 s）；
+② 本机已有的 **pip HTTP 缓存**（torch wheel 命中缓存 ⇒ 装得快，纯网络会更慢）；
+③ **中文字体**（`00_check_env.py` 专门检查；缺字体只影响图的观感，不影响数值）。
+
+★ **本记录的边界**：同机、CPU、同一 torch 版本。**换机 / 换 torch 大版本**见 §6（待做）。
+
+---
+
+## 6. 外部验收：给同学的最短复现说明（**待执行**）
+
+> 这是 `AGENT-BRIEF` §2.4「下一步」第 4 项。目标是**别人在一台全新机器上能跑出 §5 的数字**。
+> ★ 复制下面整段给对方即可；**其独立执行结果与卡点**要记回来。
+
+```text
+仓库：github.com/colorHur/world-model-lab
+前置：一台装了 Python 3.11 的机器（CPU 即可，不需要 GPU）
+
+1) 克隆 + 建全新 venv
+   git clone https://github.com/colorHur/world-model-lab && cd world-model-lab
+   python -m venv venv-clean
+   # Windows: venv-clean\Scripts\python.exe ；Linux/macOS: venv-clean/bin/python
+
+2) 装依赖（torch 的 +cpu 在官方 CPU 索引，必须额外加索引；其余走就近镜像）
+   <venv>/python -m pip install -r requirements.lock.txt \
+       --extra-index-url https://download.pytorch.org/whl/cpu
+
+3) 跑四项（期望全部 exit=0）
+   <venv>/python scripts/00_check_env.py                          # 15 项全过
+   <venv>/python tests/test_channel_and_aoi.py                    # nn/nn passed
+   <venv>/python scripts/02_train_world_model.py                  # 见下表"H*"
+   <venv>/python scripts/30_scheduling_baselines.py --n 50000 --tmax 16
+
+4) 把下面这张表的"你实测"列填回来（命令 stdout 里就有）
+   ┌─────────────────────────┬───────────────────────────┬──────────┐
+   │ 项                      │ 预期                       │ 你实测   │
+   ├─────────────────────────┼───────────────────────────┼──────────┤
+   │ 00_check_env            │ 15 项全过                  │          │
+   │ tests/*                 │ nn/nn passed               │          │
+   │ 02 H* 开环              │ 12.945840516581065 (±1e-6) │          │
+   │ 02 H* 闭环              │ 6.955816701033772  (±1e-6) │          │
+   │ 02 参数量               │ 67,652                     │          │
+   │ 02 final loss train     │ 4.5944e-4          (±1e-8) │          │
+   │ 30 闭式对账最差比值     │ ≤ 1.0                      │          │
+   │ 30 p=0 比值中位         │ 1.0000             (±1e-9) │          │
+   └─────────────────────────┴───────────────────────────┴──────────┘
+
+记录：OS / Python / torch 版本、每步耗时、任何安装或运行报错。
+```
+
+★ **为什么 H\* 用严格容差（±1e-6）而调度比值宽松**：训练路径是**同种子确定性**的
+（§5 已证明逐位一致）；而调度**空跑**用的是蒙特卡洛，其散度由脚本内的 **5×批量均值标准误**
+判据吸收（`--n` 越大越紧），所以对外只要求"最差比值 ≤ 1"。
