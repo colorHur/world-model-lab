@@ -130,7 +130,7 @@ H\* 还要加**种子数与采样量**。同一个模型上合法的 H\* 数值�
 
 | 项 | 值 |
 |---|---|
-| 检出 | `git clone` → `D:\repro\wmlab-clean\repo-r1`，**HEAD = `92b843c`**，工作树**无 `outputs/`**（无旧缓存） |
+| 检出 | `git clone` → `D:\repro\wmlab-clean\repo-r1`，**HEAD = `345e191`**（首次跑在 `92b843c`，结论相同），工作树**无 `outputs/`**（无旧缓存） |
 | 解释器 | **全新** venv（基线 = 本机 `ai-lab` 的 Python **3.11.16**） |
 | 依赖 | `pip install -r requirements.lock.txt --extra-index-url https://download.pytorch.org/whl/cpu -i <镜像>` ⇒ **28 包**（27 锁 + pip） |
 | 版本 | torch **2.14.1+cpu**｜numpy **2.4.6**｜matplotlib **3.11.2**｜gymnasium **1.4.0** |
@@ -141,9 +141,12 @@ H\* 还要加**种子数与采样量**。同一个模型上合法的 H\* 数值�
 | # | 命令 | 耗时 | 实测 | 预期 / 容差 |
 |---|---|---|---|---|
 | ① | `python scripts/00_check_env.py` | **2.3 s** | 15 项全过 | 15 项全过（exact） |
-| ② | `python tests/test_channel_and_aoi.py` | **21.1 s** | **84/84**（`92b843c` 的项数；含本轮新增后为 86） | 全过（exact） |
+| ② | `python tests/test_channel_and_aoi.py` | **21.0 s** | **86/86**（在 `345e191`；首次在 `92b843c` 上为 84/84） | 全过（exact） |
 | ③ | `python scripts/02_train_world_model.py` | **42.5 s**（训练本身 **39.1 s**） | H\* 开环 **12.945840516581065** / 闭环 **6.955816701033772**；参数量 **67,652**；final loss train **4.5944e-4** / val **1.2622e-3** | ★ **与历史逐位一致**（容差 **0**） |
 | ④ | `python scripts/30_scheduling_baselines.py --n 50000 --tmax 16` | **12.7 s** | 闭式对账最差比值 **0.796**（≤1，99 点）；退化 `tx_rate−1 = 0`；`p=0` 比值中位 **1.0000** | ≤1 / `=0` / `=1.0000`（脚本内**自检即判**，不过则 `raise`） |
+
+★ **本节跑了两遍**（`92b843c` → `345e191`，各一次干净检出 + 无缓存）：③④ 的关键数值**两次逐位相同**，
+自检项数随新增用例由 84 → 86。⇒ "同种子可复现"这件事本身也被**重复验证**了一次。
 
 ★ **③ 最有信息量**：世界模型训练在**同种子下逐位可复现**（H\*、参数量、loss 全一致）
 ⇒ 该核心结果**不依赖本机的缓存或环境残留**（至少在同一 CPU 平台 / 同 torch 版本下）。
