@@ -95,6 +95,11 @@
                                        但按位比对必须判 False（这才是"配对"的站得住的检查）
   [68] ★★ 调度库：信号相关族缺 `U`/`age`/真值误差 ⇒ **直接报错**（`MissingStateError`）——
                                        反向断言：旧的 `state.get(key,0.0)` 口径对缺失字段**不报错**
+  [69] ★★ 接线核对必须**可证伪**（`closedloop.check_wiring` W1–W4）—— 反向断言：把 state
+                                       写成**常量**（age 恒 0）必须判违约；否则该核对没有分辨力
+  [70] ★★ 六族统一闭环的构件契约：`err_from_sq` 的**位置维 / 全维**不可混用（量纲错配，
+                                       X43 记录过犯两次）+ `sample_windows` 对过短 episode
+                                       必须 raise（不许静默少采样）
                                        （返回 0 ⇒ 静默"永不触发"）；接入验收用 `state.reads`
 """
 
@@ -3044,6 +3049,102 @@ def test_scheduling_missing_state_field_raises():
     st3["err"] = 1.0
     _ = so(2, np.random.default_rng(0))               # 现在可用
     assert scheduling.state_read_summary(st3).get("err", 0) >= 1
+
+
+def test_wiring_check_has_discrimination():
+    """[69] ★★ `closedloop.check_wiring` 必须**可证伪**。
+
+    2026-10-15（六族接入统一闭环）：`state.reads`（在 `scheduling.py`）只证明**读过字段**，
+    **不证明"值是当前步、正确时点的"** —— 字段可能一直是旧值。本核对把"调度器**实际读到**
+    的 (age, U, 真值误差) + 是否送达"记下来，再做四条可证伪的检查：
+        W1 AoI 递推；W2 送达 ⇒ 下一步 U=0；W3(oracle) 送达 ⇒ 下一步真值误差=0；W4 首查询 age=0。
+
+    ★★ 反向断言（这条测试的**全部意义**）：把同一段的 `age` 改成**常量 0**
+      ⇒ W1 必须判违约并 raise。否则该核对对"读的是陈旧常量"根本没有分辨力
+      —— 那它就不是核对，只是一段好看的打印（第 33 次自证伪的教训）。
+    """
+    from wmlab.eval import closedloop
+
+    # 一条**自洽**的探针日志：t=1 首查询 age=0；随后按"送达⇒0 / 未送达⇒+1"递推。
+    seg = [
+        {"t": 1, "age": 0.0, "U": 0.0, "truth": 0.0, "delivered": True},
+        {"t": 2, "age": 0.0, "U": 0.0, "truth": 0.0, "delivered": True},
+        {"t": 3, "age": 0.0, "U": 0.0, "truth": 0.0, "delivered": False},
+        {"t": 4, "age": 1.0, "U": 0.5, "truth": 0.7, "delivered": False},
+        {"t": 5, "age": 2.0, "U": 1.0, "truth": 1.2, "delivered": True},
+    ]
+    ok = closedloop.check_wiring(list(seg) + [{"boundary": True}], family="conformal")
+    assert ok["violations"] == [], ok
+    assert ok["n_w1"] == 4 and ok["n_w4"] == 1, ok
+    assert ok["n_w2"] >= 1, ok
+    # oracle 版：带真值键，W3 被核对
+    ok_o = closedloop.check_wiring(list(seg) + [{"boundary": True}], family="oracle",
+                                  truth_key="truth")
+    assert ok_o["n_w3"] >= 1 and ok_o["violations"] == [], ok_o
+
+    # ★★ 反向断言①：age 被写成常量 0 ⇒ W1 必须判违约（t=4 应按递推为 1）
+    bad = [dict(r) for r in seg]
+    for r in bad:
+        r["age"] = 0.0
+    try:
+        closedloop.check_wiring(bad + [{"boundary": True}], family="conformal")
+        raise AssertionError("★ 对『age 恒为常量』的日志没判违约 ⇒ 核对无分辨力")
+    except AssertionError as e:
+        assert "W1" in str(e), f"应因 W1 违约而 raise，实际：{e}"
+
+    # ★★ 反向断言②：首查询 age ≠ 0 ⇒ W4 必须判违约
+    bad2 = [dict(r) for r in seg]
+    bad2[0]["age"] = 3.0
+    try:
+        closedloop.check_wiring(bad2 + [{"boundary": True}], family="conformal")
+        raise AssertionError("★ 首查询 age≠0 未判违约（W4 失效）")
+    except AssertionError as e:
+        assert "W4" in str(e), f"应因 W4 违约而 raise，实际：{e}"
+
+    # ★★ 反向断言③：送达后 U 未归零 ⇒ W2 必须判违约
+    #   （t=1 声称送达 ⇒ t=2 读到的 U 必须为 0；这里把它做成 0.3）
+    bad4 = [dict(r) for r in seg]
+    bad4[0]["delivered"] = True
+    bad4[1]["U"] = 0.3
+    try:
+        closedloop.check_wiring(bad4 + [{"boundary": True}], family="conformal")
+        raise AssertionError("★ 送达后下一步 U≠0 未判违约（W2 失效）")
+    except AssertionError as e:
+        assert "W2" in str(e), f"应因 W2 违约而 raise，实际：{e}"
+
+
+def test_closedloop_building_blocks_contracts():
+    """[70] ★★ 六族统一闭环的两条构件契约（量纲 / 采样边界）。
+
+    (a) `err_from_sq` 的 **位置维 vs 全维 不可混用** —— X43 把同一条量纲错配犯了**两次**
+        （一次只有一列、一次列号算了没接进取数行），症状都**像"标定不可迁移 / 信号无效"**，
+        而不是像报错。这里用"构造上已知答案"钉死：
+            sq 全 1（位置 2 维）与全 9（其余 2 维）⇒ 位置维均值 = 1，全维均值 = 5。
+        反向断言：两者必须**不同**（若实现把 dims 参数吞掉，就会相等 ⇒ 测试失效）。
+    (b) `sample_windows` 对**过短** episode 必须 raise（不许静默少采样 —— 那样标定集的
+        口径会悄悄变小，而覆盖率看着仍然正常）。
+    """
+    from wmlab.eval import closedloop
+
+    sq = np.zeros((2, 3, 4), dtype=np.float64)
+    sq[:, :, 0:2] = 1.0
+    sq[:, :, 2:] = 9.0
+    e_pos = closedloop.err_from_sq(sq, slice(0, 2), var_g=1.0)
+    e_all = closedloop.err_from_sq(sq, slice(None), var_g=1.0)
+    assert np.allclose(e_pos, 1.0), e_pos
+    assert np.allclose(e_all, 5.0), e_all
+    assert not np.allclose(e_pos, e_all)          # ★ 反向断言：dims 必须真的接线
+    # var_g 的归一化必须生效
+    assert np.allclose(closedloop.err_from_sq(sq, slice(None), var_g=5.0), 1.0)
+
+    # (b) 过短 episode ⇒ raise（而不是抽到 0 个窗口后静默继续）
+    short = [{"obs": np.zeros((5, 6), dtype=np.float32),
+              "act": np.zeros((4, 2), dtype=np.float32), "length": 5}]
+    try:
+        closedloop.sample_windows(short, horizon=32, n_samples=8, seed=0, t0_min=0)
+        raise AssertionError("★ 过短 episode 未 raise ⇒ 会静默少采样、悄悄改标定口径")
+    except AssertionError as e:
+        assert "窗口" in str(e), f"应是『没有可用窗口』的断言，实际：{e}"
 
 
 def main() -> int:

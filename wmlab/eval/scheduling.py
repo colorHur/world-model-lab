@@ -69,8 +69,13 @@ class ClosedLoopState(dict):
         state（如 `state["U"] = u`、`state["age"] = age`）。
       · **调度器只读**：信号相关族通过 `state.require(key)` 读；缺字段即抛
         `MissingStateError`（R14：报错优于给假数字）。
-      · **接入验收**：跑完看 `state.reads` —— 每族应至少读到它的 `.needs` 字段，
-        且读次数 ≈ 步数（证明是"每步都接线"，不是"注册了但没接"）。
+      · **接入验收**：跑完看 `state.reads` —— 每族**至少读到它的 `.needs` 字段**
+        （证明"注册了"背后**确实接了线**）。
+        ★★ **不许**统一要求"读次数 ≈ 总步数"（2026-10-15 华腾指出）：`conformal` / `oracle`
+          含 `if age < K` **分支短路** ⇒ 某些字段（如 `U`）在 `age ≥ K` 的那些步**根本不必读**；
+          实测 `conformal` 的 `U` 只读 191/320 次。⇒ 读次数是**下界**证据，不是等式。
+        ★★ **更强的证据**是 `closedloop.check_wiring` 的 W1–W4（AoI 递推 / 送达即归零 /
+          首查询初值）：它证明读到的值是**当前步、正确时点**的，而 `reads` 只证明"读过"。
     """
 
     def __init__(self, *args, **kwargs):

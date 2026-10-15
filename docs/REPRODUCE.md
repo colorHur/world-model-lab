@@ -12,7 +12,7 @@
 
 ```bash
 python scripts/00_check_env.py            # 环境自检（含中文字体链路），15 项
-python tests/test_channel_and_aoi.py      # ★ 86 项回归自检（不依赖 pytest）
+python tests/test_channel_and_aoi.py      # ★ 88 项回归自检（不依赖 pytest）
 python scripts/30_scheduling_baselines.py --n 50000 --tmax 16   # 调度基线库 v0.1，无模型、秒级~分钟级
 ```
 
@@ -93,6 +93,7 @@ venv3\Scripts\python.exe -m pip install --no-cache-dir numpy matplotlib pyyaml t
 | `scripts/29_x45_boundary_attribution.py` | X45 相位边界归因（读 X44 产物） | 不重训 |
 | `scripts/31_x9_imagination.py` | X9 想象训练（Pendulum 连续动作；世界模型 + 三档视界 + 真实 PPO 对照） | 约 6 min |
 | `scripts/32_reference_learner_audit.py` | 参照学习器审计（3 种子 × 800 轮 = 1,228,800 步） | 约 10 min CPU |
+| `scripts/33_unified_closed_loop.py` | ★ **六族调度统一最小闭环**（`periodic/threshold/timing/selfreport/conformal/oracle` 同一 runner；`--mode table`／`repro-x44`／`both`） | 约 12–18 min CPU（含训练；有缓存更快） |
 
 ★ **缓存复用**：多数脚本会把训练好的模型存到 `outputs/_temp/*.pt`，重跑时自动载入
 （要重训加 `--retrain`）。`outputs/` 已 gitignore ⇒ 缓存**不进版本库**，需要先自己跑一次产生。
@@ -104,7 +105,7 @@ venv3\Scripts\python.exe -m pip install --no-cache-dir numpy matplotlib pyyaml t
 
 | 判据 | 期望 | 出自 |
 |---|---|---|
-| 自检（当前） | 全部通过（`nn/nn passed`；**当前 86 项**） | `tests/test_channel_and_aoi.py` |
+| 自检（当前） | 全部通过（`nn/nn passed`；**当前 88 项**） | `tests/test_channel_and_aoi.py` |
 | 环境自检 | 15 项全过，含中文字体链路 | `scripts/00_check_env.py` |
 | 调度基线闭式对账 | 最差 `diff/(5·SE) ≤ 1`，99 个点 | `scripts/30_scheduling_baselines.py` |
 | 调度基线退化 | `periodic(T=1)` / `threshold(K=0)` 的 `tx_rate−1 = 0` | 同上 |
@@ -113,6 +114,8 @@ venv3\Scripts\python.exe -m pip install --no-cache-dir numpy matplotlib pyyaml t
 | 同种子重跑 | 逐位一致（`outputs/` 里的 JSON 与本文档数字对得上） | 全仓库约定 |
 | 参照学习器审计（可选，**约 15 min CPU**） | 判定规则可复跑（单一真源）：**每个**种子末 5 次均值 ≥ 随机基线 + 1.5 ⇒ VALID；否则 VOID。随机基线与 PPO **同初值种子**（配对），且**逐回合种子序列按位相同**（`audit.same_seed_sequence`） | `scripts/32_reference_learner_audit.py` |
 | 训练随机源受控 | 同一训练种子**结果不随种子列表顺序改变**（自检 **[65]** + 实测 `ORDER_INDEPENDENT: True`） | 同上 |
+| ★ 六族统一闭环（`--mode both`） | 六族**各 ≥1 行**跑出数；接线核对 **W1–W4 零违约**；触发率随旋钮**单调不增**；校准/评测 seed **不相交** | `scripts/33_unified_closed_loop.py` |
+| ★ 统一 runner 重现 X44 | 27/27 行 **最大 \|Δest_nmse\| = 最大 \|Δmean_dist_tail\| = 0.000e+00**（判据 ≤ 1e-9）⇒ **逐位复现** | 同上（对照 `outputs/28_x44_timing.json`） |
 
 ★ **口径纪律**（本仓库最容易被违反的一条）：任何"误差"数字都必须同时写清
 **逐点还是累积 / 在哪个评测集 / 除以哪个方差 / 曲线定义（开环/观测闭环/潜闭环）**；
@@ -188,22 +191,44 @@ H\* 还要加**种子数与采样量**。同一个模型上合法的 H\* 数值�
    <venv>/python scripts/30_scheduling_baselines.py --n 50000 --tmax 16
 
 4) 把下面这张表的"你实测"列填回来（命令 stdout 里就有）
-   ┌─────────────────────────┬───────────────────────────┬──────────┐
-   │ 项                      │ 预期                       │ 你实测   │
-   ├─────────────────────────┼───────────────────────────┼──────────┤
-   │ 00_check_env            │ 15 项全过                  │          │
-   │ tests/*                 │ nn/nn passed               │          │
-   │ 02 H* 开环              │ 12.945840516581065 (±1e-6) │          │
-   │ 02 H* 闭环              │ 6.955816701033772  (±1e-6) │          │
-   │ 02 参数量               │ 67,652                     │          │
-   │ 02 final loss train     │ 4.5944e-4          (±1e-8) │          │
-   │ 30 闭式对账最差比值     │ ≤ 1.0                      │          │
-   │ 30 p=0 比值中位         │ 1.0000             (±1e-9) │          │
-   └─────────────────────────┴───────────────────────────┴──────────┘
+   ★★ 跨机**首次验收只记录偏差，不设严格容差**（理由见下"容差纪律"）。
+      判"过"的标准分三档：
+        (A) **流程运行成功**：每条命令 exit=0，无报错/无卡点            ← 这是本轮唯一硬要求
+        (B) **数值接近**：H* 开环相对偏差 ≤ 1e-3（见下"为什么是 1e-3"）
+        (C) **研究结论保持**：p=0 比值中位 ≈1.0000、闭式对账 ≤1、H* 开/闭环比值同量级
+      把 (A)(B)(C) **分别**打钩，**不要把 (B) 未达当整体失败**。
+   ┌─────────────────────────┬───────────────────────────────┬──────────┐
+   │ 项                      │ 预期（参考值，仅用于对比）      │ 你实测   │
+   ├─────────────────────────┼───────────────────────────────┼──────────┤
+   │ 00_check_env            │ 15 项全过                     │          │
+   │ tests/*                 │ nn/nn passed                  │          │
+   │ 02 H* 开环              │ 12.945840516581065            │          │
+   │ 02 H* 闭环              │ 6.955816701033772             │          │
+   │ 02 参数量               │ 67,652                        │          │
+   │ 02 final loss train     │ 4.5944e-4                     │          │
+   │ 30 闭式对账最差比值     │ ≤ 1.0                         │          │
+   │ 30 p=0 比值中位         │ 1.0000                        │          │
+   │ 33 六族表               │ 六族各 ≥1 行；接线核对 0 违约   │          │
+   │ 33 重现 X44 最大 |Δ|    │ ≤ 1e-9（★ **仅同环境同版本**）  │          │
+   └─────────────────────────┴───────────────────────────────┴──────────┘
 
-记录：OS / Python / torch 版本、每步耗时、任何安装或运行报错。
+记录：OS / CPU 架构 / Python 与 torch 版本、每步耗时、任何安装或运行报错。
 ```
 
-★ **为什么 H\* 用严格容差（±1e-6）而调度比值宽松**：训练路径是**同种子确定性**的
-（§5 已证明逐位一致）；而调度**空跑**用的是蒙特卡洛，其散度由脚本内的 **5×批量均值标准误**
-判据吸收（`--n` 越大越紧），所以对外只要求"最差比值 ≤ 1"。
+★ **容差纪律（2026-10-15 修正，此前写错过）**：
+**同种子逐位一致**只在**同机 / 同 torch 版本 / 同平台**下被实测过（§5），
+**不能**据此要求另一台机器也逐位相同。PyTorch 官方《Reproducibility》明确写：
+*"results are not guaranteed to be reproducible across releases, platforms, or devices,
+even with the same seed"*（<https://docs.pytorch.org/docs/stable/notes/randomness.html>）
+—— 不同 BLAS/MKL 版本、不同 CPU 指令集（AVX2/AVX512）、不同线程数都会改变浮点归约顺序。
+⇒ 因此把两张表分开：
+- **同环境回归**（本仓库自检 / CI 口径）：**容差 0**，逐位一致是**契约**；
+- **跨机首次验收**：**只记录偏差**，并按上面 (A)(B)(C) 三档分别判断。
+  **不许**把未经验证的 `±1e-6` / `±1e-8` 直接当失败标准 —— 那会把"平台差异"
+  误判成"别人没跑对"。
+
+★ **为什么 (B) 用相对偏差 1e-3 而 H\* 是离散值**：H\* 由**阈值穿越**定义
+（误差曲线首次超过阈值的那个步），在阈值附近是**阶跃**的 ⇒ 相邻平台的浮点差异
+可能把首个越界点挪动 **1 步**（相对偏差 ~1/H\*≈8e-2）。⇒ **首验收只要求同量级 +
+"跨阈值那一步相同"**；若恰好落在阈值边缘而挪了 1 步，**如实记下**（这本身是有用信息：
+它说明该 H\* 在这台机器上处于"刀刃"位置，报引用时要带这条限定）。
