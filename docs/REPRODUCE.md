@@ -186,11 +186,14 @@ H\* 还要加**种子数与采样量**。同一个模型上合法的 H\* 数值�
    <venv>/python -m pip install -r requirements.lock.txt \
        --extra-index-url https://download.pytorch.org/whl/cpu
 
-3) 跑四项（期望全部 exit=0）
+3) 跑五项（期望全部 exit=0）
    <venv>/python scripts/00_check_env.py                          # 15 项全过
    <venv>/python tests/test_channel_and_aoi.py                    # nn/nn passed
    <venv>/python scripts/02_train_world_model.py                  # 见下表"H*"
    <venv>/python scripts/30_scheduling_baselines.py --n 50000 --tmax 16
+   <venv>/python scripts/33_unified_closed_loop.py --mode both    # 六族表 + 重现 X44（最长，约 12–18 min）
+   # 可选（约 40 min CPU，不急）：<venv>/python scripts/34_ppo_diagnosis.py
+   #   ↑ SB3 诊断参照；只想验流程可先 --smoke（秒级）。全量数值见 §4 判据表。
 
 4) 把下面这张表的"你实测"列填回来（命令 stdout 里就有）
    ★★ 跨机**首次验收只记录偏差，不设严格容差**（理由见下"容差纪律"）。
