@@ -100,6 +100,9 @@
   [70] ★★ 六族统一闭环的构件契约：`err_from_sq` 的**位置维 / 全维**不可混用（量纲错配，
                                        X43 记录过犯两次）+ `sample_windows` 对过短 episode
                                        必须 raise（不许静默少采样）
+  [71] ★★ SB3 臂「复用」必须**逐项**匹配（配置 + 训练种子 + 评测初值 + 预算）——
+                                       反向断言：只改一个超参 / 换种子 / 换预算 ⇒ **不得**命中
+                                       （错配会把别的配置的数字搬过来，症状是"数字看着正常"）
                                        （返回 0 ⇒ 静默"永不触发"）；接入验收用 `state.reads`
 """
 
@@ -3145,6 +3148,64 @@ def test_closedloop_building_blocks_contracts():
         raise AssertionError("★ 过短 episode 未 raise ⇒ 会静默少采样、悄悄改标定口径")
     except AssertionError as e:
         assert "窗口" in str(e), f"应是『没有可用窗口』的断言，实际：{e}"
+
+
+def test_ppo_diagnosis_reuse_matcher():
+    """[71] ★★ SB3 臂的「复用」必须**逐项**匹配，否则宁可不复用（R14）。
+
+    背景：`scripts/34` 支持 `--reuse-sb3-json`，把分批跑完的配置合并成一份权威 JSON
+    （省掉几十分钟算力）。但复用是**唯一**会把"别人的数字"搬进本次结果的操作 ⇒
+    它自己就是一个"检查"，必须能被证伪。
+
+    ★ 反向断言（缺一条这个检查就没有分辨力）：
+      - 只改**一个超参**（`n_steps` 512→2048）⇒ 不得命中；
+      - 换**训练种子**序列 ⇒ 不得命中；
+      - 换**评测初值**列表 / 换**环境步预算** ⇒ 不得命中；
+      - 该 seed **没有记录** ⇒ 不得命中（不许"就近"取别的 seed）。
+    """
+    import importlib.util
+    import json as _json
+
+    root = Path(__file__).resolve().parents[1]
+    target = root / "scripts" / "34_ppo_diagnosis.py"
+    spec = importlib.util.spec_from_file_location("_s34_reuse", target)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)          # __name__ != '__main__' ⇒ 不会触发它的 main()
+
+    cfg = dict(mod.SB3_CONFIGS["aligned"])
+    seeds = [0, 1, 2]
+    eval_seeds = [500_000 + i for i in range(10)]
+    budget = 409_600
+    n_ev = 32
+    arm = {"config": cfg,
+           "per_step_per_seed": {str(s): [0.0] * n_ev for s in seeds},
+           "seconds_per_seed": {str(s): 1.0 for s in seeds},
+           "eval_at_steps": [12_800 * (i + 1) for i in range(n_ev)],
+           "episode_returns_per_seed": {str(s): [[0.0] * 10 for _ in range(n_ev)]
+                                        for s in seeds}}
+    entry = {"source": "x.json", "name": "aligned", "arm": arm,
+             "seeds": seeds, "eval_seeds": eval_seeds, "budget": budget}
+    cache = {_json.dumps(cfg, sort_keys=True): [entry]}
+
+    # (a) 正例：四要素逐项相同 ⇒ 必须命中（否则"复用"这个功能本身没生效）
+    hit = mod.reuse_lookup(cache, cfg, seeds, eval_seeds, budget, 1)
+    assert hit is not None and hit["source"] == "x.json", hit
+
+    # (b) 反向断言：只改一个超参 ⇒ 不得命中
+    cfg2 = dict(cfg)
+    cfg2["n_steps"] = 2048
+    assert mod.reuse_lookup(cache, cfg2, seeds, eval_seeds, budget, 1) is None, \
+        "★ 改了 n_steps 仍命中 ⇒ 复用会静默错配到别的配置"
+
+    # (c) 反向断言：换训练种子序列 ⇒ 不得命中
+    assert mod.reuse_lookup(cache, cfg, [9, 1, 2], eval_seeds, budget, 1) is None
+
+    # (d) 反向断言：换评测初值 / 换预算 ⇒ 不得命中
+    assert mod.reuse_lookup(cache, cfg, seeds, eval_seeds[:9], budget, 1) is None
+    assert mod.reuse_lookup(cache, cfg, seeds, eval_seeds, budget + 512, 1) is None
+
+    # (e) 反向断言：该 seed 无记录 ⇒ 不得命中
+    assert mod.reuse_lookup(cache, cfg, seeds, eval_seeds, budget, 7) is None
 
 
 def main() -> int:

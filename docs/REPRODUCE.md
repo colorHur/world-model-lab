@@ -12,7 +12,7 @@
 
 ```bash
 python scripts/00_check_env.py            # 环境自检（含中文字体链路），15 项
-python tests/test_channel_and_aoi.py      # ★ 88 项回归自检（不依赖 pytest）
+python tests/test_channel_and_aoi.py      # ★ 89 项回归自检（不依赖 pytest）
 python scripts/30_scheduling_baselines.py --n 50000 --tmax 16   # 调度基线库 v0.1，无模型、秒级~分钟级
 ```
 
@@ -94,6 +94,7 @@ venv3\Scripts\python.exe -m pip install --no-cache-dir numpy matplotlib pyyaml t
 | `scripts/31_x9_imagination.py` | X9 想象训练（Pendulum 连续动作；世界模型 + 三档视界 + 真实 PPO 对照） | 约 6 min |
 | `scripts/32_reference_learner_audit.py` | 参照学习器审计（3 种子 × 800 轮 = 1,228,800 步） | 约 10 min CPU |
 | `scripts/33_unified_closed_loop.py` | ★ **六族调度统一最小闭环**（`periodic/threshold/timing/selfreport/conformal/oracle` 同一 runner；`--mode table`／`repro-x44`／`both`） | 约 12–18 min CPU（含训练；有缓存更快） |
+| `scripts/34_ppo_diagnosis.py` | ★ **限时 PPO 诊断**（SB3 2.9.0 作诊断参照；同一任务/评测初值/409,600 步预算；单旋钮消融） | 约 40 min CPU（5 配置 × 3 种子）；`--smoke` 秒级 |
 
 ★ **缓存复用**：多数脚本会把训练好的模型存到 `outputs/_temp/*.pt`，重跑时自动载入
 （要重训加 `--retrain`）。`outputs/` 已 gitignore ⇒ 缓存**不进版本库**，需要先自己跑一次产生。
@@ -105,7 +106,7 @@ venv3\Scripts\python.exe -m pip install --no-cache-dir numpy matplotlib pyyaml t
 
 | 判据 | 期望 | 出自 |
 |---|---|---|
-| 自检（当前） | 全部通过（`nn/nn passed`；**当前 88 项**） | `tests/test_channel_and_aoi.py` |
+| 自检（当前） | 全部通过（`nn/nn passed`；**当前 89 项**） | `tests/test_channel_and_aoi.py` |
 | 环境自检 | 15 项全过，含中文字体链路 | `scripts/00_check_env.py` |
 | 调度基线闭式对账 | 最差 `diff/(5·SE) ≤ 1`，99 个点 | `scripts/30_scheduling_baselines.py` |
 | 调度基线退化 | `periodic(T=1)` / `threshold(K=0)` 的 `tx_rate−1 = 0` | 同上 |
@@ -116,6 +117,7 @@ venv3\Scripts\python.exe -m pip install --no-cache-dir numpy matplotlib pyyaml t
 | 训练随机源受控 | 同一训练种子**结果不随种子列表顺序改变**（自检 **[65]** + 实测 `ORDER_INDEPENDENT: True`） | 同上 |
 | ★ 六族统一闭环（`--mode both`） | 六族**各 ≥1 行**跑出数；接线核对 **W1–W4 零违约**；触发率随旋钮**单调不增**；校准/评测 seed **不相交** | `scripts/33_unified_closed_loop.py` |
 | ★ 统一 runner 重现 X44 | 27/27 行 **最大 \|Δest_nmse\| = 最大 \|Δmean_dist_tail\| = 0.000e+00**（判据 ≤ 1e-9）⇒ **逐位复现** | 同上（对照 `outputs/28_x44_timing.json`） |
+| ★ 限时 PPO 诊断（可选，**约 40 min CPU**） | 同一任务/评测初值/预算下重跑：SB3 `aligned` **0/3**、`default` **3/3**；单旋钮 `ab_nsteps`、`ab_epochs` **各 3/3**、`ab_ent` **0/3**。判据 = `reference_learner_verdict`（末 5 次均值 ≥ −5.159） | `scripts/34_ppo_diagnosis.py`（对照 `outputs/32_reference_learner_audit.json`） |
 
 ★ **口径纪律**（本仓库最容易被违反的一条）：任何"误差"数字都必须同时写清
 **逐点还是累积 / 在哪个评测集 / 除以哪个方差 / 曲线定义（开环/观测闭环/潜闭环）**；
