@@ -278,16 +278,18 @@ def main() -> int:
                     cell["la_score_best_mean"] = float(np.mean(
                         [b for _g, b in pairs])) if pairs else float("nan")
                     # ★ 机制证据（解释用）：刷新用户 j 的估计，对它**自己**下一步代价的降幅。
-                    #   uav_gain = Ĉ[serve uav][uav] − Ĉ[serve cart][uav]（服务 uav 相对服务 cart 的收益）
-                    #   cart_gain = Ĉ[serve cart][cart] − Ĉ[serve uav][cart]
-                    #   若 cart_gain ≡ 0，则"1 步前瞻看不见 CartPole 的价值"是结构性的，不是接线错。
+                    #   gain(j) := Ĉ[serve 另一人][j] − Ĉ[serve j][j]，> 0 ⇒ 服务 j 降低了 j 的代价。
+                    #   ⚠ 2026-10-19 T14 修正：旧版 cart_gain 写成 `m[:,1,1] − m[:,0,1]`（方向与
+                    #   uav_gain 相反），因当时恒为 0（0 = −0）从未暴露。现在两项统一为同一方向；
+                    #   本轮数值不变（均为 0.0），不影响已入库的 results/42_*.json。
                     two = [d for d in tr if d["alive"][0] and d["alive"][1]]
                     if two:
                         m = np.asarray([d["mat"] for d in two], dtype=float)
                         cell["la_uav_gain_raw"] = float(np.mean(m[:, 1, 0] - m[:, 0, 0]))
-                        cell["la_cart_gain_raw"] = float(np.mean(m[:, 1, 1] - m[:, 0, 1]))
-                        cell["la_cart_gain_n_pos"] = int(np.sum((m[:, 1, 1] - m[:, 0, 1]) > 0))
-                        cell["la_cart_gain_n_neg"] = int(np.sum((m[:, 1, 1] - m[:, 0, 1]) < 0))
+                        d_cart = m[:, 0, 1] - m[:, 1, 1]
+                        cell["la_cart_gain_raw"] = float(np.mean(d_cart))
+                        cell["la_cart_gain_n_pos"] = int(np.sum(d_cart > 0))
+                        cell["la_cart_gain_n_neg"] = int(np.sum(d_cart < 0))
                 cells.append(cell)
                 print(f"  B={budget:3d} {arm:6s} seed={seed} "
                       f"J=({cell['J_mean'][0]:.4f},{cell['J_mean'][1]:.4f}) "

@@ -71,7 +71,7 @@ import numpy as np
 __all__ = ["UserSlot", "View", "Allocation", "Allocator", "StepRecord", "delivery_rate",
            "MissingStateError", "SuccessModel", "ConstantSuccess", "SINRSuccess",
            "default_uav_cost", "require_privileged", "run_multiuser", "window_cost",
-           "counterfactual_next_costs"]
+           "counterfactual_next_costs", "counterfactual_horizon_costs"]
 
 
 @dataclass(frozen=True)
@@ -559,6 +559,149 @@ def counterfactual_next_costs(
     return mat
 
 
+def counterfactual_horizon_costs(
+    envs: Sequence,
+    controllers: Sequence,
+    est: Sequence[np.ndarray],
+    alive: Sequence[bool],
+    q: Sequence[float],
+    cfs: Sequence[Callable[[np.ndarray], float]],
+    *,
+    horizon: int = 1,
+    ages: Sequence[int] | None = None,
+) -> np.ndarray:
+    """**H 步前瞻**的逐步平均期望代价矩阵（2026-10-19 T14；填 `View.privileged["true_cost_next"]`）。
+
+    预注册：`04-实验与代码/2026-10-19-T14-多步前瞻视界-预注册-v0.1.md` §2。定义::
+
+        Ĉ_H[i][j] = (1/H) · Σ_{k=1..H} E[ c_j(t+k) | 本步派给 i ]
+
+    索引顺序仍是 `[候选 i][用户 j]`（与 `counterfactual_next_costs` 一致）。
+
+    ★★ 为什么除以 H（不是可选项）
+      不除的话量纲是"H 步代价和"，与 `s_j`（每步代价）不同量纲 ⇒ `cart_gain(H)` 会随 H
+      机械增长，`0.1·s_cart` 这条阈值就成了随 H 走的橡皮筋。除以 H 后：① 所有 H 同量纲；
+      ② **H=1 时与 `counterfactual_next_costs` 逐位相同**（L9 的逐位回归就靠这条）。
+
+    ★★★ 基准策略（本函数唯一的新假设，预注册 §2.4）
+      t+1 之后（k ≥ 2）没有人再"前瞻"，按 **max-age** 选人、且**确定性送达**（q=1）。
+      选 max-age：本臂回答的是"相对 age 基线，此刻偏离一步、往后看 H 步是否划算"
+      = 策略迭代里的**一步偏离评估**。
+      选确定性送达：把 `2^H` 的分支压成 2（只在 t+1 分支），H=20 才跑得动；
+      **偏差方向是低估"此刻服务它"的价值**（未来太乐观）⇒ 对臂保守，不虚报收益。
+      ⇒ 标签是"完美动力学 + H 步一步偏离评估"，**不是**上界，**不是** model-based。
+
+    ★ 终止（预注册 §2.5）：反事实里终止的用户，从终止那步起在**剩余步数上冻结**
+      终止观测的代价（与 `window_cost` 的 absorbed 同值：25 m / 1.0）。
+
+    ★ 时序（与 runner 逐位对齐，见 `counterfactual_next_costs` 的两步说明）
+      反事实第 1 步 = runner 的第 t 步（与决策无关，所有分支共用）；
+      第 2 步 = t+1（分支：送达/丢失，权重 q_i / 1−q_i）；
+      第 k 步（k ≥ 3）= t+k−1，按基准策略。
+      ⇒ H=1 只累计第 2 步，与 `counterfactual_next_costs` 是**同一个对象**。
+
+    Args:
+        envs, controllers, est, alive, q, cfs: 同 `counterfactual_next_costs`。
+        horizon: H ≥ 1。
+        ages: **决策时点**的年龄（与 `StepRecord.ages` 同一时点）。H=1 时可不给；
+            H>1 必须给（基准策略要用），缺了直接 `ValueError`（不许默认 0 蒙过去）。
+
+    Returns:
+        `(N, N)` 数组；死亡候选的行全 NaN。
+    """
+    n = len(envs)
+    if not (len(controllers) == len(est) == len(alive) == len(q) == len(cfs) == n):
+        raise ValueError(
+            f"counterfactual_horizon_costs 的输入长度不一致：envs={len(envs)} "
+            f"controllers={len(controllers)} est={len(est)} alive={len(alive)} "
+            f"q={len(q)} cfs={len(cfs)}")
+    H = int(horizon)
+    if H < 1:
+        raise ValueError(f"horizon 必须 ≥ 1，收到 {horizon!r}")
+    if ages is None:
+        if H > 1:
+            # ★ 不许默认成 0：ages 全 0 时 max-age 基准策略恒选 idx 小，
+            #   会静默把"基准策略"变成"恒选用户 0"，而结果看起来完全正常。
+            raise ValueError("horizon > 1 需要 ages（基准策略 max-age 依赖它），收到 None")
+        ag0 = [0] * n
+    else:
+        if len(ages) != n:
+            raise ValueError(f"ages 长度必须是 {n}，收到 {len(ages)}")
+        ag0 = [int(a) for a in ages]
+
+    # ---------- 反事实第 1 步：与决策无关的公共未来 ----------
+    cf_envs = [copy.deepcopy(e) if alive[i] else None for i, e in enumerate(envs)]
+    cf_ctrls = [copy.deepcopy(c) if alive[i] else None for i, c in enumerate(controllers)]
+    nxt: list[np.ndarray | None] = [None] * n
+    alive1 = [bool(alive[i]) for i in range(n)]
+    c_term = [float("nan")] * n
+    for i in range(n):
+        if not alive1[i]:
+            continue
+        res = cf_envs[i].step(cf_ctrls[i].act(est[i]))
+        o = np.asarray(res.obs, dtype=np.float32)
+        nxt[i] = o
+        if res.terminated or res.truncated:
+            alive1[i] = False
+            c_term[i] = float(cfs[i](o))
+
+    # ---------- 第 2 步（分支）… 第 H+1 步（基准策略）----------
+    mat = np.full((n, n), np.nan, dtype=float)
+    for cand in range(n):
+        if not alive[cand]:
+            continue
+        row = np.zeros(n, dtype=float)
+        for delivered in (True, False):
+            w = float(q[cand]) if delivered else 1.0 - float(q[cand])
+            if w <= 0.0:                      # q=0/1 的退化分支权重为 0，不算
+                continue
+            est_cur = [np.asarray(e, dtype=np.float64).reshape(-1).copy() for e in est]
+            if delivered:
+                est_cur[cand] = nxt[cand].astype(np.float64)
+            al = list(alive1)
+            ag = list(ag0)
+            for j in range(n):
+                if alive[j]:                  # 第 t 步的送达 ⇒ t+1 决策时点的 age
+                    ag[j] = 0 if (delivered and j == cand) else ag[j] + 1
+            acc = np.zeros(n, dtype=float)
+            frozen: dict[int, float] = {}
+            for j in range(n):
+                if alive[j] and not al[j]:    # 第 1 步就终止：整段窗口按终止代价
+                    acc[j] += w * c_term[j] * H
+                    frozen[j] = c_term[j]
+            e_k = {j: copy.deepcopy(cf_envs[j]) for j in range(n) if al[j]}
+            c_k = {j: copy.deepcopy(cf_ctrls[j]) for j in range(n) if al[j]}
+            obs_prev = {j: nxt[j] for j in range(n) if al[j]}
+
+            for s in range(2, H + 2):
+                live = [j for j in range(n) if al[j]]
+                if s >= 3 and live:
+                    # 上一步的基准策略决策：max-age（同分取 idx 小）+ 确定性送达
+                    u = live[0]
+                    for j in live[1:]:
+                        if ag[j] > ag[u]:
+                            u = j
+                    est_cur[u] = np.asarray(obs_prev[u], dtype=np.float64).reshape(-1).copy()
+                    for j in live:
+                        ag[j] = 0 if j == u else ag[j] + 1
+                for j in range(n):
+                    if not alive[j]:
+                        continue                  # 决策时点已死：不进矩阵（列为 0，与旧实现一致）
+                    if not al[j]:
+                        acc[j] += w * frozen[j]   # 已终止：本步记冻结代价
+                        continue
+                    res = e_k[j].step(c_k[j].act(est_cur[j]))
+                    o = np.asarray(res.obs, dtype=np.float32)
+                    acc[j] += w * float(cfs[j](o))
+                    obs_prev[j] = o
+                    if res.terminated or res.truncated:
+                        al[j] = False
+                        frozen[j] = float(cfs[j](o))
+            row += acc
+        mat[cand] = row / float(H)
+    return mat
+
+
 def run_multiuser(
     envs: Sequence,
     controllers: Sequence,
@@ -575,6 +718,7 @@ def run_multiuser(
     csi: float | Sequence[float] | np.ndarray | None = None,
     diagnostic: bool = False,
     counterfactual: bool = False,
+    cf_horizon: int = 1,
 ) -> dict:
     """多用户闭环骨架：**分配 → 成功概率 → 送达 → 步进 → 记账**，逐 step 落原始表。
 
@@ -609,9 +753,14 @@ def run_multiuser(
     非诊断臂 `privileged is None`，且 `UserSlot.cost_est` **只随送达更新**（A 项修复）。
 
     ★ `counterfactual`（2026-10-19 T13）：为 True 时**额外**算 `privileged["true_cost_next"]`
-    （`(N,N)` 的期望 1 步前瞻代价矩阵，见 `counterfactual_next_costs`），供 `lookahead` 臂使用。
+    （`(N,N)` 的期望前瞻代价矩阵，见 `counterfactual_next_costs`），供 `lookahead` 臂使用。
     **必须与 `diagnostic=True` 同时使用**（它本身就是特权量）；`counterfactual=True, diagnostic=False`
     ⇒ 直接 `ValueError`，不许静默忽略（否则"以为接线了其实没接"会悄悄跑出一个正常数字）。
+
+    ★ `cf_horizon`（2026-10-19 T14）：矩阵的视界 H，走 `counterfactual_horizon_costs`。
+    `H=1` ⇒ 与 T13 的 `counterfactual_next_costs` **逐位相同**（L9 回归）；
+    `H>1` ⇒ 逐步平均的 H 步前瞻（t+1 之后按 max-age 基准策略、确定性送达）。
+    若 `allocator` 带 `horizon` 属性且与 `cf_horizon` 不一致 ⇒ `ValueError`（R12 接线守卫）。
 
     Returns:
         {"records": [StepRecord…],                 # Gate 2 要的原始表（真值代价 + 五类事件）
@@ -648,6 +797,17 @@ def run_multiuser(
         # ★ 不许静默忽略：`counterfactual` 产出的矩阵是特权量，非诊断运行里给它等于放宽信息集。
         raise ValueError("counterfactual=True 必须配 diagnostic=True（true_cost_next 是特权量，"
                          "见 View.privileged 白名单）")
+    if int(cf_horizon) < 1:
+        raise ValueError(f"cf_horizon 必须 ≥ 1，收到 {cf_horizon!r}")
+    if counterfactual:
+        # ★ R12 接线守卫（2026-10-19 T14）：臂自报的视界与 runner 实际算的视界必须一致。
+        #   不一致时不会报错，只会让"以为在看 20 步"的臂拿到 1 步的矩阵 —— 结果依旧"正常"，
+        #   这是最典型的一类静默错。没有 horizon 属性的臂（如 rr/age）不检查。
+        want = getattr(allocator, "horizon", None)
+        if want is not None and int(want) != int(cf_horizon):
+            raise ValueError(
+                f"接线不一致：allocator.horizon={want} 与 cf_horizon={cf_horizon} 不同"
+                f"（臂会拿到错误的视界，且不会报错）")
 
     warm = ([int(warmup_steps)] * n_users) if np.isscalar(warmup_steps) \
         else [int(x) for x in warmup_steps]
@@ -751,8 +911,9 @@ def run_multiuser(
                 q_cf = np.asarray(success(
                     View(t=int(t), slots=slots, budget_left=int(budget_cap - used_ep),
                          budget_total=int(budget_cap), privileged=None), _probe), dtype=float)
-                cf_mat = counterfactual_next_costs(envs, controllers, est, alive_before,
-                                                   q_cf, cfs)
+                cf_mat = counterfactual_horizon_costs(
+                    envs, controllers, est, alive_before, q_cf, cfs,
+                    horizon=int(cf_horizon), ages=ages_before)
                 priv["true_cost_next"] = cf_mat
             view = View(t=int(t), slots=slots, budget_left=int(budget_cap - used_ep),
                         budget_total=int(budget_cap), privileged=priv)

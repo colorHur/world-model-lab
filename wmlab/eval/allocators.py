@@ -216,10 +216,16 @@ class Lookahead:
     ★ 与 `TrueError` 的差别只有一条：`TrueError` 看**当前**代价，`Lookahead` 看**服务之后**的
       下一步代价。其余（alive 过滤、预算守卫、同分取 idx 小、不消耗 rng）完全一致 ——
       这样两者之差可以归因到"前瞻"这一个变量上。
+
+    ★ `horizon`（2026-10-19 T14）：**不改变本臂的算法**（永远是"对给定矩阵取行和的 argmin"），
+      只是声明"我以为矩阵是几步的"。runner 会用 `run_multiuser(cf_horizon=...)` 校验两者一致，
+      不一致直接 `ValueError` —— 否则"臂以为在看 20 步、runner 只给 1 步"不会报错，
+      只会安静地跑出一个看起来正常的数字（R12 接线事故的标准形态）。
     """
 
     scales: Sequence[float] | None = None
     name: str = "lookahead"
+    horizon: int = 1
     trace: list | None = None
     """诊断轨迹（默认 None = 不记录）。给了 list 就逐步 append `{"t","scores","chosen","gap"}`。
 
@@ -270,5 +276,5 @@ class Lookahead:
                                "chosen": int(i), "gap": float(gap),
                                "mat": mat.tolist(),
                                "alive": [bool(s.alive) for s in view.slots]})
-        return _alloc(n, i, f"{self.name}:min-expected-next-cost")
+        return _alloc(n, i, f"{self.name}:argmin-expected-cost-H{int(self.horizon)}")
 
