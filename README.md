@@ -103,8 +103,15 @@ python scripts/39_t9_e1_n1_regression.py     # N=1 逐位回归（护栏，改�
 python scripts/40_t9_n2_smoke.py             # N=2 记账冒烟（含 I6 空转反例）
 python scripts/41_t9_sinr_success_n1_regression.py
 python scripts/43_t9_fix_abc_selfcheck.py    # 信息边界 / 死亡记账 / 终止代价，24 条
-python scripts/42_t12_hetero_four_arms.py    # 四臂 × 两档 × 3 种子（产物见 results/）
+python scripts/44_t13_lookahead_selfcheck.py # 前瞻臂 8 条（含"反事实不扰动主轨迹"）
+python scripts/42_t12_hetero_four_arms.py    # 五臂 × 两档 × 3 种子（产物见 results/）
 ```
+
+# 18) ★ T13 `lookahead`（期望 1 步前瞻）——**负结果，已归档**
+#     结论：geo = 1.080 / 1.050（两档），两档都打不过 `max-age`（0.944 / 0.801）
+#     原因（可证）：CartPole 代价是 0/1 阈值函数 ⇒ 1 步 rollout 的代价差**恒为 0**
+#     （实测 cart_gain = 0.00e+00，6000 次决策 0 正 0 负）⇒ 臂必然恒选 UAV = max-channel
+#     ⇒ 见 04-实验与代码/2026-10-19-T13-lookahead结果-v0.1.md §2；下一假设 H3 = 视界 H∈{5,20}
 
 换环境只换配置，代码不动（长视界那轮就是这么做控制变量的）：
 

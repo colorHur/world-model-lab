@@ -15,7 +15,8 @@
          **逐臂共享同一条轨迹**（公共随机数）；绑定方式 = `default_rng([seed, 7919])`
     q = SINRSuccess 口径 A：q(csi) = exp(−κ/csi)，κ = −ln 0.7
 
-四臂：`rr` / `age` / `chan` / `oracle`（oracle = myopic 真值误差，**不是上界**）
+五臂：`rr` / `age` / `chan` / `oracle`（myopic 真值误差，**不是上界**）/ `lookahead`（期望 1 步前瞻，
+2026-10-19 T13 新增，预注册见 `2026-10-19-T13-lookahead臂实现口径-预注册-v0.1.md`，**也不是上界**）
 两档：`B=100`（p_eff≈0.82）/ `B=200`（p_eff≈0.65）
 
 判据（预注册，跑完不改）
@@ -26,6 +27,7 @@
   P4 `chan` 臂对用户 0 的 attempts 份额 > 0.9（否则异质链路没接上，臂是退化的）
   G2 每档 `mean_seed( geo(r_i) ) ≤ 0.90`；两档同向 ⇒ 通过
   R4 逐用户 `r_i` 必须报；任一 `r_i > 1.10` 标"该用户被牺牲"
+  H2 `lookahead/rr` 的 geo ≤ 0.90 且两档同向（**假设检验，不进 FAILS**，见 main 里的注释）
 
 统计口径（§5 已定）：`r_i(seed) = J_i(arm,seed) / J_i(rr,seed)`（同种子配对），
 `geo(seed) = sqrt(r_0·r_1)`；报 3 个种子的均值 ± 样本标准差。**不做事后选种子。**
@@ -58,7 +60,9 @@ sys.path.insert(0, str(ROOT))
 
 from wmlab.control import PDRelativeController  # noqa: E402
 from wmlab.envs import make_env  # noqa: E402
-from wmlab.eval.allocators import MaxAge, MaxChannel, RoundRobin, TrueError  # noqa: E402
+from wmlab.eval.allocators import (  # noqa: E402
+    Lookahead, MaxAge, MaxChannel, RoundRobin, TrueError,
+)
 from wmlab.eval.multiuser import (  # noqa: E402
     SINRSuccess, default_uav_cost, delivery_rate, run_multiuser, window_cost,
 )
@@ -73,7 +77,7 @@ BUDGETS = (100, 200)
 ESCAPE_RADIUS = 25.0        # UavTrackAdapter.escape_radius：跟丢 ⇒ 终止
 ABSORBED_UAV = ESCAPE_RADIUS  # 跟丢后窗口内每步按逃逸半径记（不是 0！0 会把"丢机"奖励成"零代价"）
 ABSORBED_CART = 1.0           # 倒杆后窗口内每步记 1
-ARMS = ("rr", "age", "chan", "oracle")
+ARMS = ("rr", "age", "chan", "oracle", "lookahead")
 GATE = 0.90
 FAILS: list[str] = []
 
@@ -206,19 +210,25 @@ def main() -> int:
                         make_env("CartPole-v1", seed=seed)]
                 ctrls = [PDRelativeController(), CartPoleLQR(K)]
                 if arm == "rr":
-                    alloc, diag = RoundRobin(), False
+                    alloc, diag, cf = RoundRobin(), False, False
                 elif arm == "age":
-                    alloc, diag = MaxAge(), False
+                    alloc, diag, cf = MaxAge(), False, False
                 elif arm == "chan":
-                    alloc, diag = MaxChannel(), False
+                    alloc, diag, cf = MaxChannel(), False, False
+                elif arm == "lookahead":
+                    # ★ 2026-10-19 T13：期望 1 步前瞻（特权 + 反事实矩阵）
+                    tr = []
+                    alloc, diag, cf = Lookahead(scales=[s_scale[0], s_scale[1]],
+                                                trace=tr), True, True
                 else:
-                    alloc, diag = TrueError([uav_pot, cart_pot], scales=[s_scale[0], s_scale[1]]), True
+                    alloc, diag, cf = TrueError([uav_pot, cart_pot],
+                                                scales=[s_scale[0], s_scale[1]]), True, False
                 csi = make_csi(seed, n_ep)
                 r = run_multiuser(envs, ctrls, alloc, q_model, n_episodes=n_ep, seed=seed,
                                   max_steps=WINDOW, warmup_steps=[WARMUP_UAV, 0],
                                   budget_total=budget, csi=csi,
                                   cost_fn=[default_uav_cost, cartpole_cost],
-                                  diagnostic=diag)
+                                  diagnostic=diag, counterfactual=cf)
                 dr = delivery_rate(r["records"], 2)
                 J = np.asarray(window_cost(r["records"], 2, window=WINDOW,
                                            absorbed=[ABSORBED_UAV, ABSORBED_CART], n_episodes=n_ep))
@@ -251,12 +261,49 @@ def main() -> int:
                     "uav_absorbed_used": bool(alive0 < n_ep * WINDOW),
                     "elapsed_s": round(time.time() - t0, 2),
                 }
+                if arm == "lookahead" and tr:
+                    # ★ 解释性诊断（不是判据）：1 步前瞻的**分辨力**。gap = 次优 − 最优；
+                    #   gap_rel = gap / |最优 score|。若 gap_rel ~1e-3，臂实质上等于"按量级选"。
+                    # ★ 只用"有两个存活候选"的决策算（单候选时 gap=inf，会把均值污染成 nan）。
+                    pairs = [(d["gap"], min(d["scores"].values())) for d in tr
+                             if np.isfinite(d["gap"]) and len(d["scores"]) > 1]
+                    cell["la_n_decisions"] = len(tr)
+                    cell["la_n_two_cand"] = len(pairs)
+                    cell["la_choice_count"] = {str(k): sum(1 for d in tr if d["chosen"] == k)
+                                               for k in (0, 1)}
+                    cell["la_gap_rel_mean"] = float(np.mean(
+                        [g / max(abs(b), 1e-12) for g, b in pairs])) if pairs else float("nan")
+                    cell["la_gap_rel_max"] = float(np.max(
+                        [g / max(abs(b), 1e-12) for g, b in pairs])) if pairs else float("nan")
+                    cell["la_score_best_mean"] = float(np.mean(
+                        [b for _g, b in pairs])) if pairs else float("nan")
+                    # ★ 机制证据（解释用）：刷新用户 j 的估计，对它**自己**下一步代价的降幅。
+                    #   uav_gain = Ĉ[serve uav][uav] − Ĉ[serve cart][uav]（服务 uav 相对服务 cart 的收益）
+                    #   cart_gain = Ĉ[serve cart][cart] − Ĉ[serve uav][cart]
+                    #   若 cart_gain ≡ 0，则"1 步前瞻看不见 CartPole 的价值"是结构性的，不是接线错。
+                    two = [d for d in tr if d["alive"][0] and d["alive"][1]]
+                    if two:
+                        m = np.asarray([d["mat"] for d in two], dtype=float)
+                        cell["la_uav_gain_raw"] = float(np.mean(m[:, 1, 0] - m[:, 0, 0]))
+                        cell["la_cart_gain_raw"] = float(np.mean(m[:, 1, 1] - m[:, 0, 1]))
+                        cell["la_cart_gain_n_pos"] = int(np.sum((m[:, 1, 1] - m[:, 0, 1]) > 0))
+                        cell["la_cart_gain_n_neg"] = int(np.sum((m[:, 1, 1] - m[:, 0, 1]) < 0))
                 cells.append(cell)
                 print(f"  B={budget:3d} {arm:6s} seed={seed} "
                       f"J=({cell['J_mean'][0]:.4f},{cell['J_mean'][1]:.4f}) "
                       f"share=({cell['share_attempts'][0]:.3f},{cell['share_attempts'][1]:.3f}) "
                       f"link_q=({dr['link_q'][0]:.3f},{dr['link_q'][1]:.3f}) "
                       f"wasted={dr['budget_wasted']} {cell['elapsed_s']}s")
+                if "la_n_decisions" in cell:
+                    extra = (f" uav_gain={cell['la_uav_gain_raw']:.4f}m "
+                             f"cart_gain={cell['la_cart_gain_raw']:.2e}"
+                             f"(+{cell['la_cart_gain_n_pos']}/-{cell['la_cart_gain_n_neg']})"
+                             if "la_uav_gain_raw" in cell else "")
+                    print(f"        └ lookahead 分辨力：choices={cell['la_choice_count']} "
+                          f"gap_rel mean={cell['la_gap_rel_mean']:.2e} "
+                          f"max={cell['la_gap_rel_max']:.2e} "
+                          f"（两候选决策 {cell['la_n_two_cand']}/{cell['la_n_decisions']} 次）"
+                          + extra)
                 for e in envs:
                     e.close()
 
@@ -347,6 +394,33 @@ def main() -> int:
                   if summary[b]["oracle"]["r_mean"][i] > 1.10]
     print(f"  R4 被牺牲的用户：{sacrificed if sacrificed else '无'}")
 
+    # ---------- H2（2026-10-19 T13 预注册的假设检验）----------
+    # ★ 与上面 P*/G2 的 `check()` **分开记**：那些是"测试台有没有接对"，H2 是"假设成不成立"。
+    #   两者都写进 FAILS 会让 exit 2 变得没法解释（分不清是代码坏还是假设被否证）。
+    h2 = {"gate": GATE, "per_budget": {}, "falsified": None, "beats_age": None, "note": ""}
+    print("\n== H2（lookahead 期望 1 步前瞻）==")
+    for budget in BUDGETS:
+        g_la = summary[budget]["lookahead"]["geo_mean"]
+        g_age = summary[budget]["age"]["geo_mean"]
+        ok_b = bool(np.isfinite(g_la) and g_la <= GATE)
+        h2["per_budget"][budget] = {
+            "lookahead_geo": float(g_la), "lookahead_geo_sd": summary[budget]["lookahead"]["geo_sd"],
+            "lookahead_r_mean": summary[budget]["lookahead"]["r_mean"],
+            "age_geo": float(g_age), "delta_vs_age": float(g_la - g_age),
+            "lookahead_le_gate": ok_b,
+        }
+        print(f"  B={budget:3d} lookahead geo={g_la:.3f}±{summary[budget]['lookahead']['geo_sd']:.3f}"
+              f"  r=({summary[budget]['lookahead']['r_mean'][0]:.3f},"
+              f"{summary[budget]['lookahead']['r_mean'][1]:.3f})"
+              f"  | age geo={g_age:.3f}  Δ(lookahead−age)={g_la - g_age:+.3f}"
+              f"  | ≤{GATE}? {'YES' if ok_b else 'NO'}")
+    h2["falsified"] = not all(v["lookahead_le_gate"] for v in h2["per_budget"].values())
+    # "打不过 age" = 两档的 Δ 都 > 0（同向更差）。单档更差不算定论。
+    deltas = [v["delta_vs_age"] for v in h2["per_budget"].values()]
+    h2["beats_age"] = not all(d > 0 for d in deltas)
+    print(f"  ⇒ H2 {'被否证（有档位未达 ≤%.2f）' % GATE if h2['falsified'] else '成立'}"
+          f"；与 age 比：{'两档都更差 ⇒ 打不过 age' if not h2['beats_age'] else '至少一档不差'}")
+
     out = {
         "config": {"N": 2, "window": WINDOW, "warmup": [WARMUP_UAV, 0], "mus": MUS,
                    "rho": RHO, "csi_sd": CSI_SD, "q_ref": Q_REF, "budgets": list(BUDGETS),
@@ -354,12 +428,15 @@ def main() -> int:
                    "cost": ["uav: dist[m]", "cartpole: 1 if fallen else 0"],
                    "absorbed": [0.0, 1.0], "gate": GATE,
                    "aggregation": "geo of per-user ratios vs rr, same seed",
-                   "oracle_note": "myopic true-error, 1-step lookahead NOT implemented, NOT an upper bound",
+                   "oracle_note": "myopic true-error, NOT an upper bound",
+                   "lookahead_note": "expected 1-step lookahead with cloned (perfect) dynamics; "
+                                     "privileged, NOT an upper bound (horizon=1)",
                    "q4_signoff": "autonomous default (not human-signed), see doc §6"},
         "pilot_b0": {"per_seed": pilot_J, "s_mean": s_scale},
         "cells": cells,
         "summary": summary,
         "verdict": verdict,
+        "h2": h2,
         "sacrificed_users": sacrificed,
         "checks_failed": FAILS,
         "elapsed_s": round(time.time() - t_all, 1),
@@ -369,13 +446,19 @@ def main() -> int:
         json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
     (ROOT / "results").mkdir(exist_ok=True)
     (ROOT / "results" / "42_t12_four_arms_summary.json").write_text(
-        json.dumps({k: out[k] for k in ("config", "pilot_b0", "summary", "verdict",
+        json.dumps({k: out[k] for k in ("config", "pilot_b0", "summary", "verdict", "h2",
                                         "sacrificed_users", "checks_failed", "elapsed_s")}
                    | {"cells_J": [{"budget": c["budget"], "arm": c["arm"], "seed": c["seed"],
                                    "J_per_episode": c["J_per_episode"],
                                    "survival_frac": c["survival_frac"],
                                    "share_attempts": c["share_attempts"],
                                    "link_q": c["link_q"], "p_eff": c["p_eff"]}
+                                  | ({k: c[k] for k in ("la_n_decisions", "la_n_two_cand",
+                                                        "la_choice_count", "la_gap_rel_mean",
+                                                        "la_gap_rel_max", "la_score_best_mean",
+                                                        "la_uav_gain_raw", "la_cart_gain_raw",
+                                                        "la_cart_gain_n_pos", "la_cart_gain_n_neg")}
+                                     if "la_n_decisions" in c else {})
                                   for c in cells]},
                    ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\n{'ALL CHECKS PASS' if not FAILS else 'FAILED: ' + '; '.join(FAILS)}")

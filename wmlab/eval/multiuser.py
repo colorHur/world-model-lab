@@ -62,6 +62,7 @@
 
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 from typing import Callable, Sequence
 
@@ -69,7 +70,8 @@ import numpy as np
 
 __all__ = ["UserSlot", "View", "Allocation", "Allocator", "StepRecord", "delivery_rate",
            "MissingStateError", "SuccessModel", "ConstantSuccess", "SINRSuccess",
-           "default_uav_cost", "require_privileged", "run_multiuser", "window_cost"]
+           "default_uav_cost", "require_privileged", "run_multiuser", "window_cost",
+           "counterfactual_next_costs"]
 
 
 @dataclass(frozen=True)
@@ -459,6 +461,104 @@ def window_cost(
     return out
 
 
+def counterfactual_next_costs(
+    envs: Sequence,
+    controllers: Sequence,
+    est: Sequence[np.ndarray],
+    alive: Sequence[bool],
+    q: Sequence[float],
+    cfs: Sequence[Callable[[np.ndarray], float]],
+) -> np.ndarray:
+    """**期望 1 步前瞻**的代价矩阵 `Ĉ`（2026-10-19 T13；填 `View.privileged["true_cost_next"]`）。
+
+    定义（预注册：`04-实验与代码/2026-10-19-T13-lookahead臂实现口径-预注册-v0.1.md` §2）::
+
+        Ĉ[j][i] = q_i · c_j(t+1 | 本步派给 i 且送达) + (1−q_i) · c_j(t+1 | 派给 i 但丢失)
+
+    ★ 索引顺序是 `[候选分配 i][用户 j]`（与 `View.privileged["true_cost_next"]` 的"第 i 行 =
+      服务用户 i 后下一步各用户的真实代价"一致），**不是** `[用户][候选]`。L2 自检专门验这一条。
+
+    ★★ 为什么必须走**两步**（这里最容易接错，2026-10-19 实测踩点）
+      runner 的时序是 `build_view → alloc → 抽样 → 各用户 step → 送达者 est ← nxt`。
+      ⇒ 本步的动作在**送达之前**就算好了，所以"派给谁"对**本步**代价没有任何影响；
+        它只通过 `est` 影响 **t+1** 的代价。因此：
+            第 1 步（所有分支共用，与决策无关）：用当前 est 各走一步 ⇒ nxt
+            第 2 步（分支）：送达 ⇒ est_i ← nxt_i；丢失 ⇒ est 不变；再各走一步 ⇒ c(t+1)
+      若只走一步，"下一步代价"对每个候选恒等 ⇒ 臂退化成"恒选 idx 小"，且**不会报错**
+      （`scripts/44` 的 L8 就是为打死这种接法写的）。
+
+    ★ 为什么按 `q_i` 取期望而不是"假设一定送达"：`q_i` 由**公开**的 `csi` 与公开的 SINR 映射
+      算出，不是特权量；而乐观分支会让臂系统性高估低 q 用户（本场景 ≈0.53）的收益，
+      那不是前瞻，是错误的信念。
+
+    ★ 反事实**只读**原对象：env / controller / est 全部 `deepcopy` 后再步进，
+      主轨迹、控制器内部状态（`PDRelativeController._tgt_prev`）与任何 rng 都不被触碰。
+      这条由 `scripts/44` 的 L5（`rr` 带/不带反事实必须逐位相同）打死。
+
+    Args:
+        envs: 长度 N 的 env 适配器（只读，内部会被 deepcopy）。
+        controllers: 长度 N 的控制器（**状态会被 deepcopy**，`act()` 的副作用不落到原件）。
+        est: 长度 N 的估计观测（控制器实际看到的）。
+        alive: 长度 N 的存活标志（**决策前**时点）。
+        q: 长度 N 的每用户成功概率（本步 `success(view, alloc)` 的输出）。
+        cfs: 长度 N 的逐用户真值代价函数。
+
+    Returns:
+        `(N, N)` 数组；`Ĉ[i][j]` = 若本步派给 i，用户 j 在 t+1 的期望代价。
+        **死亡候选的行全 NaN**（不该被选；臂必须只在 alive 行里取 argmin）。
+    """
+    n = len(envs)
+    if not (len(controllers) == len(est) == len(alive) == len(q) == len(cfs) == n):
+        raise ValueError(
+            f"counterfactual_next_costs 的输入长度不一致：envs={len(envs)} "
+            f"controllers={len(controllers)} est={len(est)} alive={len(alive)} "
+            f"q={len(q)} cfs={len(cfs)}")
+
+    # ---------- 第 1 步：与决策无关的公共未来 ----------
+    cf_envs = [copy.deepcopy(e) if alive[i] else None for i, e in enumerate(envs)]
+    cf_ctrls = [copy.deepcopy(c) if alive[i] else None for i, c in enumerate(controllers)]
+    nxt: list[np.ndarray | None] = [None] * n
+    alive_cf = [bool(alive[i]) for i in range(n)]
+    c_term: list[float] = [float("nan")] * n      # 第 1 步就终止的用户：t+1 用终止观测的代价
+    for i in range(n):
+        if not alive_cf[i]:
+            continue
+        res = cf_envs[i].step(cf_ctrls[i].act(est[i]))
+        obs = np.asarray(res.obs, dtype=np.float32)
+        nxt[i] = obs
+        if res.terminated or res.truncated:
+            alive_cf[i] = False
+            c_term[i] = float(cfs[i](obs))
+
+    # ---------- 第 2 步：逐候选 × 逐送达分支 ----------
+    mat = np.full((n, n), np.nan, dtype=float)
+    for cand in range(n):
+        if not alive[cand]:
+            continue
+        row = np.zeros(n, dtype=float)
+        for delivered in (True, False):
+            w = float(q[cand]) if delivered else 1.0 - float(q[cand])
+            if w <= 0.0:                      # q=0/1 的退化分支权重为 0，不算（省一半 clone）
+                continue
+            est2 = [np.asarray(e, dtype=np.float64).reshape(-1).copy() for e in est]
+            if delivered:
+                est2[cand] = nxt[cand].astype(np.float64)
+            # 第 1 步已终止的用户在第 2 步不步进，直接记终止代价（与 absorbed 同值，见 §2.4）
+            for j in range(n):
+                if alive[j] and not alive_cf[j]:
+                    row[j] += w * c_term[j]
+            step2 = [j for j in range(n) if alive_cf[j]]
+            if not step2:
+                continue
+            e2 = {j: copy.deepcopy(cf_envs[j]) for j in step2}
+            c2 = {j: copy.deepcopy(cf_ctrls[j]) for j in step2}
+            for j in step2:
+                res = e2[j].step(c2[j].act(est2[j]))
+                row[j] += w * float(cfs[j](np.asarray(res.obs, dtype=np.float32)))
+        mat[cand] = row
+    return mat
+
+
 def run_multiuser(
     envs: Sequence,
     controllers: Sequence,
@@ -474,6 +574,7 @@ def run_multiuser(
     tail_frac: float = 0.25,
     csi: float | Sequence[float] | np.ndarray | None = None,
     diagnostic: bool = False,
+    counterfactual: bool = False,
 ) -> dict:
     """多用户闭环骨架：**分配 → 成功概率 → 送达 → 步进 → 记账**，逐 step 落原始表。
 
@@ -507,6 +608,11 @@ def run_multiuser(
     `{"true_obs": ..., "true_age": ...}`（T8 白名单内的键，**不新增键**）。
     非诊断臂 `privileged is None`，且 `UserSlot.cost_est` **只随送达更新**（A 项修复）。
 
+    ★ `counterfactual`（2026-10-19 T13）：为 True 时**额外**算 `privileged["true_cost_next"]`
+    （`(N,N)` 的期望 1 步前瞻代价矩阵，见 `counterfactual_next_costs`），供 `lookahead` 臂使用。
+    **必须与 `diagnostic=True` 同时使用**（它本身就是特权量）；`counterfactual=True, diagnostic=False`
+    ⇒ 直接 `ValueError`，不许静默忽略（否则"以为接线了其实没接"会悄悄跑出一个正常数字）。
+
     Returns:
         {"records": [StepRecord…],                 # Gate 2 要的原始表（真值代价 + 五类事件）
          "per_user_cost": [均值(逐集尾均)…],        # 旧口径，**仅供历史对照，不得用于 Gate 2**
@@ -538,6 +644,10 @@ def run_multiuser(
     budget_cap = int(max_steps if budget_total is None else budget_total)
     if budget_cap < 0:
         raise ValueError("budget_total 必须 ≥ 0（单位 = 帧）")
+    if counterfactual and not diagnostic:
+        # ★ 不许静默忽略：`counterfactual` 产出的矩阵是特权量，非诊断运行里给它等于放宽信息集。
+        raise ValueError("counterfactual=True 必须配 diagnostic=True（true_cost_next 是特权量，"
+                         "见 View.privileged 白名单）")
 
     warm = ([int(warmup_steps)] * n_users) if np.isscalar(warmup_steps) \
         else [int(x) for x in warmup_steps]
@@ -631,6 +741,19 @@ def run_multiuser(
             priv = ({"true_obs": tuple(o.copy() for o in true_obs),
                      "true_age": tuple(int(x) for x in ages_before)}
                     if diagnostic else None)
+            if counterfactual:
+                # ★ q 必须在本步**决策之前**知道（矩阵要进 view），而矩阵又是分配器的输入
+                #   ⇒ 只能用"与 alloc 无关"的方式取 q。契约上 SuccessModel 只依赖 csi
+                #   （SINRSuccess.__call__ 只读 slots.csi），所以这里传一个零分配探针。
+                #   若将来 success 真的依赖 alloc，"取 q 用零分配"就成了错误假设 ⇒ 必须在
+                #   预注册 §6 里记并改（不许在这里静默）。
+                _probe = Allocation(served=np.zeros(n_users, dtype=bool), reason="cf-q-probe")
+                q_cf = np.asarray(success(
+                    View(t=int(t), slots=slots, budget_left=int(budget_cap - used_ep),
+                         budget_total=int(budget_cap), privileged=None), _probe), dtype=float)
+                cf_mat = counterfactual_next_costs(envs, controllers, est, alive_before,
+                                                   q_cf, cfs)
+                priv["true_cost_next"] = cf_mat
             view = View(t=int(t), slots=slots, budget_left=int(budget_cap - used_ep),
                         budget_total=int(budget_cap), privileged=priv)
 

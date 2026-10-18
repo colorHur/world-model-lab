@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
-"""四个分配臂（T11 / Gate 2 的对照臂）。
+"""分配臂（T11 / Gate 2 的对照臂）。
 
 为什么单独一个文件
 ------------------
-臂的**规则**是研究口径的一部分（预注册于 `04-实验与代码/2026-10-19-T12-口径修订与四臂预注册-v0.1.md` §4），
+臂的**规则**是研究口径的一部分（预注册于 `04-实验与代码/2026-10-19-T12-口径修订与四臂预注册-v0.1.md` §4，
+前瞻臂见 `2026-10-19-T13-lookahead臂实现口径-预注册-v0.1.md` §2），
 必须与 runner 分开：runner 管记账，臂只管"派给谁"。这样换臂不动记账、改记账不动臂。
+
+五个臂：`rr` / `age` / `chan` / `oracle`（myopic 真值）/ `lookahead`（期望 1 步前瞻，2026-10-19 T13 新增）。
 
 四条共同纪律（写死，别在子类里破）
 ----------------------------------
@@ -35,7 +38,7 @@ import numpy as np
 
 from .multiuser import Allocation, MissingStateError, View, require_privileged
 
-__all__ = ["RoundRobin", "MaxAge", "MaxChannel", "TrueError", "ALIVE_ONLY_NOTE"]
+__all__ = ["RoundRobin", "MaxAge", "MaxChannel", "TrueError", "Lookahead", "ALIVE_ONLY_NOTE"]
 
 
 ALIVE_ONLY_NOTE = (
@@ -44,18 +47,26 @@ ALIVE_ONLY_NOTE = (
 )
 
 
-def _pick_alive(view: View, key: Callable[[int], float]) -> int:
-    """在存活用户里选 `key` 最大者；同分取 idx 小；没人活着返回 -1。
+def _pick_alive(view: View, key: Callable[[int], float], *, maximize: bool = True) -> int:
+    """在存活用户里选 `key` 最大（`maximize=False` 时最小）者；同分取 idx 小；没人活着返回 -1。
 
     ★ 唯一的"选人"出口：想加新臂就写 `key`，不要自己写 argmax —— 那样很容易忘掉 alive 过滤，
       而忘掉它的后果（预算空转）在单臂单跑时**看不出来**，只在跨臂比较时变成假收益。
+
+    ★ 2026-10-19 T13：加 `maximize` 开关（`Lookahead` 要的是 argmin）。**同分仍取 idx 小**：
+      最小分支用严格 `<`，所以并列时保留先遇到的（idx 更小）。
     """
-    best, best_key = -1, -np.inf
+    best, best_key = -1, (-np.inf if maximize else np.inf)
     for s in view.slots:
         if not s.alive:
             continue
         k = float(key(s.idx))
-        if k > best_key:                 # 严格大于 ⇒ 同分保留更小的 idx
+        if not np.isfinite(k):
+            # ★ I3 的延伸：NaN 参与比较会让 argmin 静默吞掉这个候选（nan < x 恒 False），
+            #   于是"算不出来"变成"没被选"，与"明确知道它不重要"无法区分。
+            raise MissingStateError(f"user {s.idx} 的选择键不是有限值：{k}")
+        better = (k > best_key) if maximize else (k < best_key)
+        if better:                                      # 严格 ⇒ 同分保留更小的 idx
             best, best_key = s.idx, k
     return best
 
@@ -180,3 +191,84 @@ class TrueError:
             scaled[s.idx] = c / (1.0 if self.scales is None else self.scales[s.idx])
         i = _pick_alive(view, lambda j: scaled[j])
         return _alloc(len(view.slots), i, f"{self.name}:true-error-greedy")
+
+
+@dataclass
+class Lookahead:
+    """**期望 1 步前瞻**（诊断臂）：选让"下一步各用户归一化代价之和"最小的那个用户。
+
+    规则（预注册：`04-实验与代码/2026-10-19-T13-lookahead臂实现口径-预注册-v0.1.md` §2）::
+
+        score(i) = Σ_{j ∈ A} Ĉ[j][i] / s_j        ← 注意索引：`Ĉ[cand][user]`
+        lookahead := argmin_{i ∈ A} score(i)      （并列取 idx 小）
+
+    `Ĉ` 由 runner 通过 `View.privileged["true_cost_next"]` 提供（`counterfactual_next_costs`
+    算出，已把 `q_i` 的送达期望算进去）。
+
+    ★★ 三条诚实标注（写进论文/汇报，不许省）
+    1. 它是 **privileged**：动力学是真实 env 的 clone，不是学出来的模型
+       ⇒ 标签是"完美信息 1 步前瞻"，**不是** "model-based"，更**不是** 上界。
+    2. 视界只有 1 步 ⇒ 对"后果滞后"的任务（CartPole 掉杆要好几步）先天看不够。
+       这正是 H2 要被检验的地方；失败也不奇怪。
+    3. 它**不知道**本步骰子（按 `q_i` 取期望），所以不是 clairvoyant：
+       信息集里没有"未来"。
+
+    ★ 与 `TrueError` 的差别只有一条：`TrueError` 看**当前**代价，`Lookahead` 看**服务之后**的
+      下一步代价。其余（alive 过滤、预算守卫、同分取 idx 小、不消耗 rng）完全一致 ——
+      这样两者之差可以归因到"前瞻"这一个变量上。
+    """
+
+    scales: Sequence[float] | None = None
+    name: str = "lookahead"
+    trace: list | None = None
+    """诊断轨迹（默认 None = 不记录）。给了 list 就逐步 append `{"t","scores","chosen","gap"}`。
+
+    ★ 为什么需要它：冒烟实测 `lookahead` 的选择与 `max-channel` **逐位相同**（恒选 UAV）。
+      这可能是"1 步视界真的没分辨力"，也可能是"矩阵算错了但恰好退化"。
+      只有把 `gap = 次优 − 最优` 的实际量级记下来，才能区分两者 ——
+      这是**解释性诊断量**，不是新判据（GATE / geo / 种子 / 预算一律不动）。
+    """
+
+    def __post_init__(self) -> None:
+        if self.scales is not None:
+            self.scales = [float(s) for s in self.scales]
+            if any((not np.isfinite(s)) or s <= 0.0 for s in self.scales):
+                raise ValueError(f"scales 必须是有限正数，收到 {self.scales}")
+
+    def __call__(self, view: View, rng: np.random.Generator) -> Allocation:
+        stop = _exhausted(view)
+        if stop is not None:
+            return stop
+        mat = np.asarray(require_privileged(view, "true_cost_next"), dtype=float)
+        n = len(view.slots)
+        if mat.shape != (n, n):
+            raise MissingStateError(f"true_cost_next 形状必须是 ({n},{n})，收到 {mat.shape}")
+        if self.scales is not None and len(self.scales) != n:
+            raise MissingStateError(f"scales 长度 {len(self.scales)} != N {n}")
+        s = [1.0] * n if self.scales is None else self.scales
+        score = {}
+        for i in range(n):
+            if not view.slots[i].alive:
+                continue
+            total = 0.0
+            for j in range(n):
+                if not view.slots[j].alive:
+                    continue          # 死者不计价（NaN 也在这里被跳过）
+                v = float(mat[i, j])
+                if not np.isfinite(v):
+                    raise MissingStateError(
+                        f"true_cost_next[{i}][{j}] 不是有限值（候选 {i} 存活、用户 {j} 存活）")
+                total += v / s[j]
+            score[i] = total
+        if not score:                 # 没有存活候选 ⇒ _pick_alive 返回 -1，与其余臂一致
+            return _alloc(n, -1, f"{self.name}:no-alive")
+        i = _pick_alive(view, lambda j: score[j], maximize=False)
+        if self.trace is not None:
+            order = sorted(score.items(), key=lambda kv: kv[1])
+            gap = (order[1][1] - order[0][1]) if len(order) > 1 else float("inf")
+            self.trace.append({"t": int(view.t), "scores": {int(k): float(v) for k, v in order},
+                               "chosen": int(i), "gap": float(gap),
+                               "mat": mat.tolist(),
+                               "alive": [bool(s.alive) for s in view.slots]})
+        return _alloc(n, i, f"{self.name}:min-expected-next-cost")
+
