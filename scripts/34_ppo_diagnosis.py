@@ -114,7 +114,12 @@ CONFIG_DIFF = [
     ("log_std 初值", "-0.5", "SB3 默认（0.0）", "SB3 默认（0.0）"),
     ("参数初始化", "正交（mean 头 gain 0.01）", "SB3 默认", "SB3 默认"),
     ("观测归一化", "无", "无（未用 VecNormalize）", "无（未用 VecNormalize）"),
-    ("动作 squash", "s·tanh(u)，s=2", "SB3 SquashedDiagGaussian", "同"),
+    # ★ 2026-10-18 更正：SB3 默认 PPO('MlpPolicy') 的 use_sde=False、squash_output=False，
+    #   动作分布是 DiagGaussian **直出**，再由 action_space.clip 截到 [-2,2]；
+    #   我方是 2·tanh(u)（有界 squash）。两者**分布形状不同**（一个在边界堆积、一个两端梯度消失），
+    #   原表写 "SB3 SquashedDiagGaussian / 同" 是错的 ⇒ 这一项属于**未对齐**，
+    #   使 X9 的归因只能停在"超参足以解释 SB3 侧的失败"，不能扩成"我方失败纯属超参"。
+    ("动作参数化", "2·tanh(u)（有界 squash）", "DiagGaussian 直出 + clip 到 [-2,2]", "同"),
 ]
 
 
@@ -285,9 +290,15 @@ def main():
             f"--n-eval {args.n_eval} --last-k {args.last_k} --margin {args.margin}"
         )
     our = json.loads(p_our.read_text(encoding="utf-8"))
-    if [int(z) for z in our["eval_seeds"]] != [int(z) for z in our["eval_seeds"]]:
-        raise AssertionError("eval_seeds 非整数序列")
-    eval_seeds = [int(z) for z in our["eval_seeds"]]
+    # ★ 2026-10-18 修复：原守卫 `[int(z) for z in xs] != [int(z) for z in xs]` 左右是同一表达式，
+    #   **条件恒假**，那行 raise 永远不会执行。真正起作用的是 `int(z)` 转换自身抛异常
+    #   （所以"能不能转成 int"被隐式校验了，"是不是整数而不是 5.0"没被校验）。
+    #   这里换成显式类型校验：bool 要单独排除（isinstance(True, int) 为真）。
+    _raw_eval_seeds = our["eval_seeds"]
+    if not isinstance(_raw_eval_seeds, (list, tuple)) or any(
+            isinstance(z, bool) or not isinstance(z, (int, np.integer)) for z in _raw_eval_seeds):
+        raise AssertionError(f"eval_seeds 应为整数列表，实际 {_raw_eval_seeds!r}")
+    eval_seeds = [int(z) for z in _raw_eval_seeds]
     if len(eval_seeds) != int(args.n_eval):
         raise AssertionError(
             f"评测种子数不匹配：JSON={len(eval_seeds)} vs --n-eval={args.n_eval}"
