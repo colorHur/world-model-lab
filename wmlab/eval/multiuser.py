@@ -45,9 +45,12 @@
      ★ 这条会让 oracle 的优势变小（更保守），是刻意选的保守方向；
      它同时是一个待拍板项（见 T8 文档 §6-Q2）。
 
-状态（2026-10-18 T9 起）：**接口已钉死；实现只到 E1 这一层**。
-- 已实现：`delivery_rate`、`run_multiuser`（闭环骨架）、`ConstantSuccess`（**仅 E1 对齐用**）。
-- 未实现：`SINRSuccess`（csi → 成功概率的物理映射）、N>1 的冒烟、I1–I6 的逐条自检。
+状态（2026-10-18 T9 起）：**接口已钉死；资源层已到"分配决定成功概率"这一层**。
+- 已实现：`delivery_rate`、`run_multiuser`（闭环骨架 + `csi` 接线）、`ConstantSuccess`（**仅 E1 对齐用**）、
+  `SINRSuccess`（csi → Rayleigh 中断概率，锚定口径见其 docstring）、`require_privileged`（I3 的唯一合法读法）。
+- 未实现：**时变** `csi`（现在只支持"每用户一个常数"，逐 step 衰落未做 ⇒ T11 的 `max-channel` 臂
+  在静态 csi 下退化为"恒选最优用户"，不是信道择优）；I1–I6 的逐条自检只做了 I1/I5/I6（`scripts/40`）；
+  I2/I3 只有 `scripts/41` 的一条反例；全仓 `pytest` 在本机跑不了（无 pytest）。
 - ★ 2026-10-18 20:15 起，「Q4（N 个用户的任务代价怎么合成一个比）未定前 T9 不得开工」**作废**：
   Q4 约束的是**报出来的那个比怎么合成**，T9–T11 的代码不编码任何聚合口径，聚合在离线做。
   边界改为：**T12 跑出任何 `oracle`/`round-robin` 比值之前，Q4 签注框必须已勾**（计划 §3.1）。
@@ -61,8 +64,8 @@ from typing import Callable, Sequence
 import numpy as np
 
 __all__ = ["UserSlot", "View", "Allocation", "Allocator", "StepRecord", "delivery_rate",
-           "MissingStateError", "SuccessModel", "ConstantSuccess", "default_uav_cost",
-           "run_multiuser"]
+           "MissingStateError", "SuccessModel", "ConstantSuccess", "SINRSuccess",
+           "default_uav_cost", "require_privileged", "run_multiuser"]
 
 
 @dataclass(frozen=True)
@@ -258,6 +261,84 @@ class ConstantSuccess:
         return np.full(len(view.slots), float(self.q), dtype=float)
 
 
+_PRIVILEGED_KEYS = ("true_obs", "true_cost_next", "true_age")
+
+
+def require_privileged(view: "View", key: str):
+    """**I3 唯一合法的读法**：读诊断臂的特权字段。拿不到就抛，不许 `or 0` / `or []`。
+
+    为什么要有这个函数而不是让各臂自己写 `if view.privileged:`：
+      `scheduling.py:55-92` 已经吃过一次亏 —— 把 `None` 当"没有特权"而落到默认分支，
+      于是诊断臂在**没有真值**的情况下照样跑出一个数字，且不报错。
+      Gate 2 要拿 `oracle-alloc` 当诊断上界，这种"静默降级"会让上界变成假的。
+
+    Raises:
+        ValueError: `key` 不在 `View.privileged` 的白名单里（防止随手塞新特权量）。
+        MissingStateError: `view.privileged is None`、缺该键、或该键的值是 `None`。
+    """
+    if key not in _PRIVILEGED_KEYS:
+        raise ValueError(f"未知特权键 {key!r}；允许 {list(_PRIVILEGED_KEYS)}")
+    if view.privileged is None:
+        raise MissingStateError(
+            f"I3：本臂要求特权字段 {key!r}，但 view.privileged is None（非诊断臂或未接线）")
+    if key not in view.privileged:
+        raise MissingStateError(f"I3：view.privileged 缺键 {key!r}，现有 {sorted(view.privileged)}")
+    val = view.privileged[key]
+    if val is None:
+        raise MissingStateError(f"I3：view.privileged[{key!r}] 是 None，不许当空值继续")
+    return val
+
+
+@dataclass(frozen=True)
+class SINRSuccess:
+    """Rayleigh 中断 → 每用户成功概率。**T9 要的就是这一层：q 由"服务谁"决定。**
+
+    映射（★ 口径 A：2026-10-18 选定，见 `04-实验与代码/2026-10-18-T9-N2冒烟-v0.1.md` §6.1）
+    -----------------------------------------------------------------------------
+        κ      := −ln(q_ref)          # 默认 q_ref = 0.7 ⇒ κ = 0.3566749…
+        q(csi) := exp(−κ / csi)       # csi ∈ (0, 1]
+        q(0)   := 0.0                 # 全中断（按 csi→0+ 的极限取，不是除以 0）
+
+    于是 `csi = 1 ⇔ q = q_ref`，`csi ↑ ⇒ q ↑`（单调），`csi → 0+ ⇒ q → 0`。
+
+    ★★ 为什么锚在 q_ref 而不是锚在 γ̄/γ_th（口径 B 被否的理由）
+      T8 的契约是 `csi ∈ [0,1]` 且 **1 = 最好**（`UserSlot` docstring）。若按
+      `csi = γ̄/γ_th` 归一化，则 `q = exp(−1/csi)`，`csi = 1 ⇒ q = 0.3679` —— 想表达
+      β 档的 `q = 0.7` 需要 `csi = 2.8037 > 1`，**越出契约**。口径 A 把 `csi = 1` 定义成
+      "判-01 β 档那条信道"，代价是**"最好"是相对于 β 档而言的，不是物理最优**
+      ⇒ 论文/汇报里必须这么写，不许说成"csi=1 即理想信道"。
+
+    ★ 口径 A 的实际好处（不是审美）：`q(1) ≡ q_ref` ⇒ N=1 时 `SINRSuccess(0.7)` 与
+      `ConstantSuccess(0.7)` 数值等价，E1 的三个锚点**一位都不用改**仍可当护栏。
+
+    ★ 未做的边界：**csi 只支持"每用户一个常数"**（`run_multiuser(csi=…)`），
+      逐 step 衰落未实现。影响：T11 的 `max-channel` 在静态 csi 下退化为
+      "恒选 csi 最大的那个用户"，不是信道择优 —— 要真做信道择优，先补时变 csi。
+    """
+
+    q_ref: float = 0.7
+
+    def __post_init__(self) -> None:
+        if not (0.0 < float(self.q_ref) < 1.0):
+            raise ValueError(f"q_ref 必须在 (0,1)，收到 {self.q_ref}")
+
+    @property
+    def kappa(self) -> float:
+        """κ = −ln(q_ref)，即"参考档的 γ_th/γ̄"（口径 A 下 `csi = 1` 就取这个值）。"""
+        return float(-np.log(float(self.q_ref)))
+
+    def q(self, csi: float) -> float:
+        c = float(csi)
+        if not np.isfinite(c) or c < 0.0 or c > 1.0:
+            raise ValueError(f"csi 必须落在 [0,1] 且有限，收到 {csi!r}")
+        if c == 0.0:
+            return 0.0
+        return float(np.exp(-self.kappa / c))
+
+    def __call__(self, view: "View", alloc: "Allocation") -> np.ndarray:
+        return np.array([self.q(s.csi) for s in view.slots], dtype=float)
+
+
 def default_uav_cost(obs: np.ndarray) -> float:
     """UAV 任务代价 = `‖p_drone − p_target‖`，与 `control.py` 的 `dist` 逐位同口径。"""
     o = np.asarray(obs, dtype=np.float32)
@@ -277,6 +358,7 @@ def run_multiuser(
     budget_total: int | None = None,
     cost_fn: Callable[[np.ndarray], float] | None = None,
     tail_frac: float = 0.25,
+    csi: float | Sequence[float] | None = None,
 ) -> dict:
     """多用户闭环骨架：**分配 → 成功概率 → 送达 → 步进 → 记账**，逐 step 落原始表。
 
@@ -287,8 +369,7 @@ def run_multiuser(
     ★ 与 `control.py:run_closed_loop_control` 的唯一差别：**谁被服务是决策**，不是外生调度。
       N=1 + 恒成功率时两者必须**逐位一致**（E1 的判据）；不一致只可能是抽样次数/顺序错。
 
-    ★★ 两条随机数纪律（I4 的实现方式，写死以免日后被"优化"掉）
-    ------------------------------------------------------------------
+    ★★ 两条随机数纪律（I4 的实现方式，写死以免日后被"优化"掉）    ------------------------------------------------------------------
     1. **信道流与分配器流分开**：`rng_ch = default_rng(seed)` 只管送达判决；
        `rng_alloc = default_rng([seed, 2**31−1])` 才交给分配器。
        混用一个流 ⇒ ε-greedy 类臂多抽一次就改掉后面所有送达骰子，"换臂"变成"换轨迹"。
@@ -297,6 +378,10 @@ def run_multiuser(
        ② 同种子跨臂 ⇒ **公共随机数**：第 t 步、第 i 个用户的骰子与臂无关，
           于是"臂 A 与臂 B 的差"不再混入信道噪声。
        代价：未服务用户的骰子被浪费掉。这个浪费是**刻意的**，不要改成"只给被派帧的人抽"。
+
+    ★ `csi` 参数（2026-10-18 T9 新增）：`None` ⇒ 每用户 1.0（与 E1 逐位可比）；
+    标量 ⇒ 所有用户同值；长度 N 的序列 ⇒ 逐用户常数。**逐 step 衰落未实现**。
+    有了它，`SINRSuccess` 才能让"派给谁"改变本步的成功概率 —— 这是 T9 的交付物本身。
 
     Returns:
         {"records": [StepRecord…],                 # Gate 2 要的原始表
@@ -316,6 +401,21 @@ def run_multiuser(
     rng_ch = np.random.default_rng(int(seed))
     rng_alloc = np.random.default_rng([int(seed), 2 ** 31 - 1])
 
+    # ---------- csi 解析（★ 2026-10-18 T9：把"信道质量"从常量变成每用户的输入）----------
+    # None ⇒ 全 1.0（= 之前 E1/冒烟的世界，保持逐位可比）；标量 ⇒ 广播；序列 ⇒ 逐用户。
+    # ★ 只支持"每用户一个常数"：逐 step 衰落未实现，别在文档里说成"有时变信道"。
+    if csi is None:
+        csi_per_user = [1.0] * n_users
+    elif np.isscalar(csi):
+        csi_per_user = [float(csi)] * n_users
+    else:
+        csi_per_user = [float(x) for x in csi]
+        if len(csi_per_user) != n_users:
+            raise ValueError(f"csi 长度必须是 {n_users}，收到 {len(csi_per_user)}")
+    for i, c in enumerate(csi_per_user):
+        if not np.isfinite(c) or c < 0.0 or c > 1.0:
+            raise ValueError(f"csi[{i}] 必须落在 [0,1] 且有限，收到 {c!r}（契约见 UserSlot.csi）")
+
     records: list[StepRecord] = []
     tail: list[list[float]] = [[] for _ in range(n_users)]
     surv: list[list[int]] = [[] for _ in range(n_users)]
@@ -334,9 +434,6 @@ def run_multiuser(
         n_frames = [0] * n_users
         n_attempts = [0] * n_users
         last_obs = [o.copy() for o in obs]
-        # ★ E1/首次冒烟：csi 恒为 1（等价于"信道质量不随用户变"）。
-        #   SINR 版（csi 由环境给出）尚未实现，属 T9 剩余项，不在此处假装接线。
-        csi = [1.0] * n_users
         cost_last = [float("nan")] * n_users
         ep_dist: list[list[float]] = [[] for _ in range(n_users)]
         ep_alive = [0] * n_users
@@ -360,7 +457,7 @@ def run_multiuser(
             slots = tuple(
                 UserSlot(idx=i, alive=bool(alive[i]), age=int(age[i]),
                          last_obs=last_obs[i], n_frames=int(n_frames[i]),
-                         n_attempts=int(n_attempts[i]), csi=float(csi[i]),
+                         n_attempts=int(n_attempts[i]), csi=float(csi_per_user[i]),
                          cost_last=float(cost_last[i]))
                 for i in range(n_users)
             )
