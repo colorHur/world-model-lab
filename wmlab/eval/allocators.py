@@ -8,6 +8,7 @@
 必须与 runner 分开：runner 管记账，臂只管"派给谁"。这样换臂不动记账、改记账不动臂。
 
 五个臂：`rr` / `age` / `chan` / `oracle`（myopic 真值）/ `lookahead`（期望 1 步前瞻，2026-10-19 T13 新增）。
+2026-10-19 T15 新增第六个：`NormalizedAge`（`age_i/D_i`，**无特权信息**，定位=机制验证臂）。
 
 四条共同纪律（写死，别在子类里破）
 ----------------------------------
@@ -38,7 +39,8 @@ import numpy as np
 
 from .multiuser import Allocation, MissingStateError, View, require_privileged
 
-__all__ = ["RoundRobin", "MaxAge", "MaxChannel", "TrueError", "Lookahead", "ALIVE_ONLY_NOTE"]
+__all__ = ["RoundRobin", "MaxAge", "MaxChannel", "TrueError", "Lookahead", "NormalizedAge",
+           "ALIVE_ONLY_NOTE"]
 
 
 ALIVE_ONLY_NOTE = (
@@ -122,6 +124,68 @@ class MaxAge:
             return stop
         i = _pick_alive(view, lambda j: view.slots[j].age)
         return _alloc(len(view.slots), i, "max-age")
+
+
+@dataclass
+class NormalizedAge:
+    """**归一化年龄**：选 `age_i / D_i` 最大者（`D_i` = 该任务的失效窗口）。
+
+    规则（预注册：`04-实验与代码/2026-10-19-T15-归一化年龄-预注册-v0.1.md` §2）::
+
+        score_i = age_i / D_i          （D_i > 0，已知任务参数）
+        selected = argmax_{i ∈ alive} score_i      （同分取 idx 小）
+
+    ★★ 它**不是**新算法，别当新算法写（预注册 §0/§7）
+      1. `D` 全相等时 `argmax age_i/D ≡ argmax age_i` ⇒ 与 `MaxAge` **逐位相同**。
+         若所有任务共用同一个截止期，归一化**不改变任何决策**（这是恒等式，不是近似）。
+      2. 归一化只在 `D_i` 逐任务不同时才改变行为 —— 本系统 10 vs 53（5.3×），
+         于是它实际作用是**把预算系统性偏向 `D` 小的任务**（CartPole）。
+         ⇒ 若它变好，正确结论是"按失效窗口倾斜是对的"，**不是**"归一化年龄更优"。
+      3. 实时调度里的 EDF/LLF、AoI 约束调度里的"最接近违约阈值者优先"已占位
+         （见 `03-文献与竞品/2026-10-19-T15-deadline与虚拟队列占位检索-v0.1.md`）。
+
+    ★ 信息边界（可部署性）：只读 `slots[i].age` + 自身 `deadlines`，**无特权信息**。
+      `D_i` 视为**已知任务元数据**（任务规格书上的"容忍陈旧时长"），
+      来源是 `results/46_t14_failure_timescale.json` 的闭环实测（53 / 10 步），
+      与任何臂的收益无关 ⇒ 不是用结果调出来的参数。
+      `D_i` 若需在线估计，属另一条线，本臂不支持（不许在这里偷偷用 `cost_est` 推）。
+
+    ★ 为什么长度不符抛 `ValueError` 而不是 `MissingStateError`
+      这是**接线错误**（构造参数与系统不匹配），不是"运行中缺了一个状态量"。
+      `Lookahead.scales` 长度不符抛 `MissingStateError` 是历史遗留的不一致；
+      本臂按预注册 §5-S4 的原文抛 `ValueError`，差异是刻意的，不unify以免掩盖。
+    """
+
+    deadlines: Sequence[float]
+    name: str = "na"
+    trace: list | None = None
+    """诊断轨迹（默认 None）。给了 list 就逐步 append `{"t","scores","chosen","alive"}`。"""
+
+    def __post_init__(self) -> None:
+        d = [float(x) for x in self.deadlines]
+        if not d:
+            raise ValueError("deadlines 不能为空")
+        bad = [(k, v) for k, v in enumerate(d) if (not np.isfinite(v)) or v <= 0.0]
+        if bad:
+            raise ValueError(f"deadlines 必须是有限正数（单位 = 步），非法项 {bad}")
+        self.deadlines = d
+
+    def __call__(self, view: View, rng: np.random.Generator) -> Allocation:
+        stop = _exhausted(view)
+        if stop is not None:
+            return stop
+        n = len(view.slots)
+        if len(self.deadlines) != n:
+            raise ValueError(f"deadlines 长度 {len(self.deadlines)} != N {n}（接线错误）")
+        i = _pick_alive(view, lambda j: view.slots[j].age / self.deadlines[j])
+        if self.trace is not None:
+            self.trace.append({
+                "t": int(view.t), "chosen": int(i),
+                "scores": {int(s.idx): float(s.age / self.deadlines[s.idx]) for s in view.slots},
+                "ages": {int(s.idx): int(s.age) for s in view.slots},
+                "alive": [bool(s.alive) for s in view.slots],
+            })
+        return _alloc(n, i, f"{self.name}:argmax-age-over-D")
 
 
 @dataclass
