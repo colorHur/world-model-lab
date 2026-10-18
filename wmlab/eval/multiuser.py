@@ -48,9 +48,13 @@
 状态（2026-10-18 T9 起）：**接口已钉死；资源层已到"分配决定成功概率"这一层**。
 - 已实现：`delivery_rate`、`run_multiuser`（闭环骨架 + `csi` 接线）、`ConstantSuccess`（**仅 E1 对齐用**）、
   `SINRSuccess`（csi → Rayleigh 中断概率，锚定口径见其 docstring）、`require_privileged`（I3 的唯一合法读法）。
-- 未实现：**时变** `csi`（现在只支持"每用户一个常数"，逐 step 衰落未做 ⇒ T11 的 `max-channel` 臂
-  在静态 csi 下退化为"恒选最优用户"，不是信道择优）；I1–I6 的逐条自检只做了 I1/I5/I6（`scripts/40`）；
-  I2/I3 只有 `scripts/41` 的一条反例；全仓 `pytest` 在本机跑不了（无 pytest）。
+- 2026-10-19（验收报告 §3 修复）：
+  A 信息边界 —— `UserSlot.cost_last` 改名 `cost_est`，**只由已送达观测算出**，真值只进 `StepRecord.costs`；
+  B 死亡记账 —— `StepRecord` 增 `attempted_idx`，五类事件（reserved/attempted/delivered/valid/wasted）同义；
+  C 终止代价 —— 新增 `window_cost()`（定长窗口 + 吸收态补齐），旧尾均值 `per_user_cost` 只留作历史对照；
+  另加：逐用户 `warmup_steps`、3 维时变 `csi` 轨迹、`diagnostic` 开关（`privileged` 只给诊断臂）。
+- **仍未实现**：`max-channel` 在**常数** csi 下退化为"恒选最优"（要时变轨迹才是信道择优；本版已支持喂轨迹，
+  但轨迹由调用方生成）；I2 的逐条自检只在 `scripts/43` 里；全仓 `pytest` 在本机跑不了（无 pytest）。
 - ★ 2026-10-18 20:15 起，「Q4（N 个用户的任务代价怎么合成一个比）未定前 T9 不得开工」**作废**：
   Q4 约束的是**报出来的那个比怎么合成**，T9–T11 的代码不编码任何聚合口径，聚合在离线做。
   边界改为：**T12 跑出任何 `oracle`/`round-robin` 比值之前，Q4 签注框必须已勾**（计划 §3.1）。
@@ -65,7 +69,7 @@ import numpy as np
 
 __all__ = ["UserSlot", "View", "Allocation", "Allocator", "StepRecord", "delivery_rate",
            "MissingStateError", "SuccessModel", "ConstantSuccess", "SINRSuccess",
-           "default_uav_cost", "require_privileged", "run_multiuser"]
+           "default_uav_cost", "require_privileged", "run_multiuser", "window_cost"]
 
 
 @dataclass(frozen=True)
@@ -89,9 +93,13 @@ class UserSlot:
         csi: 归一化信道质量 ∈ [0, 1]（1 = 最好）。
             ⚠ 待核（T8 §6-Q1）：CSI 是否"免费可得"会改变所有臂的信息集，
             在 Q1 拍板前，T9 只许把它当**已知量**并在结果里显式声明。
-        cost_last: 上一步该用户的任务代价（标量，**逐用户量纲**）。
+        cost_est: 由**最后一次成功送达的观测**算出的任务代价（标量，**逐用户量纲**）。
+            ★★ 2026-10-19 验收修复（A 项）：这里**只允许**是 `cost_fn(last_obs)`，
+            **不是** env 当前真值。旧字段名 `cost_last` 装的是"上一步真值"，等于给所有臂
+            免费一条紧迫性遥测通道（验收 §3-A 的缺陷）。改名就是为了让旧语义无处藏身。
+            从未送达时 = `cost_fn(reset 观测)`，可用 `n_frames == 0` 区分。
             ★★ 不同任务族的量纲不同（UAV = 稳态距离 m，CartPole = 0/1 存活），
-            **不可跨用户相加**。聚合口径见 T8 §6-Q4，未定之前不许用它算总分。
+            **不可跨用户相加**。聚合口径见 T8 §6-Q4；评估一律走逐用户比值。
     """
 
     idx: int
@@ -101,7 +109,7 @@ class UserSlot:
     n_frames: int
     n_attempts: int
     csi: float
-    cost_last: float
+    cost_est: float
 
 
 @dataclass(frozen=True)
@@ -167,11 +175,20 @@ class StepRecord:
     Attributes:
         episode: episode 序号（0-based）。
         t: 步号。
-        served_idx: 本步被服务的用户（-1 = 空转）。
-        delivered_idx: 本步**真正送达**的用户（-1 = 没送达）。
-            `served_idx != delivered_idx` 时（served 但丢包）两者不同，这是 T9 SINR 层的证据。
+        served_idx: 本步**分配器选中**的用户（-1 = 空转）。
+            ★ 语义是 `reserved`（派了份额），**不代表真的发了帧**：若该用户已死，
+              份额空转（I6），`attempted_idx == -1`。这里沿用旧名字只为兼容既有脚本，
+              新代码请读 `attempted_idx` / `delivered_idx`。
+        attempted_idx: 本步**真的发出**了帧的用户（-1 = 没发）。
+            `= served_idx if alive_before[served_idx] else -1`。
+            ★ 2026-10-19 验收修复（B 项）：旧实现把"派给死人"直接写成 `delivered_idx`，
+              实测 2116 条死者被记送达，而汇总又把这 2116 条剔除 ⇒ 原始表与汇总词义不一致。
+        delivered_idx: 本步**物理送达**的用户（-1 = 没送达/没发）。
+            `attempted_idx == i` 且 `u_i >= 1 − q_i` 才成立 ⇒ 死者**不可能**出现在这里。
+            ★ 本轮 `valid ≡ delivered`（不给尸体发帧）；字段留给将来"链路可送达但任务已终止"。
         ages: 长度 N 的年龄（**决策前**的值，即分配器看到的那个）。
-        costs: 长度 N 的该步任务代价（`alive=False` 的用户填 `nan`）。
+        costs: 长度 N 的该步**真值**任务代价（`alive=False` 的用户填 `nan`）。
+            ★ 只进离线评估，**任何分配器都读不到**（信息边界见 UserSlot.cost_est）。
         alive: 长度 N 的存活标志（**决策前**的值 —— 与 `ages` 同一时点）。
             ★ 为什么必须与 `ages` 同时点：若记成"步进之后"的值，
               本步刚死掉的用户会被 `delivery_rate` 从分母里剔掉，
@@ -181,6 +198,7 @@ class StepRecord:
     episode: int
     t: int
     served_idx: int
+    attempted_idx: int
     delivered_idx: int
     ages: tuple[int, ...]
     costs: tuple[float, ...]
@@ -190,11 +208,25 @@ class StepRecord:
 def delivery_rate(records: Sequence[StepRecord], n_users: int) -> dict:
     """**实测**每用户送达率与等效丢包（H2 的唯一合法来源）。
 
+    2026-10-19 验收修复（B 项）后，五类事件分开统计，**同一词义贯穿原始表与汇总**：
+
+    | 键 | 含义 | 分母 |
+    |---|---|---|
+    | `reserved` | Σ served_idx≥0（派了份额，含派给死人的空转） | — |
+    | `attempted` | Σ attempted_idx≥0（真发了帧） | — |
+    | `frames` (= `valid`) | Σ delivered_idx==i（物理送达且接收方存活） | — |
+    | `wasted` | reserved − attempted（派给死人） | — |
+    | `lost` | attempted − frames（发了没送到） | — |
+
     Returns:
-        {"per_user": [frames_i / alive_steps_i, ...],   # 分母 = 该用户**存活**步数
-         "p_eff": [1 − rate_i, ...],
-         "budget_used": Σ served_idx >= 0,
-         "budget_total": len(records)}
+        {"per_user": [frames_i / alive_steps_i, ...],       # 业务送达率（含份额损失）
+         "p_eff": [1 − rate_i, ...],                        # 等效丢包（Gate 口径，定义不变）
+         "link_q": [frames_i / attempts_i, ...],            # 纯链路成功率，只含信道损失
+         "budget_reserved": int, "budget_attempted": int, "budget_wasted": int,
+         "budget_lost": int,
+         "budget_used": int,        # = budget_reserved（兼容旧键，语义未变）
+         "budget_total": int,       # = len(records)，帧位
+         "frames", "attempts", "alive_steps", "n_users"}
 
     ★ 为什么分母是"存活步数"而不是总步数：CartPole 掉杆后 `alive=False`（I6 不转嫁），
       拿总步数做分母会把"已经不用服务"算成"丢包"⇒ p_eff 虚高。这是 I6 的直接后果，
@@ -202,30 +234,44 @@ def delivery_rate(records: Sequence[StepRecord], n_users: int) -> dict:
 
     ★★ 报 p_eff 时必须同时报 `budget_total` 与 N：
       单看 p_eff = 0.5 无法判断是"N=2 且每次成功"还是"N=4 且一半丢失"。
-      判-01 §4 的风险正是"档位看着紧、其实松"，唯一防法是这两个数一起报。
+
+    ★ `link_q` 是 2026-10-19 新增的**诊断量**，不是新判据：`per_user` 里混了"份额少"与"链路差"
+      两种损失，`link_q` 把两者分开。判据 P3 用的是 `link_q`（纯信道），不是 `per_user`。
     """
     frames = [0] * n_users
+    attempts = [0] * n_users
     alive_steps = [0] * n_users
-    budget_used = 0
+    reserved = attempted = 0
     for r in records:
-        budget_used += int(r.served_idx >= 0)
+        reserved += int(r.served_idx >= 0)
+        attempted += int(getattr(r, "attempted_idx", -1) >= 0)
         for i in range(n_users):
             if i < len(r.alive) and bool(r.alive[i]):
                 alive_steps[i] += 1
+                if int(getattr(r, "attempted_idx", -1)) == i:
+                    attempts[i] += 1
                 if int(r.delivered_idx) == i:
                     frames[i] += 1
     per_user = [(frames[i] / alive_steps[i]) if alive_steps[i] else float("nan")
                 for i in range(n_users)]
     p_eff = [(1.0 - x) if x == x else float("nan") for x in per_user]
+    link_q = [(frames[i] / attempts[i]) if attempts[i] else float("nan")
+              for i in range(n_users)]
     return {
         "per_user": per_user,
         "p_eff": p_eff,
-        "budget_used": int(budget_used),
+        "link_q": link_q,
+        "budget_reserved": int(reserved),
+        "budget_attempted": int(attempted),
+        "budget_wasted": int(reserved - attempted),
+        "budget_lost": int(attempted - sum(frames)),
+        "budget_used": int(reserved),
         # ★ 按本函数契约，这里是"总帧位"（= records 数），不是计划的 `budget_total`。
         #   两者只有在 budget_total == max_steps 且无提前终止时相等，别混用。
         "budget_total": len(records),
         "n_users": int(n_users),
         "frames": [int(x) for x in frames],
+        "attempts": [int(x) for x in attempts],
         "alive_steps": [int(x) for x in alive_steps],
     }
 
@@ -345,6 +391,74 @@ def default_uav_cost(obs: np.ndarray) -> float:
     return float(np.linalg.norm(o[0:2] - o[4:6]))
 
 
+def window_cost(
+    records: Sequence[StepRecord],
+    n_users: int,
+    *,
+    window: int,
+    absorbed,
+    n_episodes: int | None = None,
+) -> list[list[float]]:
+    """**定长窗口 + 终止吸收代价**的逐集逐用户任务代价 `J_i(e)`（2026-10-19 验收修复 C 项）。
+
+    定义（预注册于 `04-实验与代码/2026-10-19-T12-口径修订与四臂预注册-v0.1.md` §3）::
+
+        J_i(e) = (1/L) · [ Σ_{t≤T_e} c_i(t)          # 仅存活步
+                         + absorbed_i · (L − T_e) ]  # 终止/截断后按吸收态补齐
+
+    L = `window`（评估窗口，两任务同一个 L）；T_e = 该集实际记录步数。
+
+    ★★ 为什么必须这么算（验收 §3-C）：旧口径"对终止前已有样本取尾均值"下，
+      **更早失败 ⇒ 样本更少 ⇒ 坏样本更少 ⇒ 代价更低**，把"死得快"奖励成了"成本低"。
+      本函数里早死一定更贵：第 50 步死 ⇒ 至少 (L−50)/L 的窗口被 absorbed 填满。
+
+    ★★★ 2026-10-19 自证伪：第一版用**逐集**的 `T_e = max(t)` 做补齐边界，于是
+      "用户 1 第 12 步死、用户 0 活到 200"时，用户 1 的 188 个死步**一步都没补**，
+      代价只有 0.005（等于把缺陷原样保留）。单用户自检全过，因为**单用户时 T_e 就是它自己的存活步数**。
+      修正：补齐边界必须是**逐用户**的 `alive_steps_i`，不是 episode 的最后一步。
+
+    ★ 为什么不做跨任务归一化：Gate 2 只用**逐用户比值** `r_i = J_i(arm)/J_i(rr)`，
+      量纲自动约掉；一旦做绝对归一化，就得选一个"1 m 误差 = 多少失败概率"的汇率，
+      而这个汇率能单独决定 Gate 2 生死（与 X45 同型风险）。
+
+    Args:
+        records: `run_multiuser` 的原始表（`costs` 是真值，`alive` 是决策前时点）。
+        absorbed: 标量或长度 N 的吸收态代价（死亡后每步记多少）。
+        n_episodes: 若给定，缺失的 episode 也按"全窗口 absorbed"补齐（不静默丢集）。
+
+    Returns:
+        `[episode][user]` 的列表，长度 = `n_episodes`（或实际出现过的集数）。
+    """
+    ab = ([float(absorbed)] * n_users) if np.isscalar(absorbed) else [float(x) for x in absorbed]
+    if len(ab) != n_users:
+        raise ValueError(f"absorbed 长度必须是 {n_users}，收到 {len(ab)}")
+    if int(window) <= 0:
+        raise ValueError("window 必须 > 0")
+
+    n_eps = int(n_episodes) if n_episodes is not None else (max((r.episode for r in records), default=-1) + 1)
+    sums = [[0.0] * n_users for _ in range(n_eps)]
+    alive_cnt = [[0] * n_users for _ in range(n_eps)]   # ★ 逐用户，不是逐集
+    for r in records:
+        e = int(r.episode)
+        if not (0 <= e < n_eps):
+            raise ValueError(f"episode {e} 越界（n_episodes={n_eps}）")
+        if int(r.t) > int(window):
+            raise ValueError(f"记录步数超过窗口：t={r.t} > window={window}")
+        for i in range(n_users):
+            if i < len(r.alive) and bool(r.alive[i]):
+                c = float(r.costs[i])
+                if not np.isfinite(c):
+                    raise ValueError(f"episode {e} t={r.t} user {i} 存活但代价不是有限值：{c}")
+                sums[e][i] += c
+                alive_cnt[e][i] += 1
+
+    out: list[list[float]] = []
+    for e in range(n_eps):
+        out.append([(sums[e][i] + ab[i] * (int(window) - alive_cnt[e][i])) / float(window)
+                    for i in range(n_users)])
+    return out
+
+
 def run_multiuser(
     envs: Sequence,
     controllers: Sequence,
@@ -354,11 +468,12 @@ def run_multiuser(
     n_episodes: int = 30,
     seed: int = 0,
     max_steps: int = 200,
-    warmup_steps: int = 0,
+    warmup_steps: int | Sequence[int] = 0,
     budget_total: int | None = None,
-    cost_fn: Callable[[np.ndarray], float] | None = None,
+    cost_fn: Callable[[np.ndarray], float] | Sequence[Callable[[np.ndarray], float]] | None = None,
     tail_frac: float = 0.25,
-    csi: float | Sequence[float] | None = None,
+    csi: float | Sequence[float] | np.ndarray | None = None,
+    diagnostic: bool = False,
 ) -> dict:
     """多用户闭环骨架：**分配 → 成功概率 → 送达 → 步进 → 记账**，逐 step 落原始表。
 
@@ -379,42 +494,87 @@ def run_multiuser(
           于是"臂 A 与臂 B 的差"不再混入信道噪声。
        代价：未服务用户的骰子被浪费掉。这个浪费是**刻意的**，不要改成"只给被派帧的人抽"。
 
-    ★ `csi` 参数（2026-10-18 T9 新增）：`None` ⇒ 每用户 1.0（与 E1 逐位可比）；
-    标量 ⇒ 所有用户同值；长度 N 的序列 ⇒ 逐用户常数。**逐 step 衰落未实现**。
-    有了它，`SINRSuccess` 才能让"派给谁"改变本步的成功概率 —— 这是 T9 的交付物本身。
+    ★ `csi` 参数（2026-10-18 T9 新增，2026-10-19 扩展）：`None` ⇒ 每用户 1.0（与 E1 逐位可比）；
+    标量 ⇒ 所有用户同值；长度 N 的序列 ⇒ 逐用户常数；
+    **形状 `(n_episodes, max_steps, N)` 的数组 ⇒ 逐 step 时变 csi（T12 的异质链路）**。
+    时变分支只从数组**读**，不抽随机数 ⇒ 同一条轨迹可以喂给所有臂（公共随机数，臂间差里不含信道噪声）。
+
+    ★ `warmup_steps`（2026-10-19）：标量 ⇒ 所有用户同样预热；序列 ⇒ 逐用户。
+    **为什么要逐用户**：UAV 需要 300 步让 PD 收敛，CartPole 不需要；给 CartPole 预热 300 步
+    等于在第 300 步前就掉杆（判-01 已踩过"预热把被测段吃掉"的坑）。
+
+    ★ `diagnostic`（2026-10-19）：只有诊断臂为 True。为 True 时 `View.privileged` 里放
+    `{"true_obs": ..., "true_age": ...}`（T8 白名单内的键，**不新增键**）。
+    非诊断臂 `privileged is None`，且 `UserSlot.cost_est` **只随送达更新**（A 项修复）。
 
     Returns:
-        {"records": [StepRecord…],                 # Gate 2 要的原始表
-         "per_user_cost": [均值(逐集尾均)…],        # 与 `mean_dist_tail` 同口径
+        {"records": [StepRecord…],                 # Gate 2 要的原始表（真值代价 + 五类事件）
+         "per_user_cost": [均值(逐集尾均)…],        # 旧口径，**仅供历史对照，不得用于 Gate 2**
          "per_user_survival": [均值(存活步数)…],
-         "budget_used": int, "budget_cap_per_episode": int,
-         "n_steps": int, "n_users": int}
+         "budget_reserved": int, "budget_attempted": int, "budget_wasted": int,
+         "budget_cap_per_episode": int,
+         "n_steps": int, "n_users": int, "window": int}
+
+    ★★ 为什么还留着 `per_user_cost`（尾均值）：`scripts/39/40/41` 的护栏用它。
+      **Gate 2 一律用 `window_cost()`**（定长窗口 + 吸收代价），它在"早死"时给出更高代价，
+      而尾均值给出更低 —— 两者结论方向不同，混用就是 X45 那种口径反转。
     """
     n_users = len(envs)
     if len(controllers) != n_users:
         raise ValueError(f"envs/controllers 数量不等：{n_users} vs {len(controllers)}")
-    cost_fn = cost_fn or default_uav_cost
+    # ★ 2026-10-19：cost_fn 支持**逐用户**（异质任务必须逐用户定义，UAV 是米、CartPole 是 0/1）。
+    #   标量函数 ⇒ 广播给所有用户（旧行为，E1/39-41 逐位不变）。
+    if cost_fn is None:
+        cfs: list[Callable[[np.ndarray], float]] = [default_uav_cost] * n_users
+    elif callable(cost_fn):
+        cfs = [cost_fn] * n_users
+    else:
+        cfs = list(cost_fn)
+        if len(cfs) != n_users:
+            raise ValueError(f"cost_fn 序列长度必须是 {n_users}，收到 {len(cfs)}")
+        if not all(callable(f) for f in cfs):
+            raise TypeError("cost_fn 序列里每一项都必须是可调用对象")
+    cost_fn = cfs[0] if n_users == 1 else cost_fn   # 仅为兼容旧调试打印，不参与计算
     budget_cap = int(max_steps if budget_total is None else budget_total)
     if budget_cap < 0:
         raise ValueError("budget_total 必须 ≥ 0（单位 = 帧）")
 
+    warm = ([int(warmup_steps)] * n_users) if np.isscalar(warmup_steps) \
+        else [int(x) for x in warmup_steps]
+    if len(warm) != n_users:
+        raise ValueError(f"warmup_steps 长度必须是 {n_users}，收到 {len(warm)}")
+
     rng_ch = np.random.default_rng(int(seed))
     rng_alloc = np.random.default_rng([int(seed), 2 ** 31 - 1])
 
-    # ---------- csi 解析（★ 2026-10-18 T9：把"信道质量"从常量变成每用户的输入）----------
-    # None ⇒ 全 1.0（= 之前 E1/冒烟的世界，保持逐位可比）；标量 ⇒ 广播；序列 ⇒ 逐用户。
-    # ★ 只支持"每用户一个常数"：逐 step 衰落未实现，别在文档里说成"有时变信道"。
+    # ---------- csi 解析（2026-10-18 常数 / 2026-10-19 时变轨迹）----------
+    csi_traj = None
+    csi_per_user = None
     if csi is None:
         csi_per_user = [1.0] * n_users
     elif np.isscalar(csi):
         csi_per_user = [float(csi)] * n_users
     else:
-        csi_per_user = [float(x) for x in csi]
-        if len(csi_per_user) != n_users:
-            raise ValueError(f"csi 长度必须是 {n_users}，收到 {len(csi_per_user)}")
-    for i, c in enumerate(csi_per_user):
-        if not np.isfinite(c) or c < 0.0 or c > 1.0:
-            raise ValueError(f"csi[{i}] 必须落在 [0,1] 且有限，收到 {c!r}（契约见 UserSlot.csi）")
+        arr = np.asarray(csi, dtype=float)
+        if arr.ndim == 3:
+            if arr.shape[0] != int(n_episodes) or arr.shape[1] != int(max_steps) \
+                    or arr.shape[2] != n_users:
+                raise ValueError(
+                    f"csi 轨迹形状必须是 ({int(n_episodes)}, {int(max_steps)}, {n_users})，"
+                    f"收到 {arr.shape}")
+            if not np.all(np.isfinite(arr)) or arr.min() < 0.0 or arr.max() > 1.0:
+                raise ValueError("csi 轨迹必须落在 [0,1] 且有限（契约见 UserSlot.csi）")
+            csi_traj = arr
+        elif arr.ndim == 1:
+            csi_per_user = [float(x) for x in arr]
+            if len(csi_per_user) != n_users:
+                raise ValueError(f"csi 长度必须是 {n_users}，收到 {len(csi_per_user)}")
+        else:
+            raise ValueError(f"csi 只接受标量 / 长度 {n_users} 序列 / 3 维轨迹，收到 ndim={arr.ndim}")
+    if csi_per_user is not None:
+        for i, c in enumerate(csi_per_user):
+            if not np.isfinite(c) or c < 0.0 or c > 1.0:
+                raise ValueError(f"csi[{i}] 必须落在 [0,1] 且有限，收到 {c!r}（契约见 UserSlot.csi）")
 
     records: list[StepRecord] = []
     tail: list[list[float]] = [[] for _ in range(n_users)]
@@ -434,17 +594,21 @@ def run_multiuser(
         n_frames = [0] * n_users
         n_attempts = [0] * n_users
         last_obs = [o.copy() for o in obs]
-        cost_last = [float("nan")] * n_users
+        true_obs = [o.copy() for o in obs]       # 评估侧真值，只用于 privileged / 记录
+        # ★ A 项：cost_est 只能从"已送达的观测"算。t=0 的 reset 观测在开局即已知，
+        #   算进去是合规的（它不需要传输），用 n_frames==0 可区分。
+        cost_est = [float(cfs[i](o)) for i, o in enumerate(obs)]
         ep_dist: list[list[float]] = [[] for _ in range(n_users)]
         ep_alive = [0] * n_users
 
         # ---------- 预热：每步送真值，控制器先收敛到稳态（不消耗任何 rng）----------
-        for _ in range(int(warmup_steps)):
+        for _ in range(max(warm) if n_users else 0):
             for i in range(n_users):
-                if not alive[i]:
+                if not alive[i] or _ >= warm[i]:
                     continue
                 res = envs[i].step(controllers[i].act(est[i]))
                 est[i] = np.asarray(res.obs, dtype=np.float32).copy()
+                true_obs[i] = est[i].copy()
                 if res.terminated or res.truncated:
                     alive[i] = False
 
@@ -454,15 +618,21 @@ def run_multiuser(
             t += 1
             alive_before = list(alive)
             ages_before = list(age)
+            csi_step = ([float(csi_per_user[i]) for i in range(n_users)]
+                        if csi_traj is None else
+                        [float(csi_traj[e, t - 1, i]) for i in range(n_users)])
             slots = tuple(
                 UserSlot(idx=i, alive=bool(alive[i]), age=int(age[i]),
                          last_obs=last_obs[i], n_frames=int(n_frames[i]),
-                         n_attempts=int(n_attempts[i]), csi=float(csi_per_user[i]),
-                         cost_last=float(cost_last[i]))
+                         n_attempts=int(n_attempts[i]), csi=float(csi_step[i]),
+                         cost_est=float(cost_est[i]))
                 for i in range(n_users)
             )
+            priv = ({"true_obs": tuple(o.copy() for o in true_obs),
+                     "true_age": tuple(int(x) for x in ages_before)}
+                    if diagnostic else None)
             view = View(t=int(t), slots=slots, budget_left=int(budget_cap - used_ep),
-                        budget_total=int(budget_cap), privileged=None)
+                        budget_total=int(budget_cap), privileged=priv)
 
             alloc = allocator(view, rng_alloc)
             served = np.asarray(alloc.served, dtype=bool).reshape(-1)
@@ -484,10 +654,14 @@ def run_multiuser(
             u = rng_ch.random(n_users)      # ★ 固定抽 n_users 个，见 docstring 纪律 2
             delivered = np.zeros(n_users, dtype=bool)
             si = -1
+            ai = -1
             if n_served:
                 si = int(np.flatnonzero(served)[0])
-                n_attempts[si] += 1
-                delivered[si] = bool(u[si] >= 1.0 - probs[si])
+                # ★ B 项：派给死人 = 份额空转，**不发帧**（不可能送达）。
+                if alive_before[si]:
+                    ai = si
+                    n_attempts[ai] += 1
+                    delivered[ai] = bool(u[ai] >= 1.0 - probs[ai])
 
             costs_step = [float("nan")] * n_users
             for i in range(n_users):
@@ -495,14 +669,15 @@ def run_multiuser(
                     continue
                 res = envs[i].step(controllers[i].act(est[i]))
                 nxt = np.asarray(res.obs, dtype=np.float32)
-                c = float(cost_fn(nxt))
+                c = float(cfs[i](nxt))
                 costs_step[i] = c
+                true_obs[i] = nxt.copy()
                 ep_dist[i].append(c)
                 ep_alive[i] += 1
-                cost_last[i] = c
                 if delivered[i]:
                     est[i] = nxt.copy()
                     last_obs[i] = nxt.copy()
+                    cost_est[i] = float(cfs[i](nxt))   # ★ A 项：只有送达才更新估计代价
                     n_frames[i] += 1
                     age[i] = 0
                 else:
@@ -512,7 +687,8 @@ def run_multiuser(
 
             records.append(StepRecord(
                 episode=int(e), t=int(t), served_idx=int(si),
-                delivered_idx=int(si if (si >= 0 and delivered[si]) else -1),
+                attempted_idx=int(ai),
+                delivered_idx=int(ai if (ai >= 0 and delivered[ai]) else -1),
                 ages=tuple(int(x) for x in ages_before),
                 costs=tuple(costs_step),
                 alive=tuple(bool(x) for x in alive_before),
@@ -529,12 +705,17 @@ def run_multiuser(
         budget_used += used_ep
         n_steps += t
 
+    dr = delivery_rate(records, n_users)
     return {
         "records": records,
         "per_user_cost": [float(np.mean(x)) if x else float("nan") for x in tail],
         "per_user_survival": [float(np.mean(x)) if x else float("nan") for x in surv],
+        "budget_reserved": int(dr["budget_reserved"]),
+        "budget_attempted": int(dr["budget_attempted"]),
+        "budget_wasted": int(dr["budget_wasted"]),
         "budget_used": int(budget_used),
         "budget_cap_per_episode": int(budget_cap),
         "n_steps": int(n_steps),
         "n_users": int(n_users),
+        "window": int(max_steps),
     }

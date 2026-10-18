@@ -93,6 +93,19 @@ python scripts/34_ppo_diagnosis.py --smoke
 python scripts/34_ppo_diagnosis.py --sb3-configs aligned,default,ab_nsteps,ab_epochs,ab_ent
 ```
 
+# 17) ★ 多用户资源层（T8–T12）：N 个用户竞争同一份**帧预算**，成功概率由"派给谁"决定
+#     T8 接口契约（wmlab/eval/multiuser.py 的模块 docstring：信息集 / 预算 / 五类记账 / 不变量）
+#     T9 E1=N=1 逐位回归（3 种子 hex 相同）、N=2 冒烟、SINRSuccess（q(csi)=exp(-κ/csi)）
+#     T12 四臂 × 两档预算 × 3 种子 × 30 集（uav + cartpole，AR(1) 异质链路），CPU ~13 s
+#     ★ 定长窗口 + 终止吸收代价（window_cost）：**早死必须更贵**，尾均值会把它算便宜
+#     ★ 四个臂只在 alive 用户里选：派给死人的份额空转会令"各臂可用预算"不等
+python scripts/39_t9_e1_n1_regression.py     # N=1 逐位回归（护栏，改口径不许破它）
+python scripts/40_t9_n2_smoke.py             # N=2 记账冒烟（含 I6 空转反例）
+python scripts/41_t9_sinr_success_n1_regression.py
+python scripts/43_t9_fix_abc_selfcheck.py    # 信息边界 / 死亡记账 / 终止代价，24 条
+python scripts/42_t12_hetero_four_arms.py    # 四臂 × 两档 × 3 种子（产物见 results/）
+```
+
 换环境只换配置，代码不动（长视界那轮就是这么做控制变量的）：
 
 ```bash
@@ -113,7 +126,11 @@ wmlab/
 scripts/    可直接运行的入口脚本（编号即依赖顺序；00 = 环境自检）
 configs/    YAML 配置（device: auto 时自动选 cuda 或 cpu）
 outputs/    ★ 结果图与日志，已 gitignore
+results/    ★ 需要**外部可核验**的小体积汇总（逐 episode J / 判据输出），**入库**
 ```
+
+> ★ 为什么要有 `results/`：`outputs/` 被 gitignore ⇒ 只放在那里的数字别人复核不了。
+> `results/` 只放"小到能进库、又足以重算结论"的汇总（逐 episode、逐用户），全量原始表仍在 `outputs/`。
 
 ## 设计约定（为云 GPU 迁移服务）
 
