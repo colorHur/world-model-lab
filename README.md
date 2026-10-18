@@ -103,8 +103,10 @@ python scripts/39_t9_e1_n1_regression.py     # N=1 逐位回归（护栏，改�
 python scripts/40_t9_n2_smoke.py             # N=2 记账冒烟（含 I6 空转反例）
 python scripts/41_t9_sinr_success_n1_regression.py
 python scripts/43_t9_fix_abc_selfcheck.py    # 信息边界 / 死亡记账 / 终止代价，24 条
-python scripts/44_t13_lookahead_selfcheck.py # 前瞻臂 8 条（含"反事实不扰动主轨迹"）
+python scripts/44_t13_lookahead_selfcheck.py # 前瞻臂 12 条（H=1 逐位回归 / H=3 暴力对照 / 解析视界 / 接线守卫）
 python scripts/42_t12_hetero_four_arms.py    # 五臂 × 两档 × 3 种子（产物见 results/）
+python scripts/45_t14_horizon_arms.py        # 视界 H∈{1,5,20} × 两档 × 3 种子（99 s）
+python scripts/46_t14_failure_timescale.py   # 断服失效时间尺度（诊断，非判据）
 ```
 
 # 18) ★ T13 `lookahead`（期望 1 步前瞻）——**负结果，已归档**
@@ -112,6 +114,15 @@ python scripts/42_t12_hetero_four_arms.py    # 五臂 × 两档 × 3 种子（�
 #     原因（可证）：CartPole 代价是 0/1 阈值函数 ⇒ 1 步 rollout 的代价差**恒为 0**
 #     （实测 cart_gain = 0.00e+00，6000 次决策 0 正 0 负）⇒ 臂必然恒选 UAV = max-channel
 #     ⇒ 见 04-实验与代码/2026-10-19-T13-lookahead结果-v0.1.md §2；下一假设 H3 = 视界 H∈{5,20}
+
+# 19) ★ T14 多步前瞻（H=1/5/20）——**负结果，已归档**：视界不是瓶颈
+#     cart_gain(H) = 0.0000 / 0.0128 / 0.0296（H=1/5/20；门槛 0.1·s_cart = 0.0956）
+#     geo(H=20) = 1.041 / 1.015，仍差于 `max-age`（0.944 / 0.801）
+#     ★ 机制（scripts/46 实测）：CartPole 断服中位 10 步（≤20 步 100%）⇒ H=20 **已覆盖**失效窗口；
+#       UAV 恒定 53 步（≤20 步 0%）⇒ 要覆盖它得 H≥53，但那是另一个假设，不是本轮判据的补救
+#     ★ 真正的短板是**目标函数**：`age` 把 CartPole 的送达间隔压在中位 3 步（0.5% ≥10 步），
+#       `la20` 拉到中位 6 步（22% ≥10 步）⇒ 逐步边际价值在此系统上系统性低估"脆弱任务"的需求
+#     ⇒ 见 04-实验与代码/2026-10-19-T14-多步前瞻视界结果-v0.1.md；下一假设 H4 = 归一化年龄/约束式分配
 
 换环境只换配置，代码不动（长视界那轮就是这么做控制变量的）：
 
