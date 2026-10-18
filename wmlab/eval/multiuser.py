@@ -45,9 +45,12 @@
      ★ 这条会让 oracle 的优势变小（更保守），是刻意选的保守方向；
      它同时是一个待拍板项（见 T8 文档 §6-Q2）。
 
-状态（2026-10-18）：**接口已钉死，实现为零**。本文件所有可执行体都 `raise NotImplementedError`，
-唯一通过的自检是「能 import」（T8 文档 §7 第 3 步）。T8 文档 §3.1 表里 T8 只能记「部分」：
-Q1–Q4 未拍板，其中 **Q4（N 个用户的任务代价怎么合成一个比）未定前 T9 不得开工**。
+状态（2026-10-18 T9 起）：**接口已钉死；实现只到 E1 这一层**。
+- 已实现：`delivery_rate`、`run_multiuser`（闭环骨架）、`ConstantSuccess`（**仅 E1 对齐用**）。
+- 未实现：`SINRSuccess`（csi → 成功概率的物理映射）、N>1 的冒烟、I1–I6 的逐条自检。
+- ★ 2026-10-18 20:15 起，「Q4（N 个用户的任务代价怎么合成一个比）未定前 T9 不得开工」**作废**：
+  Q4 约束的是**报出来的那个比怎么合成**，T9–T11 的代码不编码任何聚合口径，聚合在离线做。
+  边界改为：**T12 跑出任何 `oracle`/`round-robin` 比值之前，Q4 签注框必须已勾**（计划 §3.1）。
 """
 
 from __future__ import annotations
@@ -57,7 +60,9 @@ from typing import Callable, Sequence
 
 import numpy as np
 
-__all__ = ["UserSlot", "View", "Allocation", "Allocator", "StepRecord", "delivery_rate"]
+__all__ = ["UserSlot", "View", "Allocation", "Allocator", "StepRecord", "delivery_rate",
+           "MissingStateError", "SuccessModel", "ConstantSuccess", "default_uav_cost",
+           "run_multiuser"]
 
 
 @dataclass(frozen=True)
@@ -163,8 +168,11 @@ class StepRecord:
         delivered_idx: 本步**真正送达**的用户（-1 = 没送达）。
             `served_idx != delivered_idx` 时（served 但丢包）两者不同，这是 T9 SINR 层的证据。
         ages: 长度 N 的年龄（**决策前**的值，即分配器看到的那个）。
-        costs: 长度 N 的该步任务代价。
-        alive: 长度 N 的存活标志。
+        costs: 长度 N 的该步任务代价（`alive=False` 的用户填 `nan`）。
+        alive: 长度 N 的存活标志（**决策前**的值 —— 与 `ages` 同一时点）。
+            ★ 为什么必须与 `ages` 同时点：若记成"步进之后"的值，
+              本步刚死掉的用户会被 `delivery_rate` 从分母里剔掉，
+              而它本步确实被派过帧 ⇒ 送达率被低估（I6 的直接后果）。
     """
 
     episode: int
@@ -193,4 +201,243 @@ def delivery_rate(records: Sequence[StepRecord], n_users: int) -> dict:
       单看 p_eff = 0.5 无法判断是"N=2 且每次成功"还是"N=4 且一半丢失"。
       判-01 §4 的风险正是"档位看着紧、其实松"，唯一防法是这两个数一起报。
     """
-    raise NotImplementedError("T9 才实现：本文件只是接口契约（T8），不许在这里落数字")
+    frames = [0] * n_users
+    alive_steps = [0] * n_users
+    budget_used = 0
+    for r in records:
+        budget_used += int(r.served_idx >= 0)
+        for i in range(n_users):
+            if i < len(r.alive) and bool(r.alive[i]):
+                alive_steps[i] += 1
+                if int(r.delivered_idx) == i:
+                    frames[i] += 1
+    per_user = [(frames[i] / alive_steps[i]) if alive_steps[i] else float("nan")
+                for i in range(n_users)]
+    p_eff = [(1.0 - x) if x == x else float("nan") for x in per_user]
+    return {
+        "per_user": per_user,
+        "p_eff": p_eff,
+        "budget_used": int(budget_used),
+        # ★ 按本函数契约，这里是"总帧位"（= records 数），不是计划的 `budget_total`。
+        #   两者只有在 budget_total == max_steps 且无提前终止时相等，别混用。
+        "budget_total": len(records),
+        "n_users": int(n_users),
+        "frames": [int(x) for x in frames],
+        "alive_steps": [int(x) for x in alive_steps],
+    }
+
+
+# ================================================================ 资源层（T9）
+class MissingStateError(RuntimeError):
+    """分配器/资源层读到 `None` 形态的必需字段（I3）。**不许拿 0 / False 顶替。**"""
+
+
+SuccessModel = Callable[[View, Allocation], np.ndarray]
+"""`(View, Allocation) -> 长度 N 的每用户成功概率 ∈ [0,1]`。
+
+★ 为什么成功概率要依赖 `Allocation`：预算按帧记（I1），每步**至多一个**用户被派帧（I5）
+  ⇒ 本步没有同频干扰，SINR 只由"被服务的是谁"决定（该用户的 `csi`）。
+  这是 T8 接口的直接后果，不是简化假设；若将来放宽到多帧并发，签名不用改，只改实现。
+"""
+
+
+@dataclass(frozen=True)
+class ConstantSuccess:
+    """每用户恒定成功概率 —— **E1 专用对齐装置，不是物理信道**。
+
+    存在的唯一理由：让"多用户资源层 + N=1"与单用户 `lossy_schedule(p)` 走**同一条**
+    随机数路径（同样每步 1 次抽样、同样判决式 `u >= 1−q`），E1 才能是逐位回归。
+    `q = 0.7` ⇔ `lossy_schedule(0.3)`。
+
+    ★★ 不得用它产出任何 Gate 数字：它把"通信约束"又写回外生常数，
+       正是 T9 要消灭的那种做法。它只允许出现在自检脚本里。
+    """
+    q: float
+
+    def __call__(self, view: "View", alloc: "Allocation") -> np.ndarray:
+        return np.full(len(view.slots), float(self.q), dtype=float)
+
+
+def default_uav_cost(obs: np.ndarray) -> float:
+    """UAV 任务代价 = `‖p_drone − p_target‖`，与 `control.py` 的 `dist` 逐位同口径。"""
+    o = np.asarray(obs, dtype=np.float32)
+    return float(np.linalg.norm(o[0:2] - o[4:6]))
+
+
+def run_multiuser(
+    envs: Sequence,
+    controllers: Sequence,
+    allocator: Allocator,
+    success: SuccessModel,
+    *,
+    n_episodes: int = 30,
+    seed: int = 0,
+    max_steps: int = 200,
+    warmup_steps: int = 0,
+    budget_total: int | None = None,
+    cost_fn: Callable[[np.ndarray], float] | None = None,
+    tail_frac: float = 0.25,
+) -> dict:
+    """多用户闭环骨架：**分配 → 成功概率 → 送达 → 步进 → 记账**，逐 step 落原始表。
+
+    时序（与 `multiuser.py` 模块头的第 1–5 步一一对应）
+    ------------------------------------------------------------------
+        第 t 步：build_view(t) → allocator(view) → 抽信道 → 各存活用户 step → 写 StepRecord
+
+    ★ 与 `control.py:run_closed_loop_control` 的唯一差别：**谁被服务是决策**，不是外生调度。
+      N=1 + 恒成功率时两者必须**逐位一致**（E1 的判据）；不一致只可能是抽样次数/顺序错。
+
+    ★★ 两条随机数纪律（I4 的实现方式，写死以免日后被"优化"掉）
+    ------------------------------------------------------------------
+    1. **信道流与分配器流分开**：`rng_ch = default_rng(seed)` 只管送达判决；
+       `rng_alloc = default_rng([seed, 2**31−1])` 才交给分配器。
+       混用一个流 ⇒ ε-greedy 类臂多抽一次就改掉后面所有送达骰子，"换臂"变成"换轨迹"。
+    2. **信道每步固定抽 `n_users` 个 double，与"谁被服务"无关**。两个后果都是要的：
+       ① N=1 时抽样次数 = 每步 1 次，与 `lossy_schedule` 逐位相同（E1 的前提）；
+       ② 同种子跨臂 ⇒ **公共随机数**：第 t 步、第 i 个用户的骰子与臂无关，
+          于是"臂 A 与臂 B 的差"不再混入信道噪声。
+       代价：未服务用户的骰子被浪费掉。这个浪费是**刻意的**，不要改成"只给被派帧的人抽"。
+
+    Returns:
+        {"records": [StepRecord…],                 # Gate 2 要的原始表
+         "per_user_cost": [均值(逐集尾均)…],        # 与 `mean_dist_tail` 同口径
+         "per_user_survival": [均值(存活步数)…],
+         "budget_used": int, "budget_cap_per_episode": int,
+         "n_steps": int, "n_users": int}
+    """
+    n_users = len(envs)
+    if len(controllers) != n_users:
+        raise ValueError(f"envs/controllers 数量不等：{n_users} vs {len(controllers)}")
+    cost_fn = cost_fn or default_uav_cost
+    budget_cap = int(max_steps if budget_total is None else budget_total)
+    if budget_cap < 0:
+        raise ValueError("budget_total 必须 ≥ 0（单位 = 帧）")
+
+    rng_ch = np.random.default_rng(int(seed))
+    rng_alloc = np.random.default_rng([int(seed), 2 ** 31 - 1])
+
+    records: list[StepRecord] = []
+    tail: list[list[float]] = [[] for _ in range(n_users)]
+    surv: list[list[int]] = [[] for _ in range(n_users)]
+    budget_used = 0
+    n_steps = 0
+
+    for e in range(int(n_episodes)):
+        obs = [np.asarray(env.reset(seed=int(seed) + e), dtype=np.float32).copy()
+               for env in envs]
+        est = [o.copy() for o in obs]
+        for i, c in enumerate(controllers):
+            c.reset(obs[i])
+
+        alive = [True] * n_users
+        age = [0] * n_users
+        n_frames = [0] * n_users
+        n_attempts = [0] * n_users
+        last_obs = [o.copy() for o in obs]
+        # ★ E1/首次冒烟：csi 恒为 1（等价于"信道质量不随用户变"）。
+        #   SINR 版（csi 由环境给出）尚未实现，属 T9 剩余项，不在此处假装接线。
+        csi = [1.0] * n_users
+        cost_last = [float("nan")] * n_users
+        ep_dist: list[list[float]] = [[] for _ in range(n_users)]
+        ep_alive = [0] * n_users
+
+        # ---------- 预热：每步送真值，控制器先收敛到稳态（不消耗任何 rng）----------
+        for _ in range(int(warmup_steps)):
+            for i in range(n_users):
+                if not alive[i]:
+                    continue
+                res = envs[i].step(controllers[i].act(est[i]))
+                est[i] = np.asarray(res.obs, dtype=np.float32).copy()
+                if res.terminated or res.truncated:
+                    alive[i] = False
+
+        t = 0
+        used_ep = 0
+        while t < int(max_steps) and any(alive):
+            t += 1
+            alive_before = list(alive)
+            ages_before = list(age)
+            slots = tuple(
+                UserSlot(idx=i, alive=bool(alive[i]), age=int(age[i]),
+                         last_obs=last_obs[i], n_frames=int(n_frames[i]),
+                         n_attempts=int(n_attempts[i]), csi=float(csi[i]),
+                         cost_last=float(cost_last[i]))
+                for i in range(n_users)
+            )
+            view = View(t=int(t), slots=slots, budget_left=int(budget_cap - used_ep),
+                        budget_total=int(budget_cap), privileged=None)
+
+            alloc = allocator(view, rng_alloc)
+            served = np.asarray(alloc.served, dtype=bool).reshape(-1)
+            if served.shape != (n_users,):
+                raise ValueError(f"served 形状必须是 ({n_users},)，收到 {served.shape}")
+            n_served = int(served.sum())
+            if n_served > 1:
+                raise RuntimeError(f"I1/I5 违约：一步派出 {n_served} 帧（上限 1）")
+            if n_served and used_ep >= budget_cap:
+                raise RuntimeError(f"I1 违约：预算 {budget_cap} 帧已用尽仍要派帧")
+            used_ep += n_served
+
+            probs = np.asarray(success(view, alloc), dtype=float).reshape(-1)
+            if probs.shape != (n_users,):
+                raise ValueError(f"success 返回形状必须是 ({n_users},)，收到 {probs.shape}")
+            if np.any((probs < 0.0) | (probs > 1.0)):
+                raise ValueError(f"成功概率越界：{probs.tolist()}")
+
+            u = rng_ch.random(n_users)      # ★ 固定抽 n_users 个，见 docstring 纪律 2
+            delivered = np.zeros(n_users, dtype=bool)
+            si = -1
+            if n_served:
+                si = int(np.flatnonzero(served)[0])
+                n_attempts[si] += 1
+                delivered[si] = bool(u[si] >= 1.0 - probs[si])
+
+            costs_step = [float("nan")] * n_users
+            for i in range(n_users):
+                if not alive_before[i]:
+                    continue
+                res = envs[i].step(controllers[i].act(est[i]))
+                nxt = np.asarray(res.obs, dtype=np.float32)
+                c = float(cost_fn(nxt))
+                costs_step[i] = c
+                ep_dist[i].append(c)
+                ep_alive[i] += 1
+                cost_last[i] = c
+                if delivered[i]:
+                    est[i] = nxt.copy()
+                    last_obs[i] = nxt.copy()
+                    n_frames[i] += 1
+                    age[i] = 0
+                else:
+                    age[i] += 1
+                if res.terminated or res.truncated:
+                    alive[i] = False
+
+            records.append(StepRecord(
+                episode=int(e), t=int(t), served_idx=int(si),
+                delivered_idx=int(si if (si >= 0 and delivered[si]) else -1),
+                ages=tuple(int(x) for x in ages_before),
+                costs=tuple(costs_step),
+                alive=tuple(bool(x) for x in alive_before),
+            ))
+
+        for i in range(n_users):
+            d = ep_dist[i]
+            if d:
+                k = max(1, int(round(len(d) * float(tail_frac))))
+                tail[i].append(float(np.mean(d[-k:])))
+            else:
+                tail[i].append(float("nan"))
+            surv[i].append(int(ep_alive[i]))
+        budget_used += used_ep
+        n_steps += t
+
+    return {
+        "records": records,
+        "per_user_cost": [float(np.mean(x)) if x else float("nan") for x in tail],
+        "per_user_survival": [float(np.mean(x)) if x else float("nan") for x in surv],
+        "budget_used": int(budget_used),
+        "budget_cap_per_episode": int(budget_cap),
+        "n_steps": int(n_steps),
+        "n_users": int(n_users),
+    }
