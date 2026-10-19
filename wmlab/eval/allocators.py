@@ -40,7 +40,7 @@ import numpy as np
 from .multiuser import Allocation, MissingStateError, View, require_privileged
 
 __all__ = ["RoundRobin", "MaxAge", "MaxChannel", "TrueError", "Lookahead", "NormalizedAge",
-           "ALIVE_ONLY_NOTE"]
+           "QuotaPacing", "ALIVE_ONLY_NOTE"]
 
 
 ALIVE_ONLY_NOTE = (
@@ -341,4 +341,121 @@ class Lookahead:
                                "mat": mat.tolist(),
                                "alive": [bool(s.alive) for s in view.slots]})
         return _alloc(n, i, f"{self.name}:argmin-expected-cost-H{int(self.horizon)}")
+
+
+@dataclass
+class QuotaPacing:
+    """**配额 + 配速**：把 `quotas[i]` 帧按 `B/L` 的速率**铺满整个窗口**，而不是先到先用完。
+
+    规则（预注册：`04-实验与代码/2026-10-19-T16-配额配速-预注册-v0.1.md` §3）::
+
+        d_i(t) = eff_i(t) · t / L − used_i          # 累计配额赤字（L = window）
+        eff_i(t) = quotas[i]                       # reclaim=False（严格 I6）
+                 = quotas[i] + dead_q·quotas[i]/Σ_alive quotas   # reclaim=True
+        cand   = argmax_{i ∈ alive} d_i(t)           # 同分取 idx 小
+        serve  = cand  若 d_cand(t) ≥ 0.5  否则不派
+        used_cand += 1
+
+    ★★ 存在的理由（2026-10-19 T16 实测，不是设想）
+      现有四个臂一旦 `budget_left > 0` 就每步派帧 ⇒ **第 t 步累计已用 = t** ⇒
+      `t = B` 时预算归零，此后窗内剩下的 `L − B` 步**完全断服**。
+      B=100 / L=200 时实测：`rr`、`age` 的「最后一次发帧」精确在 t=100，`t>100` 发帧数 **0**
+      （2 集 × seed 0，见 T16 预注册 §1）。
+      ⇒ 那一档的 `J` 混着"窗口后半段没人服务"，不能直接当"策略能力上限"读。
+      本臂就是把这个缺陷单独拿出来当一个变量：**同样的帧数，改成匀速铺开**。
+
+    ★ 三条硬性质
+      1. **配额硬上界（解析）**：`d ≥ 0.5` ⇒ `used_i ≤ quotas[i]·t/L − 0.5 < quotas[i]`
+         （因 `t ≤ L`）⇒ 只要 `Σ quotas ≤ budget_total`，**不可能**触发 I1 预算违约。
+      2. **均匀铺开**：`Σ quotas = B` 时支出速率被 `B/L` 卡住 ⇒ 帧铺满 `[1, L]`。
+      3. **不转嫁（沿用 I6，默认）**：`alive=False` 不进候选，其配额**空转**。
+         `reclaim=True` 时才按比例收回（理由见 `reclaim` 字段 docstring：
+         不收回会把"配速"与"总帧数更少"混成一个变量）。
+
+    ★ 信息边界：只读 `view.t`、`view.budget_left`、`slots[i].alive` 与自身计数器。
+      **无特权信息**（不读 `privileged` / `cost_est`）⇒ `diagnostic=False` 可跑。
+      ⚠ `View.t` 是公开字段（runner 每步给），不是特权量。
+
+    ★ 诚实标注：**不是新算法主张**。加权轮询 / deficit round robin 是网络调度的标准件；
+      本臂的定位是**机制验证**——"配速 vs 前紧后松"这一个变量值多少 `geo`。
+
+    ★ `_used` 的复位：靠"`t` 不递增 ⇒ 新 episode"判定（runner 每集 t 从 1 重置）。
+      不用 `t == 1` 单条件，因为**首集首步与后续集首步无法区分**；用 `t <= _last_t` 才唯一。
+    """
+
+    quotas: Sequence[int]
+    window: int
+    name: str = "quota"
+    reclaim: bool = False
+    """死亡用户的**未用配额**是否按存活用户的配额比例收回（默认 False = 严格 I6 不转嫁）。
+
+    ★ 为什么必须有这个开关（2026-10-19 T16 自检实测，看结果之前决定的）
+      严格 I6 下，CartPole 第 ~40 步死掉后它的 50 帧配额**永远空转**，
+      实测 B=100 `(50,50)` 每集只花 **54/100** 帧。于是"配速"这个变量会与
+      "总共花了更少的帧"混在一起，而后者本身就会让结果变差 —— 归属未定（同 #35 型）。
+      开 `reclaim=True` 时把死者的未用配额按比例分给存活用户，
+      `Σ eff_i = Σ quotas_i ≤ budget_total` ⇒ **总支出仍被 B 卡死**，只改"给谁"。
+      两条硬性质仍成立：`used_i ≤ eff_i`（逐时刻），且 `eff_i` 只随死亡单调增 ⇒ 不会 I1 违约。
+    """
+    _used: list = field(default_factory=list, init=False, repr=False)
+    _last_t: int = field(default=-1, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        q = []
+        for k, v in enumerate(self.quotas):
+            if isinstance(v, bool) or not isinstance(v, (int, float)):
+                raise ValueError(f"quotas[{k}] 必须是整数，收到 {v!r}")
+            if float(v) != int(v):
+                raise ValueError(f"quotas[{k}] 必须是整数（不许静默截断），收到 {v!r}")
+            if int(v) < 0:
+                raise ValueError(f"quotas[{k}] 必须 ≥ 0，收到 {v!r}")
+            q.append(int(v))
+        if not q:
+            raise ValueError("quotas 不能为空")
+        if int(self.window) <= 0:
+            raise ValueError(f"window 必须 > 0，收到 {self.window!r}")
+        self.quotas = q
+        self.window = int(self.window)
+
+    @property
+    def used(self) -> list[int]:
+        """本 episode 已派帧数（逐用户）。诊断用，**不要**拿它当判据。"""
+        return list(self._used)
+
+    def __call__(self, view: View, rng: np.random.Generator) -> Allocation:
+        n = len(view.slots)
+        if len(self.quotas) != n:
+            raise ValueError(f"quotas 长度 {len(self.quotas)} != N {n}（接线错误）")
+
+        t = int(view.t)
+        if not self._used:
+            self._used = [0] * n
+        elif t <= self._last_t:                 # t 不递增 ⇒ 新一集开始
+            self._used = [0] * n
+        self._last_t = t
+        L = int(self.window)
+
+        if int(view.budget_left) <= 0:
+            return _alloc(n, -1, "quota:budget-exhausted")
+        if t > L:                               # 窗口外不再花（否则"铺满窗口"的口径失效）
+            return _alloc(n, -1, "quota:beyond-window")
+
+        deficit = {}
+        alive_idx = [s.idx for s in view.slots if s.alive]
+        if not alive_idx:
+            return _alloc(n, -1, "quota:no-alive")
+        dead_q = sum(q for i, q in enumerate(self.quotas) if i not in alive_idx)
+        tot_alive_q = sum(self.quotas[i] for i in alive_idx)
+        for i in alive_idx:
+            eff = self.quotas[i]
+            if self.reclaim and dead_q > 0:
+                eff = self.quotas[i] + (dead_q * self.quotas[i] / tot_alive_q
+                                        if tot_alive_q > 0 else dead_q / float(len(alive_idx)))
+            deficit[i] = eff * (t / float(L)) - self._used[i]
+
+        i = _pick_alive(view, lambda j: deficit[j], maximize=True)
+        if not (deficit[i] >= 0.5):             # ← 配速闸门：还没到该发的时点
+            return _alloc(n, -1, "quota:pace-hold")
+        self._used[i] += 1
+        return _alloc(n, i, f"{self.name}:quota-{self.quotas[i]}-used-{self._used[i]}")
 

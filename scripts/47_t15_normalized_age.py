@@ -470,6 +470,10 @@ def _dump(payload, cells, summary, h4, n_ep, seeds):
     (ROOT / "outputs").mkdir(exist_ok=True)
     (ROOT / "outputs" / "47_t15_normalized_age.json").write_text(
         json.dumps({**out, "cells": (cells or [])}, ensure_ascii=False, indent=2), encoding="utf-8")
+    if cells is None:
+        # ★ 2026-10-19 T16：`--skip-experiment` 只跑自检，**不得**覆盖入库证据。
+        #   实测踩点：这条路径把 results/47 的 24 个 cell 写成空表（须 git checkout 才救回）。
+        return
     (ROOT / "results").mkdir(exist_ok=True)
     slim = [{k: c[k] for k in ("budget", "arm", "seed", "J_per_episode", "J_mean",
                                "share_attempts", "link_q", "gap_cart", "gap_uav",
