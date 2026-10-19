@@ -1032,8 +1032,12 @@ def run_multiuser(
                     age[i] = 0
                     if predictor is not None:
                         # 快照必须取"本步已步进"之后的 env（a_t 已烘进状态）⇒ 缓冲清空不重放
+                        # ★ T23-a：把**本步实际施加**的动作交给预测器（`ARX` 学一步映射要它）。
+                        #   此刻缓冲还没清空，最后一项就是 a_t（上面无条件 append 的那一条）。
+                        _a_deliv = (np.asarray(actions_since[i][-1]).copy()
+                                    if actions_since[i] else None)
                         predictor.observe_delivery(i, nxt, age_before=int(ages_before[i]),
-                                                   env=envs[i])
+                                                   env=envs[i], action=_a_deliv)
                         actions_since[i] = []
                 else:
                     age[i] += 1

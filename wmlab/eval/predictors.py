@@ -12,9 +12,13 @@ T12–T21 的全部数字都建立在**一件事**上：接收端的估计观测
 ------------------------------------------------
 每个预测器只允许用下面这张表里的东西，越界就是"偷真值"：
 
-    ZOH      最后一次送达的观测
-    Linear   最近两次送达的观测（差分估速度）
-    TrueDyn  `deepcopy` 的 env + **自己实际施加过的动作**（诊断特权，只作上界）
+    ZOH              最后一次送达的观测
+    Linear           最近两次送达的观测（差分估速度）
+    ARX              最近两次送达的观测 + 两次之间实际施加的动作（只学 gap==1 的一步映射）
+    TrueDyn          `deepcopy` 的 env + **自己实际施加过的动作**（诊断特权，只作上界）
+
+`LinearTargetOnly` / `LinearSelfOnly` 是 `Linear` 的**维度切片**变体（机制分解，
+不是可部署方法）；它们与上面四个共用同一张信息集表。
 
 三者**都不读 `View` / `View.privileged`**：预测器拿不到 `privileged`，这是结构性保证
 （`predict()` 的签名里根本没有 view），不是"我们保证不读"。`scripts/53` 的 S3 另外用
@@ -43,7 +47,22 @@ from typing import Sequence
 
 import numpy as np
 
-__all__ = ["PredictorBase", "ZOH", "Linear", "TrueDyn", "make_predictor"]
+__all__ = ["PredictorBase", "ZOH", "Linear", "TrueDyn", "ARX",
+           "LinearTargetOnly", "LinearSelfOnly", "make_predictor"]
+
+
+def _linear_extrapolate(st: dict, age: int) -> np.ndarray:
+    """局部线性外推 `x̂ = x_last + age·v`，`v = (x_last − x_prev)/gap_prev`。
+
+    ★ 抽成模块级函数（T23-a）是为了让 `Linear` 与 `ARX` 的**退化路径**共用同一份实现：
+      预注册 §5-A3 要求"样本不足时 ARX 与 Linear 逐位相同"，两份实现各写一遍迟早会分叉，
+      而分叉之后"A3 PASS"就变成了"A3 恰好在那几个 bit 上相同"。
+    """
+    prev, gap = st.get("prev_obs"), int(st.get("gap_prev", 0))
+    if prev is None or gap <= 0 or age == 0:
+        return st["last_obs"]
+    v = (np.asarray(st["last_obs"], dtype=np.float64) - prev) / float(gap)
+    return st["last_obs"] + float(age) * v
 
 
 class PredictorBase:
@@ -70,7 +89,7 @@ class PredictorBase:
         """每集开头清空全部用户状态（不跨集泄漏，等价于 I6 的"跨集不继承"）。"""
         self._st = {}
 
-    def observe_delivery(self, i: int, obs, *, age_before: int, env=None) -> None:
+    def observe_delivery(self, i: int, obs, *, age_before: int, env=None, action=None) -> None:
         """一帧送达：把历史前移一格，并把新观测记为 `last_obs`。
 
         Args:
@@ -78,12 +97,17 @@ class PredictorBase:
             obs: 本步送达的观测（= 该步 `env.step()` 返回的 `nxt`）。
             age_before: **决策时点**的年龄（该步尚未结算），用来推 `gap_prev`。
             env: 仅 `consumes_env=True` 的预测器需要（快照源）。
+            action: 本步**实际施加**的动作（T23-a 新增，可选）。只有 `ARX` 用它学一步映射；
+                `ZOH`/`Linear`/`TrueDyn` 忽略它。**必须是 `act()` 的返回值**（即真正喂给
+                `env.step` 的那个），不是命令值 —— 下行有损时这两者才会不同（当前下行理想）。
         """
         i = int(i)
         st = self._st.setdefault(i, {})
         prev = st.get("last_obs")
         st["prev_obs"] = None if prev is None else np.asarray(prev, dtype=np.float64).copy()
         st["gap_prev"] = (int(age_before) + 1) if prev is not None else 0
+        st["last_action"] = (None if action is None
+                             else np.asarray(action, dtype=np.float64).reshape(-1).copy())
         st["last_obs"] = np.asarray(obs, dtype=np.float32).reshape(-1).copy()
         st["n_deliveries"] = int(st.get("n_deliveries", 0)) + 1
         if self.consumes_env and env is None:
@@ -128,6 +152,11 @@ class PredictorBase:
             out.extend(st.values())
         return out
 
+    def describe(self) -> dict:
+        """机器可读的自述（T23-a：`ARX` 必须能区分"在学"与"在退"）。"""
+        return {"name": self.name, "consumes_env": bool(self.consumes_env),
+                "n_users": len(self._st)}
+
 
 class ZOH(PredictorBase):
     """零阶保持 = **现状**（`83340e1` 的行为）。它的存在意义是回归红线。
@@ -156,11 +185,199 @@ class Linear(PredictorBase):
     name = "linear"
 
     def _predict(self, i: int, st: dict, *, age: int, actions_since: list) -> np.ndarray:
+        return _linear_extrapolate(st, age)
+
+
+class ARX(PredictorBase):
+    """**动作条件一步映射**（T23-a）：`x_{k+1} ≈ A x_k + B a_k + c`，递推最小二乘 + 相对 ridge。
+
+    为什么需要它（预注册 §1）
+    ------------------------
+    T22 只有 `Linear`，而 `Linear` **只用观测、不用动作**。稳定控制器会持续反向修正，
+    按惯性外推必然过冲 ⇒ 若 T23-b 里 `Linear` 输给 `ZOH`，**无法区分**"这个弱预测器不行"
+    与"预测补偿没有空间"。`ARX` 把前一种解释排除掉：它用**自己实际施加的动作**，
+    且只需"已送达观测 + 自己施加的动作"，不需要任何任务知识。
+
+    样本口径（预注册 §2，写死）
+    --------------------------
+    **只学 `gap == 1` 的送达对** `(x_{k}, a_{k+1}, x_{k+1})`。`gap > 1` 时中间状态未观测，
+    拿一步模型硬套等于把多步误差混进一步拟合；这类对**只计数、不入拟合**（`describe()` 可查）。
+
+    ★ 结构性限制（写在跑之前）：两用户轮流服务时，同一用户的送达间隔常是 2 步 ⇒ `gap==1`
+      样本可能很少，`ARX` 会长期停在退化态。这不是缺陷，是"只用一步对"的口径代价，
+      必须在结果里量化（`scripts/54` 的 A9），并在 T23-b 的解释里带上。
+    """
+
+    name = "arx"
+    consumes_env = False          # ★ 结构性：拿不到 env ⇒ 不可能偷真值
+
+    def __init__(self, ridge_rel: float = 1e-6, min_samples_factor: int = 2) -> None:
+        super().__init__()
+        self.ridge_rel = float(ridge_rel)
+        self.min_samples_factor = int(min_samples_factor)
+        self._fit: dict[int, dict] = {}
+        self._counts: dict[int, dict] = {}
+
+    def reset_episode(self) -> None:
+        super().reset_episode()
+        self._fit = {}
+        self._counts = {}
+
+    # ------------------------------------------------------------ 学
+    def _model(self, i: int, *, dim: int, act_dim: int) -> dict:
+        m = self._fit.get(i)
+        if m is not None and (m["dim"] != dim or m["act_dim"] != act_dim):
+            raise ValueError(f"ARX：用户 {i} 的维度中途变了（{m['dim']}/{m['act_dim']} → "
+                             f"{dim}/{act_dim}）—— 只可能是接线错误")
+        if m is None:
+            F = dim + act_dim + 1
+            m = {"dim": dim, "act_dim": act_dim, "F": F, "n": 0,
+                 "R": np.zeros((F, F), dtype=np.float64),
+                 "b": np.zeros((F, dim), dtype=np.float64), "W": None}
+            self._fit[i] = m
+        return m
+
+    def _on_delivery(self, i: int, st: dict, env) -> None:
+        cnt = self._counts.setdefault(i, {"gap1": 0, "gap_gt1": 0, "no_action": 0})
+        prev, act = st.get("prev_obs"), st.get("last_action")
+        gap = int(st.get("gap_prev", 0))
+        if prev is None:
+            return                                  # 首个观测：没有"上一拍"，学不了
+        if gap != 1:
+            cnt["gap_gt1"] += 1
+            return
+        if act is None:
+            cnt["no_action"] += 1
+            return
+        y = np.asarray(st["last_obs"], dtype=np.float64)
+        x = np.asarray(prev, dtype=np.float64)
+        if x.shape != y.shape:
+            raise ValueError(f"ARX：上一拍观测形状 {x.shape} ≠ 送达观测 {y.shape}")
+        m = self._model(i, dim=int(y.size), act_dim=int(act.size))
+        z = np.concatenate([x, act, np.ones(1, dtype=np.float64)])
+        m["R"] += np.outer(z, z)
+        m["b"] += np.outer(z, y)
+        m["n"] += 1
+        cnt["gap1"] += 1
+        self._solve(m)
+
+    def _solve(self, m: dict) -> None:
+        """相对 ridge：`(R + λ·diag(R) + εI) W = b`。
+
+        ★ 用**相对** ridge 而非固定值：UAV 的位置量级 ~10 m、速度 ~m/s、动作 ~3 m/s²，
+          固定 ridge 会系统性偏向大尺度那一维（等价于给它更强的正则），换个场景就得重调。
+        """
+        F = int(m["F"])
+        d = np.diag(m["R"]).copy()
+        scale = float(d.max()) if F else 0.0
+        if not np.isfinite(scale) or scale <= 0.0:
+            return
+        reg = m["R"] + self.ridge_rel * np.diag(d) + (1e-9 * scale) * np.eye(F)
+        m["W"] = np.linalg.solve(reg, m["b"])
+
+    # ------------------------------------------------------------ 预测
+    def _need(self, dim: int) -> int:
+        return self.min_samples_factor * int(dim)
+
+    def _predict(self, i: int, st: dict, *, age: int, actions_since: list) -> np.ndarray:
+        dim = int(np.size(st["last_obs"]))
+        if age == 0:
+            return st["last_obs"]
+        m = self._fit.get(i)
+        if m is None or m["W"] is None or m["n"] < self._need(dim):
+            return _linear_extrapolate(st, age)      # ★ 显式退化（`describe()` 里可见）
+        x = np.asarray(st["last_obs"], dtype=np.float64).copy()
+        for k, a in enumerate(actions_since):
+            av = np.asarray(a, dtype=np.float64).reshape(-1)
+            if av.size != m["act_dim"]:
+                raise ValueError(f"ARX：第 {k} 个动作维度 {av.size} ≠ 学到的 {m['act_dim']}")
+            x = np.concatenate([x, av, np.ones(1, dtype=np.float64)]) @ m["W"]
+            if not np.all(np.isfinite(x)):
+                raise ValueError(f"ARX：迭代第 {k+1} 步发散（出现 NaN/inf）")
+        return x
+
+    def describe(self) -> dict:
+        users = {}
+        for i, m in sorted(self._fit.items()):
+            need = self._need(m["dim"])
+            users[str(i)] = {"dim": m["dim"], "act_dim": m["act_dim"], "n_samples": m["n"],
+                             "n_needed": need, "degraded": bool(m["n"] < need),
+                             "fitted": m["W"] is not None,
+                             **self._counts.get(i, {})}
+        for i, c in sorted(self._counts.items()):
+            users.setdefault(str(i), {"dim": None, "act_dim": None, "n_samples": 0,
+                                      "n_needed": None, "degraded": True,
+                                      "fitted": False, **c})
+        return {"name": self.name, "consumes_env": False, "ridge_rel": self.ridge_rel,
+                "min_samples_factor": self.min_samples_factor,
+                "users": users,
+                "degraded_users": sorted(int(k) for k, v in users.items() if v["degraded"]),
+                "total_gap1": int(sum(v.get("gap1", 0) for v in users.values())),
+                "total_gap_gt1": int(sum(v.get("gap_gt1", 0) for v in users.values()))}
+
+
+#: 观测里"外部目标"占的维度区间（**读实现核对过**：`wmlab/envs/uav_track.py:_get_obs`
+#: 返回 `concat([uav_p(2), uav_v(2), tgt_p(2)])`）。表里没有的环境 ⇒ 全部维度视为"自身"。
+_TARGET_OBS_DIMS: dict[int, tuple[int, int]] = {6: (4, 6)}
+
+
+class _LinearPartial(Linear):
+    """机制分解用：只外推"目标维"或只外推"自身维"，其余维保持。
+
+    ★★ 不是可部署方法，**只做机制分解**，不进 T23-b 的主判据。
+    ★★ 拆分规则按**观测维度**查表（`_TARGET_OBS_DIMS`），不按环境名：
+      拿不到环境名（预测器本来就不该知道自己在哪个环境），维度是它唯一能看见的东西。
+      CartPole（4 维）不在表里 ⇒ `LinearTargetOnly` 在它上面**就是 `ZOH`**，
+      `LinearSelfOnly` **就是 `Linear`**（逐位，`scripts/54` 的 A5/A6 验）。
+    """
+
+    name = "linear_partial"
+    extrapolate_target = True
+
+    def _mask(self, dim: int) -> np.ndarray:
+        rng = _TARGET_OBS_DIMS.get(int(dim))
+        m = np.zeros(int(dim), dtype=bool)
+        if rng is None:
+            if not self.extrapolate_target:
+                m[:] = True                       # 无目标分量 ⇒ "只外推自身" = 全部
+            return m                              # "只外推目标" ⇒ 空 ⇒ 等价 ZOH
+        lo, hi = rng
+        m[lo:hi] = True
+        return m if self.extrapolate_target else ~m
+
+    def _predict(self, i: int, st: dict, *, age: int, actions_since: list) -> np.ndarray:
+        dim = int(np.size(st["last_obs"]))
+        mask = self._mask(dim)
+        if bool(mask.all()):
+            return _linear_extrapolate(st, age)   # 与 `Linear` 共用实现 ⇒ 逐位一致
+        if not bool(mask.any()):
+            return st["last_obs"]                 # 与 `ZOH` 完全同一条返回路径
         prev, gap = st.get("prev_obs"), int(st.get("gap_prev", 0))
         if prev is None or gap <= 0 or age == 0:
-            return st["last_obs"]          # 无速度估计 ⇒ 退化为 ZOH（预注册 §2）
+            return st["last_obs"]
         v = (np.asarray(st["last_obs"], dtype=np.float64) - prev) / float(gap)
-        return st["last_obs"] + float(age) * v
+        out = np.asarray(st["last_obs"], dtype=np.float64).copy()
+        out[mask] += float(age) * v[mask]
+        return out
+
+    def describe(self) -> dict:
+        dims = sorted({int(np.size(s["last_obs"])) for s in self._st.values() if "last_obs" in s})
+        return {"name": self.name, "consumes_env": False,
+                "extrapolate_target": bool(self.extrapolate_target),
+                "obs_dims": dims,
+                "target_component": {str(d): (d in _TARGET_OBS_DIMS) for d in dims}}
+
+
+class LinearTargetOnly(_LinearPartial):
+    """只外推**外部目标**维（UAV：`obs[4:6]`），自身维保持最后一次送达值。"""
+    name = "linear_target_only"
+    extrapolate_target = True
+
+
+class LinearSelfOnly(_LinearPartial):
+    """只外推**自身**维（UAV：`obs[0:4]`），目标维保持最后一次送达值。"""
+    name = "linear_self_only"
+    extrapolate_target = False
 
 
 class TrueDyn(PredictorBase):
@@ -209,7 +426,8 @@ class TrueDyn(PredictorBase):
         return st["shadow_obs"]
 
 
-_PREDICTORS = {"zoh": ZOH, "linear": Linear, "truedyn": TrueDyn}
+_PREDICTORS = {"zoh": ZOH, "linear": Linear, "truedyn": TrueDyn, "arx": ARX,
+               "linear_target_only": LinearTargetOnly, "linear_self_only": LinearSelfOnly}
 
 
 def make_predictor(name: str | None) -> PredictorBase | None:
