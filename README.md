@@ -109,6 +109,7 @@ python scripts/45_t14_horizon_arms.py        # 视界 H∈{1,5,20} × 两档 × 
 python scripts/46_t14_failure_timescale.py   # 断服失效时间尺度（诊断，非判据）
 python scripts/51_p0_results_io_selfcheck.py # 入库唯一入口 26 条（拒绝覆盖/备份/INDEX/接线，全在临时目录）
 python scripts/52_t21_paced_matching_ablation.py --skip-experiment  # 配速包装器 7 条（含 B=L 恒等 / 裸臂 t>B=0 两条阴性对照）
+python scripts/53_t22_predictor_timing.py --skip-zoh-regression     # 三种预测的时序/信息集 8 组（不带 S2 时 <1 s；带 S2 = 36 cell 逐位回归 44 s）
 ```
 
 > **入库规则（2026-10-19 T20 / P0-3）**：脚本**不得**自己拼 `results/` 路径，一律走
@@ -188,6 +189,28 @@ python scripts/52_t21_paced_matching_ablation.py --skip-experiment  # 配速包�
 #       但 J_cart 0.781 → 0.896（+14.7%）
 #     ⚠ 边界：只测了一种配速时点（均匀铺开）、3 种子、未测预测臂；`Paced` **不是新算法**（token bucket）
 #     ⇒ 见 04-实验与代码/2026-10-19-T21-配速化匹配消融-结果-v0.1.md；证据 `results/runs/…/52_*.json`
+#
+# 23) ★ T22 接收端预测器（`wmlab/eval/predictors.py`）——**先把"接得上"证掉，再说收益**
+#     做法：`est`（控制器看到的状态）从"零阶保持"改为可替换的 `predictor`；
+#       `ZOH`（保持）/ `Linear`（两次送达观测差分外推，**不用动作**）/ `TrueDyn`（`deepcopy` 环境 +
+#       自己实际施加的动作前推，**诊断特权**）。信息集是签名的一部分：三者都**拿不到 `View`**
+#     ★ 回归红线：`predictor=None` 与 `ZOH` **逐位相同**（S1）；`ZOH` 重跑 T21 的 **36 cell**，
+#       逐 episode J 与 `results/52` **逐位相同**（S2，44 s）⇒ 新路径没有改变既有轨迹
+#     ★ 信息集：`diagnostic=True/False` 下 `Linear` 轨迹**逐位相同**（S3）；`age≥2` 时分配器看到的
+#       `last_obs` 仍是**送达值**（S9）⇒ 预测只喂控制器，**没有**免费给所有臂一条"预测真值"通道
+#     ★ 时序：强制"送 2 帧→断服"，送达步误差 **精确 0**、t=3 仍为 0、此后严格增长（S5）；
+#       `actions_since` 长度恒等于 `age`（差一步就会"预测错步数"）；动作逐项等于 `controller.act()`
+#       的返回值、丢帧步照样入缓冲（S6）
+#     ★ `TrueDyn` 在 `age≥1` 步误差**恒等于 0**（S4，精确 0，无容差；反对照 ZOH 中位 0.60）
+#       ⇒ 影子确实在推演，不是静默退化成 ZOH；`TrueDyn` 的 0 误差是**环境确定性**的产物，不是模型好
+#     ★ 影子不得污染主轨迹：换一个"照跑但丢输出"的 `ShadowOnly`，轨迹与 `predictor=None` 逐位相同（S7）
+#     ⚠ **本轮不出收益表**（预注册 §0/§4）。接线冒烟（2 集 × 1 种子 × `age` 臂）里 J 有方向性差异
+#       （ZOH 3.18/2.81 → Linear 0.94/1.09 → TrueDyn 0.39/0.39，逐用户 J_uav/J_cart），
+#       但样本量与环境确定性都不支持任何结论 ⇒ **只当"接对了"的旁证**；收益表留 T23
+#     ⚠ 边界：①下行理想（`est` 直接喂控制器）⇒ 本轮的"实际施加动作"≡"命令"，S6 验的是接线不是鲁棒性；
+#       ②`Linear` **结构性地弱**（忽略控制动作，稳定控制器下必然过冲）⇒ 若 T23 出现 Linear 劣于 ZOH，
+#       **不得**写成"预测无用"；预注册已冻结补救：T23 先加 `ARX`（`x⁺≈Ax+Ba`，在线 RLS）再下结论
+#     ⇒ 预注册 04-实验与代码/2026-10-19-T22-三种预测-预注册-v0.1.md；结果 …-时序确认-v0.1.md
 #
 # [T19] 2026-10-19 · P0 修正（不是新实验，是把证据链本身修到可信）
 #     ★ 原子锁：旧版"先 status 再 write" + 全局共享 `.run.id` ⇒ **无分辨力**。实测对照：

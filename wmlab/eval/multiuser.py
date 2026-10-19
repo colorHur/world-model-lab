@@ -719,6 +719,8 @@ def run_multiuser(
     diagnostic: bool = False,
     counterfactual: bool = False,
     cf_horizon: int = 1,
+    predictor=None,
+    pred_probe: Callable[[dict], None] | None = None,
 ) -> dict:
     """多用户闭环骨架：**分配 → 成功概率 → 送达 → 步进 → 记账**，逐 step 落原始表。
 
@@ -761,6 +763,19 @@ def run_multiuser(
     `H=1` ⇒ 与 T13 的 `counterfactual_next_costs` **逐位相同**（L9 回归）；
     `H>1` ⇒ 逐步平均的 H 步前瞻（t+1 之后按 max-age 基准策略、确定性送达）。
     若 `allocator` 带 `horizon` 属性且与 `cf_horizon` 不一致 ⇒ `ValueError`（R12 接线守卫）。
+
+    ★ `predictor`（2026-10-19 T22）：接收端的估计观测 `est[i]` 从"零阶保持"改为"预测"。
+    `None` ⇒ **完全走既有路径**（逐位回归红线：T12–T21 的全部数字都是这条路径）。
+    非 None 时每步在**动作产生之前**用 `predictor.predict(i, age, actions_since)` 刷新 `est[i]`，
+    送达时 `est ← nxt` 并 `observe_delivery` + 清空该用户的动作缓冲。
+    预测器实现见 `wmlab/eval/predictors.py`（信息集边界写在那里）。
+
+    ★★ 预测**不得**进入分配器的信息集：`View.slots[i].last_obs` / `cost_est` 仍是送达值。
+      否则等于给所有臂免费一条"预测真值"通道，T22 就变成"偷偷放宽信息约束"。
+      `scripts/53` 的 S3/S9 就是为打死这种接法写的。
+
+    ★ `pred_probe`（诊断回调，默认 None）：每步调用一次，payload 见函数末尾的组装代码。
+      只给自检脚本用；不参与任何决策、不写 `results/`。
 
     Returns:
         {"records": [StepRecord…],                 # Gate 2 要的原始表（真值代价 + 五类事件）
@@ -808,6 +823,14 @@ def run_multiuser(
             raise ValueError(
                 f"接线不一致：allocator.horizon={want} 与 cf_horizon={cf_horizon} 不同"
                 f"（臂会拿到错误的视界，且不会报错）")
+
+    if predictor is not None:
+        # ★ 结构检查：缺方法就炸，别让"接了一半"静默跑成 ZOH（那会让 T22 的结论完全落空）
+        for meth in ("reset_episode", "observe_delivery", "predict"):
+            if not callable(getattr(predictor, meth, None)):
+                raise TypeError(f"predictor 缺方法 {meth}（收到 {type(predictor).__name__}）")
+        if getattr(predictor, "consumes_env", False) and not hasattr(predictor, "_on_delivery"):
+            raise TypeError(f"predictor {type(predictor).__name__} 声称 consumes_env 却没实现快照钩子")
 
     warm = ([int(warmup_steps)] * n_users) if np.isscalar(warmup_steps) \
         else [int(x) for x in warmup_steps]
@@ -891,6 +914,15 @@ def run_multiuser(
             last_obs[i] = est[i].copy()
             cost_est[i] = float(cfs[i](est[i]))
 
+        # ★ T22：预测器初态 = "预热末次完整观测免费可得"（与上面 P0-2 的预热同步同一口径，
+        #   否则 `Linear` 会把 t=0 的 reset 观测当成上一个送达点，速度量纲直接错）。
+        actions_since: list[list] = [[] for _ in range(n_users)]
+        if predictor is not None:
+            predictor.reset_episode()
+            for i in range(n_users):
+                if alive[i]:
+                    predictor.observe_delivery(i, last_obs[i], age_before=0, env=envs[i])
+
         t = 0
         used_ep = 0
         while t < int(max_steps) and any(alive):
@@ -961,27 +993,68 @@ def run_multiuser(
                     n_attempts[ai] += 1
                     delivered[ai] = bool(u[ai] >= 1.0 - probs[ai])
 
+            # ★ T22：预测必须在 `act()` 之前刷新 `est`（否则控制器看到的仍是上一拍的保持值），
+            #   且**不得**改 View —— 分配器看到的是 `last_obs`，不是预测值。
+            #   此刻 `actions_since[i]` 恰好有 `age[i]` 项（第 t−d … t−1 步实际施加的动作）。
+            if predictor is not None:
+                for i in range(n_users):
+                    if alive_before[i]:
+                        est[i] = predictor.predict(i, age=int(age[i]),
+                                                  actions_since=actions_since[i])
+            if pred_probe is not None:
+                est_pre = [o.copy() for o in est]
+                true_pre = [o.copy() for o in true_obs]
+                n_since_before = [int(len(actions_since[i])) for i in range(n_users)]
+                acts_now: list = [None] * n_users
+                acts_after: list = [None] * n_users
+
             costs_step = [float("nan")] * n_users
             for i in range(n_users):
                 if not alive_before[i]:
                     continue
-                res = envs[i].step(controllers[i].act(est[i]))
+                act_i = controllers[i].act(est[i])
+                res = envs[i].step(act_i)
                 nxt = np.asarray(res.obs, dtype=np.float32)
                 c = float(cfs[i](nxt))
                 costs_step[i] = c
                 true_obs[i] = nxt.copy()
                 ep_dist[i].append(c)
                 ep_alive[i] += 1
+                if pred_probe is not None:
+                    acts_now[i] = np.asarray(act_i).copy()
+                # ★ 实际施加的动作**无条件**入缓冲（与是否送达无关：动作用的是旧估计，照样执行）
+                actions_since[i].append(np.asarray(act_i).copy())
                 if delivered[i]:
                     est[i] = nxt.copy()
                     last_obs[i] = nxt.copy()
                     cost_est[i] = float(cfs[i](nxt))   # ★ A 项：只有送达才更新估计代价
                     n_frames[i] += 1
                     age[i] = 0
+                    if predictor is not None:
+                        # 快照必须取"本步已步进"之后的 env（a_t 已烘进状态）⇒ 缓冲清空不重放
+                        predictor.observe_delivery(i, nxt, age_before=int(ages_before[i]),
+                                                   env=envs[i])
+                        actions_since[i] = []
                 else:
                     age[i] += 1
+                if pred_probe is not None:
+                    acts_after[i] = int(len(actions_since[i]))
                 if res.terminated or res.truncated:
                     alive[i] = False
+
+            if pred_probe is not None:
+                pred_probe({
+                    "episode": int(e), "t": int(t),
+                    "age": [int(x) for x in ages_before],
+                    "alive": [bool(x) for x in alive_before],
+                    "est_pre": est_pre, "true_pre": true_pre,
+                    "est_post": [o.copy() for o in est],
+                    "true_post": [o.copy() for o in true_obs],
+                    "delivered": [bool(x) for x in delivered],
+                    "actions": acts_now,
+                    "n_since_before": n_since_before,
+                    "n_since_after": acts_after,
+                })
 
             records.append(StepRecord(
                 episode=int(e), t=int(t), served_idx=int(si),
