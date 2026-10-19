@@ -1,0 +1,23 @@
+{
+  "D1": {
+    "warm25_first_cost_est": 25.0,
+    "warm0_first_cost_est": 0.0
+  },
+  "D2": {
+    "nan": "ValueError: 成功概率含 NaN/inf：[nan] （NaN 会躲过 [0,1] 区间检查，必须显式拦）",
+    "inf": "ValueError: 成功概率含 NaN/inf：[inf] （NaN 会躲过 [0,1] 区间检查，必须显式拦）",
+    "normal": "NO-RAISE"
+  },
+  "D3": {
+    "ABSORBED": [
+      25.0,
+      1.0
+    ],
+    "json_absorbed": [
+      25.0,
+      1.0
+    ]
+  },
+  "fails": [],
+  "pass": true
+}

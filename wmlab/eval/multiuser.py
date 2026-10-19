@@ -882,6 +882,15 @@ def run_multiuser(
                 if res.terminated or res.truncated:
                     alive[i] = False
 
+        # ★ T19/P0-2：预热末态同步。预热按定义"每步送真值"⇒ 末次观测是**免费可得**的，
+        #   所以 `last_obs`/`cost_est` 必须跟上 `est`，否则主循环第一步的 `cost_est`
+        #   还停在 t=0 的 reset 观测量纲上（UAV 预热 25 步，差得很远）。
+        #   旧版只更新 est/true_obs ⇒ "预热说免费给了真值，但估计代价没跟着走"，
+        #   属于接线不一致（R12）。当前没有任何臂读这两字段，故数值不变；P1 的预测臂会读。
+        for i in range(n_users):
+            last_obs[i] = est[i].copy()
+            cost_est[i] = float(cfs[i](est[i]))
+
         t = 0
         used_ep = 0
         while t < int(max_steps) and any(alive):
@@ -932,6 +941,11 @@ def run_multiuser(
             probs = np.asarray(success(view, alloc), dtype=float).reshape(-1)
             if probs.shape != (n_users,):
                 raise ValueError(f"success 返回形状必须是 ({n_users},)，收到 {probs.shape}")
+            # ★ T19/P0-2：NaN 能通过下面的区间检查（NaN 的比较恒为 False）⇒ 会静默算成"丢包"。
+            #   这类错误不报错、只让结果悄悄变差，属于最难查的一类，必须在入口拦死。
+            if not np.all(np.isfinite(probs)):
+                raise ValueError(f"成功概率含 NaN/inf：{probs.tolist()} "
+                                 f"（NaN 会躲过 [0,1] 区间检查，必须显式拦）")
             if np.any((probs < 0.0) | (probs > 1.0)):
                 raise ValueError(f"成功概率越界：{probs.tolist()}")
 

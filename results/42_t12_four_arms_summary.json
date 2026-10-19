@@ -35,10 +35,11 @@
       "cartpole: 1 if fallen else 0"
     ],
     "absorbed": [
-      0.0,
+      25.0,
       1.0
     ],
     "gate": 0.9,
+    "metadata_note": "T19/P0-2: absorbed 现由 ABSORBED 常量生成；v1(30bdf6a..bdfe143) 误写为 [0.0,1.0]（与计算不符），旧文件存为 results/42_..._v1_absorbed_meta_err.json",
     "aggregation": "geo of per-user ratios vs rr, same seed",
     "oracle_note": "myopic true-error, NOT an upper bound",
     "lookahead_note": "expected 1-step lookahead with cloned (perfect) dynamics; privileged, NOT an upper bound (horizon=1)",
@@ -493,7 +494,7 @@
     "G2[100] oracle geo ≤ 0.9: geo=1.2557 ⇒ FAIL",
     "G2[200] oracle geo ≤ 0.9: geo=1.2615 ⇒ FAIL"
   ],
-  "elapsed_s": 24.7,
+  "elapsed_s": 60.5,
   "cells_J": [
     {
       "budget": 100,
@@ -2359,9 +2360,9 @@
         "0": 3000,
         "1": 0
       },
-      "la_gap_rel_mean": 0.05030964577753015,
+      "la_gap_rel_mean": 0.050238132699195824,
       "la_gap_rel_max": 0.08697056655100832,
-      "la_score_best_mean": 0.24520154068390823,
+      "la_score_best_mean": 0.35090364045612027,
       "la_uav_gain_raw": 0.035326934824835295,
       "la_cart_gain_raw": 0.0,
       "la_cart_gain_n_pos": 0,
@@ -2515,9 +2516,9 @@
         "0": 3000,
         "1": 0
       },
-      "la_gap_rel_mean": 0.051012298680618295,
+      "la_gap_rel_mean": 0.05094417664619944,
       "la_gap_rel_max": 0.08697047935298553,
-      "la_score_best_mean": 0.24495983403176708,
+      "la_score_best_mean": 0.3510190354923988,
       "la_uav_gain_raw": 0.03476309080709152,
       "la_cart_gain_raw": 0.0,
       "la_cart_gain_n_pos": 0,
@@ -2671,9 +2672,9 @@
         "0": 3000,
         "1": 0
       },
-      "la_gap_rel_mean": 0.05151446389083485,
+      "la_gap_rel_mean": 0.05144234900654725,
       "la_gap_rel_max": 0.08697055070583522,
-      "la_score_best_mean": 0.2439717829758375,
+      "la_score_best_mean": 0.3500309844364692,
       "la_uav_gain_raw": 0.035289828967439506,
       "la_cart_gain_raw": 0.0,
       "la_cart_gain_n_pos": 0,
@@ -4543,9 +4544,9 @@
         "0": 6000,
         "1": 0
       },
-      "la_gap_rel_mean": 0.05279893020559986,
+      "la_gap_rel_mean": 0.0527309387725311,
       "la_gap_rel_max": 0.08697056655100832,
-      "la_score_best_mean": 0.2435540090307924,
+      "la_score_best_mean": 0.34925610880300456,
       "la_uav_gain_raw": 0.034784992368588716,
       "la_cart_gain_raw": 0.0,
       "la_cart_gain_n_pos": 0,
@@ -4699,9 +4700,9 @@
         "0": 6000,
         "1": 0
       },
-      "la_gap_rel_mean": 0.050512099577852146,
+      "la_gap_rel_mean": 0.050440437451524156,
       "la_gap_rel_max": 0.08584761820089734,
-      "la_score_best_mean": 0.24543568584255443,
+      "la_score_best_mean": 0.3514948873031861,
       "la_uav_gain_raw": 0.03507715165836123,
       "la_cart_gain_raw": 0.0,
       "la_cart_gain_n_pos": 0,
@@ -4855,9 +4856,9 @@
         "0": 6000,
         "1": 0
       },
-      "la_gap_rel_mean": 0.052051014917321364,
+      "la_gap_rel_mean": 0.051979842169879616,
       "la_gap_rel_max": 0.08697055070583522,
-      "la_score_best_mean": 0.24427068352585968,
+      "la_score_best_mean": 0.35032988498649137,
       "la_uav_gain_raw": 0.035038116367571814,
       "la_cart_gain_raw": 0.0,
       "la_cart_gain_n_pos": 0,

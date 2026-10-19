@@ -77,6 +77,9 @@ BUDGETS = (100, 200)
 ESCAPE_RADIUS = 25.0        # UavTrackAdapter.escape_radius：跟丢 ⇒ 终止
 ABSORBED_UAV = ESCAPE_RADIUS  # 跟丢后窗口内每步按逃逸半径记（不是 0！0 会把"丢机"奖励成"零代价"）
 ABSORBED_CART = 1.0           # 倒杆后窗口内每步记 1
+# ★ T19/P0-2：唯一真源。计算与 JSON 元数据都必须从这里取，
+#   旧版元数据写死 [0.0, 1.0]（与计算用的 [25, 1] 不一致）⇒ 元数据在说谎。
+ABSORBED = (ABSORBED_UAV, ABSORBED_CART)
 ARMS = ("rr", "age", "chan", "oracle", "lookahead")
 GATE = 0.90
 FAILS: list[str] = []
@@ -179,7 +182,7 @@ def main() -> int:
                           warmup_steps=[WARMUP_UAV, 0],
                           budget_total=0, cost_fn=[default_uav_cost, cartpole_cost],
                           csi=make_csi(seed, n_ep))
-        J = window_cost(r["records"], 2, window=WINDOW, absorbed=[ABSORBED_UAV, ABSORBED_CART], n_episodes=n_ep)
+        J = window_cost(r["records"], 2, window=WINDOW, absorbed=list(ABSORBED), n_episodes=n_ep)
         pilot_J.append(np.mean(np.asarray(J), axis=0).tolist())
         for e in envs:
             e.close()
@@ -231,7 +234,7 @@ def main() -> int:
                                   diagnostic=diag, counterfactual=cf)
                 dr = delivery_rate(r["records"], 2)
                 J = np.asarray(window_cost(r["records"], 2, window=WINDOW,
-                                           absorbed=[ABSORBED_UAV, ABSORBED_CART], n_episodes=n_ep))
+                                           absorbed=list(ABSORBED), n_episodes=n_ep))
                 # 期望 q（按实际被派帧的步，用同一条 csi 轨迹算）
                 q_exp = [0.0, 0.0]
                 n_att = [0, 0]
@@ -428,7 +431,10 @@ def main() -> int:
                    "rho": RHO, "csi_sd": CSI_SD, "q_ref": Q_REF, "budgets": list(BUDGETS),
                    "arms": list(ARMS), "episodes": n_ep, "seeds": seeds,
                    "cost": ["uav: dist[m]", "cartpole: 1 if fallen else 0"],
-                   "absorbed": [0.0, 1.0], "gate": GATE,
+                   "absorbed": [float(x) for x in ABSORBED], "gate": GATE,
+                   "metadata_note": "T19/P0-2: absorbed 现由 ABSORBED 常量生成；"
+                                    "v1(30bdf6a..bdfe143) 误写为 [0.0,1.0]（与计算不符），"
+                                    "旧文件存为 results/42_..._v1_absorbed_meta_err.json",
                    "aggregation": "geo of per-user ratios vs rr, same seed",
                    "oracle_note": "myopic true-error, NOT an upper bound",
                    "lookahead_note": "expected 1-step lookahead with cloned (perfect) dynamics; "
