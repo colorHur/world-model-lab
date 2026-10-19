@@ -16,6 +16,7 @@ T12–T21 的全部数字都建立在**一件事**上：接收端的估计观测
     Linear           最近两次送达的观测（差分估速度）
     ARX              最近两次送达的观测 + 两次之间实际施加的动作（只学 gap==1 的一步映射）
     MultiLag         最近两次送达的观测 + 两次之间**全部**实际施加的动作（按滞后阶 g 分模型）
+    SharedLag        最近两次送达的观测 + 两次之间**全部**实际施加的动作（**所有 g 共用一套 (A,B_j,c)**）
     TrueDyn          `deepcopy` 的 env + **自己实际施加过的动作**（诊断特权，只作上界）
 
 `LinearTargetOnly` / `LinearSelfOnly` 是 `Linear` 的**维度切片**变体（机制分解，
@@ -49,7 +50,7 @@ from typing import Sequence
 import numpy as np
 
 __all__ = ["PredictorBase", "ZOH", "Linear", "TrueDyn", "ARX", "MultiLag", "HybridLag",
-           "LinearTargetOnly", "LinearSelfOnly", "make_predictor"]
+           "SharedLag", "LinearTargetOnly", "LinearSelfOnly", "make_predictor"]
 
 
 def _linear_extrapolate(st: dict, age: int) -> np.ndarray:
@@ -568,6 +569,180 @@ class HybridLag(MultiLag):
         return d
 
 
+class SharedLag(MultiLag):
+    """**共享 `(A, B_j, c)` 的单模型**（T24 主对象）：`x_{k+g} ≈ A x_k + Σ_{j≤g} B_j a_{k+j} + c`。
+
+    为什么是这一轮（T23-b 的机制指向，`62663b3`）
+    --------------------------------------------
+    逐阶 `M_g` 的 `F_g = dim + g·act_dim + 1` 随 `g` 线性增长、样本被 6 阶摊薄 ⇒ 只有 `g=2,3` 过门，
+    `age=1` **结构性 0%**（一步对仅 1.03%）⇒ 实跑合并覆盖率只有 **17.6%**。
+    共享参数把**所有 `g` 的送达对合并进一套正规方程**：`B_1` 由**每一个**送达对贡献样本，
+    于是 `age=1` 第一次有模型可用（它的特征里只有 `A, B_1, c` 三块）。
+
+    ★★ 结构偏差（预注册 `2026-10-20-T24-共享AB单模型-预注册-v0.1.md` §2b，写在跑之前）
+    ----------------------------------------------------------------------------------
+    真实线性系统的精确 `g` 步映射是 `A^g x + Σ A^{g-j} B a_{k+j} + Σ A^i c`，
+    即 `a_{k+1}` 的系数随 `g` 变（`A^{g-1}B`）。共享口径把它写成同一个 `B_1` ⇒
+    **`g=1` 无偏，`g≥2` 有偏且偏差随 `g` 累积**。这是一次显式的**偏差-方差交换**：
+    用高 `g` 的灵活性换低 `g` 的覆盖率。**高 `g` 变差必须写"交易"，不许写"共享模型更好"。**
+    （无偏的参数化 `A_g=A^g` 需要非线性最小二乘，本轮不做。）
+
+    实现口径（写死）
+    ----------------
+    1. 每个用户**一套** `(R, b)`，特征向量定长 `F_total = dim + max_gap·act_dim + 1`；
+       第 `j` 个动作块在 `j ≤ g` 时填 `a_{k+j}`、否则**填 0**（= 该块对该样本无约束）。
+    2. **不拼装**：`age=d` 一次前推 `d` 步。
+    3. 退化路径：`age > max_gap` 或 `n < F_total` ⇒ `_linear_extrapolate`（与 `Linear` **同一函数**，逐位）。
+    4. 逐 episode 重置（同 `ARX`/`MultiLag`）；`cum_stats` 跨集累计**只作描述统计**，不进决策。
+
+    ★ 不是世界模型，是**线性辨识基线**；`B_j` 在高 `j` 上样本少（只来自 `g ≥ j` 的对），
+      可能停在 ridge 先验（≈0）⇒ 表现为"窗口末端动作被忽略"，`describe()` 的 `gaps_seen` 可查。
+    """
+
+    name = "shared"
+    consumes_env = False          # ★ 结构性：签名里没有 env/view ⇒ 不可能偷真值
+
+    def __init__(self, max_gap: int = 6, ridge_rel: float = 1e-6,
+                 min_samples_factor: int = 1) -> None:
+        super().__init__(max_gap=max_gap, ridge_rel=ridge_rel,
+                         min_samples_factor=min_samples_factor)
+        #: 每用户**一套**共享系统（区别于 `MultiLag` 的 `_fit[i][g]`）
+        self._joint: dict[int, dict] = {}
+        #: 每个用户实际见过的 `gap` 直方图（写进 `describe()`，用来解释"为什么 `B_6` 学不到"）
+        self._gaps_seen: dict[int, dict[int, int]] = {}
+        #: 跨集累计的调用统计（`reset_episode` 不清空；同 `HybridLag.cum_stats` 的理由）
+        self.cum_stats: dict[int, dict] = {}
+
+    def reset_episode(self) -> None:
+        super().reset_episode()          # `_fit`/`_counts`/`_pred_stats` 清空
+        self._joint = {}
+        self._gaps_seen = {}
+        # ★ `cum_stats` 保留：它是描述统计，不是决策状态
+
+    def _stat(self, i: int, age: int, used_model: bool) -> None:
+        super()._stat(i, age, used_model)
+        c = self.cum_stats.setdefault(int(i), {"used_model": {}, "used_degraded": {}})
+        k = "used_model" if used_model else "used_degraded"
+        c[k][int(age)] = int(c[k].get(int(age), 0)) + 1
+
+    # ------------------------------------------------------------ 学（单一正规方程）
+    def _model_joint(self, i: int, *, dim: int, act_dim: int) -> dict:
+        m = self._joint.get(i)
+        F = int(dim) + self.max_gap * int(act_dim) + 1
+        if m is not None and (m["dim"] != dim or m["act_dim"] != act_dim):
+            raise ValueError(f"SharedLag：用户 {i} 的维度中途变了"
+                             f"（{m['dim']}/{m['act_dim']} → {dim}/{act_dim}）—— 只可能是接线错误")
+        if m is None:
+            m = {"dim": int(dim), "act_dim": int(act_dim), "F": F, "n": 0,
+                 "R": np.zeros((F, F), dtype=np.float64),
+                 "b": np.zeros((F, dim), dtype=np.float64), "W": None}
+            self._joint[i] = m
+        return m
+
+    def _features(self, x, acts, *, act_dim: int) -> np.ndarray:
+        """定长特征：`[x, a_1..a_g, 0..0, 1]`（长度 `F_total`）。"""
+        g = len(acts)
+        blocks = []
+        for j in range(self.max_gap):
+            if j < g:
+                a = np.asarray(acts[j], dtype=np.float64).reshape(-1)
+                if a.size != act_dim:
+                    raise ValueError(f"SharedLag：第 {j+1} 个动作维度 {a.size} ≠ 学到的 {act_dim}")
+                blocks.append(a)
+            else:
+                blocks.append(np.zeros(act_dim, dtype=np.float64))
+        return np.concatenate([np.asarray(x, dtype=np.float64)] + blocks
+                              + [np.ones(1, dtype=np.float64)])
+
+    def _on_delivery(self, i: int, st: dict, env) -> None:
+        cnt = self._counts.setdefault(i, {"pairs": 0, "gap_gt_max": 0, "no_action": 0,
+                                          "n_len_mismatch": 0})
+        prev = st.get("prev_obs")
+        seq = st.get("last_action_seq")
+        gap = int(st.get("gap_prev", 0))
+        if prev is None:
+            return                                   # 首个观测：没有"上一拍"，学不了
+        cnt["pairs"] += 1
+        gs = self._gaps_seen.setdefault(i, {})
+        gs[gap] = int(gs.get(gap, 0)) + 1
+        if gap > self.max_gap:
+            cnt["gap_gt_max"] += 1
+            return
+        if not seq:
+            cnt["no_action"] += 1
+            return
+        if len(seq) != gap:
+            # ★ 长度 ≠ gap：窗口与间隔脱节 ⇒ 这条样本会把错位烘进拟合（#51/#52 同族）
+            cnt["n_len_mismatch"] += 1
+            self.seq_mismatch += 1
+            return
+        y = np.asarray(st["last_obs"], dtype=np.float64)
+        x = np.asarray(prev, dtype=np.float64)
+        if x.shape != y.shape:
+            raise ValueError(f"SharedLag：上一拍观测形状 {x.shape} ≠ 送达观测 {y.shape}")
+        act_dim = int(np.asarray(seq[0]).size)
+        m = self._model_joint(i, dim=int(y.size), act_dim=act_dim)
+        z = self._features(x, list(seq), act_dim=act_dim)
+        if z.size != m["F"]:
+            raise ValueError(f"SharedLag：特征长度 {z.size} ≠ F_total {m['F']}（gap={gap}）")
+        m["R"] += np.outer(z, z)
+        m["b"] += np.outer(z, y)
+        m["n"] += 1
+        self._solve(m)                                # 复用 `MultiLag._solve`（同一份 ridge 实现）
+
+    # ------------------------------------------------------------ 预测
+    def _need(self, m: dict) -> int:                  # type: ignore[override]
+        return self.min_samples_factor * int(m["F"])
+
+    def _predict(self, i: int, st: dict, *, age: int, actions_since: list) -> np.ndarray:
+        if age == 0:
+            self._stat(i, 0, True)                    # age=0 = 送达值，不算"预测"
+            return st["last_obs"]
+        m = self._joint.get(i)
+        if m is None or m["W"] is None or age > self.max_gap or m["n"] < self._need(m):
+            self._stat(i, age, False)
+            return _linear_extrapolate(st, age)       # ★ 显式退化（与 `Linear` 同一函数）
+        z = self._features(st["last_obs"], list(actions_since), act_dim=int(m["act_dim"]))
+        x = z @ m["W"]
+        if not np.all(np.isfinite(x)):
+            raise ValueError(f"SharedLag：age={age} 的预测输出含 NaN/inf")
+        self._stat(i, age, True)
+        return x
+
+    # ------------------------------------------------------------ 自述
+    def describe(self) -> dict:
+        users: dict[str, dict] = {}
+        for i in sorted(set(self._joint) | set(self._counts) | set(self._pred_stats)):
+            m = self._joint.get(i)
+            st = self._pred_stats.get(i, {})
+            need = (self._need(m) if m else None)
+            users[str(i)] = {
+                "dim": (m["dim"] if m else None), "act_dim": (m["act_dim"] if m else None),
+                "F_total": (m["F"] if m else None),
+                "n_samples": (int(m["n"]) if m else 0),
+                "n_needed": need,
+                "degraded": (True if m is None else bool(m["n"] < need)),
+                "marginal": (None if m is None else bool(need <= m["n"] < 2 * int(m["F"]))),
+                "fitted": (None if m is None else bool(m["W"] is not None)),
+                "gaps_seen": {str(k): int(v) for k, v in sorted(self._gaps_seen.get(i, {}).items())},
+                "used_model": {str(k): int(v) for k, v in sorted(st.get("used_model", {}).items())},
+                "used_degraded": {str(k): int(v) for k, v in
+                                  sorted(st.get("used_degraded", {}).items())},
+                **self._counts.get(i, {}),
+            }
+        return {"name": self.name, "consumes_env": False, "max_gap": self.max_gap,
+                "min_samples_factor": self.min_samples_factor, "ridge_rel": self.ridge_rel,
+                "users": users,
+                "degraded_users": sorted(int(k) for k, v in users.items() if v["degraded"]),
+                "seq_mismatch": int(self.seq_mismatch),
+                "seq_last_mismatch": int(self.seq_last_mismatch),
+                "cum_stats": {str(i): {"used_model": {str(k): int(v) for k, v in
+                                                      sorted(c["used_model"].items())},
+                                       "used_degraded": {str(k): int(v) for k, v in
+                                                         sorted(c["used_degraded"].items())}}
+                              for i, c in sorted(self.cum_stats.items())}}
+
+
 class _LinearPartial(Linear):
     """机制分解用：只外推"目标维"或只外推"自身维"，其余维保持。
 
@@ -674,7 +849,7 @@ class TrueDyn(PredictorBase):
 
 
 _PREDICTORS = {"zoh": ZOH, "linear": Linear, "truedyn": TrueDyn, "arx": ARX, "mlag": MultiLag,
-               "hybrid": HybridLag,
+               "hybrid": HybridLag, "shared": SharedLag,
                "linear_target_only": LinearTargetOnly, "linear_self_only": LinearSelfOnly}
 
 

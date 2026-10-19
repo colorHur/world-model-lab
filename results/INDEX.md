@@ -26,6 +26,7 @@
 | `56_t23b_compensation_benefit` | 20261020-003551-daacb33 | **superseded** | 2026-10-20 00:35 | 322111 B | `b6fa72a84531` | `results/runs/20261020-003551-daacb33/56_t23b_compensation_benefit.json` |
 | `56_t23b_compensation_benefit` | 20261020-003811-daacb33 | **superseded** | 2026-10-20 00:38 | 339134 B | `891de28d1ed9` | `results/runs/20261020-003811-daacb33/56_t23b_compensation_benefit.json` |
 | `56_t23b_compensation_benefit` | 20261020-004151-daacb33 | **current** | 2026-10-20 00:41 | 341228 B | `1d1d9f6278f9` | `results/runs/20261020-004151-daacb33/56_t23b_compensation_benefit.json` |
+| `57_t24_shared_ab` | 20261020-025036-62663b3 | **current** | 2026-10-20 02:50 | 339059 B | `6a86ca85bb6e` | `results/runs/20261020-025036-62663b3/57_t24_shared_ab.json` |
 
 ## 自检快照（`results/selfcheck/`，判定不变则不重写）
 
