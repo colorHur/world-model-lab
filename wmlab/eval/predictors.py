@@ -48,7 +48,7 @@ from typing import Sequence
 
 import numpy as np
 
-__all__ = ["PredictorBase", "ZOH", "Linear", "TrueDyn", "ARX", "MultiLag",
+__all__ = ["PredictorBase", "ZOH", "Linear", "TrueDyn", "ARX", "MultiLag", "HybridLag",
            "LinearTargetOnly", "LinearSelfOnly", "make_predictor"]
 
 
@@ -509,6 +509,65 @@ class MultiLag(PredictorBase):
                 "seq_last_mismatch": int(self.seq_last_mismatch)}
 
 
+class HybridLag(MultiLag):
+    """**`M_2`/`M_3` + `Linear` 回退**（T23-b 主对象；`MultiLag` 的纪律子集）。
+
+    为什么是子集而不是新实现（T23-b 预注册 §2）
+    --------------------------------------------
+    `MultiLag` 为每个 `g ∈ 1..max_gap` 各学一套模型，但 T23-a-2 实测**只有 `g=2,3` 过了样本门**
+    （`F_g` 随 `g` 线性增长、样本被 6 阶摊薄）；`g≥4` 拟合出来基本是 ridge 先验、`g=1` 结构性无样本。
+    把它们留在 `_predict` 里等于让"没学到的模型"参与决策 ⇒ 收益无法归因到"学到的那一阶"。
+
+    ★ 实现上**不覆盖 `_predict`**：只把不该用的阶挡在**拟合**之外（`_on_delivery`），
+      于是 `age ∉ {2,3}` 走的仍是 `MultiLag._predict` 里那条 `_linear_extrapolate`
+      —— 与 `Linear` **同一条函数**。这不是"保证一致"，是**结构上不可能不同**
+      （T23-b 预注册 §4-2 的匹配消融就建立在这条上）。
+
+    ★ 必须与 `Linear` 在 `age∉{2,3}` 上逐位相同（`scripts/56` 的 C1/C2 判死）。
+    """
+
+    name = "hybrid"
+    #: 唯一允许启用模型的滞后阶（T23-a-2 §3：`g=2`、`g=3` 是唯一过 `n ≥ F_g` 的两阶）
+    usable_gaps: tuple[int, ...] = (2, 3)
+
+    def __init__(self, ridge_rel: float = 1e-6, min_samples_factor: int = 1) -> None:
+        super().__init__(max_gap=max(self.usable_gaps), ridge_rel=ridge_rel,
+                         min_samples_factor=min_samples_factor)
+        #: ★ 跨集累计（**`reset_episode` 不清空**）：`_pred_stats` 是逐集重置的，
+        #:   用它算"整轮覆盖率"只会得到最后一集（T23-b 首跑当场抓到：2 集时 134 vs 199）。
+        #:   覆盖率是**描述统计**，不是决策状态 ⇒ 累计不构成"跨集继承信息"（模型仍逐集重置）。
+        self.cum_stats: dict[int, dict] = {}
+
+    def reset_episode(self) -> None:
+        super().reset_episode()          # `_fit` / `_pred_stats` 清空；`cum_stats` 保留
+
+    def _stat(self, i: int, age: int, used_model: bool) -> None:
+        super()._stat(i, age, used_model)
+        c = self.cum_stats.setdefault(int(i), {"used_model": {}, "used_degraded": {}})
+        k = "used_model" if used_model else "used_degraded"
+        c[k][int(age)] = int(c[k].get(int(age), 0)) + 1
+
+    def _on_delivery(self, i: int, st: dict, env) -> None:
+        gap = int(st.get("gap_prev", 0))
+        if st.get("prev_obs") is not None and gap not in self.usable_gaps:
+            # ★ 只计数、不入拟合（C3 查这里）；不许"顺手学一下"，否则收益归因失效
+            cnt = self._counts.setdefault(i, {"pairs": 0, "gap_gt_max": 0, "no_action": 0,
+                                              "n_len_mismatch": 0, "skipped_gap": {}})
+            sk = cnt.setdefault("skipped_gap", {})
+            sk[str(gap)] = int(sk.get(str(gap), 0)) + 1
+            return
+        super()._on_delivery(i, st, env)
+
+    def describe(self) -> dict:
+        d = super().describe()
+        d["usable_gaps"] = [int(g) for g in self.usable_gaps]
+        d["cum_stats"] = {str(i): {"used_model": {str(k): int(v) for k, v in sorted(c["used_model"].items())},
+                                   "used_degraded": {str(k): int(v) for k, v in
+                                                     sorted(c["used_degraded"].items())}}
+                          for i, c in sorted(self.cum_stats.items())}
+        return d
+
+
 class _LinearPartial(Linear):
     """机制分解用：只外推"目标维"或只外推"自身维"，其余维保持。
 
@@ -615,6 +674,7 @@ class TrueDyn(PredictorBase):
 
 
 _PREDICTORS = {"zoh": ZOH, "linear": Linear, "truedyn": TrueDyn, "arx": ARX, "mlag": MultiLag,
+               "hybrid": HybridLag,
                "linear_target_only": LinearTargetOnly, "linear_self_only": LinearSelfOnly}
 
 

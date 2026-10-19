@@ -23,6 +23,9 @@
 | `48_t16_quota_pacing` | v1 | **v1(frozen)** | 2026-10-19 08:50 | 420197 B | `c36e2da6971a` | `results/48_t16_quota_pacing.json` |
 | `50_p0_wiring_selfcheck` | v1 | **v1(frozen)** | 2026-10-19 11:28 | 520 B | `44cc9901b84a` | `results/50_p0_wiring_selfcheck.json` |
 | `52_t21_paced_matching_ablation` | 20261019-154839-132f110 | **current** | 2026-10-19 15:48 | 167442 B | `99fe7398349a` | `results/runs/20261019-154839-132f110/52_t21_paced_matching_ablation.json` |
+| `56_t23b_compensation_benefit` | 20261020-003551-daacb33 | **superseded** | 2026-10-20 00:35 | 322111 B | `b6fa72a84531` | `results/runs/20261020-003551-daacb33/56_t23b_compensation_benefit.json` |
+| `56_t23b_compensation_benefit` | 20261020-003811-daacb33 | **superseded** | 2026-10-20 00:38 | 339134 B | `891de28d1ed9` | `results/runs/20261020-003811-daacb33/56_t23b_compensation_benefit.json` |
+| `56_t23b_compensation_benefit` | 20261020-004151-daacb33 | **current** | 2026-10-20 00:41 | 341228 B | `1d1d9f6278f9` | `results/runs/20261020-004151-daacb33/56_t23b_compensation_benefit.json` |
 
 ## 自检快照（`results/selfcheck/`，判定不变则不重写）
 
