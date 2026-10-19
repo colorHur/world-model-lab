@@ -12,7 +12,8 @@
 
 | 逻辑名 | 版本 | 状态 | 文件时间 | 大小 | sha256 | 路径 |
 |---|---|---|---|---|---|---|
-| `42_t12_four_arms_summary` | v1 | **v1(frozen)** | 2026-10-19 11:28 | 90055 B | `2bbeb6622426` | `results/42_t12_four_arms_summary.json` |
+| `42_t12_four_arms_summary` | v1 | **superseded** | 2026-10-19 11:28 | 90055 B | `2bbeb6622426` | `results/42_t12_four_arms_summary.json` |
+| `42_t12_four_arms_summary` | 20261019-134106-ef67549 | **current** | 2026-10-19 13:41 | 90055 B | `5012d4be62f5` | `results/runs/20261019-134106-ef67549/42_t12_four_arms_summary.json` |
 | `42_t12_four_arms_summary.v1_absorbed_meta_err` | v1 | **v1(frozen)** | 2026-10-19 11:27 | 89860 B | `2a07e64160fd` | `results/42_t12_four_arms_summary.v1_absorbed_meta_err.json` |
 | `43_fix_abc_selfcheck` | v1 | **v1(frozen)** | 2026-10-19 11:29 | 720 B | `dc36443edd07` | `results/43_fix_abc_selfcheck.json` |
 | `44_lookahead_selfcheck` | v1 | **v1(frozen)** | 2026-10-19 11:29 | 2154 B | `cbad0af99004` | `results/44_lookahead_selfcheck.json` |

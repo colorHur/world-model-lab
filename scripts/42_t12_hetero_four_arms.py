@@ -56,6 +56,10 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
+
+#: `--smoke` 时给 outputs/ 文件名加后缀 —— smoke 的少量 episode **不得**覆盖全量原始表
+#: （2026-10-19 T20 实测踩点：`42 --smoke` 把 outputs/42 的 1800 cell 原始表换成了 20 cell）
+SMOKE_TAG = ""
 sys.path.insert(0, str(ROOT))
 
 from wmlab.control import PDRelativeController  # noqa: E402
@@ -167,6 +171,8 @@ def main() -> int:
     ap.add_argument("--allow-overwrite", action="store_true",
                     help="仅用于**确有必要**重写同一 run-id 的旧证据（会先备份 .bak）")
     args = ap.parse_args()
+    global SMOKE_TAG
+    SMOKE_TAG = "_smoke" if args.smoke else ""
     n_ep = 2 if args.smoke else args.episodes
     seeds = [0] if args.smoke else args.seeds
 
@@ -454,7 +460,7 @@ def main() -> int:
         "elapsed_s": round(time.time() - t_all, 1),
     }
     (ROOT / "outputs").mkdir(exist_ok=True)
-    (ROOT / "outputs" / "42_t12_hetero_four_arms.json").write_text(
+    (ROOT / "outputs" / ("42_t12_hetero_four_arms" + SMOKE_TAG + ".json")).write_text(
         json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
     summary_payload = {k: out[k] for k in ("config", "pilot_b0", "summary", "verdict", "h2",
                                           "sacrificed_users", "checks_failed", "elapsed_s")}
