@@ -44,6 +44,7 @@ sys.path.insert(0, str(ROOT))
 from wmlab.control import PDRelativeController  # noqa: E402
 from wmlab.envs import make_env  # noqa: E402
 from wmlab.eval.multiuser import default_uav_cost  # noqa: E402
+from wmlab.eval.results_io import write_result  # noqa: E402  ← 入库唯一入口（P0-3）
 
 N_EP = 200
 MAX_STEPS = 200
@@ -145,11 +146,10 @@ def main() -> int:
                             % (100 * cp["frac_le_20"], cp["median"])),
                "uav": ("H=20 只覆盖 %.0f%%（median %.0f 步）"
                        % (100 * ua["frac_le_20"], ua["median"]))}}
-    (ROOT / "results").mkdir(exist_ok=True)
-    (ROOT / "results" / "46_t14_failure_timescale.json").write_text(
-        json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    # ★ P0-3（2026-10-19）：改走 run-id 分目录，拒绝覆盖固定路径。
+    dest = write_result("46_t14_failure_timescale", out)
     print(f"  ⇒ {out['interpretation']['cartpole']}；{out['interpretation']['uav']}")
-    print("JSON → results/46_t14_failure_timescale.json")
+    print(f"JSON → {dest.relative_to(ROOT).as_posix()}")
     return 0
 
 

@@ -1,0 +1,47 @@
+{
+  "A": {
+    "A1_cost_est_range": 0.0,
+    "A1_true_range": 29.0,
+    "A2_delta": 29.0
+  },
+  "B": {
+    "blind": {
+      "budget_reserved": 100,
+      "budget_attempted": 50,
+      "budget_wasted": 50,
+      "budget_lost": 0,
+      "frames": [
+        50,
+        0
+      ]
+    },
+    "alive_filtered": {
+      "budget_reserved": 100,
+      "budget_attempted": 100,
+      "budget_wasted": 0,
+      "frames": [
+        100,
+        0
+      ]
+    }
+  },
+  "C": {
+    "J": [
+      0.75,
+      0.25,
+      0.0,
+      1.0,
+      0.95
+    ],
+    "old_tail_mean": [
+      0.0,
+      0.0
+    ],
+    "J_two_user": [
+      1.0,
+      0.94
+    ]
+  },
+  "fails": [],
+  "pass": true
+}

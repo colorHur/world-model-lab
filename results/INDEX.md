@@ -1,0 +1,32 @@
+# results 索引（自动生成，勿手改）
+
+由 `wmlab/eval/results_io.py::rebuild_index()` 生成。手改会被下一次写入覆盖。
+
+| 状态 | 含义 |
+|---|---|
+| `current` | 该逻辑名的**最新**版本（引用数字请指这里） |
+| `superseded` | 旧版本，**保留不删**，仅为可追溯 |
+| `v1(frozen)` | P0-3 之前写在 `results/` 根目录的 v1 产物，**原地冻结**，未经 run-id 复跑 |
+
+## 证据（`results/runs/<run_id>/` 与冻结的 v1）
+
+| 逻辑名 | 版本 | 状态 | 文件时间 | 大小 | sha256 | 路径 |
+|---|---|---|---|---|---|---|
+| `42_t12_four_arms_summary` | v1 | **v1(frozen)** | 2026-10-19 11:28 | 90055 B | `2bbeb6622426` | `results/42_t12_four_arms_summary.json` |
+| `42_t12_four_arms_summary.v1_absorbed_meta_err` | v1 | **v1(frozen)** | 2026-10-19 11:27 | 89860 B | `2a07e64160fd` | `results/42_t12_four_arms_summary.v1_absorbed_meta_err.json` |
+| `43_fix_abc_selfcheck` | v1 | **v1(frozen)** | 2026-10-19 11:29 | 720 B | `dc36443edd07` | `results/43_fix_abc_selfcheck.json` |
+| `44_lookahead_selfcheck` | v1 | **v1(frozen)** | 2026-10-19 11:29 | 2154 B | `cbad0af99004` | `results/44_lookahead_selfcheck.json` |
+| `45_t14_horizon_arms` | v1 | **v1(frozen)** | 2026-10-19 04:32 | 95366 B | `5bc20c38fc88` | `results/45_t14_horizon_arms.json` |
+| `46_t14_failure_timescale` | v1 | **v1(frozen)** | 2026-10-19 04:32 | 5337 B | `9612beee95c7` | `results/46_t14_failure_timescale.json` |
+| `47_t15_normalized_age` | v1 | **v1(frozen)** | 2026-10-19 08:52 | 84722 B | `cf1cf2b35af4` | `results/47_t15_normalized_age.json` |
+| `48_t16_quota_pacing` | v1 | **v1(frozen)** | 2026-10-19 08:50 | 420197 B | `c36e2da6971a` | `results/48_t16_quota_pacing.json` |
+| `50_p0_wiring_selfcheck` | v1 | **v1(frozen)** | 2026-10-19 11:28 | 520 B | `44cc9901b84a` | `results/50_p0_wiring_selfcheck.json` |
+
+## 自检快照（`results/selfcheck/`，判定不变则不重写）
+
+| 快照 | 文件时间 | 大小 | sha256 |
+|---|---|---|---|
+| `43_fix_abc_selfcheck` | 2026-10-19 13:37 | 720 B | `dc36443edd07` |
+| `44_lookahead_selfcheck` | 2026-10-19 13:38 | 2154 B | `cbad0af99004` |
+| `50_p0_wiring_selfcheck` | 2026-10-19 13:38 | 520 B | `44cc9901b84a` |
+| `51_p0_results_io_selfcheck` | 2026-10-19 13:37 | 4260 B | `f94f5b0e510e` |

@@ -54,6 +54,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from wmlab.eval.allocators import Lookahead, MaxAge, RoundRobin  # noqa: E402
+from wmlab.eval.results_io import latest_result_path, write_result  # noqa: E402  ← 入库唯一入口（P0-3）
 from wmlab.eval.multiuser import (  # noqa: E402
     SINRSuccess, default_uav_cost, delivery_rate, run_multiuser, window_cost,
 )
@@ -118,6 +119,9 @@ def main() -> int:
     ap.add_argument("--seeds", type=int, nargs="+", default=[0, 1, 2])
     ap.add_argument("--horizons", type=int, nargs="+", default=[1, 5, 20])
     ap.add_argument("--smoke", action="store_true")
+    ap.add_argument("--run-id", default=None, help="入库目录名；默认 <时间戳>-<commit>")
+    ap.add_argument("--allow-overwrite", action="store_true",
+                    help="仅用于**确有必要**重写同一 run-id 的旧证据（会先备份 .bak）")
     args = ap.parse_args()
     n_ep = 2 if args.smoke else args.episodes
     seeds = [0] if args.smoke else args.seeds
@@ -280,9 +284,12 @@ def main() -> int:
 
     # ---------- R0：与 T13 的 rr/age/la1 逐位回归 ----------
     print("\n== R0 与 results/42 的 rr/age/la1 逐位回归 ==")
-    ref_path = ROOT / "results" / "42_t12_four_arms_summary.json"
+    # ★ P0-3（2026-10-19）：读"当前版本"（runs/ 最新优先，退回 v1 冻结件），并打印**实际**路径。
+    #   硬编码 results/42_... 会在 P0-3 之后永远核对旧的冻结文件（自证伪 #46 同型）。
+    ref_path = latest_result_path("42_t12_four_arms_summary")
+    print(f"  [ref] {ref_path.relative_to(ROOT).as_posix() if ref_path else '<缺失>'}")
     r0_ok, r0_detail = True, "未找到 42 结果（跳过，不算通过）"
-    if ref_path.exists():
+    if ref_path is not None and ref_path.exists():
         ref = json.loads(ref_path.read_text(encoding="utf-8"))
         ref_map = {(c["budget"], c["arm"], c["seed"]): c["J_per_episode"]
                    for c in ref.get("cells_J", [])}
@@ -388,18 +395,22 @@ def main() -> int:
     (ROOT / "outputs").mkdir(exist_ok=True)
     (ROOT / "outputs" / "45_t14_horizon_arms.json").write_text(
         json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
-    (ROOT / "results").mkdir(exist_ok=True)
-    (ROOT / "results" / "45_t14_horizon_arms.json").write_text(
-        json.dumps({**{k: out[k] for k in ("config", "pilot_b0", "summary", "h3",
-                                           "checks_failed", "elapsed_s")},
-                    "cells_J": [{k: c[k] for k in ("budget", "arm", "horizon", "seed",
-                                                   "J_per_episode", "J_mean", "survival_frac",
-                                                   "share_attempts", "link_q", "elapsed_s")}
-                                | ({k: v for k, v in c.items() if k.startswith("la_")})
-                                for c in cells]}, ensure_ascii=False, indent=2),
-        encoding="utf-8")
+    payload = {**{k: out[k] for k in ("config", "pilot_b0", "summary", "h3",
+                                      "checks_failed", "elapsed_s")},
+               "cells_J": [{k: c[k] for k in ("budget", "arm", "horizon", "seed",
+                                              "J_per_episode", "J_mean", "survival_frac",
+                                              "share_attempts", "link_q", "elapsed_s")}
+                           | ({k: v for k, v in c.items() if k.startswith("la_")})
+                           for c in cells]}
+    # ★ P0-3（2026-10-19）：改走 run-id 分目录，拒绝覆盖；smoke 不入库。
+    if args.smoke:
+        print("[smoke] 不写 results/（smoke 数字不进证据链，也不抢 INDEX 的 current）")
+    else:
+        dest = write_result("45_t14_horizon_arms", payload,
+                            run_id=args.run_id, allow_overwrite=args.allow_overwrite)
+        print(f"[evidence] {dest.relative_to(ROOT).as_posix()}")
     print(f"\n{'ALL CHECKS PASS' if not FAILS else 'FAILED: ' + '; '.join(FAILS)}")
-    print(f"总耗时 {out['elapsed_s']}s ⇒ results/45_t14_horizon_arms.json")
+    print(f"总耗时 {out['elapsed_s']}s")
     return 0 if not FAILS else 2
 
 

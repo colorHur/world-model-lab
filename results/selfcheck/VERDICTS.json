@@ -1,0 +1,26 @@
+{
+  "43_fix_abc_selfcheck": {
+    "verdict": "PASS",
+    "changed_from": null,
+    "since": "2026-10-19 13:37:59",
+    "run_id": "20261019-133759-bbc8bee"
+  },
+  "44_lookahead_selfcheck": {
+    "verdict": "PASS",
+    "changed_from": null,
+    "since": "2026-10-19 13:38:04",
+    "run_id": "20261019-133804-bbc8bee"
+  },
+  "50_p0_wiring_selfcheck": {
+    "verdict": "PASS",
+    "changed_from": null,
+    "since": "2026-10-19 13:38:06",
+    "run_id": "20261019-133806-bbc8bee"
+  },
+  "51_p0_results_io_selfcheck": {
+    "verdict": "PASS",
+    "changed_from": "FAIL",
+    "since": "2026-10-19 13:37:22",
+    "run_id": "20261019-133722-bbc8bee"
+  }
+}

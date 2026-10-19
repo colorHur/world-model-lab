@@ -59,6 +59,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from wmlab.control import PDRelativeController  # noqa: E402
+from wmlab.eval.results_io import write_result  # noqa: E402  ← 入库唯一入口（P0-3）
 from wmlab.envs import make_env  # noqa: E402
 from wmlab.eval.allocators import (  # noqa: E402
     Lookahead, MaxAge, MaxChannel, RoundRobin, TrueError,
@@ -162,6 +163,9 @@ def main() -> int:
     ap.add_argument("--episodes", type=int, default=30)
     ap.add_argument("--seeds", type=int, nargs="+", default=[0, 1, 2])
     ap.add_argument("--smoke", action="store_true")
+    ap.add_argument("--run-id", default=None, help="入库目录名；默认 <时间戳>-<commit>")
+    ap.add_argument("--allow-overwrite", action="store_true",
+                    help="仅用于**确有必要**重写同一 run-id 的旧证据（会先备份 .bak）")
     args = ap.parse_args()
     n_ep = 2 if args.smoke else args.episodes
     seeds = [0] if args.smoke else args.seeds
@@ -452,23 +456,29 @@ def main() -> int:
     (ROOT / "outputs").mkdir(exist_ok=True)
     (ROOT / "outputs" / "42_t12_hetero_four_arms.json").write_text(
         json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
-    (ROOT / "results").mkdir(exist_ok=True)
-    (ROOT / "results" / "42_t12_four_arms_summary.json").write_text(
-        json.dumps({k: out[k] for k in ("config", "pilot_b0", "summary", "verdict", "h2",
-                                        "sacrificed_users", "checks_failed", "elapsed_s")}
-                   | {"cells_J": [{"budget": c["budget"], "arm": c["arm"], "seed": c["seed"],
-                                   "J_per_episode": c["J_per_episode"],
-                                   "survival_frac": c["survival_frac"],
-                                   "share_attempts": c["share_attempts"],
-                                   "link_q": c["link_q"], "p_eff": c["p_eff"]}
-                                  | ({k: c[k] for k in ("la_n_decisions", "la_n_two_cand",
-                                                        "la_choice_count", "la_gap_rel_mean",
-                                                        "la_gap_rel_max", "la_score_best_mean",
-                                                        "la_uav_gain_raw", "la_cart_gain_raw",
-                                                        "la_cart_gain_n_pos", "la_cart_gain_n_neg")}
-                                     if "la_n_decisions" in c else {})
-                                  for c in cells]},
-                   ensure_ascii=False, indent=2), encoding="utf-8")
+    summary_payload = {k: out[k] for k in ("config", "pilot_b0", "summary", "verdict", "h2",
+                                          "sacrificed_users", "checks_failed", "elapsed_s")}
+    summary_payload |= {"cells_J": [
+        {"budget": c["budget"], "arm": c["arm"], "seed": c["seed"],
+         "J_per_episode": c["J_per_episode"],
+         "survival_frac": c["survival_frac"],
+         "share_attempts": c["share_attempts"],
+         "link_q": c["link_q"], "p_eff": c["p_eff"]}
+        | ({k: c[k] for k in ("la_n_decisions", "la_n_two_cand",
+                              "la_choice_count", "la_gap_rel_mean",
+                              "la_gap_rel_max", "la_score_best_mean",
+                              "la_uav_gain_raw", "la_cart_gain_raw",
+                              "la_cart_gain_n_pos", "la_cart_gain_n_neg")}
+           if "la_n_decisions" in c else {})
+        for c in cells]}
+    # ★ P0-3（2026-10-19）：不再写固定路径 `results/42_...json`。
+    #   smoke 直写会让 2 集 × 1 种子的数字**抢走** INDEX 的 current ⇒ 明确拒绝入库。
+    if args.smoke:
+        print("[smoke] 不写 results/（smoke 数字不进证据链，也不抢 INDEX 的 current）")
+    else:
+        dest = write_result("42_t12_four_arms_summary", summary_payload,
+                            run_id=args.run_id, allow_overwrite=args.allow_overwrite)
+        print(f"[evidence] {dest.relative_to(ROOT).as_posix()}")
     print(f"\n{'ALL CHECKS PASS' if not FAILS else 'FAILED: ' + '; '.join(FAILS)}")
     print(f"总耗时 {out['elapsed_s']}s ⇒ outputs/42_t12_hetero_four_arms.json")
     return 0 if not FAILS else 2

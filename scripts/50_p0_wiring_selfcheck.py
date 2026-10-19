@@ -31,6 +31,8 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from wmlab.eval.results_io import latest_result_path, write_selfcheck  # noqa: E402
+
 FAILS: list[str] = []
 
 
@@ -127,27 +129,34 @@ def section_d3() -> dict:
           f"ABSORBED={got}")
     check("D3- 且等于计算值 (25, 1)", got == (25.0, 1.0), f"ABSORBED={got}（期望 (25.0, 1.0)）")
     # 已入库 JSON 的元数据（若重跑过 42，这里就是新值）
-    p = ROOT / "results" / "42_t12_four_arms_summary.json"
+    # ★ P0-3：读"当前版本"（runs/ 最新优先，退回 v1 冻结文件），否则本检查会永远核对旧文件
+    p = latest_result_path("42_t12_four_arms_summary")
     meta = None
-    if p.exists():
+    if p is not None and p.exists():
         meta = json.loads(p.read_text(encoding="utf-8")).get("config", {}).get("absorbed")
     check("D3b 入库 JSON 的 absorbed == [25.0, 1.0]",
           meta is not None and [float(x) for x in meta] == [25.0, 1.0],
-          f"results/42 config.absorbed={meta}（旧版为 [0.0, 1.0]，与计算不符）")
+          f"{p.relative_to(ROOT).as_posix() if p else '<缺失>'} "
+          f"config.absorbed={meta}（旧版为 [0.0, 1.0]，与计算不符）")
     return {"ABSORBED": list(got), "json_absorbed": meta}
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--json-out", default=str(ROOT / "results" / "50_p0_wiring_selfcheck.json"))
+    ap.add_argument("--json-out", default=None,
+                    help="显式路径（默认走 results/selfcheck/50_p0_wiring_selfcheck.json）")
     args = ap.parse_args()
     print(f"numpy {np.__version__}")
     out = {"D1": section_d1(), "D2": section_d2(), "D3": section_d3()}
     out["fails"] = FAILS
     out["pass"] = len(FAILS) == 0
-    dest = Path(args.json_out)
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    if args.json_out:
+        dest = Path(args.json_out)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    else:
+        # ★ P0-3（2026-10-19）：自检快照走 results/selfcheck/，判定不变则不重写
+        dest = write_selfcheck("50_p0_wiring_selfcheck", out)
     print(f"\n{'='*60}\n{'ALL PASS' if out['pass'] else 'FAILED: ' + '; '.join(FAILS)}")
     print(f"JSON → {dest}")
     return 0 if out["pass"] else 2

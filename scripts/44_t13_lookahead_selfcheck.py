@@ -41,6 +41,7 @@ sys.path.insert(0, str(ROOT))
 from wmlab.control import PDRelativeController  # noqa: E402
 from wmlab.envs import make_env  # noqa: E402
 from wmlab.eval.allocators import Lookahead, RoundRobin  # noqa: E402
+from wmlab.eval.results_io import write_selfcheck  # noqa: E402  ← 入库唯一入口（P0-3）
 from wmlab.eval.multiuser import (  # noqa: E402
     Allocation, MissingStateError, SINRSuccess, UserSlot, View,
     counterfactual_horizon_costs, counterfactual_next_costs,
@@ -323,10 +324,9 @@ def main() -> int:
     check("L12 视界不一致 ⇒ ValueError（两向都抛）", not l12,
           "；".join(l12) if l12 else "arm20/cf1 与 arm1/cf5 都抛")
 
-    (ROOT / "results").mkdir(exist_ok=True)
     out = {"checks": RESULTS, "failed": FAILS}
-    (ROOT / "results" / "44_lookahead_selfcheck.json").write_text(
-        json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    # ★ P0-3（2026-10-19）：自检快照走 results/selfcheck/，判定不变则不重写
+    write_selfcheck("44_lookahead_selfcheck", out)
     n_ok = sum(1 for r in RESULTS if r["ok"])
     print(f"\n{'ALL CHECKS PASS' if not FAILS else 'FAILED: ' + '; '.join(FAILS)} "
           f"({n_ok}/{len(RESULTS)})")

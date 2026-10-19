@@ -1,0 +1,157 @@
+{
+  "checks": [
+    {
+      "name": "R1a 落到 results/runs/<run_id>/<name>.json",
+      "ok": true,
+      "detail": "path=results/runs/20260101-120000-abcdef0/demo.json"
+    },
+    {
+      "name": "R1b 没有顺手在 results/ 根目录留一份副本",
+      "ok": true,
+      "detail": "results/ 根目录 json = []"
+    },
+    {
+      "name": "R1c 默认 run_id 形如 <8位日期>-<6位时刻>-<7位commit>",
+      "ok": true,
+      "detail": "run_id=20261019-133722-bbc8bee"
+    },
+    {
+      "name": "R1d 内容可回读",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "R2a 同名同 run_id 再写 ⇒ SystemExit(3)",
+      "ok": true,
+      "detail": "exit=3"
+    },
+    {
+      "name": "R2b 旧文件字节不变",
+      "ok": true,
+      "detail": "sha 46b0918a18d7 → 46b0918a18d7"
+    },
+    {
+      "name": "R2c 旧内容仍是旧值",
+      "ok": true,
+      "detail": "content={'a': 1}"
+    },
+    {
+      "name": "R2d 阴性对照：裸 write_text 确实会改 sha（证明 R2b 有分辨力）",
+      "ok": true,
+      "detail": "对照 sha 46b0918a18d7 → 2d6121d61e57"
+    },
+    {
+      "name": "R3a 显式覆盖后新内容生效",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "R3b 恰好生成 1 个 .bak",
+      "ok": true,
+      "detail": "baks=['demo.json.bak.20261019-133722']"
+    },
+    {
+      "name": "R3c 备份内容 == 旧内容",
+      "ok": true,
+      "detail": "bak=demo.json.bak.20261019-133722"
+    },
+    {
+      "name": "R4a 最新 run = current",
+      "ok": true,
+      "detail": "got **current**"
+    },
+    {
+      "name": "R4b 旧 run = superseded",
+      "ok": true,
+      "detail": "got **superseded**"
+    },
+    {
+      "name": "R4c 被取代的 v1 = superseded",
+      "ok": true,
+      "detail": "got **superseded**"
+    },
+    {
+      "name": "R4d 独占的 v1 = v1(frozen)",
+      "ok": true,
+      "detail": "got **v1(frozen)**"
+    },
+    {
+      "name": "R4e 旧文件没被删（只标 superseded）",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "R5a 判定不变 ⇒ 不重写（sha 不变）",
+      "ok": true,
+      "detail": "7ecb30bdb109 → 7ecb30bdb109"
+    },
+    {
+      "name": "R5b 判定翻转 ⇒ 重写",
+      "ok": true,
+      "detail": "7ecb30bdb109 → dbeafe72c1be"
+    },
+    {
+      "name": "R5c VERDICTS 记下翻转来源",
+      "ok": true,
+      "detail": "row={'verdict': 'FAIL', 'changed_from': 'PASS', 'since': '2026-10-19 13:37:22', 'run_id': '20261019-133722-bbc8bee'}"
+    },
+    {
+      "name": "R6a 八个脚本都 import 了 results_io",
+      "ok": true,
+      "detail": "缺=[]"
+    },
+    {
+      "name": "R6b 没有脚本再用固定路径写 results/",
+      "ok": true,
+      "detail": "命中=[]"
+    },
+    {
+      "name": "R6c 人造违规被 R6b 的检测函数抓到",
+      "ok": true,
+      "detail": "命中=['(ROOT / \"results\" / \"99_fake.json\").write_text', 'ROOT / \"results\" / \"99_fake.json\"']"
+    },
+    {
+      "name": "R6d 已知局限：经中间变量的写法**抓不到**（记录下来，不假装没漏洞）",
+      "ok": true,
+      "detail": "命中=[]"
+    },
+    {
+      "name": "R7 runs/ 最新优先于 v1",
+      "ok": true,
+      "detail": "got=results/runs/20260102-000000-bbbbbbb/42_t12_four_arms_summary.json"
+    },
+    {
+      "name": "R7b 只有 legacy 时回退到 v1",
+      "ok": true,
+      "detail": "got=C:\\Users\\Owner\\AppData\\Local\\Temp\\wmlab_rio_ltycc58h\\results\\legacy_only.json"
+    },
+    {
+      "name": "R7c 不存在的逻辑名 ⇒ None",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "failed": [],
+  "detail": {
+    "r1": {
+      "rid": "20260101-120000-abcdef0",
+      "path": "results/runs/20260101-120000-abcdef0/demo.json"
+    },
+    "r3": {
+      "bak": "demo.json.bak.20261019-133722"
+    },
+    "r4": {
+      "current": "**current**",
+      "v1": "**v1(frozen)**"
+    },
+    "r5": {
+      "verdict_after": "FAIL"
+    },
+    "r6": {
+      "targets": 8
+    },
+    "r7": {
+      "latest": "results/runs/20260102-000000-bbbbbbb/42_t12_four_arms_summary.json"
+    }
+  }
+}

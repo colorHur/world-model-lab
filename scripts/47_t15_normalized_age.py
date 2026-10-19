@@ -54,6 +54,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from wmlab.eval.allocators import MaxAge, NormalizedAge, RoundRobin  # noqa: E402
+from wmlab.eval.results_io import latest_result_path, write_result  # noqa: E402  ← 入库唯一入口（P0-3）
 from wmlab.eval.multiuser import (  # noqa: E402
     Allocation, MissingStateError, SINRSuccess, UserSlot, View, default_uav_cost,
     delivery_rate, run_multiuser, window_cost,
@@ -228,6 +229,9 @@ def main() -> int:
     ap.add_argument("--seeds", type=int, nargs="+", default=[0, 1, 2])
     ap.add_argument("--smoke", action="store_true")
     ap.add_argument("--skip-experiment", action="store_true")
+    ap.add_argument("--run-id", default=None, help="入库目录名；默认 <时间戳>-<commit>")
+    ap.add_argument("--allow-overwrite", action="store_true",
+                    help="仅用于**确有必要**重写同一 run-id 的旧证据（会先备份 .bak）")
     args = ap.parse_args()
     n_ep = 2 if args.smoke else args.episodes
     seeds = [0] if args.smoke else args.seeds
@@ -368,9 +372,12 @@ def main() -> int:
 
     # ---------- R0' 与 42 逐位回归 ----------
     print("\n== R0' 与 results/42 的 rr/age 逐位回归 ==")
-    ref_path = ROOT / "results" / "42_t12_four_arms_summary.json"
+    # ★ P0-3（2026-10-19）：读"当前版本"（runs/ 最新优先，退回 v1 冻结件），并打印**实际**路径。
+    #   硬编码 results/42_... 会在 P0-3 之后永远核对旧的冻结文件（自证伪 #46 同型）。
+    ref_path = latest_result_path("42_t12_four_arms_summary")
+    print(f"  [ref] {ref_path.relative_to(ROOT).as_posix() if ref_path else '<缺失>'}")
     r0_ok, r0_detail = True, "未找到 42 结果（跳过，不算通过）"
-    if ref_path.exists():
+    if ref_path is not None and ref_path.exists():
         ref = json.loads(ref_path.read_text(encoding="utf-8"))
         ref_map = {(c["budget"], c["arm"], c["seed"]): c["J_per_episode"]
                    for c in ref.get("cells_J", [])}
@@ -451,13 +458,15 @@ def main() -> int:
         h4["note"] = f"有档位 geo > {GATE} ⇒ 约束满足型目标也没过 Gate"
     print(f"  ⇒ {h4['verdict']}：{h4['note']}")
 
-    _dump({"selfchecks": sc, "experiment": {"cells": cells}}, cells, summary, h4, n_ep, seeds)
+    _dump({"selfchecks": sc, "experiment": {"cells": cells}}, cells, summary, h4, n_ep, seeds,
+          run_id=args.run_id, allow_overwrite=args.allow_overwrite, persist=not args.smoke)
     print(f"\n{'ALL CHECKS PASS' if not FAILS else 'FAILED: ' + '; '.join(FAILS)}")
-    print(f"总耗时 {round(time.time() - t_all, 1)}s ⇒ results/47_t15_normalized_age.json")
+    print(f"总耗时 {round(time.time() - t_all, 1)}s")
     return 0 if not FAILS else 2
 
 
-def _dump(payload, cells, summary, h4, n_ep, seeds):
+def _dump(payload, cells, summary, h4, n_ep, seeds, *, run_id=None, allow_overwrite=False,
+          persist=True):
     out = {"config": {"N": 2, "window": WINDOW, "warmup": [WARMUP_UAV, 0],
                       "budgets": list(BUDGETS), "episodes": n_ep, "seeds": seeds,
                       "gate": GATE, "D_measured": list(D_MEASURED), "D_swapped": list(D_SWAPPED),
@@ -470,17 +479,20 @@ def _dump(payload, cells, summary, h4, n_ep, seeds):
     (ROOT / "outputs").mkdir(exist_ok=True)
     (ROOT / "outputs" / "47_t15_normalized_age.json").write_text(
         json.dumps({**out, "cells": (cells or [])}, ensure_ascii=False, indent=2), encoding="utf-8")
-    if cells is None:
-        # ★ 2026-10-19 T16：`--skip-experiment` 只跑自检，**不得**覆盖入库证据。
-        #   实测踩点：这条路径把 results/47 的 24 个 cell 写成空表（须 git checkout 才救回）。
+    if cells is None or not persist:
+        # `--skip-experiment` / `--smoke` 只跑自检或接线，**不得**写入库证据。
+        # 实测踩点（T16）：这条路径曾把 results/47 的 24 个 cell 写成空表，须 git checkout 才救回。
+        if cells is not None:
+            print("[smoke] 不写 results/（smoke 数字不进证据链，也不抢 INDEX 的 current）")
         return
-    (ROOT / "results").mkdir(exist_ok=True)
     slim = [{k: c[k] for k in ("budget", "arm", "seed", "J_per_episode", "J_mean",
                                "share_attempts", "link_q", "gap_cart", "gap_uav",
                                "alive_steps", "frames", "attempts", "elapsed_s")}
             for c in (cells or [])]
-    (ROOT / "results" / "47_t15_normalized_age.json").write_text(
-        json.dumps({**out, "cells_J": slim}, ensure_ascii=False, indent=2), encoding="utf-8")
+    # ★ P0-3（2026-10-19）：改走 run-id 分目录；同名 run-id 再写会 SystemExit(3)。
+    dest = write_result("47_t15_normalized_age", {**out, "cells_J": slim},
+                        run_id=run_id, allow_overwrite=allow_overwrite)
+    print(f"[evidence] {dest.relative_to(ROOT).as_posix()}")
 
 
 if __name__ == "__main__":

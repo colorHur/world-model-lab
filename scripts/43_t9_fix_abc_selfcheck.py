@@ -32,6 +32,7 @@ sys.path.insert(0, str(ROOT))
 
 from wmlab.envs.base import StepResult  # noqa: E402
 from wmlab.eval.allocators import RoundRobin  # noqa: E402
+from wmlab.eval.results_io import write_selfcheck  # noqa: E402  ← 入库唯一入口（P0-3）
 from wmlab.eval.multiuser import (  # noqa: E402
     Allocation, ConstantSuccess, StepRecord, delivery_rate, run_multiuser, window_cost,
 )
@@ -276,12 +277,10 @@ def main() -> int:
     out = {"A": section_a(), "B": section_b(), "C": section_c()}
     out["fails"] = FAILS
     out["pass"] = len(FAILS) == 0
-    dest = ROOT / "results"
-    dest.mkdir(exist_ok=True)
-    (dest / "43_fix_abc_selfcheck.json").write_text(
-        json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    # ★ P0-3（2026-10-19）：自检快照走 results/selfcheck/，判定不变则不重写（避免回归噪声）
+    dest = write_selfcheck("43_fix_abc_selfcheck", out)
     print(f"\n{'='*60}\n{'ALL PASS' if out['pass'] else 'FAILED: ' + '; '.join(FAILS)}")
-    print(f"JSON → {dest / '43_fix_abc_selfcheck.json'}")
+    print(f"JSON → {dest.relative_to(ROOT).as_posix()}")
     return 0 if out["pass"] else 2
 
 
