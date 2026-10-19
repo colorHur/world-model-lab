@@ -28,6 +28,10 @@
 | `56_t23b_compensation_benefit` | 20261020-004151-daacb33 | **current** | 2026-10-20 00:41 | 341228 B | `1d1d9f6278f9` | `results/runs/20261020-004151-daacb33/56_t23b_compensation_benefit.json` |
 | `57_t24_shared_ab` | 20261020-025036-62663b3 | **current** | 2026-10-20 02:50 | 339059 B | `6a86ca85bb6e` | `results/runs/20261020-025036-62663b3/57_t24_shared_ab.json` |
 | `58_p3_confirmation` | 20261020-050355-613f4be | **current** | 2026-10-20 05:03 | 625811 B | `504d8235fb97` | `results/runs/20261020-050355-613f4be/58_p3_confirmation.json` |
+| `59_p3_boundary` | 20261020-071627-58ee7b7 | **superseded** | 2026-10-20 07:16 | 398607 B | `dccf9b811f4b` | `results/runs/20261020-071627-58ee7b7/59_p3_boundary.json` |
+| `59_p3_boundary` | 20261020-072122-58ee7b7 | **current** | 2026-10-20 07:21 | 398626 B | `b6617d27e780` | `results/runs/20261020-072122-58ee7b7/59_p3_boundary.json` |
+| `59b_p3_boundary_refine` | 20261020-071807-58ee7b7 | **superseded** | 2026-10-20 07:18 | 78080 B | `a050a5a767de` | `results/runs/20261020-071807-58ee7b7/59b_p3_boundary_refine.json` |
+| `59b_p3_boundary_refine` | 20261020-071854-58ee7b7 | **current** | 2026-10-20 07:18 | 78061 B | `925230560bdf` | `results/runs/20261020-071854-58ee7b7/59b_p3_boundary_refine.json` |
 
 ## 自检快照（`results/selfcheck/`，判定不变则不重写）
 
