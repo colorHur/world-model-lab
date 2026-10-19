@@ -15,6 +15,7 @@ T12–T21 的全部数字都建立在**一件事**上：接收端的估计观测
     ZOH              最后一次送达的观测
     Linear           最近两次送达的观测（差分估速度）
     ARX              最近两次送达的观测 + 两次之间实际施加的动作（只学 gap==1 的一步映射）
+    MultiLag         最近两次送达的观测 + 两次之间**全部**实际施加的动作（按滞后阶 g 分模型）
     TrueDyn          `deepcopy` 的 env + **自己实际施加过的动作**（诊断特权，只作上界）
 
 `LinearTargetOnly` / `LinearSelfOnly` 是 `Linear` 的**维度切片**变体（机制分解，
@@ -47,7 +48,7 @@ from typing import Sequence
 
 import numpy as np
 
-__all__ = ["PredictorBase", "ZOH", "Linear", "TrueDyn", "ARX",
+__all__ = ["PredictorBase", "ZOH", "Linear", "TrueDyn", "ARX", "MultiLag",
            "LinearTargetOnly", "LinearSelfOnly", "make_predictor"]
 
 
@@ -89,7 +90,8 @@ class PredictorBase:
         """每集开头清空全部用户状态（不跨集泄漏，等价于 I6 的"跨集不继承"）。"""
         self._st = {}
 
-    def observe_delivery(self, i: int, obs, *, age_before: int, env=None, action=None) -> None:
+    def observe_delivery(self, i: int, obs, *, age_before: int, env=None, action=None,
+                         action_seq=None) -> None:
         """一帧送达：把历史前移一格，并把新观测记为 `last_obs`。
 
         Args:
@@ -100,6 +102,9 @@ class PredictorBase:
             action: 本步**实际施加**的动作（T23-a 新增，可选）。只有 `ARX` 用它学一步映射；
                 `ZOH`/`Linear`/`TrueDyn` 忽略它。**必须是 `act()` 的返回值**（即真正喂给
                 `env.step` 的那个），不是命令值 —— 下行有损时这两者才会不同（当前下行理想）。
+            action_seq: **两次送达之间**自己实际施加的**全部**动作（T23-a-2 新增，可选）。
+                长度必须 == `gap_prev`；由 runner 在清空 `actions_since` 之前整体传入。
+                只有 `MultiLag` 用它（多步模型要整段动作）；给 `None` 时退化为 `[action]`。
         """
         i = int(i)
         st = self._st.setdefault(i, {})
@@ -108,6 +113,12 @@ class PredictorBase:
         st["gap_prev"] = (int(age_before) + 1) if prev is not None else 0
         st["last_action"] = (None if action is None
                              else np.asarray(action, dtype=np.float64).reshape(-1).copy())
+        if action_seq is None:
+            st["last_action_seq"] = (None if st["last_action"] is None
+                                     else [st["last_action"].copy()])
+        else:
+            st["last_action_seq"] = [np.asarray(a, dtype=np.float64).reshape(-1).copy()
+                                     for a in action_seq]
         st["last_obs"] = np.asarray(obs, dtype=np.float32).reshape(-1).copy()
         st["n_deliveries"] = int(st.get("n_deliveries", 0)) + 1
         if self.consumes_env and env is None:
@@ -321,6 +332,183 @@ class ARX(PredictorBase):
 _TARGET_OBS_DIMS: dict[int, tuple[int, int]] = {6: (4, 6)}
 
 
+class MultiLag(PredictorBase):
+    """**分滞后阶线性模型组**（T23-a-2）：对每个 `g` 一套 `x_{k+g} ≈ A_g x_k + B_g[a_{k+1};…;a_{k+g}] + c_g`。
+
+    为什么不是 `ARX` 的迭代前推（T23-a 的事实，`93aa45e`）
+    ------------------------------------------------------
+    `ARX` 只学 `gap==1` 的送达对，而 1 帧/步 + `N=2` ⇒ 每用户服务率 ≤ 0.5 ⇒ 间隔 ≥ 2
+    ⇒ 两用户都存活时 `gap==1` 占 **1.03%** ⇒ 一步映射**没有数据**、全程退化 ≡ `Linear`。
+    这里按 `age` 直接查对应阶的模型，把 `gap=2,3`（实测有样本）用起来。
+
+    口径（预注册 `2026-10-19-T23a2-分滞后阶模型-预注册-v0.1.md` §2，写死）
+    ------------------------------------------------------------------
+    1. 样本 = `gap_prev == g` 的送达对，`g ∈ {1..max_gap}`；`gap > max_gap` 只计数。
+    2. **不拼装**：`age = d` 只用 `M_d`；没有 `M_d`/样本不足 ⇒ 整步退化到 `Linear`（逐位相同）。
+       链式拼装（5=2+2+1）误差无界，且会把"模型质量"与"拼装规则"混成一个数。
+    3. 启用门槛 `n_samples ≥ F_g`（`F_g = dim + g·act_dim + 1`）：秩亏时解完全由 ridge 先验决定，
+       那不是"学到的模型"。`n < 2·F_g` 另标 `marginal`（样本刚过线，只作报告，不改门槛）。
+    4. **逐 episode 重置**（同 `ARX`）：跨集累积等于"前几集免费拿数据"，收益无法归因到在线可学。
+    5. 动作窗口 `action_seq` 必须由 runner 整体传入（长度 == `gap_prev`）；长度不符**计数并跳过**，
+       由 `scripts/55` 的 B6 判死（#49：两边对账先问起点终点）。
+
+    ★ 不是"世界模型"，是**线性辨识基线**（v2 §三-P2 才谈学习模型）。它就是"简单线性/局部动力学预测"。
+    """
+
+    name = "mlag"
+    consumes_env = False          # ★ 结构性：签名里没有 env/view ⇒ 不可能偷真值
+
+    def __init__(self, max_gap: int = 6, ridge_rel: float = 1e-6,
+                 min_samples_factor: int = 1) -> None:
+        super().__init__()
+        self.max_gap = int(max_gap)
+        self.ridge_rel = float(ridge_rel)
+        self.min_samples_factor = int(min_samples_factor)
+        self._fit: dict[int, dict[int, dict]] = {}
+        self._counts: dict[int, dict] = {}
+        self._pred_stats: dict[int, dict] = {}
+        self.seq_mismatch = 0
+        self.seq_last_mismatch = 0
+
+    def reset_episode(self) -> None:
+        super().reset_episode()
+        self._fit = {}
+        self._counts = {}
+        self._pred_stats = {}
+        # ★ 计数器跨集保留：它们是"接线是否对"的全局证据，逐集清零会掩盖早期错误
+
+    # ------------------------------------------------------------ 学
+    def _model(self, i: int, *, g: int, dim: int, act_dim: int) -> dict:
+        per_user = self._fit.setdefault(i, {})
+        m = per_user.get(g)
+        F = int(dim) + int(g) * int(act_dim) + 1
+        if m is not None and (m["dim"] != dim or m["act_dim"] != act_dim):
+            raise ValueError(f"MultiLag：用户 {i} 在 g={g} 上的维度中途变了"
+                             f"（{m['dim']}/{m['act_dim']} → {dim}/{act_dim}）—— 只可能是接线错误")
+        if m is None:
+            m = {"g": int(g), "dim": int(dim), "act_dim": int(act_dim), "F": F, "n": 0,
+                 "R": np.zeros((F, F), dtype=np.float64),
+                 "b": np.zeros((F, dim), dtype=np.float64), "W": None}
+            per_user[g] = m
+        return m
+
+    def _on_delivery(self, i: int, st: dict, env) -> None:
+        cnt = self._counts.setdefault(i, {"pairs": 0, "gap_gt_max": 0, "no_action": 0,
+                                          "n_len_mismatch": 0})
+        prev = st.get("prev_obs")
+        seq = st.get("last_action_seq")
+        gap = int(st.get("gap_prev", 0))
+        if prev is None:
+            return                                   # 首个观测：没有"上一拍"，学不了
+        cnt["pairs"] += 1
+        if gap > self.max_gap:
+            cnt["gap_gt_max"] += 1
+            return
+        if not seq:
+            cnt["no_action"] += 1
+            return
+        act0 = st.get("last_action")
+        if act0 is not None and not np.array_equal(seq[-1], act0):
+            # 同一动作在两处不一致 ⇒ 传参接线错，样本不可信
+            self.seq_last_mismatch += 1
+        if len(seq) != gap:
+            # ★ 长度 ≠ gap：窗口与间隔脱节（多/少一步），这条样本会把错位烘进拟合
+            cnt["n_len_mismatch"] += 1
+            self.seq_mismatch += 1
+            return
+        y = np.asarray(st["last_obs"], dtype=np.float64)
+        x = np.asarray(prev, dtype=np.float64)
+        if x.shape != y.shape:
+            raise ValueError(f"MultiLag：上一拍观测形状 {x.shape} ≠ 送达观测 {y.shape}")
+        act_dim = int(np.asarray(seq[0]).size)
+        m = self._model(i, g=gap, dim=int(y.size), act_dim=act_dim)
+        z = np.concatenate([x] + [np.asarray(a, dtype=np.float64).reshape(-1) for a in seq]
+                           + [np.ones(1, dtype=np.float64)])
+        if z.size != m["F"]:
+            raise ValueError(f"MultiLag：特征长度 {z.size} ≠ F {m['F']}（g={gap}）")
+        m["R"] += np.outer(z, z)
+        m["b"] += np.outer(z, y)
+        m["n"] += 1
+        self._solve(m)
+
+    def _solve(self, m: dict) -> None:
+        """相对 ridge，与 `ARX._solve` 同一条实现思路（量纲差一个数量级，固定 ridge 会偏大尺度维）。"""
+        F = int(m["F"])
+        d = np.diag(m["R"]).copy()
+        scale = float(d.max()) if F else 0.0
+        if not np.isfinite(scale) or scale <= 0.0:
+            return
+        reg = m["R"] + self.ridge_rel * np.diag(d) + (1e-9 * scale) * np.eye(F)
+        m["W"] = np.linalg.solve(reg, m["b"])
+
+    # ------------------------------------------------------------ 预测
+    def _need(self, m: dict) -> int:
+        return self.min_samples_factor * int(m["F"])
+
+    def _stat(self, i: int, age: int, used_model: bool) -> None:
+        s = self._pred_stats.setdefault(i, {"used_model": {}, "used_degraded": {}})
+        key = "used_model" if used_model else "used_degraded"
+        s[key][int(age)] = int(s[key].get(int(age), 0)) + 1
+
+    def _predict(self, i: int, st: dict, *, age: int, actions_since: list) -> np.ndarray:
+        if age == 0:
+            self._stat(i, 0, True)                   # age=0 = 直接拿送达值，不算"预测"
+            return st["last_obs"]
+        m = self._fit.get(i, {}).get(int(age))
+        if m is None or m["W"] is None or m["n"] < self._need(m):
+            self._stat(i, age, False)
+            return _linear_extrapolate(st, age)      # ★ 显式退化（describe() 可见）
+        acts = [np.asarray(a, dtype=np.float64).reshape(-1) for a in actions_since]
+        for k, a in enumerate(acts):
+            if a.size != m["act_dim"]:
+                raise ValueError(f"MultiLag：第 {k} 个动作维度 {a.size} ≠ 学到的 {m['act_dim']}")
+        z = np.concatenate([np.asarray(st["last_obs"], dtype=np.float64)] + acts
+                           + [np.ones(1, dtype=np.float64)])
+        x = z @ m["W"]
+        if not np.all(np.isfinite(x)):
+            raise ValueError(f"MultiLag：g={age} 的预测输出含 NaN/inf")
+        self._stat(i, age, True)
+        return x
+
+    # ------------------------------------------------------------ 自述
+    def describe(self) -> dict:
+        """★ `degraded_ages` 的定义（两种都算"该年龄没有模型"）：
+        ① 拟合了但样本不足（`n < F_g`）；② 从未拟合、却在预测里真被用到（走了 `Linear`）。
+        单列 `fitted_degraded_ages` 以便区分 —— 只有 ① 才是"学了一半"，② 是"根本没有数据"。
+        """
+        users: dict[str, dict] = {}
+        for i in sorted(set(self._fit) | set(self._counts) | set(self._pred_stats)):
+            ages = {}
+            for g, m in sorted(self._fit.get(i, {}).items()):
+                need = self._need(m)
+                ages[str(g)] = {"n_samples": int(m["n"]), "F": int(m["F"]), "n_needed": need,
+                                "n_over_F": round(float(m["n"]) / max(int(m["F"]), 1), 3),
+                                "degraded": bool(m["n"] < need),
+                                "marginal": bool(need <= m["n"] < 2 * int(m["F"])),
+                                "fitted": m["W"] is not None}
+            st = self._pred_stats.get(i, {})
+            fitted_deg = sorted(int(g) for g, v in ages.items() if v["degraded"])
+            used_deg = sorted(int(k) for k, v in st.get("used_degraded", {}).items()
+                              if int(v) > 0 and int(k) > 0)
+            never_fitted = sorted(set(used_deg) - {int(g) for g in ages})
+            users[str(i)] = {
+                "ages": ages,
+                "fitted_degraded_ages": fitted_deg,
+                "never_fitted_ages": never_fitted,
+                "degraded_ages": sorted(set(fitted_deg) | set(never_fitted)),
+                "usable_ages": sorted(int(g) for g, v in ages.items() if not v["degraded"]),
+                "used_model": {str(k): int(v) for k, v in sorted(st.get("used_model", {}).items())},
+                "used_degraded": {str(k): int(v) for k, v in
+                                  sorted(st.get("used_degraded", {}).items())},
+                **self._counts.get(i, {}),
+            }
+        return {"name": self.name, "consumes_env": False, "max_gap": self.max_gap,
+                "min_samples_factor": self.min_samples_factor, "ridge_rel": self.ridge_rel,
+                "users": users,
+                "seq_mismatch": int(self.seq_mismatch),
+                "seq_last_mismatch": int(self.seq_last_mismatch)}
+
+
 class _LinearPartial(Linear):
     """机制分解用：只外推"目标维"或只外推"自身维"，其余维保持。
 
@@ -426,7 +614,7 @@ class TrueDyn(PredictorBase):
         return st["shadow_obs"]
 
 
-_PREDICTORS = {"zoh": ZOH, "linear": Linear, "truedyn": TrueDyn, "arx": ARX,
+_PREDICTORS = {"zoh": ZOH, "linear": Linear, "truedyn": TrueDyn, "arx": ARX, "mlag": MultiLag,
                "linear_target_only": LinearTargetOnly, "linear_self_only": LinearSelfOnly}
 
 

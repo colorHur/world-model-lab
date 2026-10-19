@@ -1036,8 +1036,13 @@ def run_multiuser(
                         #   此刻缓冲还没清空，最后一项就是 a_t（上面无条件 append 的那一条）。
                         _a_deliv = (np.asarray(actions_since[i][-1]).copy()
                                     if actions_since[i] else None)
+                        # ★ T23-a-2：整段动作窗口（长度 == gap_prev）交给预测器，
+                        #   `MultiLag` 的多步模型需要它；`ARX` 仍只读 `action=`（行为不变）。
+                        _a_seq = ([np.asarray(a).copy() for a in actions_since[i]]
+                                  if actions_since[i] else None)
                         predictor.observe_delivery(i, nxt, age_before=int(ages_before[i]),
-                                                   env=envs[i], action=_a_deliv)
+                                                   env=envs[i], action=_a_deliv,
+                                                   action_seq=_a_seq)
                         actions_since[i] = []
                 else:
                     age[i] += 1
