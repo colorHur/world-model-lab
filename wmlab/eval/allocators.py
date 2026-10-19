@@ -40,7 +40,7 @@ import numpy as np
 from .multiuser import Allocation, MissingStateError, View, require_privileged
 
 __all__ = ["RoundRobin", "MaxAge", "MaxChannel", "TrueError", "Lookahead", "NormalizedAge",
-           "QuotaPacing", "ALIVE_ONLY_NOTE"]
+           "QuotaPacing", "Paced", "ALIVE_ONLY_NOTE"]
 
 
 ALIVE_ONLY_NOTE = (
@@ -458,4 +458,99 @@ class QuotaPacing:
             return _alloc(n, -1, "quota:pace-hold")
         self._used[i] += 1
         return _alloc(n, i, f"{self.name}:quota-{self.quotas[i]}-used-{self._used[i]}")
+
+
+@dataclass
+class Paced:
+    """**配速包装器**：只决定"这一步能不能发"，**选谁完全交给内层臂**。
+
+    规则（预注册：`04-实验与代码/2026-10-19-T21-配速化匹配消融-预注册-v0.1.md` §2）::
+
+        allowance(t) = floor(B · t / L)        # 到第 t 步为止"允许累计发过多少帧"
+        放行 ⇔ allowance(t) − used ≥ 1          # used = 本集累计已发帧数（跨用户求和）
+        放行时：alloc = arm(view, rng)          # view **原样**传下去，不加工、不过滤
+        used += 1  当且仅当本步真的派了帧
+
+    ★★ 为什么需要它（2026-10-19 T16 实测，不是设想）
+      裸臂只要 `budget_left > 0` 就每步派帧 ⇒ 第 t 步累计已用 = t ⇒ `t = B` 时预算归零，
+      窗内后 `L−B` 步**完全断服**（实测 `t>B` 发帧 = 0）。T16 用 `QuotaPacing` 证明了
+      "铺满窗口"本身值 −56% 的 UAV 代价，**但那同时换掉了"选谁"**（赤字 argmax），
+      所以它不能回答"同一批臂配上同一配速后排序是否不变"。
+      本类就是把**时序**这一个变量单独剥出来：预算、窗口、发送时点全部固定，
+      臂之间唯一的自由度还是"选谁"。
+
+    ★ 三条硬性质
+      1. **`B = L` 时恒等**：`allowance(t) = t` ⇒ 每步都放行 ⇒ 与裸臂**逐位相同**。
+         这是包装器透明性的判据（`scripts/52` 的 S1），也说明 `B=L` 的历史结论
+         **从来不受该缺陷影响**（缺陷只在 `B < L` 出现）。
+      2. **发送时点与臂无关**：`B=100, L=200` 时闸门只在偶数步开 ⇒ 三个臂拿到
+         完全相同的发送时点集合 ⇒ 臂间差只可能来自"选谁"。
+      3. **不读任何 slot 字段**（不读 age/csi/cost_est）⇒ 无特权信息，
+         `diagnostic=False` 可跑；也不改变内层臂的信息集。
+
+    ★ 诚实标注：**不是新算法**。token bucket / deficit 允许量是网络调度的标准件；
+      本类的定位是**公平化装置**（把 T12–T15 的记账缺陷从比较里剔掉）。
+
+    ★ 与 `QuotaPacing` 的区别（别混用）
+      `QuotaPacing` **自己选人**（赤字 argmax，按用户名额）；`Paced` **不选人**，
+      只按全局允许量开门/关门。前者回答"按配额分帧值多少"，后者回答"只改时序值多少"。
+
+    ★ `used` 的复位：`t` 不递增 ⇒ 新 episode（runner 每集 `t` 从 1 重来）。
+      用 `t <= _last_t` 而不是 `t == 1`：首集首步与后续集首步无法用 `t == 1` 区分。
+    """
+
+    arm: object
+    budget: int
+    window: int
+    name: str = "paced"
+    _used: int = field(default=0, init=False, repr=False)
+    _last_t: int = field(default=-1, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        for k in ("budget", "window"):
+            v = getattr(self, k)
+            if isinstance(v, bool) or not isinstance(v, (int, np.integer)):
+                raise ValueError(f"{k} 必须是整数，收到 {v!r}")
+            if float(v) != int(v):
+                raise ValueError(f"{k} 必须是整数（不许静默截断），收到 {v!r}")
+        self.budget, self.window = int(self.budget), int(self.window)
+        if self.window <= 0:
+            raise ValueError(f"window 必须 > 0，收到 {self.window!r}")
+        if self.budget < 0:
+            raise ValueError(f"budget 必须 ≥ 0，收到 {self.budget!r}")
+        if self.budget > self.window:
+            # ★ B > L 时"把 B 帧铺满 L 步"无定义（只能每步都发也发不完）⇒ 口径外推，
+            #   必须显式拒绝，不许静默跑出一个"看起来正常"的数字。
+            raise ValueError(f"budget({self.budget}) 不得大于 window({self.window})："
+                             f"配速口径只在 B ≤ L 时有定义")
+
+    @property
+    def used(self) -> int:
+        """本集累计已发帧数（诊断用，**不要**拿它当判据）。"""
+        return int(self._used)
+
+    @property
+    def horizon(self) -> int | None:
+        """转发内层臂的视界声明（`run_multiuser` 的 R12 接线守卫要读它）。
+
+        内层臂没有 `horizon`（rr/age/na）⇒ 返回 None，守卫按"不检查"处理，与裸臂一致。
+        """
+        return getattr(self.arm, "horizon", None)
+
+    def __call__(self, view: View, rng: np.random.Generator) -> Allocation:
+        n = len(view.slots)
+        t = int(view.t)
+        if t <= self._last_t:                 # t 不递增 ⇒ 新一集开始
+            self._used = 0
+        self._last_t = t
+        allowance = (self.budget * t) // self.window
+        if allowance - self._used < 1:
+            return _alloc(n, -1, f"{self.name}:pace-hold(t={t},used={self._used})")
+        a = self.arm(view, rng)               # ★ 原样转交：不加工 view、不过滤候选
+        served = np.asarray(a.served, dtype=bool).reshape(-1)
+        if served.shape != (n,):
+            raise ValueError(f"内层臂返回的 served 形状必须是 ({n},)，收到 {served.shape}")
+        if int(served.sum()) > 0:
+            self._used += 1
+        return Allocation(served=served, reason=f"{self.name}[{a.reason}]")
 

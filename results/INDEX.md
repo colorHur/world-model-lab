@@ -22,6 +22,7 @@
 | `47_t15_normalized_age` | v1 | **v1(frozen)** | 2026-10-19 08:52 | 84722 B | `cf1cf2b35af4` | `results/47_t15_normalized_age.json` |
 | `48_t16_quota_pacing` | v1 | **v1(frozen)** | 2026-10-19 08:50 | 420197 B | `c36e2da6971a` | `results/48_t16_quota_pacing.json` |
 | `50_p0_wiring_selfcheck` | v1 | **v1(frozen)** | 2026-10-19 11:28 | 520 B | `44cc9901b84a` | `results/50_p0_wiring_selfcheck.json` |
+| `52_t21_paced_matching_ablation` | 20261019-154839-132f110 | **current** | 2026-10-19 15:48 | 167442 B | `99fe7398349a` | `results/runs/20261019-154839-132f110/52_t21_paced_matching_ablation.json` |
 
 ## 自检快照（`results/selfcheck/`，判定不变则不重写）
 
