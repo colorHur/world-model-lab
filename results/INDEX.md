@@ -36,6 +36,7 @@
 | `66_identifiability` | 20261020-183802-1c59479 | **current** | 2026-10-20 18:38 | 28016 B | `636dd24cbf52` | `results/runs/20261020-183802-1c59479/66_identifiability.json` |
 | `67_cf_action` | 20261020-204741-2fbe298 | **superseded** | 2026-10-20 20:47 | 5562 B | `69bf81a854cb` | `results/runs/20261020-204741-2fbe298/67_cf_action.json` |
 | `67_cf_action` | 20261020-204836-2fbe298 | **current** | 2026-10-20 20:48 | 12384 B | `024ff94226a0` | `results/runs/20261020-204836-2fbe298/67_cf_action.json` |
+| `68_t27_gated_fallback` | 20261020-225901-ece860c | **current** | 2026-10-20 22:59 | 141889 B | `67f0721eb1dc` | `results/runs/20261020-225901-ece860c/68_t27_gated_fallback.json` |
 
 ## 自检快照（`results/selfcheck/`，判定不变则不重写）
 

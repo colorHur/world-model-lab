@@ -17,6 +17,7 @@ T12–T21 的全部数字都建立在**一件事**上：接收端的估计观测
     ARX              最近两次送达的观测 + 两次之间实际施加的动作（只学 gap==1 的一步映射）
     MultiLag         最近两次送达的观测 + 两次之间**全部**实际施加的动作（按滞后阶 g 分模型）
     SharedLag        最近两次送达的观测 + 两次之间**全部**实际施加的动作（**所有 g 共用一套 (A,B_j,c)**）
+    Gated            最近两次送达的观测，**按 `age` 二选一**：`age>=θ` 用 `last_obs`，否则线性外推
     TrueDyn          `deepcopy` 的 env + **自己实际施加过的动作**（诊断特权，只作上界）
 
 `LinearTargetOnly` / `LinearSelfOnly` 是 `Linear` 的**维度切片**变体（机制分解，
@@ -50,7 +51,7 @@ from typing import Sequence
 import numpy as np
 
 __all__ = ["PredictorBase", "ZOH", "Linear", "TrueDyn", "ARX", "MultiLag", "HybridLag",
-           "SharedLag", "LinearTargetOnly", "LinearSelfOnly", "make_predictor"]
+           "SharedLag", "Gated", "LinearTargetOnly", "LinearSelfOnly", "make_predictor"]
 
 
 def _linear_extrapolate(st: dict, age: int) -> np.ndarray:
@@ -802,6 +803,67 @@ class LinearSelfOnly(_LinearPartial):
     extrapolate_target = False
 
 
+class Gated(PredictorBase):
+    """**按年龄门控的回退**（T27）：`age >= θ` ⇒ 用 `last_obs`（保持）；否则线性外推。
+
+    为什么是它（T25→T26 的直接后果，不是随手挑的启发式）
+    ----------------------------------------------------
+    T25-I3：伤害最大的格 `B=100/unpaced/u0` 里，按**预测误差**门控的触发率 = **0**
+      （三桶三种子误差全部更低）⇒ "误差低 ⇒ 可以补偿"这个方向是**反的**。
+    T26-A2：UAV `τ(ΔJ, age)` = +0.435(B200) / +0.832(B100)，两档同号；
+    T26-A3：`age∈{1,2–3}` 上 2234 个决策点 `share(ΔJ>0) = 0.000`（补偿无害），
+            `age≥4` 才出现危害，且两档危害份额不同（11.0% vs 73.0%）。
+    ⇒ `age` 是决策时点**实际可得**、且有符号证据的唯一天然信号；θ 只能由这份数据给出，
+      再由**未参与选择的第三批初值**确认（见 T27 预注册 §1/§2）。
+
+    三条实现纪律
+    ------------
+    1. **θ=0 必须逐位等于 `ZOH`，θ=10⁹ 必须逐位等于 `Linear`** —— 两条边界退化由
+       `scripts/68` 的 G0a/G0b 在**真实 cell** 上验。这不是"顺手加的一致性"：
+       门控写错时最常见的失效就是"恒走一支"，而那两种失效**都能让结果看起来完全正常**。
+    2. **只改 `est`，不碰调度**：`predict()` 的签名里没有 `View`，分配器读的是 runner 的
+       `last_obs`/`age` ⇒ 本类结构上不可能影响"把帧给谁"。
+    3. **计数器不进数值路径**：`n_hold`/`n_extrap` 只用于 G2 的接线核验（"门控触发了，
+       但 `est` 有没有真的换"），不参与任何返回值的计算。
+    """
+
+    name = "gated"
+
+    def __init__(self, threshold: int = 4) -> None:
+        super().__init__()
+        self.threshold = int(threshold)
+        self.n_hold = 0
+        self.n_extrap = 0
+        self.n_hold_by_user: dict[int, int] = {}
+        self.n_extrap_by_user: dict[int, int] = {}
+
+    def reset_episode(self) -> None:
+        """★ **只清估计状态，不清计数器**。
+
+        计数器是"这个对象活到现在一共回退了多少次"，而 runner 在**每集开头**都会调
+        `reset_episode()`。第一版在这里把计数器一起清零 ⇒ G2（计数器 vs 探针的 `age>=θ`
+        决策点数）在 2 集上看起来差近一半 —— **那是判据对象错了，不是门控没工作**（#46 同族）。
+        每个 cell 都新建一个实例，所以"生命周期累计"与"该 cell 的累计"是同一件事。
+        """
+        super().reset_episode()
+
+    def _predict(self, i: int, st: dict, *, age: int, actions_since: list) -> np.ndarray:
+        if age >= self.threshold:
+            self.n_hold += 1
+            self.n_hold_by_user[int(i)] = int(self.n_hold_by_user.get(int(i), 0)) + 1
+            return st["last_obs"]                     # 与 `ZOH._predict` 同一条返回路径
+        self.n_extrap += 1
+        self.n_extrap_by_user[int(i)] = int(self.n_extrap_by_user.get(int(i), 0)) + 1
+        return _linear_extrapolate(st, age)            # 与 `Linear._predict` 共用实现
+
+    def describe(self) -> dict:
+        return {"name": self.name, "consumes_env": False, "threshold": int(self.threshold),
+                "n_hold": int(self.n_hold), "n_extrap": int(self.n_extrap),
+                "n_hold_by_user": {str(k): int(v) for k, v in sorted(self.n_hold_by_user.items())},
+                "n_extrap_by_user": {str(k): int(v) for k, v in sorted(self.n_extrap_by_user.items())},
+                "n_users": len(self._st)}
+
+
 class TrueDyn(PredictorBase):
     """**真实动力学预测（诊断特权）**：从送达时刻的 env 快照出发，用自己实际施加的动作前推。
 
@@ -849,7 +911,7 @@ class TrueDyn(PredictorBase):
 
 
 _PREDICTORS = {"zoh": ZOH, "linear": Linear, "truedyn": TrueDyn, "arx": ARX, "mlag": MultiLag,
-               "hybrid": HybridLag, "shared": SharedLag,
+               "hybrid": HybridLag, "shared": SharedLag, "gated": Gated,
                "linear_target_only": LinearTargetOnly, "linear_self_only": LinearSelfOnly}
 
 
