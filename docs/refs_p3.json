@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "purpose": "P3 论文的公开文献来源清单：每条引用必须在这里有条目，条目必须写清『核到什么程度』。正文（docs/PAPER-P3-v0.2.md）与本文档由 scripts/65_precheck.py 对账。",
+  "checked_at": "2026-10-20T16:26:12+08:00",
+  "checked_at_tz": "Asia/Shanghai",
+  "checked_by": "自动化会话（scripts/65_precheck.py 的上游人工/机器核对）；核对方式 = 直接读 arXiv abs 页面，不采信二手转述",
+  "status_vocabulary": {
+    "verified_abs_page": "已读 arXiv abs 页面：题名、作者列表、提交日期、Comments/Journal-ref 按页面原文记录",
+    "partial": "页面只给出部分信息（如仅有 arXiv 版本、Comments 写『Submitted to IEEE』），出版卷期页码记为『待核』",
+    "unverified": "未取得一手页面，只保留编号与暂记信息，正文须标『待核』"
+  },
+  "entries": [
+    {
+      "key": "han2026worldmodel",
+      "arxiv_id": "2606.30568",
+      "cited_in_paper_section": "2-1",
+      "title": "Towards World Model-Empowered Integrated Sensing, Communication, and Decision for Complex Unmanned Systems",
+      "authors": [
+        "Xue Han",
+        "Yongpeng Wu",
+        "Meng Shen",
+        "Wenjun Xu",
+        "Biqian Feng",
+        "Zijin Wang",
+        "Xiaohu You",
+        "Shengli Sun",
+        "Wenjun Zhang"
+      ],
+      "submitted": "2026-06-29 (v1, UTC)",
+      "venue_status": "verified_abs_page",
+      "venue_as_recorded": "Comments: Accepted by IEEE Communications Magazine",
+      "journal_ref_on_page": null,
+      "volume_issue_pages": "待核（abs 页面未给出卷/期/页码；不得以『已录用』代替卷期）",
+      "doi": "10.48550/arXiv.2606.30568（arXiv 自身 DOI，非出版方 DOI）",
+      "source_url": "https://arxiv.org/abs/2606.30568",
+      "notes": [
+        "第一作者是 Xue Han，Yongpeng Wu 为第二作者 —— 本稿旧写法『作者含 Yongpeng Wu 等』容易让读者误以为其为一作，已改为全列表。",
+        "讲座纪要记的『任务级信息年龄 = 生成 + 传输』不在该页摘要文字内 ⇒ 该具体定义仍待核原文，不以纪要代替原文。",
+        "摘要中出现 task urgency 与 predictive uncertainty 的联合调度表述，可作为机制关系的落点，但『联合优化到什么程度』须读正文，本稿不引。"
+      ],
+      "mechanism_relation": "世界模型 + 时效感知（AoI/urgency）+ 预测不确定性的联合调度框架；本文与之的差异是：本文不建世界模型，只测『线性外推补偿在不同刷新时序下的符号』。"
+    },
+    {
+      "key": "zheng2020uoi",
+      "arxiv_id": "2002.07987",
+      "cited_in_paper_section": "2-2",
+      "title": "Urgency of Information for Context-Aware Timely Status Updates in Remote Control Systems",
+      "authors": [
+        "Xi Zheng",
+        "Sheng Zhou",
+        "Zhisheng Niu"
+      ],
+      "submitted": "2020-02-19 (v1, UTC)",
+      "venue_status": "partial",
+      "venue_as_recorded": "Comments: Submitted to IEEE for possible publications",
+      "journal_ref_on_page": null,
+      "volume_issue_pages": "待核（页面只有 arXiv v1 与『Submitted to IEEE』；本稿旧记忆里的『IEEE TWC 2020』未在该页得到确认，不得写进正文）",
+      "doi": "10.48550/arXiv.2002.07987（arXiv 自身 DOI）",
+      "source_url": "https://arxiv.org/abs/2002.07987",
+      "notes": [
+        "页面摘要明确给出 UoI 的『非线性时变重要性 + 非一致上下文依赖』，且给出单终端 update-index 与多终端调度 ⇒ 『平均 AoI 不足』与『紧迫度可调度』均已被占位。",
+        "本文与它的关系不是提出新紧迫度，而是把成本项 δ(·) 的形状用仿真实测出来。"
+      ],
+      "mechanism_relation": "UoI = 上下文相关的紧迫度函数，用于更新与多用户调度；本文测的是同一族里『任务代价对陈旧度的实测响应』，不提出新的紧迫度定义。"
+    },
+    {
+      "key": "li2026freshness",
+      "arxiv_id": "2504.19507",
+      "cited_in_paper_section": "2-3",
+      "title": "From Freshness to Effectiveness: Goal-Oriented Sampling for Remote Decision Making",
+      "authors": [
+        "Aimin Li",
+        "Shaohua Wu",
+        "Gary C.F. Lee",
+        "Sumei Sun"
+      ],
+      "submitted": "2025-04-28 (v1)；最新 v3 2026-02-06",
+      "venue_status": "verified_abs_page",
+      "venue_as_recorded": "Journal reference: IEEE Transactions on Information Theory, vol. 72, no. 4, pp. 2237-2276, April 2026",
+      "journal_ref_on_page": "IEEE Transactions on Information Theory, vol. 72, no. 4, pp. 2237-2276, April 2026",
+      "volume_issue_pages": "72(4): 2237-2276, April 2026（按 abs 页面 Journal reference 原文记录）",
+      "doi": "10.1109/TWC.2025.3593377（★ 与 Journal reference 冲突：DOI 前缀为 TWC，Journal reference 写 T-IT。两处都在同一页面，无法就地判定哪个是最终出版信息 ⇒ 本稿按 Journal reference 写刊名卷期，并显式标注该冲突为『待核』，不擅自改 DOI）",
+      "source_url": "https://arxiv.org/abs/2504.19507",
+      "notes": [
+        "★ 本轮最实质的一条核对结果：页面同时给出 Journal reference（T-IT 72(4):2237-2276）与 Related DOI（10.1109/TWC.…），两者刊名不一致 ⇒ 只写能确证的部分，冲突显式记录。",
+        "方法本体是 AR-MDP + QuickBLP 两阶段求解，含采样频率阈值分析 ⇒ 『新鲜度不等于效用』这句已被顶刊占位，本文不得当作自己的发现。"
+      ],
+      "mechanism_relation": "以决策有效性为目标反推采样频率，并给出『超过某频率后不再增益』的阈值；本文在同一问题上只做测量（R 对实测 age 的响应与饱和），不给出最优策略。"
+    }
+  ],
+  "do_not_cite": [
+    {
+      "what": "『平均 AoI 不足以刻画决策性能』作为本文的发现",
+      "why": "已被 li2026freshness（T-IT 2026）与 zheng2020uoi 占位；本文只能以『实测』身份出现。"
+    },
+    {
+      "what": "任何卷期页码，若 refs_p3.json 里 volume_issue_pages 写的是『待核』",
+      "why": "本稿纪律：拿不准写待核（用户级协作准则第 3 条）。"
+    }
+  ]
+}

@@ -417,6 +417,33 @@ python scripts/53_t22_predictor_timing.py --skip-zoh-regression     # 三种预�
 #       **没有任何一个 J/R 变了**；连跑两次 `sha256` 完全相同；`39/40/41/43/44/49/50/51` +
 #       `58/59/60 --skip-experiment` 全绿
 #
+# 33) ★★ v3.1 整改（两轮，2026-10-20）—— **不改数字，只改"数字怎么被信任"**
+#     第一轮（`9783ae6`）：`62` 复现闸不再把"没比对"当匹配（expected/compared/skipped/failed/invalid
+#       五项显式记录，完整非空匹配才打 `BITWISE MATCH`；缺证据/未知 seed/缺格/非有限值 ⇒ `NOT VERIFIED`）；
+#       `wmlab/eval/evidence.py` + `scripts/63_freeze_manifest.py` 冻结输入（run-id + `sha256_norm`，
+#       并说明 Git LF 与工作树 CRLF 的字节哈希差异）；`61` 加 **claim-id 绑定**（源 + JSON 键 +
+#       预算/模式/预测器/用户/种子集合），新增"真实数字放到错误条件"反例；`scripts/64` 9 条错误注入自检；
+#       正文 v0.2 落 `docs/PAPER-P3-v0.2.md`（此前正文只在父项目，不在版本库）
+#     第二轮（本轮）：`scripts/65_precheck.py` —— 投稿前自查的**机器可判**部分，13 检查 / 4 阴性对照：
+#       R1–R3 正文 `arXiv:` 编号 ↔ `docs/refs_p3.json` 双向对账（题名逐字、卷期"待核"须传播到正文）；
+#       A1–A2 摘要 10 / 结论 9 个结果数 **100% 绑 claim-id**（补的是"S11a 弱闸允许某个数完全不标记"的洞）；
+#       A3 claim-id 存在性；L1–L2 禁用断言语境；F1 图资产存在
+#     ★ 文献三条核到一手页面，改掉两处**真错**：
+#       ① arXiv:2606.30568 的**一作是 Xue Han**（Yongpeng Wu 第二作者）—— 旧写法"作者含 Yongpeng Wu 等"
+#          会让人读成一作是他；
+#       ② arXiv:2002.07987 页面只写 "Submitted to IEEE for possible publications" ⇒ **期刊出处待核**，
+#          旧记录里的"IEEE TWC 2020"未获确认，已从正文撤下
+#       ★ 并发现一处**页面级冲突**：arXiv:2504.19507 的 Journal reference 写
+#           IEEE Trans. Inf. Theory 72(4):2237-2276 (2026-04)，而同页 Related DOI 前缀是 `TWC`
+#           ⇒ 冲突在 `refs_p3.json` 里显式标 `待核`，正文不据任一侧推断"已正式出版"
+#     ★ 本轮两处**判据自伤**（新闸第一次运行就发生，都改判据不改被测物）：
+#       ① A1 首跑 5/10 假 FAIL —— `MARK` 正则本身以反引号开头，却又往回找了两次反引号定位 span 起点；
+#       ② A2 首跑 1 个假 FAIL（`3`）—— 正文写"相邻逆序 `3` 个<!--C5.inv-->"，单位在 code span **外**
+#          （中文正常写法），判据须放宽为"数字 + 可选单位 + 标记"
+#     ★ 数值与字节：`RESULTS-P3.md` / `results_p3_trace.json` / `claims_p3.json` 在整轮自查后
+#       **逐字节未变（`[unchanged]`）** ⇒ 没有为了让闸通过而改数字；`62` → `BITWISE MATCH`
+#       （`expected=4 compared=4 skipped=0 failed=0 invalid=0`，`max|Δ|=0`）；`64` 9/9；`63 --check` 一致
+#
 # [T19] 2026-10-19 · P0 修正（不是新实验，是把证据链本身修到可信）
 #     ★ 原子锁：旧版"先 status 再 write" + 全局共享 `.run.id` ⇒ **无分辨力**。实测对照：
 #       旧逻辑无人工间隙 3 轮全"通过"，插入 20 ms 间隙后 8/8 进程同时"拿到"同一把锁

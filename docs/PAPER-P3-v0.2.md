@@ -58,17 +58,29 @@
 ## 2 相关工作（三条已被占位，不得当成自己的发现）
 
 本轮已把三条入口核到**一手页面**（题名与作者按下述实际记录写），但**未做全文综述、未做强基线实现**，
-因此本文不写"首次 / 据我们所知"。
+因此本文不写"首次 / 据我们所知"。逐条的核对字段（题名 / 作者列表 / 提交日期 / 卷期状态 / 冲突记录）
+落在 `docs/refs_p3.json`，由 `scripts/65_precheck.py` 与本节双向对账。
 
 1. **世界模型驱动的通感算决策一体化**：*Towards World Model-Empowered Integrated Sensing,
-   Communication, and Decision for Complex Unmanned Systems*（arXiv:2606.30568，作者含 Yongpeng Wu 等；
-   讲座纪要记作"任务级信息年龄 = 生成 + 传输"，**该具体定义仍待核对原文**，不以纪要代替原文）。
+   Communication, and Decision for Complex Unmanned Systems*（arXiv:2606.30568，2026-06-29 提交；
+   作者 Xue Han、Yongpeng Wu、Meng Shen、Wenjun Xu、Biqian Feng、Zijin Wang、Xiaohu You、
+   Shengli Sun、Wenjun Zhang；页面 Comments 原文为 "Accepted by IEEE Communications Magazine"，
+   卷/期/页码 **待核**）。★ 更正：本稿旧写法"作者含 Yongpeng Wu 等"会让人误以为其为一作，
+   实际一作是 Xue Han。讲座纪要记作"任务级信息年龄 = 生成 + 传输"，**该具体定义不在该页摘要文字内，
+   仍待核原文**，不以纪要代替原文。
 2. **紧迫度 / 效用化的 AoI**：*Urgency of Information for Context-Aware Timely Status Updates in
-   Remote Control Systems*（Xi Zheng、Sheng Zhou、Zhisheng Niu，arXiv:2002.07987）。该文已讨论
+   Remote Control Systems*（Xi Zheng、Sheng Zhou、Zhisheng Niu，arXiv:2002.07987，2020-02-19 提交 v1；
+   页面 Comments 只写 "Submitted to IEEE for possible publications" ⇒ **期刊卷期与最终出处待核**，
+   旧记录里的"IEEE TWC 2020"未在该页得到确认，本稿不写）。该文已讨论
    上下文相关紧迫度、更新与多用户调度 ⇒ 本文测的是**成本项 `δ(·)` 的实测形状**，
    创新必须落到具体机制，而不是"平均 AoI 不够"这一句已经被写过的话。
 3. **从新鲜度到有效性**：*From Freshness to Effectiveness: Goal-Oriented Sampling for Remote
-   Decision Making*（arXiv:2504.19507）。卷期页码以出版方记录为准，本稿不擅自补齐。
+   Decision Making*（Aimin Li、Shaohua Wu、Gary C.F. Lee、Sumei Sun，arXiv:2504.19507；v1 2025-04-28，
+   最新 v3 2026-02-06）。页面 Journal reference 原文为 IEEE Transactions on Information Theory,
+   vol. 72, no. 4, pp. 2237-2276, April 2026 ⇒ 刊名与卷期按此记录。★ **同一页面上的 Related DOI 写作
+   10.1109/TWC.2025.3593377（前缀为 TWC，与本条 Journal reference 的刊名不一致）**，
+   两处信息无法就地判定哪个是最终出版信息 ⇒ 该冲突在 `refs_p3.json` 里显式标注为 **待核**，
+   本稿不改写 DOI、也不据冲突任一侧推断"已正式出版"。
 
 三条上游否定来自本组前期实验（不在本文主表内，但必须点名，否则会被当成没读过）：
 "用 NMSE/预测误差的阈值当任务边界"（跨两场景、三个数量级复现的反例）、
@@ -263,6 +275,8 @@
 | 资源图 | `python scripts/61d_plot_cost.py` → `assets/paper_p3_cost.png` |
 | 最短复现（4 cell，秒级） | `python scripts/62_min_repro.py` → `docs/REPRODUCE-P3.md` |
 | 闸门自检（含错误注入反例） | `python scripts/64_gate_selftest.py` |
+| 投稿前自查（机器可判部分：文献 ↔ 正文、摘要/结论 100% 绑定、禁用断言、图资产） | `python scripts/65_precheck.py` |
+| 文献来源清单（逐条核对字段 + 待核/冲突记录 + 不得引用清单） | `docs/refs_p3.json` |
 | 演示 | `docs/DEMO-P3.html` |
 
 ★ 最短复现的判据是**逐 episode 逐位相同**（`max|Δ| = 0`），并且要求**期望集合全部被比对**：
@@ -275,6 +289,44 @@
 - 图 1：`assets/paper_p3.png` —— (a) `R_uav` vs 实测陈旧度（标**补点后**的网格括区间）；
   (b) 绝对代价（log 轴）；(c) 三档窗口的交点与括区间；(d) `x*/W` 与比例参考线（探索性）。
 - 图 2：`assets/paper_p3_cost.png` —— (a) 单次调用中位耗时；(b) 每 cell 墙钟（逐 cell 散点）。
+
+**逐格坐标轴与单位（投稿前自查逐条核过，来源 = `scripts/61c_plot_paper_fig.py` 的 `set_xlabel`/`set_ylabel`）**
+
+| 图-格 | 横轴 | 纵轴 | 单位 | 口径落点 |
+|---|---|---|---|---|
+| 1(a) | measured staleness `x` = mean UAV age | `R_uav = J_uav(Linear)/J_uav(ZOH)` | 步 / **无量纲** | `x` 的过滤条件（`alive` 且 `t ≥ 41`）写在 §4.3；图上不重复 |
+| 1(b) | 同 1(a) | `J_uav` | 步 / **m（对数轴）** | §4.3 末段；同图两轴一个是步、一个是米，不可互读 |
+| 1(c) | 实测失效窗口 `W` | 交点 `x*`（`R_uav` 越过 1 处的平均 age） | 步 / 步 | §4.4；三档 `W` = 35/53/104 步，`x*` 为网格点估计 |
+| 1(d) | 实测失效窗口 `W` | `x*/W` | 步 / **无量纲** | §4.4；标注 report-only |
+| 2(a) | —（条形） | 单次预测调用中位耗时 | µs | §4.5；声明为 Python 层实现开销 |
+| 2(b) | —（散点） | 每 cell 墙钟 | s | §4.5；环境步进主导，不作实时预算结论 |
+
+★ 两张图都不含误差棒：图 1 的区间在 §4 的**表里**（cluster bootstrap），图上只画点估计与网格括区间；
+把表里的区间搬到图上会让人误以为括区间是置信区间（§4.3 已显式否定）。
+
+---
+
+## 参考文献（按一手页面记录，未核字段一律写"待核"）
+
+> 核对时间 2026-10-20（Asia/Shanghai），方式 = 直接读 arXiv abs 页面。逐条的机器可读版本在
+> `docs/refs_p3.json`；本节的题名必须与之一致，`scripts/65_precheck.py` 的 R1–R3 会核这件事。
+> **本节禁止用 inline code 写卷期数字**：那会让主表闸 S11a 把它们当成"结果数"去 trace 里找。
+
+1. X. Han, Y. Wu, M. Shen, W. Xu, B. Feng, Z. Wang, X. You, S. Sun, W. Zhang,
+   "Towards World Model-Empowered Integrated Sensing, Communication, and Decision for Complex
+   Unmanned Systems," arXiv:2606.30568, submitted 2026-06-29. Comments 记 "Accepted by IEEE
+   Communications Magazine"；**卷期页码待核**。
+2. X. Zheng, S. Zhou, Z. Niu, "Urgency of Information for Context-Aware Timely Status Updates in
+   Remote Control Systems," arXiv:2002.07987, submitted 2020-02-19. Comments 仅记 "Submitted to
+   IEEE for possible publications"；**期刊出处待核**（不写 TWC 2020）。
+3. A. Li, S. Wu, G. C. F. Lee, S. Sun, "From Freshness to Effectiveness: Goal-Oriented Sampling for
+   Remote Decision Making," arXiv:2504.19507 (v3, 2026-02-06). Journal reference:
+   IEEE Transactions on Information Theory, vol. 72, no. 4, pp. 2237-2276, April 2026.
+   ★ 同页 Related DOI 前缀为 TWC，与本条刊名不一致 ⇒ **冲突待核**，见 `refs_p3.json` 的 `doi` 字段。
+
+**不得引用**（`refs_p3.json` 的 `do_not_cite` 同款）：
+①"平均 AoI 不足以刻画决策性能"不得写成本文发现（已被第 2、3 条占位，本文身份只是**实测**）；
+②任何卷期页码，凡 `refs_p3.json` 里写"待核"的，正文不得补。
 
 ---
 
