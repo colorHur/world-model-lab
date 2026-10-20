@@ -34,6 +34,8 @@
 | `59b_p3_boundary_refine` | 20261020-071854-58ee7b7 | **current** | 2026-10-20 07:18 | 78061 B | `925230560bdf` | `results/runs/20261020-071854-58ee7b7/59b_p3_boundary_refine.json` |
 | `60_p3_window_shift` | 20261020-094752-7fcaaa5 | **current** | 2026-10-20 09:47 | 594015 B | `34a754d78498` | `results/runs/20261020-094752-7fcaaa5/60_p3_window_shift.json` |
 | `66_identifiability` | 20261020-183802-1c59479 | **current** | 2026-10-20 18:38 | 28016 B | `636dd24cbf52` | `results/runs/20261020-183802-1c59479/66_identifiability.json` |
+| `67_cf_action` | 20261020-204741-2fbe298 | **superseded** | 2026-10-20 20:47 | 5562 B | `69bf81a854cb` | `results/runs/20261020-204741-2fbe298/67_cf_action.json` |
+| `67_cf_action` | 20261020-204836-2fbe298 | **current** | 2026-10-20 20:48 | 12384 B | `024ff94226a0` | `results/runs/20261020-204836-2fbe298/67_cf_action.json` |
 
 ## 自检快照（`results/selfcheck/`，判定不变则不重写）
 

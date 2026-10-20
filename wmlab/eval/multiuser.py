@@ -721,6 +721,7 @@ def run_multiuser(
     cf_horizon: int = 1,
     predictor=None,
     pred_probe: Callable[[dict], None] | None = None,
+    decision_probe: Callable[[dict], None] | None = None,
 ) -> dict:
     """多用户闭环骨架：**分配 → 成功概率 → 送达 → 步进 → 记账**，逐 step 落原始表。
 
@@ -1012,6 +1013,18 @@ def run_multiuser(
             for i in range(n_users):
                 if not alive_before[i]:
                     continue
+                if decision_probe is not None:
+                    # ★ T26：**决策时点**的只读探针（在 `act()` 之前，控制器状态尚未被本步推进）。
+                    #   用途 = 在同一真实状态上做"补偿动作 vs 保持动作"的反事实分支。
+                    #   契约：探针**不得**修改 env / controller / est（会静默改掉主轨迹）；
+                    #   需要快照请自己 `copy.deepcopy`。默认 None ⇒ 零行为变化（G4 逐位核）。
+                    decision_probe({
+                        "episode": int(e), "t": int(t), "user": int(i),
+                        "env": envs[i], "controller": controllers[i],
+                        "est": np.asarray(est[i], dtype=np.float64).copy(),
+                        "last_obs": np.asarray(last_obs[i], dtype=np.float64).copy(),
+                        "age": int(age[i]), "cost_fn": cfs[i],
+                    })
                 act_i = controllers[i].act(est[i])
                 res = envs[i].step(act_i)
                 nxt = np.asarray(res.obs, dtype=np.float32)

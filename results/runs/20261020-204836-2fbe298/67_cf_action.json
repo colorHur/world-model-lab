@@ -1,0 +1,518 @@
+{
+  "unit": "T26 补偿动作反事实可分辨性",
+  "protocol": {
+    "arm": "age",
+    "mode": "unpaced",
+    "predictor": "linear",
+    "h": 5,
+    "seeds": [
+      200,
+      201
+    ],
+    "n_episode": 8,
+    "window": 200,
+    "warmup": [
+      300,
+      0
+    ],
+    "budgets": [
+      200,
+      100
+    ],
+    "note": "seed 200/201 = 全新初值（开发 0–31、确认 100–189 之外）"
+  },
+  "gates": {
+    "fails": [],
+    "n_fail": 0
+  },
+  "checks": {
+    "probe_n": 176,
+    "g2_verdict": "NO-ROOM"
+  },
+  "cells": {
+    "B200|u0": {
+      "n": 1580,
+      "share_dJ_pos": 0.014556962025316455,
+      "median_dJ": -1.41314098238945,
+      "median_rel": -0.24153339872842466,
+      "mean_rel": -0.22809100350275024,
+      "n_nonzero_dJ": 1574,
+      "max_abs_dJ": 1.909285306930542,
+      "tau_age": 0.4354856241279449,
+      "tau_dact": -0.3399178550505141,
+      "tau_dest": 0.39043736878285373,
+      "age_median": 2.0,
+      "buckets": {
+        "1": {
+          "n": 764,
+          "share_dJ_pos": 0.0,
+          "median_dJ": -1.4830823838710785,
+          "median_rel": -0.28681651911812583
+        },
+        "2-3": {
+          "n": 607,
+          "share_dJ_pos": 0.0,
+          "median_dJ": -1.3751616477966309,
+          "median_rel": -0.2368644968834517
+        },
+        ">=4": {
+          "n": 209,
+          "share_dJ_pos": 0.11004784688995216,
+          "median_dJ": -0.9286080598831177,
+          "median_rel": -0.1280360119410937
+        }
+      }
+    },
+    "B200|u1": {
+      "n": 941,
+      "share_dJ_pos": 0.0,
+      "median_dJ": 0.0,
+      "median_rel": 0.0,
+      "mean_rel": 0.0,
+      "n_nonzero_dJ": 0,
+      "max_abs_dJ": 0.0,
+      "tau_age": NaN,
+      "tau_dact": NaN,
+      "tau_dest": NaN,
+      "age_median": 2.0,
+      "buckets": {
+        "1": {
+          "n": 399,
+          "share_dJ_pos": 0.0,
+          "median_dJ": 0.0,
+          "median_rel": 0.0
+        },
+        "2-3": {
+          "n": 422,
+          "share_dJ_pos": 0.0,
+          "median_dJ": 0.0,
+          "median_rel": 0.0
+        },
+        ">=4": {
+          "n": 120,
+          "share_dJ_pos": 0.0,
+          "median_dJ": 0.0,
+          "median_rel": 0.0
+        }
+      }
+    },
+    "B100|u0": {
+      "n": 1692,
+      "share_dJ_pos": 0.35756501182033096,
+      "median_dJ": -1.062853366136551,
+      "median_rel": -0.12873325107860606,
+      "mean_rel": -0.12164768038120134,
+      "n_nonzero_dJ": 1691,
+      "max_abs_dJ": 1.8385668992996216,
+      "tau_age": 0.8316448237657927,
+      "tau_dact": -0.5701323139236376,
+      "tau_dest": 0.8155589574937666,
+      "age_median": 3.0,
+      "buckets": {
+        "1": {
+          "n": 440,
+          "share_dJ_pos": 0.0,
+          "median_dJ": -1.519999921321869,
+          "median_rel": -0.24290012772813252
+        },
+        "2-3": {
+          "n": 423,
+          "share_dJ_pos": 0.0,
+          "median_dJ": -1.389675498008728,
+          "median_rel": -0.21760922390602983
+        },
+        ">=4": {
+          "n": 829,
+          "share_dJ_pos": 0.729794933655006,
+          "median_dJ": 0.7789554595947266,
+          "median_rel": 0.012250382905923797
+        }
+      }
+    },
+    "B100|u1": {
+      "n": 852,
+      "share_dJ_pos": 0.0,
+      "median_dJ": 0.0,
+      "median_rel": 0.0,
+      "mean_rel": 0.0,
+      "n_nonzero_dJ": 0,
+      "max_abs_dJ": 0.0,
+      "tau_age": NaN,
+      "tau_dact": NaN,
+      "tau_dest": NaN,
+      "age_median": 2.0,
+      "buckets": {
+        "1": {
+          "n": 347,
+          "share_dJ_pos": 0.0,
+          "median_dJ": 0.0,
+          "median_rel": 0.0
+        },
+        "2-3": {
+          "n": 367,
+          "share_dJ_pos": 0.0,
+          "median_dJ": 0.0,
+          "median_rel": 0.0
+        },
+        ">=4": {
+          "n": 138,
+          "share_dJ_pos": 0.0,
+          "median_dJ": 0.0,
+          "median_rel": 0.0
+        }
+      }
+    },
+    "B200|u0|absorb": {
+      "n": 1606,
+      "share_dJ_pos": 0.014321295143212951,
+      "median_dJ": -1.4068418741226196,
+      "median_rel": -0.24139243590569368,
+      "mean_rel": -0.22817947200703578,
+      "n_nonzero_dJ": 1600,
+      "max_abs_dJ": 1.909285306930542,
+      "tau_age": 0.4208594051935145,
+      "tau_dact": -0.3442806839899291,
+      "tau_dest": 0.3724058631225965,
+      "age_median": 2.0,
+      "buckets": {
+        "1": {
+          "n": 783,
+          "share_dJ_pos": 0.0,
+          "median_dJ": -1.4773783087730408,
+          "median_rel": -0.28684199865002474
+        },
+        "2-3": {
+          "n": 613,
+          "share_dJ_pos": 0.0,
+          "median_dJ": -1.3749442100524902,
+          "median_rel": -0.2365285947823201
+        },
+        ">=4": {
+          "n": 210,
+          "share_dJ_pos": 0.10952380952380952,
+          "median_dJ": -0.9295807480812073,
+          "median_rel": -0.12811305901759704
+        }
+      }
+    },
+    "B200|u1|absorb": {
+      "n": 1029,
+      "share_dJ_pos": 0.004859086491739553,
+      "median_dJ": 0.0,
+      "median_rel": 0.0,
+      "mean_rel": 6802721.086491738,
+      "n_nonzero_dJ": 7,
+      "max_abs_dJ": 2.0,
+      "tau_age": 0.06383554255445208,
+      "tau_dact": 0.08687992998256108,
+      "tau_dest": 0.13230631308694685,
+      "age_median": 2.0,
+      "buckets": {
+        "1": {
+          "n": 415,
+          "share_dJ_pos": 0.0,
+          "median_dJ": 0.0,
+          "median_rel": 0.0
+        },
+        "2-3": {
+          "n": 439,
+          "share_dJ_pos": 0.0,
+          "median_dJ": 0.0,
+          "median_rel": 0.0
+        },
+        ">=4": {
+          "n": 175,
+          "share_dJ_pos": 0.02857142857142857,
+          "median_dJ": 0.0,
+          "median_rel": 0.0
+        }
+      }
+    },
+    "B100|u0|absorb": {
+      "n": 1772,
+      "share_dJ_pos": 0.38261851015801357,
+      "median_dJ": -0.9883126318454742,
+      "median_rel": -0.11760671234481979,
+      "mean_rel": -0.11599565144324366,
+      "n_nonzero_dJ": 1771,
+      "max_abs_dJ": 1.8385668992996216,
+      "tau_age": 0.82414211888323,
+      "tau_dact": -0.5750493409044446,
+      "tau_dest": 0.8103778819334473,
+      "age_median": 4.0,
+      "buckets": {
+        "1": {
+          "n": 440,
+          "share_dJ_pos": 0.0,
+          "median_dJ": -1.519999921321869,
+          "median_rel": -0.24290012772813252
+        },
+        "2-3": {
+          "n": 423,
+          "share_dJ_pos": 0.0,
+          "median_dJ": -1.389675498008728,
+          "median_rel": -0.21760922390602983
+        },
+        ">=4": {
+          "n": 909,
+          "share_dJ_pos": 0.7458745874587459,
+          "median_dJ": 0.7626733779907227,
+          "median_rel": 0.010714027148087838
+        }
+      }
+    },
+    "B100|u1|absorb": {
+      "n": 942,
+      "share_dJ_pos": 0.012738853503184714,
+      "median_dJ": 0.0,
+      "median_rel": 0.0,
+      "mean_rel": 12738853.506192496,
+      "n_nonzero_dJ": 12,
+      "max_abs_dJ": 2.0,
+      "tau_age": 0.18893110853998826,
+      "tau_dact": 0.27073719112341516,
+      "tau_dest": 0.17421693867537602,
+      "age_median": 2.0,
+      "buckets": {
+        "1": {
+          "n": 356,
+          "share_dJ_pos": 0.0,
+          "median_dJ": 0.0,
+          "median_rel": 0.0
+        },
+        "2-3": {
+          "n": 377,
+          "share_dJ_pos": 0.0,
+          "median_dJ": 0.0,
+          "median_rel": 0.0
+        },
+        ">=4": {
+          "n": 209,
+          "share_dJ_pos": 0.05741626794258373,
+          "median_dJ": 0.0,
+          "median_rel": 0.0
+        }
+      }
+    }
+  },
+  "verdict": {
+    "verdict": "NO-ROOM",
+    "per_cov": {
+      "tau_age": {
+        "n_cells": 2,
+        "tau": [
+          0.4354856241279449,
+          0.8316448237657927
+        ],
+        "max_abs": 0.8316448237657927,
+        "same_sign": true
+      },
+      "tau_dact": {
+        "n_cells": 2,
+        "tau": [
+          -0.3399178550505141,
+          -0.5701323139236376
+        ],
+        "max_abs": 0.5701323139236376,
+        "same_sign": true
+      },
+      "tau_dest": {
+        "n_cells": 2,
+        "tau": [
+          0.39043736878285373,
+          0.8155589574937666
+        ],
+        "max_abs": 0.8155589574937666,
+        "same_sign": true
+      }
+    },
+    "spread_2_3": 0.0,
+    "why": {
+      "all_weak": false,
+      "sign_flip": false,
+      "spread_small": true
+    }
+  },
+  "verdict_tau_only": {
+    "verdict": "SURVIVABLE",
+    "covariates": [
+      "tau_age",
+      "tau_dact",
+      "tau_dest"
+    ],
+    "per_cov": {
+      "tau_age": {
+        "n_cells": 2,
+        "tau": [
+          0.4354856241279449,
+          0.8316448237657927
+        ],
+        "max_abs": 0.8316448237657927,
+        "same_sign": true
+      },
+      "tau_dact": {
+        "n_cells": 2,
+        "tau": [
+          -0.3399178550505141,
+          -0.5701323139236376
+        ],
+        "max_abs": 0.5701323139236376,
+        "same_sign": true
+      },
+      "tau_dest": {
+        "n_cells": 2,
+        "tau": [
+          0.39043736878285373,
+          0.8155589574937666
+        ],
+        "max_abs": 0.8155589574937666,
+        "same_sign": true
+      }
+    },
+    "rule": "|tau|>=0.30 & same_sign（只看 A2；不含 spread 条件）"
+  },
+  "verdict_posthoc_absorb": {
+    "verdict": "NO-ROOM",
+    "per_cov": {
+      "tau_age": {
+        "n_cells": 4,
+        "tau": [
+          0.4208594051935145,
+          0.06383554255445208,
+          0.82414211888323,
+          0.18893110853998826
+        ],
+        "max_abs": 0.82414211888323,
+        "same_sign": true
+      },
+      "tau_dact": {
+        "n_cells": 4,
+        "tau": [
+          -0.3442806839899291,
+          0.08687992998256108,
+          -0.5750493409044446,
+          0.27073719112341516
+        ],
+        "max_abs": 0.5750493409044446,
+        "same_sign": false
+      },
+      "tau_dest": {
+        "n_cells": 4,
+        "tau": [
+          0.3724058631225965,
+          0.13230631308694685,
+          0.8103778819334473,
+          0.17421693867537602
+        ],
+        "max_abs": 0.8103778819334473,
+        "same_sign": true
+      }
+    },
+    "spread_2_3": 0.0,
+    "why": {
+      "all_weak": false,
+      "sign_flip": true,
+      "spread_small": true
+    }
+  },
+  "meta": {
+    "B200|u0": {
+      "budget": 200,
+      "user": 0,
+      "seeds": [
+        200,
+        201
+      ],
+      "absorb": false,
+      "n_probe": 1606,
+      "n_invalid": 26,
+      "n_age0": 1594
+    },
+    "B200|u1": {
+      "budget": 200,
+      "user": 1,
+      "seeds": [
+        200,
+        201
+      ],
+      "absorb": false,
+      "n_probe": 1029,
+      "n_invalid": 88,
+      "n_age0": 420
+    },
+    "B100|u0": {
+      "budget": 100,
+      "user": 0,
+      "seeds": [
+        200,
+        201
+      ],
+      "absorb": false,
+      "n_probe": 1772,
+      "n_invalid": 80,
+      "n_age0": 616
+    },
+    "B100|u1": {
+      "budget": 100,
+      "user": 1,
+      "seeds": [
+        200,
+        201
+      ],
+      "absorb": false,
+      "n_probe": 942,
+      "n_invalid": 90,
+      "n_age0": 357
+    },
+    "B200|u0|absorb": {
+      "budget": 200,
+      "user": 0,
+      "seeds": [
+        200,
+        201
+      ],
+      "absorb": true,
+      "n_probe": 1606,
+      "n_invalid": 0,
+      "n_age0": 1594
+    },
+    "B200|u1|absorb": {
+      "budget": 200,
+      "user": 1,
+      "seeds": [
+        200,
+        201
+      ],
+      "absorb": true,
+      "n_probe": 1029,
+      "n_invalid": 0,
+      "n_age0": 420
+    },
+    "B100|u0|absorb": {
+      "budget": 100,
+      "user": 0,
+      "seeds": [
+        200,
+        201
+      ],
+      "absorb": true,
+      "n_probe": 1772,
+      "n_invalid": 0,
+      "n_age0": 616
+    },
+    "B100|u1|absorb": {
+      "budget": 100,
+      "user": 1,
+      "seeds": [
+        200,
+        201
+      ],
+      "absorb": true,
+      "n_probe": 942,
+      "n_invalid": 0,
+      "n_age0": 357
+    }
+  },
+  "elapsed_s": 14.203362941741943,
+  "dJ_definition": "J_P(Linear 外推) − J_Z(最近送达冻结)；h=5 步、期间无送达、两支同噪声"
+}
