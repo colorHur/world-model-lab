@@ -49,12 +49,18 @@ class UavTrackAdapter(EnvAdapter):
     wind_period: float = 12.0
 
     def __init__(self, seed: int = 0, noise_std: float = 0.0, max_steps: int = 200,
-                 wind_amp: float = 0.0):
+                 wind_amp: float = 0.0, escape_radius: float | None = None):
         self.noise_std = float(noise_std)
         self.wind_amp = float(wind_amp)
         self.max_steps = int(max_steps)
+        # ★ 2026-10-20 P3-2：把"跟丢半径"变成**可显式传入的构造参数**（默认 = 类常量 25.0）。
+        #   为什么不用事后 monkey-patch 属性：那是"看起来改了、其实没接线"的典型来源（R12），
+        #   而且参数值会从 run 配置里消失。默认 None ⇒ 不改任何既有调用方的逐位行为。
+        if escape_radius is not None:
+            self.escape_radius = float(escape_radius)
         self.name = (f"UavTrack-v0(sigma={self.noise_std:g}"
-                     f"{'' if self.wind_amp == 0 else f',wind={self.wind_amp:g}'})")
+                     f"{'' if self.wind_amp == 0 else f',wind={self.wind_amp:g}'}"
+                     f"{'' if self.escape_radius == 25.0 else f',R_fail={self.escape_radius:g}'})")
         self.obs_dim = 6
         self.act_dim = 2
         self.is_discrete = False

@@ -32,6 +32,7 @@
 | `59_p3_boundary` | 20261020-072122-58ee7b7 | **current** | 2026-10-20 07:21 | 398626 B | `b6617d27e780` | `results/runs/20261020-072122-58ee7b7/59_p3_boundary.json` |
 | `59b_p3_boundary_refine` | 20261020-071807-58ee7b7 | **superseded** | 2026-10-20 07:18 | 78080 B | `a050a5a767de` | `results/runs/20261020-071807-58ee7b7/59b_p3_boundary_refine.json` |
 | `59b_p3_boundary_refine` | 20261020-071854-58ee7b7 | **current** | 2026-10-20 07:18 | 78061 B | `925230560bdf` | `results/runs/20261020-071854-58ee7b7/59b_p3_boundary_refine.json` |
+| `60_p3_window_shift` | 20261020-094752-7fcaaa5 | **current** | 2026-10-20 09:47 | 594015 B | `34a754d78498` | `results/runs/20261020-094752-7fcaaa5/60_p3_window_shift.json` |
 
 ## 自检快照（`results/selfcheck/`，判定不变则不重写）
 
