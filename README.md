@@ -377,6 +377,24 @@ python scripts/53_t22_predictor_timing.py --skip-zoh-regression     # 三种预�
 #       结果 …-结果-v0.1.md；证据 `results/runs/20261020-094752-7fcaaa5/60_p3_window_shift.json`
 #       （144 cell，`checks_failed=[]`）；图 `assets/60_window_shift.png`
 #
+# 31) ★★ P3-3a/b 收口交付 —— **主表 / 图 / 最短复现全部从入库 JSON 生成**（不再手抄数字）
+#     交付物：`docs/RESULTS-P3.md` + `docs/results_p3_trace.json`（表与逐格溯源）、
+#       `assets/paper_p3.png`（2×2）、`docs/REPRODUCE-P3.md` + `scripts/62_min_repro.py`（4 cell / 3.6 s）
+#     ★ 表（`scripts/61_build_tables.py`）：唯一入口 `latest_result_path()`；`R` **不由 summary 抄**，
+#       而是从 `cells_J` 的逐 episode `J` 重算再与 summary 对账（容差 `1e-9`）；每个显示值登记
+#       trace（键路径 + JSON 原值），并做**字面 grep**（S10：137 格 0 失败）
+#       ⇒ 分辨力实测：把任一显示值扰动 1e-9（S10）、把 `F1.R[0]` 加 1e-6（S1）⇒ **立刻 FAIL**
+#     ★ 字节稳定：文档不写时间戳 ⇒ 连跑两次 `docs/RESULTS-P3.md` 与 trace 的 sha256 完全不变
+#     ★ 图（`scripts/61c_plot_paper_fig.py`）：四格 = (a) 适用域比值 / (b) 绝对代价（log 轴，说明
+#       "比值趋平≠危害趋平"）/ (c) 三档窗口交点 + 区间 / (d) `x*/W` vs 实测窗口（比例参考线）
+#       ★ 交点竖线括号标注为"网格间隔，**不是**置信区间"；旧图 `59_*/60_*` 保留不删
+#     ★ 复现（`scripts/62_min_repro.py`，复用 `58.run_cell` ⇒ 配置同源）：`B=200 unpaced` ×
+#       {`zoh`,`linear`} × seed{100,130} × 30 集 = 4 cell，实测 **3.64 s**，
+#       与 `results/runs/20261020-050355-613f4be/58_*.json` 逐 episode **`max|Δ| = 0`**
+#       ⇒ 阴性对照 `--episodes 29`：形状 `(29,2)` vs `(30,2)`、4 个 FAIL、**退出码 2**（不是恒 PASS）
+#     ★ 本仓库**不做**的事在这一轮被再次钉死：交付物只引用已入库 JSON，不重跑改数；
+#       `R_cart` 不当收益；`INCONCLUSIVE` 不写成"窗口无关"；`TrueDyn` 的 0 误差不当"模型好"
+#
 # [T19] 2026-10-19 · P0 修正（不是新实验，是把证据链本身修到可信）
 #     ★ 原子锁：旧版"先 status 再 write" + 全局共享 `.run.id` ⇒ **无分辨力**。实测对照：
 #       旧逻辑无人工间隙 3 轮全"通过"，插入 20 ms 间隙后 8/8 进程同时"拿到"同一把锁
