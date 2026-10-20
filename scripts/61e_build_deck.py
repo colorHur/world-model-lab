@@ -202,9 +202,29 @@ def main() -> int:
     add('<div class="cap">图 1(c)(d)：误差棒＝交点所在相邻两点，不是统计置信区间。</div>')
     add("</section>")
 
-    # ---------------- 7 资源与下一步 ----------------
+    # ---------------- 7 否定结果（v0.3 新增） ----------------
     add('<section class="slide">')
-    add('<div class="kicker">6 · 代价与下一步</div>')
+    add('<div class="kicker">6 · 否定结果</div>')
+    add("<h2>「用陈旧度门控回退」这条路，我们试了四次</h2>")
+    add("<ul>"
+        '<li><b>T25</b> 按<b>误差</b>门控：伤害最大的那一格触发率是 <b>0</b> ⇒ 没有操作空间（方向问题，不是阈值问题）</li>'
+        f'<li><b>T26</b> <code>age</code> 与危害同号（逐决策 τ = {g("cells.B100|u0.tau_age")}），'
+        f'但换动作会更贵的决策占 {g("cells.B100|u0.share_dJ_pos")} ⇒ 秩相关<b>不能</b>折算成阈值</li>'
+        f'<li><b>T27</b> 一个固定 θ 不能两档通吃：θ=4 把毒档压到 {g("verdicts.F1.R_gated[0]")}，'
+        f'同时把好档从 0.308 抬到 {g("verdicts.F2.R[0]")} ⇒ 判词 <b>FALLBACK-FAILS</b></li>'
+        f'<li><b>T28</b> 扫描出的 θ=8 在<b>独立批</b>上：好档 {g("verdicts.T1.R_uav")}（与 linear 配对 ΔR 区间含 0、'
+        f'触发份额仅 {g("summary.200.per_arm.gated8.gate_share_theta")}），毒档 {g("verdicts.T2.R_uav")} '
+        f'（区间 [{g("verdicts.T2.ci_uav[0]")}, {g("verdicts.T2.ci_uav[1]")}] 不含 1）</li>'
+        "</ul>")
+    add('<div class="warn">判词 <b>FALLBACK-FAILS (confirm)</b>：'
+        '<b>「减少」成立、「归零」不成立</b>；好档「不坏」是因为几乎不起作用。'
+        '本文因此<b>不提供</b>可部署的补救方法。</div>')
+    add('<div class="cap">数字取自否定线冻结清单 docs/evidence_manifest_p3_neg.json（与主表清单互不影响）。</div>')
+    add("</section>")
+
+    # ---------------- 8 资源与下一步 ----------------
+    add('<section class="slide">')
+    add('<div class="kicker">7 · 代价与下一步</div>')
     add("<h2>开销是相对概念，不要读成实时预算</h2>")
     add("<ul>"
         f'<li>单次调用中位：ZOH <code>{g("TIMING.primary/zoh.median_us")}</code> µs vs Linear '
@@ -220,7 +240,7 @@ def main() -> int:
 
     html = ("<!DOCTYPE html><html lang=\"zh-CN\"><head><meta charset=\"utf-8\">"
             "<title>P3 演示 · 预测补偿的适用域</title><style>" + CSS + "</style></head><body>"
-            + "".join(s) + '<div class="nav" id="pg">1 / 7 · ←/→ 翻页</div>'
+            + "".join(s) + '<div class="nav" id="pg">1 / 8 · ←/→ 翻页</div>'
             "<script>" + JS + "</script></body></html>")
     n_slide = html.count('<section class="slide')
     n_img = html.count("data:image/png;base64,")

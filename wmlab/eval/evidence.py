@@ -31,6 +31,7 @@ from pathlib import Path
 __all__ = [
     "ROOT",
     "MANIFEST_PATH",
+    "NEG_MANIFEST_PATH",
     "EvidenceError",
     "sha256_bytes",
     "sha256_norm",
@@ -41,6 +42,9 @@ __all__ = [
 
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST_PATH = ROOT / "docs" / "evidence_manifest_p3.json"
+#: 否定线（T25–T28）的独立清单：正文 §6.2 的引用面，**不动**主清单（主清单换了版本号，
+#: 61/61c/61d/62 的"清单未换"记录就全作废）。由 `scripts/63_freeze_manifest.py --set neg` 生成。
+NEG_MANIFEST_PATH = ROOT / "docs" / "evidence_manifest_p3_neg.json"
 
 
 class EvidenceError(RuntimeError):

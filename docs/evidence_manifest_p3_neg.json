@@ -1,0 +1,75 @@
+{
+ "manifest_version": 1,
+ "purpose": "P3 **否定线**（T25–T28）的固定输入：正文 §6.2 引用面",
+ "generated_by": "scripts/63_freeze_manifest.py --set neg",
+ "note": "改名 evidence_manifest_p3_neg.json 的生成/复现脚本默认只读本清单。换证据必须 --allow-update，旧版另存 evidence_manifest_p3_neg.v<N>.json；不得手改。",
+ "hash_scheme": "sha256_norm = 行尾归一(\\r\\n→\\n)后的 sha256，权威；sha256_bytes = 工作树原始字节 sha256，仅记录（与 git blob 因换行不同）",
+ "entries": {
+  "66": {
+   "name": "66_identifiability",
+   "run_id": "20261020-183802-1c59479",
+   "path": "results/runs/20261020-183802-1c59479/66_identifiability.json",
+   "sha256_norm": "325fd60a20195c7be7b62cd91f205826307254afef9f55ff45cd5c2b08d7aeec",
+   "sha256_bytes": "636dd24cbf5224df21077a09576148c81b2dacf79f63289e4af633bc5506f19d",
+   "cells": 0,
+   "checks_failed": 0,
+   "protocol": {}
+  },
+  "67": {
+   "name": "67_cf_action",
+   "run_id": "20261020-204836-2fbe298",
+   "path": "results/runs/20261020-204836-2fbe298/67_cf_action.json",
+   "sha256_norm": "f056f4c1e85698b07d94eee0e80eae1c6b433714ba7c6537b57dc97107db113e",
+   "sha256_bytes": "024ff94226a0337bc2dbbfa5047de4ba550cd91172c7ebe974755798ad90aa4c",
+   "cells": 0,
+   "checks_failed": 0,
+   "protocol": {}
+  },
+  "68": {
+   "name": "68_t27_gated_fallback",
+   "run_id": "20261020-225901-ece860c",
+   "path": "results/runs/20261020-225901-ece860c/68_t27_gated_fallback.json",
+   "sha256_norm": "bc4ab5e4343d6cdeee0b6c1d1716197649fbe0946890f3f7231a4416f28654e7",
+   "sha256_bytes": "67f0721eb1dc41c215aab74977ca7334fadf2064566fb0939448eb8faaf0ca86",
+   "cells": 36,
+   "checks_failed": 0,
+   "protocol": {
+    "N": 2,
+    "window": 200,
+    "episodes": 30,
+    "n_boot": 10000,
+    "absorbed": [
+     25.0,
+     1.0
+    ],
+    "budgets": [
+     200,
+     100
+    ]
+   }
+  },
+  "69": {
+   "name": "69_t28_confirm",
+   "run_id": "20261021-010749-b7d0421",
+   "path": "results/runs/20261021-010749-b7d0421/69_t28_confirm.json",
+   "sha256_norm": "5ee96a4dc8e4a080929b23e790d44a251704b6b553bc54b115e134a2d8b354f0",
+   "sha256_bytes": "6566d67ba9830926f39f98255907831ca50d1dd0c494f70c57401a40d35a5789",
+   "cells": 18,
+   "checks_failed": 0,
+   "protocol": {
+    "N": 2,
+    "window": 200,
+    "episodes": 30,
+    "n_boot": 10000,
+    "absorbed": [
+     25.0,
+     1.0
+    ],
+    "budgets": [
+     200,
+     100
+    ]
+   }
+  }
+ }
+}

@@ -442,5 +442,284 @@
   "source": "58",
   "note": "F2.primary/200/unpaced.cluster_ratio_median[1]",
   "json_key": "F2.primary/200/unpaced.cluster_ratio_median[1]"
+ },
+ {
+  "id": "D1",
+  "display": "9",
+  "value": 9,
+  "spec": "d",
+  "source": "66",
+  "note": "实质反例数",
+  "json_key": "I2.n_counterexamples_substantive"
+ },
+ {
+  "id": "D2",
+  "display": "5",
+  "value": 5,
+  "spec": "d",
+  "source": "66",
+  "note": "误差-危害 τ 为负的层数",
+  "json_key": "I2.n_tau_negative"
+ },
+ {
+  "id": "D3",
+  "display": "1.215",
+  "value": 1.2149,
+  "spec": ".3f",
+  "source": "66",
+  "note": "伤害最大格的 J 比",
+  "json_key": "I2.harm_without_trigger[0][3].J_rel_vs_zoh"
+ },
+ {
+  "id": "D4",
+  "display": "628",
+  "value": 628,
+  "spec": "d",
+  "source": "66",
+  "note": "worst_case 需要的配对数",
+  "json_key": "I1.worst_case.n_needed"
+ },
+ {
+  "id": "D5",
+  "display": "90",
+  "value": 90,
+  "spec": "d",
+  "source": "66",
+  "note": "I1.worst_case.n_have",
+  "json_key": "I1.worst_case.n_have"
+ },
+ {
+  "id": "D6",
+  "display": "0.832",
+  "value": 0.8316448237657927,
+  "spec": ".3f",
+  "source": "67",
+  "note": "age 与动作效应的秩相关",
+  "json_key": "cells.B100|u0.tau_age"
+ },
+ {
+  "id": "D7",
+  "display": "0.358",
+  "value": 0.35756501182033096,
+  "spec": ".3f",
+  "source": "67",
+  "note": "ΔJ>0 的决策份额",
+  "json_key": "cells.B100|u0.share_dJ_pos"
+ },
+ {
+  "id": "D8",
+  "display": "176",
+  "value": 176,
+  "spec": "d",
+  "source": "67",
+  "note": "逐决策探针数",
+  "json_key": "checks.probe_n"
+ },
+ {
+  "id": "D9",
+  "display": "0.995",
+  "value": 0.9950515754035343,
+  "spec": ".3f",
+  "source": "68",
+  "note": "B100/gated4 的 R_uav",
+  "json_key": "verdicts.F1.R_gated[0]"
+ },
+ {
+  "id": "D10",
+  "display": "0.676",
+  "value": 0.6764871832331751,
+  "spec": ".3f",
+  "source": "68",
+  "note": "B200/gated4 的 R_uav",
+  "json_key": "verdicts.F2.R[0]"
+ },
+ {
+  "id": "D11",
+  "display": "1.586",
+  "value": 1.5864492704658009,
+  "spec": ".3f",
+  "source": "68",
+  "note": "θ 扫描最左点",
+  "json_key": "verdicts.F4.table.B200/θ2.R_uav"
+ },
+ {
+  "id": "D12",
+  "display": "0.213",
+  "value": 0.2128549411881795,
+  "spec": ".3f",
+  "source": "68",
+  "note": "B100 上 linear−gated4",
+  "json_key": "verdicts.F1.delta_R_uav"
+ },
+ {
+  "id": "D13",
+  "display": "0.162",
+  "value": 0.1617477826585673,
+  "spec": ".3f",
+  "source": "68",
+  "note": "verdicts.F1.delta_ci[0]",
+  "json_key": "verdicts.F1.delta_ci[0]"
+ },
+ {
+  "id": "D14",
+  "display": "0.262",
+  "value": 0.26242922610586206,
+  "spec": ".3f",
+  "source": "68",
+  "note": "verdicts.F1.delta_ci[1]",
+  "json_key": "verdicts.F1.delta_ci[1]"
+ },
+ {
+  "id": "D15",
+  "display": "0.322",
+  "value": 0.32232786748842795,
+  "spec": ".3f",
+  "source": "69",
+  "note": "第四批 linear B200",
+  "json_key": "verdicts.CAL.R_uav_linear_batch4"
+ },
+ {
+  "id": "D16",
+  "display": "0.318",
+  "value": 0.3181318552072102,
+  "spec": ".3f",
+  "source": "69",
+  "note": "B200/gated8",
+  "json_key": "verdicts.T1.R_uav"
+ },
+ {
+  "id": "D17",
+  "display": "0.299",
+  "value": 0.29923495931094485,
+  "spec": ".3f",
+  "source": "69",
+  "note": "verdicts.T1.ci_uav[0]",
+  "json_key": "verdicts.T1.ci_uav[0]"
+ },
+ {
+  "id": "D18",
+  "display": "0.338",
+  "value": 0.33800396154196305,
+  "spec": ".3f",
+  "source": "69",
+  "note": "verdicts.T1.ci_uav[1]",
+  "json_key": "verdicts.T1.ci_uav[1]"
+ },
+ {
+  "id": "D19",
+  "display": "0.0042",
+  "value": 0.0041960122812177425,
+  "spec": ".4f",
+  "source": "69",
+  "note": "配对差（同一次重采样内相减）",
+  "json_key": "summary.200.per_arm.delta_linear_minus_gated8.point[0]"
+ },
+ {
+  "id": "D20",
+  "display": "-0.0033",
+  "value": -0.003297932469941803,
+  "spec": ".4f",
+  "source": "69",
+  "note": "summary.200.per_arm.delta_linear_minus_gated8.ci95[0][0]",
+  "json_key": "summary.200.per_arm.delta_linear_minus_gated8.ci95[0][0]"
+ },
+ {
+  "id": "D21",
+  "display": "0.0143",
+  "value": 0.014282160570499984,
+  "spec": ".4f",
+  "source": "69",
+  "note": "summary.200.per_arm.delta_linear_minus_gated8.ci95[1][0]",
+  "json_key": "summary.200.per_arm.delta_linear_minus_gated8.ci95[1][0]"
+ },
+ {
+  "id": "D22",
+  "display": "0.0034",
+  "value": 0.0034444444444444444,
+  "spec": ".4f",
+  "source": "69",
+  "note": "触发份额（比例，非百分数）",
+  "json_key": "summary.200.per_arm.gated8.gate_share_theta"
+ },
+ {
+  "id": "D23",
+  "display": "0.4237",
+  "value": 0.42372675342166816,
+  "spec": ".4f",
+  "source": "69",
+  "note": "summary.100.per_arm.gated8.gate_share_theta",
+  "json_key": "summary.100.per_arm.gated8.gate_share_theta"
+ },
+ {
+  "id": "D31",
+  "display": "0.349",
+  "value": 0.34890858102604244,
+  "spec": ".3f",
+  "source": "69",
+  "note": "第四批 linear B200 的 95% 区间上界",
+  "json_key": "summary.200.per_arm.linear.ci95[1][0]"
+ },
+ {
+  "id": "D24",
+  "display": "1.0505",
+  "value": 1.050486547034482,
+  "spec": ".4f",
+  "source": "69",
+  "note": "B100/gated8",
+  "json_key": "verdicts.T2.R_uav"
+ },
+ {
+  "id": "D25",
+  "display": "1.0090",
+  "value": 1.0090280951852042,
+  "spec": ".4f",
+  "source": "69",
+  "note": "verdicts.T2.ci_uav[0]",
+  "json_key": "verdicts.T2.ci_uav[0]"
+ },
+ {
+  "id": "D26",
+  "display": "1.0921",
+  "value": 1.0921264765637173,
+  "spec": ".4f",
+  "source": "69",
+  "note": "verdicts.T2.ci_uav[1]",
+  "json_key": "verdicts.T2.ci_uav[1]"
+ },
+ {
+  "id": "D27",
+  "display": "1.2255",
+  "value": 1.225458035323731,
+  "spec": ".4f",
+  "source": "69",
+  "note": "verdicts.T2.R_uav_linear",
+  "json_key": "verdicts.T2.R_uav_linear"
+ },
+ {
+  "id": "D28",
+  "display": "0.1750",
+  "value": 0.17497148828924902,
+  "spec": ".4f",
+  "source": "69",
+  "note": "summary.100.per_arm.delta_linear_minus_gated8.point[0]",
+  "json_key": "summary.100.per_arm.delta_linear_minus_gated8.point[0]"
+ },
+ {
+  "id": "D29",
+  "display": "0.1309",
+  "value": 0.13094223934560184,
+  "spec": ".4f",
+  "source": "69",
+  "note": "summary.100.per_arm.delta_linear_minus_gated8.ci95[0][0]",
+  "json_key": "summary.100.per_arm.delta_linear_minus_gated8.ci95[0][0]"
+ },
+ {
+  "id": "D30",
+  "display": "0.2182",
+  "value": 0.21815405773818305,
+  "spec": ".4f",
+  "source": "69",
+  "note": "summary.100.per_arm.delta_linear_minus_gated8.ci95[1][0]",
+  "json_key": "summary.100.per_arm.delta_linear_minus_gated8.ci95[1][0]"
  }
 ]

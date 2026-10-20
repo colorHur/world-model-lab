@@ -38,7 +38,7 @@ sys.path.insert(0, str(ROOT))
 
 from wmlab.eval.evidence import resolve  # noqa: E402
 
-PAPER = ROOT / "docs" / "PAPER-P3-v0.2.md"
+PAPER = ROOT / "docs" / "PAPER-P3-v0.3.md"
 PY = sys.executable
 
 

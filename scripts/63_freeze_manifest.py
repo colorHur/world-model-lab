@@ -36,7 +36,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from wmlab.eval.evidence import (  # noqa: E402
-    MANIFEST_PATH, load_manifest, resolve, sha256_bytes, sha256_norm,
+    MANIFEST_PATH, NEG_MANIFEST_PATH, load_manifest, resolve, sha256_bytes, sha256_norm,
 )
 from wmlab.eval.results_io import latest_result_path  # noqa: E402
 
@@ -44,6 +44,12 @@ SRC = {"58": "58_p3_confirmation", "59": "59_p3_boundary",
        "59b": "59b_p3_boundary_refine", "60": "60_p3_window_shift"}
 
 PROTOCOL_KEYS = ("budget", "mode", "seed_set", "seeds", "episodes", "n_boot", "arm", "absorbed")
+
+# ★ v0.3 追加：**否定线**（T25–T28）用一份**独立**清单，不动已冻结的主清单。
+# 理由：主清单钉的是"主表/图/复现"的四份输入；改它的版本号会让 61/61c/61d/62 的
+# "清单未换"记录全部作废。否定线是正文 §6.2 的新增引用面，单独钉、单独校验更干净。
+NEG_SRC = {"66": "66_identifiability", "67": "67_cf_action",
+           "68": "68_t27_gated_fallback", "69": "69_t28_confirm"}
 
 
 def entry_from(path: Path, name: str) -> dict:
@@ -68,19 +74,25 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--allow-update", action="store_true", help="允许换证据（旧版另存为 .v<N>.json）")
     ap.add_argument("--check", action="store_true", help="只校验清单与磁盘一致，不写")
+    ap.add_argument("--set", choices=("main", "neg"), default="main",
+                    help="main = 主表/图/复现的四份输入（默认）；neg = 否定线 T25–T28（写入 *_neg.json）")
     args = ap.parse_args()
 
+    src_map = SRC if args.set == "main" else NEG_SRC
+    mpath = MANIFEST_PATH if args.set == "main" else NEG_MANIFEST_PATH
+
     cur: dict = {"manifest_version": 1,
-                 "purpose": "P3 生成/复现的固定输入（不随 latest 漂移）",
-                 "generated_by": "scripts/63_freeze_manifest.py",
-                 "note": ("生成/复现脚本默认只读本清单。换证据必须 --allow-update，"
-                          "旧版另存 evidence_manifest_p3.v<N>.json；不得手改。"),
+                 "purpose": ("P3 生成/复现的固定输入（不随 latest 漂移）" if args.set == "main"
+                             else "P3 **否定线**（T25–T28）的固定输入：正文 §6.2 引用面"),
+                 "generated_by": "scripts/63_freeze_manifest.py --set " + args.set,
+                 "note": (f"改名 {mpath.name} 的生成/复现脚本默认只读本清单。换证据必须 --allow-update，"
+                          f"旧版另存 {mpath.stem}.v<N>.json；不得手改。"),
                  "hash_scheme": ("sha256_norm = 行尾归一(\\r\\n→\\n)后的 sha256，权威；"
                                  "sha256_bytes = 工作树原始字节 sha256，仅记录（与 git blob 因换行不同）"),
                  "entries": {}}
 
     missing: list[str] = []
-    for k, name in SRC.items():
+    for k, name in src_map.items():
         p = latest_result_path(name)
         if p is None or not p.exists():
             missing.append(f"{k}:{name}")
@@ -93,8 +105,8 @@ def main() -> int:
         print("\n[FAIL] 缺证据：" + ", ".join(missing))
         return 2
 
-    if MANIFEST_PATH.exists():
-        old = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    if mpath.exists():
+        old = json.loads(mpath.read_text(encoding="utf-8"))
         same = all(old["entries"].get(k, {}).get("sha256_norm") == v["sha256_norm"]
                    for k, v in cur["entries"].items())
         if args.check:
@@ -108,20 +120,21 @@ def main() -> int:
             print("\n[unchanged] 清单与当前 latest 一致，不重写")
             return 0
         ver = int(old.get("manifest_version", 1))
-        bak = MANIFEST_PATH.with_name(f"evidence_manifest_p3.v{ver}.json")
+        bak = mpath.with_name(f"{mpath.stem}.v{ver}.json")
         bak.write_text(json.dumps(old, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
         cur["manifest_version"] = ver + 1
         cur["supersedes"] = bak.name
         print(f"[history] 旧版另存 → {bak.relative_to(ROOT).as_posix()}")
 
-    MANIFEST_PATH.parent.mkdir(parents=True, exist_ok=True)
-    MANIFEST_PATH.write_text(json.dumps(cur, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-    print(f"[out] {MANIFEST_PATH.relative_to(ROOT).as_posix()}（v{cur['manifest_version']}，"
+    mpath.parent.mkdir(parents=True, exist_ok=True)
+    mpath.write_text(json.dumps(cur, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    print(f"[out] {mpath.relative_to(ROOT).as_posix()}（v{cur['manifest_version']}，"
           f"{len(cur['entries'])} 条）")
 
     # 写完立刻用统一入口回读一遍：清单自己也要能被校验（不然只是又一份手写表）
-    for k, name in SRC.items():
-        r = resolve(name, key=k)
+    m_now = load_manifest(mpath)
+    for k, name in src_map.items():
+        r = resolve(name, key=k, manifest=m_now)
         print(f"[verify] {k} pinned={r['pinned']} run_id={r['run_id']} {r['note'] or 'OK'}")
     return 0
 

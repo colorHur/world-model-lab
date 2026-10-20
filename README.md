@@ -417,6 +417,22 @@ python scripts/53_t22_predictor_timing.py --skip-zoh-regression     # 三种预�
 #       **没有任何一个 J/R 变了**；连跑两次 `sha256` 完全相同；`39/40/41/43/44/49/50/51` +
 #       `58/59/60 --skip-experiment` 全绿
 #
+# 38) ★★ 论文 v0.3：否定结果入库 + 否定线的**独立冻结清单**（2026-10-21）
+#     产物：`docs/PAPER-P3-v0.3.md`（v0.2 保留为历史）+ `docs/evidence_manifest_p3_neg.json`
+#       + `docs/RESULTS-P3.md` §8（8 行否定线表）+ `docs/DEMO-P3.html`（8 页，新增"否定结果"页）
+#     ★ 新增 §6.2「否定结果（T25–T28）」：四行判词 `DO-NOT-START` / `NO-ROOM` / `FALLBACK-FAILS` /
+#       `FALLBACK-FAILS (confirm)`，每格都绑 claim-id（`D1`–`D31`）到**具体 JSON 键**，不是"在全部数字里检索"
+#     ★ 清单为什么另起一份：主清单钉的是主表/图/复现的四份输入，给它换版本号会让那几处"清单未换"
+#       的记录一并作废 ⇒ 否定线单独钉（`scripts/63 --set neg`），两份**互不影响**（S0 现在报 8 份已钉死）
+#     ★ `claim_num`：66–69 的标量在证据里是**字符串**，解析失败/非有限/声称计数却非整数 ⇒ **直接抛错**
+#     ★ 取数改为**带符号**（`SIGNED_DEC_RE`）：`ΔR` 的下界可以是负的，旧口径会把 `-0.0033` 抽成 `0.0033`
+#       ⇒ 既追不到 claim 也追不到 trace（假 FAIL）；另加"整段就是一个整数"的计数分支（`反例 9 个`）
+#     ★ 闸：61 全 PASS（S10d 75 条 claim 全解析；S11c 106 个标记 0 失败；S11a 128 个数 0 未命中，
+#       两条阴性对照仍命中）；62 `BITWISE MATCH`（expected=4 compared=4 failed=0）；63 两份清单一致；
+#       64 九条错误注入全按预期；65 投稿前自查 13/13（摘要 10 数 / 结论 9 数 100% 绑定）
+#     ★ 证据零改动：`results/` 一个字节未写；主表 4 份输入的清单指纹未变
+#
+
 # 37) ★★ T28 θ=8 的独立确认（2026-10-21）—— **回退能"减少"损害，不能"归零"**
 #     `scripts/69_t28_confirm.py`（自检约 5 s + 实验 24.5 s，18 cell）；
 #     证据 `results/runs/20261021-010749-b7d0421/69_t28_confirm.json`（`…-010622-…` 为同值过程 run，INDEX 标 superseded）

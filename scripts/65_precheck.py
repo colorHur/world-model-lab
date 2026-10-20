@@ -40,7 +40,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_PAPER = ROOT / "docs" / "PAPER-P3-v0.2.md"
+DEFAULT_PAPER = ROOT / "docs" / "PAPER-P3-v0.3.md"
 DEFAULT_REFS = ROOT / "docs" / "refs_p3.json"
 DEFAULT_CLAIMS = ROOT / "docs" / "claims_p3.json"
 

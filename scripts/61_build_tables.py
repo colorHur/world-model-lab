@@ -50,6 +50,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -57,13 +58,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from wmlab.eval.evidence import EvidenceError, resolve, sha256_norm as evidence_sha  # noqa: E402
+from wmlab.eval.evidence import (  # noqa: E402
+    EvidenceError, resolve, sha256_norm as evidence_sha, load_manifest, NEG_MANIFEST_PATH,  # noqa: F401
+)
 from wmlab.eval.results_io import latest_result_path  # noqa: E402
 
-# 论文正文的**唯一发布版本**在本仓库（`docs/PAPER-P3-v0.2.md`）；科研空间里的 v0.1 保留为历史。
+# 论文正文的**唯一发布版本**在本仓库（v0.3 起为 `docs/PAPER-P3-v0.3.md`；v0.2 保留为历史，
+# 科研空间里的 v0.1 亦保留为历史）——S11 闸门默认核这一份。
 # 为什么要搬进来：复验 E 项点名"初稿不在 Git 提交内 ⇒ 论文尚无版本链"。两份正文同时改会漂移，
 # 所以只认仓库这份；科研空间不再维护第二份正文。
-DEFAULT_DRAFT = ROOT / "docs" / "PAPER-P3-v0.2.md"
+DEFAULT_DRAFT = ROOT / "docs" / "PAPER-P3-v0.3.md"
 
 FAILS: list[str] = []
 SKIPS: list[str] = []
@@ -79,6 +83,17 @@ SRC = {
     "59": "59_p3_boundary",
     "59b": "59b_p3_boundary_refine",
     "60": "60_p3_window_shift",
+}
+
+# ★ v0.3 追加：**否定线**（T25–T28）。走**独立**冻结清单 `docs/evidence_manifest_p3_neg.json`
+# （`scripts/63 --set neg` 生成），主清单一个字节不动。
+# 为什么要单独一份：主清单钉的是主表/图/复现的四份输入，给它换版本号会让那几处的
+# "清单未换"记录一并作废；而否定线是正文 §6.2 的**新增**引用面，单独钉、单独校验更干净。
+NEG_SRC = {
+    "66": "66_identifiability",
+    "67": "67_cf_action",
+    "68": "68_t27_gated_fallback",
+    "69": "69_t28_confirm",
 }
 
 
@@ -135,6 +150,34 @@ def load_all() -> tuple[dict, dict]:
               f"{'清单钉死' if meta[k]['pinned'] else '非清单'})")
         if meta[k]["note"]:
             print(f"       ★ {meta[k]['note']}")
+
+    # ---- 否定线（T25–T28）：独立清单，主清单不受影响 ----
+    try:
+        neg_m = load_manifest(NEG_MANIFEST_PATH)
+    except EvidenceError as exc:
+        for k in NEG_SRC:
+            skip(f"S-{k}", str(exc))
+        neg_m = None
+    if neg_m is not None:
+        for k, name in NEG_SRC.items():
+            try:
+                src = resolve(name, key=k, manifest=neg_m)
+            except EvidenceError as exc:
+                skip(f"S-{k}", str(exc))
+                continue
+            raw = src["raw"]
+            data[k] = json.loads(raw.decode("utf-8"))
+            meta[k] = {
+                "name": name,
+                "path": src["path"].relative_to(ROOT).as_posix(),
+                "run_id": src["run_id"],
+                "sha256": evidence_sha(raw),
+                "sha256_bytes": hashlib.sha256(raw).hexdigest(),
+                "pinned": src["pinned"],
+                "note": src.get("note", ""),
+                "text": raw.decode("utf-8"),
+            }
+            print(f"  [neg] {k}: {meta[k]['path']}  ({meta[k]['run_id']}, 否定线清单钉死)")
     return data, meta
 
 
@@ -328,6 +371,27 @@ def cdisp(cid: str) -> str:
     return CLAIM_INDEX[cid]["display"]
 
 
+def claim_num(cid: str, source: str, json_key: str, spec: str = ".3f", note: str = "") -> str:
+    """同 `claim()`，但允许证据里存的是**字符串数字**。
+
+    66–69（否定线）的证据把标量写成了 `str`（脚本内部 `_s()` 口径），而 58–60 是 float。
+    这里不做数据类型"兼容"式的宽容：解析不出数、或不是有限值，**直接抛错**——
+    拿不到数就不许往正文写数（#14 报错优于给假数字）。
+    """
+    raw = json_path(DATA[source], json_key)
+    try:
+        v = float(raw)
+    except (TypeError, ValueError):
+        raise RuntimeError(f"claim {cid} 绑定的不是数值：{source}.{json_key} → {raw!r}") from None
+    if not math.isfinite(v):
+        raise RuntimeError(f"claim {cid} 绑定的不是有限值：{source}.{json_key} → {v!r}")
+    if spec == "d":
+        if not float(v).is_integer():
+            raise RuntimeError(f"claim {cid} 声称是计数却不是整数：{source}.{json_key} → {v!r}")
+        v = int(v)
+    return _reg_claim(cid, v, spec, source, {"json_key": json_key}, note or json_key)
+
+
 def merged_crossing(pts_a: list[dict], pts_b: list[dict], mode: str = "unpaced") -> dict | None:
     """把基线扫描与**补点**合起来排 `x`，找 `R_uav` 跨过 1 的相邻两格 ⇒ 网格括区间。
 
@@ -358,7 +422,12 @@ def check_claims_in_text(text: str) -> tuple[list[str], int]:
     for m in CLAIM_SPAN.finditer(text):
         span = m.group(1).strip()
         ids = CLAIM_ID.findall(m.group(2))
-        nums = DEC_RE.findall(span)
+        nums = SIGNED_DEC_RE.findall(span)
+        # ★ v0.3：计数类 claim（"反例 9 个"）的显示串是**整数**，没有小数点。
+        # 旧口径会把它读成"0 个数却跟了 1 个标记"⇒ 假 FAIL。这里把"整段就是一个整数"当唯一数。
+        # 注意：S11a 的**覆盖闸仍只抽小数**，所以这条放宽不会让凭空写的整数蒙混过关。
+        if not nums and re.fullmatch(r"-?\d+", span):
+            nums = [span]
         n += len(ids)
         line = text.count("\n", 0, m.start()) + 1
         if len(nums) != len(ids):
@@ -422,6 +491,9 @@ def mutate_claim_condition(text: str) -> str:
 # 再要求其中**每一个小数**都能在 trace 的 display 里找到（整数与协议量不在闸内，见预注册 §2）。
 SPAN_OK = re.compile(r"^[\d.,\s\[\]()–—\-+×%µms步]{1,48}$")
 DEC_RE = re.compile(r"\d+\.\d+")
+#: v0.3：正文要引**带符号**的区间（`ΔR` 的下界可以为负）⇒ 取数时带符号。
+#: 否则 `-0.0033` 会被抽成 `0.0033`，既追不到 claim、也追不到 trace（假 FAIL）。
+SIGNED_DEC_RE = re.compile(r"-?\d+\.\d+")
 
 
 def extract_result_tokens(text: str) -> list[tuple[str, int, str]]:
@@ -432,7 +504,7 @@ def extract_result_tokens(text: str) -> list[tuple[str, int, str]]:
         if not SPAN_OK.match(s):
             continue
         line = text.count("\n", 0, m.start()) + 1
-        for num in DEC_RE.findall(s):
+        for num in SIGNED_DEC_RE.findall(s):
             out.append((s, line, num.replace("−", "-")))
     return out
 
@@ -1171,6 +1243,86 @@ def render(data: dict, meta: dict) -> tuple[str, dict]:
     else:
         A("**58 证据缺失 ⇒ 本节 SKIP**")
         A("")
+    # ---------------- 8 否定线（T25–T28） ----------------
+    # ★ v0.3：正文 §6.2「否定结果」的引用面。四行 = 四次尝试，各带判词与可点的 JSON 键。
+    A("## 8 否定线（T25–T28）：四次尝试、四个判词")
+    A("")
+    A("正文 §6.2 的引用面。证据走**独立**冻结清单 `docs/evidence_manifest_p3_neg.json`"
+      "（`scripts/63_freeze_manifest.py --set neg` 生成），主清单（`…_p3.json`）与主表/图/复现的输入未动。")
+    A("")
+    A("| # | 问的问题 | 判词 | 关键数 | claim-id | 证据（run-id / 键） |")
+    A("|---|---|---|---|---|---|")
+    if "66" in data:
+        A(f"| T25 | 现有样本量 + 预测误差，够不够做「误差门控」 | `DO-NOT-START` | "
+          f"反例 {claim_num('D1', '66', 'I2.n_counterexamples_substantive', 'd', '实质反例数')} 个；"
+          f"8 层里 τ<0 的 "
+          f"{claim_num('D2', '66', 'I2.n_tau_negative', 'd', '误差-危害 τ 为负的层数')} 层；"
+          f"伤害最大格（B=100/unpaced/uav）`J/ZOH` = "
+          f"{claim_num('D3', '66', 'I2.harm_without_trigger[0][3].J_rel_vs_zoh', '.3f', '伤害最大格的 J 比')}，"
+          f"而该格误差门控触发率 **0** | `D1`–`D3` | `66_identifiability`（`I2.*`） |")
+        A(f"| T25b | 样本量能否分辨小效应 | 只能看大效应 | uav −4.3% 那格需 "
+          f"{claim_num('D4', '66', 'I1.worst_case.n_needed', 'd', 'worst_case 需要的配对数')} 对，"
+          f"实有 {claim_num('D5', '66', 'I1.worst_case.n_have', 'd')} | `D4`–`D5` | `66`（`I1.worst_case`） |")
+    if "67" in data:
+        A(f"| T26 | `age` 能不能当**阈值**（逐决策反事实） | `NO-ROOM` | "
+          f"B=100/uav 上 `τ(age, ΔJ)` = "
+          f"{claim_num('D6', '67', 'cells.B100|u0.tau_age', '.3f', 'age 与动作效应的秩相关')}，"
+          f"但「换动作会**增加**代价」的决策占 "
+          f"{claim_num('D7', '67', 'cells.B100|u0.share_dJ_pos', '.3f', 'ΔJ>0 的决策份额')}"
+          f"（探针 {claim_num('D8', '67', 'checks.probe_n', 'd', '逐决策探针数')} 个） | `D6`–`D8` | `67_cf_action`（`cells.B100\\|u0`） |")
+    if "68" in data:
+        A(f"| T27 | 一个固定 θ 的门控回退能否**两档通吃**（开发批 210–299） | `FALLBACK-FAILS` | "
+          f"θ=4：B=100 压到 {claim_num('D9', '68', 'verdicts.F1.R_gated[0]', '.3f', 'B100/gated4 的 R_uav')}、"
+          f"但 B=200 从 0.308 变成 {claim_num('D10', '68', 'verdicts.F2.R[0]', '.3f', 'B200/gated4 的 R_uav')}；"
+          f"θ=2 在 B=200 反而 {claim_num('D11', '68', 'verdicts.F4.table.B200/θ2.R_uav', '.3f', 'θ 扫描最左点')} | "
+          f"`D9`–`D11` | `68_t27_gated_fallback`（`F1/F2/F4`） |")
+        A(f"| T27b | 危害**减少了多少** | 减少不归零 | B=100 `ΔR` = "
+          f"{claim_num('D12', '68', 'verdicts.F1.delta_R_uav', '.3f', 'B100 上 linear−gated4')}，"
+          f"区间 [{claim_num('D13', '68', 'verdicts.F1.delta_ci[0]', '.3f')}, "
+          f"{claim_num('D14', '68', 'verdicts.F1.delta_ci[1]', '.3f')}] | `D12`–`D14` | `68`（`F1.delta_*`） |")
+    if "69" in data:
+        A(f"| T28 | θ=8 在**独立批 310–399** 上是否成立 | `FALLBACK-FAILS (confirm)` | "
+          f"同批 `linear` = {claim_num('D15', '69', 'verdicts.CAL.R_uav_linear_batch4', '.3f', '第四批 linear B200')}；"
+          f"B=200 `gated8` = {claim_num('D16', '69', 'verdicts.T1.R_uav', '.3f', 'B200/gated8')}"
+          f"（区间 [{claim_num('D17', '69', 'verdicts.T1.ci_uav[0]', '.3f')}, "
+          f"{claim_num('D18', '69', 'verdicts.T1.ci_uav[1]', '.3f')}]）⇒ 与 `linear` 配对 `ΔR` = "
+          f"{claim_num('D19', '69', 'summary.200.per_arm.delta_linear_minus_gated8.point[0]', '.4f', '配对差（同一次重采样内相减）')}"
+          f" 区间 [{claim_num('D20', '69', 'summary.200.per_arm.delta_linear_minus_gated8.ci95[0][0]', '.4f')}, "
+          f"{claim_num('D21', '69', 'summary.200.per_arm.delta_linear_minus_gated8.ci95[1][0]', '.4f')}] **含 0** | "
+          f"`D15`–`D21` | `69_t28_confirm` |")
+        A(f"| T28b | 好档「不坏」是怎么来的 | 几乎不起作用 | B=200 门控触发份额 = "
+          f"{claim_num('D22', '69', 'summary.200.per_arm.gated8.gate_share_theta', '.4f', '触发份额（比例，非百分数）')}"
+          f"（≈0.34%）；B=100 同臂触发份额 = "
+          f"{claim_num('D23', '69', 'summary.100.per_arm.gated8.gate_share_theta', '.4f')} | `D22`–`D23` | `69` |")
+        A(f"| T28d | 绝对门槛在本批是否批不变 | **不是** | 同批 `linear` 的区间上界 = "
+          f"{claim_num('D31', '69', 'summary.200.per_arm.linear.ci95[1][0]', '.3f', '第四批 linear B200 的 95% 区间上界')}"
+          f" > 预注册门槛 0.337 | `D31` | `69`（`summary.200.per_arm.linear`） |")
+        A(f"| T28c | 毒档是否**归零** | `NOT-CONTAINED` | B=100 `gated8` = "
+          f"{claim_num('D24', '69', 'verdicts.T2.R_uav', '.4f', 'B100/gated8')}"
+          f"（区间 [{claim_num('D25', '69', 'verdicts.T2.ci_uav[0]', '.4f')}, "
+          f"{claim_num('D26', '69', 'verdicts.T2.ci_uav[1]', '.4f')}] **不含 1**）；"
+          f"相对 `linear`（{claim_num('D27', '69', 'verdicts.T2.R_uav_linear', '.4f')}）`ΔR` = "
+          f"{claim_num('D28', '69', 'summary.100.per_arm.delta_linear_minus_gated8.point[0]', '.4f')}"
+          f" 区间 [{claim_num('D29', '69', 'summary.100.per_arm.delta_linear_minus_gated8.ci95[0][0]', '.4f')}, "
+          f"{claim_num('D30', '69', 'summary.100.per_arm.delta_linear_minus_gated8.ci95[1][0]', '.4f')}] | "
+          f"`D24`–`D30` | `69`（`T2.*`） |")
+    A("")
+    A("四条**写作纪律**（每条都由上表的数直接决定，不能反着写）：")
+    A("")
+    A("1. **判词按更强的那句写**：T28 的毒档区间**不含 1** ⇒ 只能写「仍显著差于 `zoh`」，"
+      "不得写成「与 `zoh` 等价、无收益」（教训 #73：等价与更差不能并成一格）。")
+    A("2. **好档「不坏」不等于门控有效**：触发份额 0.0034 ⇒ 打平的原因是**几乎没起作用**，"
+      "不是「补偿被正确抑制」的证明。")
+    A("3. **绝对门槛不是批不变量**：T28 的 T1 门槛 `0.337` 取自主集 `linear` 的区间上界，"
+      "而同批 `linear` 自己的上界是 0.349 ⇒ 门槛原地不动也可能 FAIL（教训 #72）。"
+      "所以 T1 的 FAIL **不得**反读成「好档被弄坏」。")
+    A("4. **一次性的 `<1` 不算复现**：T27 的 B=100 单点曾落到 0.988（<1），T28 在独立批上是 1.050"
+      " ⇒ 那个点是批噪声，不能引用为「已归零」。")
+    A("")
+    A("★ 与 §5 的关系：T25 的「误差不能排序危害」与 T23-b 同源；T26 的 `τ(age,ΔJ)` 与 C5 的 `τ_b` 同号"
+      "但**层级不同**（C5 是「点与点之间」，T26 是「逐决策」），不得互相代替。")
+    A("")
+
     return "\n".join(L), {"n_trace": len(TRACE)}
 
 
