@@ -155,13 +155,14 @@ def main() -> int:
     # ---------------- 4 主结果 ----------------
     add('<section class="slide">')
     add('<div class="kicker">3 · 主确认（快刷新档）</div>')
-    add("<h2>改善是真的，且不是靠多分帧</h2>")
+    add("<h2>改善是真的；汇总帧数没有增加</h2>")
     add("<ul>"
         f'<li><span class="big red">{g("F1.R[0]")}</span> = R<sub>uav</sub>，95% 区间 '
         f'[{g("F1.ci_uav[0]")}, {g("F1.ci_uav[1]")}]（上界 &lt; 1）</li>'
         f'<li>90 个与开发集零交集的初值：逐初值改善 <b>{g("F2.primary/200/unpaced.frac_clusters_below_1[0]")}</b>；逐种子 3/3</li>'
-        f'<li>送达帧由 <b>{g("F1.served.zoh[0]")}</b> 降到 <b>{g("F1.served.linear[0]")}</b> ⇒ 帧更少、代价更低</li>'
-        f'<li class="dim">CartPole：区间含 1、逐初值仅 {g("F2.primary/200/unpaced.frac_clusters_below_1[1]")} ⇒ <b>不构成收益</b></li>'
+        f'<li>两用户<b>汇总</b>送达帧恒为 <b>{g("F1.served.zoh[0]")}+{g("F1.served.zoh[1]")}</b>（预算上限）⇒ 不是靠多分帧</li>'
+        f'<li class="dim">但拆开看是一降一升（UAV {g("F1.served.linear[0]")} vs {g("F1.served.zoh[0]")}，CartPole {g("F1.served.linear[1]")} vs {g("F1.served.zoh[1]")}）⇒ <b>任务间重分配未隔离</b>，不作因果归因</li>'
+        f'<li class="dim">CartPole：区间含 1、逐初值仅 {g("F2.primary/200/unpaced.frac_clusters_below_1[1]")} ⇒ <b>不构成收益，也不构成等价证明</b></li>'
         "</ul>")
     add(f'<img src="data:image/png;base64,{png_ab}" alt="paper_p3 panels a b">')
     add('<div class="cap">图 1(a)(b)：左＝R 随实测陈旧度；右＝绝对代价（log 轴）。'
@@ -193,7 +194,8 @@ def main() -> int:
         f'<li>把失效半径改成三档 ⇒ 实测窗口 35 / 53 / 104 步；交点 '
         f'<b>{g("brackets.short.x_star")}</b> / <b>{g("brackets.base.x_star")}</b> / <b>{g("brackets.long.x_star")}</b></li>'
         f'<li>三个交点区间<b>两两重叠</b> ⇒ 判词 <b>INCONCLUSIVE</b>（本设计分不清位移）</li>'
-        f'<li>「门槛按窗口成比例」<b>被否证</b>：x*/W 由 {g("x_star_over_W.short.x_star_over_W")} 降到 {g("x_star_over_W.long.x_star_over_W")}</li>'
+        f'<li>比例偏离<b>只作探索性报告</b>：x*/W 由 {g("x_star_over_W.short.x_star_over_W")} 降到 {g("x_star_over_W.long.x_star_over_W")}'
+        '（预注册标 report-only；括区间不是置信区间，不能当否证判决）</li>'
         '<li class="dim">结构性限制：改窗口 ⇒ 改存活 ⇒ 改 age 分布 ⇒ <b>改横轴</b>；x*/W 的下降里有一部分是选择效应</li>'
         "</ul>")
     add(f'<img src="data:image/png;base64,{png_cd}" alt="paper_p3 panels c d">')

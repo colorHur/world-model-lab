@@ -70,18 +70,23 @@ def main() -> int:
         hi = [p["ci_uav"][1] for p in pts]
         ax.plot(xs, ys, "-o", color=color, ms=4.5, lw=1.5, label=lab)
         ax.fill_between(xs, lo, hi, color=color, alpha=0.16, lw=0)
-    for c in d59["F2"]["unpaced"]["crossings"]:
-        ax.axvspan(c["between"][0], c["between"][1], color=C_UNPACED, alpha=0.09, lw=0)
-        ax.axvline(c["x"], color=C_UNPACED, ls=":", lw=1.1)
+    # ★ 复验 D 项：旧版画了补点，却仍标**基线扫描**的括区间 (0.92, 7.57) ——
+    #   那段里根本没有设计点。这里改用"基线 + 补点"合并后的相邻设计点括区间。
+    mc = T61.merged_crossing(d59["points"], data["59b"]["points"] if "59b" in data else [])
+    if mc:
+        lo, hi = mc["lo"]["x"], mc["hi"]["x"]
+        ax.axvspan(lo, hi, color=C_UNPACED, alpha=0.09, lw=0)
+        for xv in (lo, hi):
+            ax.axvline(xv, color=C_UNPACED, ls=":", lw=1.1)
         ax.text(0.03, 0.50,
-                f"crossing bracket ({c['between'][0]:.2f}, {c['between'][1]:.2f})\n"
-                "= gap between grid points, not a CI",
+                f"crossing bracket [{lo:.2f}, {hi:.2f}]\n"
+                "(grid gap after refinement points; not a CI)",
                 transform=ax.transAxes, fontsize=7, color=C_UNPACED, va="top",
                 bbox=dict(fc="white", ec="none", alpha=0.75, pad=2.0))
     ax.axhline(1.0, color="k", lw=1.0, ls="--")
     ax.set_xlabel("measured staleness  $x$ = mean UAV age (steps)")
     ax.set_ylabel("$R_{uav}=J_{uav}(\\mathrm{Linear})/J_{uav}(\\mathrm{ZOH})$")
-    ax.set_title("(a) compensation benefit vs measured staleness", fontsize=10)
+    ax.set_title("(a) $R_{uav}$ vs measured staleness (dev scan)", fontsize=10)
     ax.legend(fontsize=7.5, loc="lower right", frameon=False)
     ax.grid(alpha=0.25, lw=0.5)
 
@@ -96,7 +101,7 @@ def main() -> int:
     ax.set_yscale("log")
     ax.set_xlabel("measured staleness  $x$ (steps)")
     ax.set_ylabel("$J_{uav}$  (m, log scale)")
-    ax.set_title("(b) the ratio flattens, the absolute cost does not", fontsize=10)
+    ax.set_title("(b) ratio flattens while absolute cost keeps rising", fontsize=10)
     ax.legend(fontsize=6.6, loc="upper left", frameon=False)
     ax.grid(alpha=0.25, lw=0.5, which="both")
 
@@ -111,7 +116,7 @@ def main() -> int:
                     label=f"$R_{{fail}}$={d60['windows'][w]['radius']:.0f} m, $W$={W}")
     ax.set_xlabel("measured failure window $W$ (steps without update)")
     ax.set_ylabel("crossing $x^*$ (mean age where $R_{uav}$ passes 1)")
-    ax.set_title("(c) crossing vs window — intervals overlap ($\\it{INCONCLUSIVE}$)", fontsize=10)
+    ax.set_title("(c) crossing vs window — grid brackets overlap ($\\it{INCONCLUSIVE}$)", fontsize=10)
     ax.legend(fontsize=7.5, loc="upper left", frameon=False)
     ax.grid(alpha=0.25, lw=0.5)
 
@@ -131,12 +136,13 @@ def main() -> int:
     ax.set_ylim(0, max(rs) * 1.45)
     ax.set_xlabel("measured failure window $W$ (steps)")
     ax.set_ylabel("$x^*/W$")
-    ax.set_title("(d) the threshold does not scale with the window", fontsize=10)
+    ax.set_title("(d) exploratory deviation from proportional scaling (report-only)",
+                 fontsize=9.5)
     ax.legend(fontsize=7.5, loc="upper right", frameon=False)
     ax.grid(alpha=0.25, lw=0.5)
 
-    fig.suptitle("Prediction-compensation safety domain under bandwidth limits "
-                 "(dev-set scan; cluster bootstrap on reset initial states)", fontsize=9.5)
+    fig.suptitle("Operating range of prediction compensation under bandwidth limits "
+                 "(dev-set scan; brackets = grid gaps, not confidence intervals)", fontsize=9.5)
     fig.tight_layout(rect=(0, 0, 1, 0.97))
     out = ROOT / "assets" / "paper_p3.png"
     out.parent.mkdir(exist_ok=True)

@@ -1,0 +1,446 @@
+[
+ {
+  "id": "C1.ci_uav_lo",
+  "display": "0.295",
+  "value": 0.2949423756732522,
+  "spec": ".3f",
+  "source": "58",
+  "note": "UAV R 区间下界",
+  "json_key": "F1.ci_uav[0]"
+ },
+ {
+  "id": "C1.ci_uav_hi",
+  "display": "0.337",
+  "value": 0.33677730734950123,
+  "spec": ".3f",
+  "source": "58",
+  "note": "UAV R 区间上界",
+  "json_key": "F1.ci_uav[1]"
+ },
+ {
+  "id": "C1.ci_cart_lo",
+  "display": "0.821",
+  "value": 0.8205813994464598,
+  "spec": ".3f",
+  "source": "58",
+  "note": "CartPole R 区间下界",
+  "json_key": "F1.ci_cart[0]"
+ },
+ {
+  "id": "C1.ci_cart_hi",
+  "display": "1.028",
+  "value": 1.027609169459361,
+  "spec": ".3f",
+  "source": "58",
+  "note": "CartPole R 区间上界",
+  "json_key": "F1.ci_cart[1]"
+ },
+ {
+  "id": "C1.R_uav",
+  "display": "0.315",
+  "value": 0.3148239427838023,
+  "spec": ".3f",
+  "source": "58",
+  "note": "B200/unpaced/linear/uav/primary",
+  "json_key": "F1.R[0]"
+ },
+ {
+  "id": "C1.R_cart",
+  "display": "0.921",
+  "value": 0.9207755142210414,
+  "spec": ".3f",
+  "source": "58",
+  "note": "B200/unpaced/linear/cart/primary",
+  "json_key": "F1.R[1]"
+ },
+ {
+  "id": "C5.br_lo",
+  "display": "5.827",
+  "value": 5.827361111111112,
+  "spec": ".3f",
+  "source": "59b",
+  "note": "交点网格下界（补点 B=160 的 x）",
+  "json_key": "points[2].x"
+ },
+ {
+  "id": "C5.br_hi",
+  "display": "7.571",
+  "value": 7.571486224026034,
+  "spec": ".3f",
+  "source": "59",
+  "note": "交点网格上界（B=150 的 x）",
+  "json_key": "points[7].x"
+ },
+ {
+  "id": "C1.frac_uav",
+  "display": "1.000",
+  "value": 1.0,
+  "spec": ".3f",
+  "source": "58",
+  "note": "90 个初值里 R<1 的比例（UAV）",
+  "json_key": "F2.primary/200/unpaced.frac_clusters_below_1[0]"
+ },
+ {
+  "id": "C2.sz0",
+  "display": "4510.3",
+  "value": 4510.333333333333,
+  "spec": ".1f",
+  "source": "58",
+  "note": "zoh UAV 送达帧（30 集合计均值）",
+  "json_key": "F1.served.zoh[0]"
+ },
+ {
+  "id": "C2.sz1",
+  "display": "1489.7",
+  "value": 1489.6666666666667,
+  "spec": ".1f",
+  "source": "58",
+  "note": "zoh CartPole 送达帧",
+  "json_key": "F1.served.zoh[1]"
+ },
+ {
+  "id": "C2.sl0",
+  "display": "4367.7",
+  "value": 4367.666666666667,
+  "spec": ".1f",
+  "source": "58",
+  "note": "linear UAV 送达帧",
+  "json_key": "F1.served.linear[0]"
+ },
+ {
+  "id": "C2.sl1",
+  "display": "1632.3",
+  "value": 1632.3333333333333,
+  "spec": ".1f",
+  "source": "58",
+  "note": "linear CartPole 送达帧",
+  "json_key": "F1.served.linear[1]"
+ },
+ {
+  "id": "C2.total_zoh",
+  "display": "6000.0",
+  "value": 6000.0,
+  "spec": ".1f",
+  "source": "58",
+  "note": "zoh 两用户合计",
+  "keys": [
+   "F1.served.zoh[0]",
+   "F1.served.zoh[1]"
+  ],
+  "ops": [
+   "+"
+  ]
+ },
+ {
+  "id": "C2.total_lin",
+  "display": "6000.0",
+  "value": 6000.0,
+  "spec": ".1f",
+  "source": "58",
+  "note": "linear 两用户合计",
+  "keys": [
+   "F1.served.linear[0]",
+   "F1.served.linear[1]"
+  ],
+  "ops": [
+   "+"
+  ]
+ },
+ {
+  "id": "C2.uav_ratio",
+  "display": "0.968",
+  "value": 0.9683689306037988,
+  "spec": ".3f",
+  "source": "58",
+  "note": "served 比 UAV linear/zoh",
+  "keys": [
+   "F1.served.linear[0]",
+   "F1.served.zoh[0]"
+  ],
+  "ops": [
+   "/"
+  ]
+ },
+ {
+  "id": "C2.cart_ratio",
+  "display": "1.096",
+  "value": 1.0957708659655403,
+  "spec": ".3f",
+  "source": "58",
+  "note": "served 比 CartPole linear/zoh",
+  "keys": [
+   "F1.served.linear[1]",
+   "F1.served.zoh[1]"
+  ],
+  "ops": [
+   "/"
+  ]
+ },
+ {
+  "id": "C3.R_uav",
+  "display": "1.223",
+  "value": 1.2228308896129467,
+  "spec": ".3f",
+  "source": "58",
+  "note": "B=100/unpaced/linear/uav/primary",
+  "json_key": "F2.primary/100/unpaced.R[0]"
+ },
+ {
+  "id": "C3.ci_lo",
+  "display": "1.167",
+  "value": 1.1668072312440105,
+  "spec": ".3f",
+  "source": "58",
+  "note": "F2.primary/100/unpaced.ci_uav[0]",
+  "json_key": "F2.primary/100/unpaced.ci_uav[0]"
+ },
+ {
+  "id": "C3.ci_hi",
+  "display": "1.279",
+  "value": 1.2785720472450448,
+  "spec": ".3f",
+  "source": "58",
+  "note": "F2.primary/100/unpaced.ci_uav[1]",
+  "json_key": "F2.primary/100/unpaced.ci_uav[1]"
+ },
+ {
+  "id": "C3.frac",
+  "display": "0.111",
+  "value": 0.1111111111111111,
+  "spec": ".3f",
+  "source": "58",
+  "note": "F2.primary/100/unpaced.frac_clusters_below_1[0]",
+  "json_key": "F2.primary/100/unpaced.frac_clusters_below_1[0]"
+ },
+ {
+  "id": "C4.R_uav",
+  "display": "0.476",
+  "value": 0.47611033080599696,
+  "spec": ".3f",
+  "source": "58",
+  "note": "B=100/paced/linear/uav/primary",
+  "json_key": "F2.primary/100/paced.R[0]"
+ },
+ {
+  "id": "C4.ci_lo",
+  "display": "0.436",
+  "value": 0.43620549129689107,
+  "spec": ".3f",
+  "source": "58",
+  "note": "F2.primary/100/paced.ci_uav[0]",
+  "json_key": "F2.primary/100/paced.ci_uav[0]"
+ },
+ {
+  "id": "C4.ci_hi",
+  "display": "0.524",
+  "value": 0.5244437358131191,
+  "spec": ".3f",
+  "source": "58",
+  "note": "F2.primary/100/paced.ci_uav[1]",
+  "json_key": "F2.primary/100/paced.ci_uav[1]"
+ },
+ {
+  "id": "C4.frac",
+  "display": "0.989",
+  "value": 0.9888888888888889,
+  "spec": ".3f",
+  "source": "58",
+  "note": "F2.primary/100/paced.frac_clusters_below_1[0]",
+  "json_key": "F2.primary/100/paced.frac_clusters_below_1[0]"
+ },
+ {
+  "id": "C5.tau",
+  "display": "0.815",
+  "value": 0.8153846153846154,
+  "spec": ".3f",
+  "source": "59",
+  "note": "12 点 Kendall τ_b",
+  "json_key": "F1.tau_full.tau_b"
+ },
+ {
+  "id": "C5.inv",
+  "display": "3",
+  "value": 3,
+  "spec": "d",
+  "source": "59",
+  "note": "F1.tau_full.n_adjacent_inversions",
+  "json_key": "F1.tau_full.n_adjacent_inversions"
+ },
+ {
+  "id": "N2.R150",
+  "display": "1.017",
+  "value": 1.0174549445029566,
+  "spec": ".3f",
+  "source": "59",
+  "note": "points[7].R_uav",
+  "json_key": "points[7].R_uav"
+ },
+ {
+  "id": "N2.R60",
+  "display": "1.165",
+  "value": 1.165194679704975,
+  "spec": ".3f",
+  "source": "59",
+  "note": "points[11].R_uav",
+  "json_key": "points[11].R_uav"
+ },
+ {
+  "id": "N2.R_ratio",
+  "display": "1.15",
+  "value": 1.1452051867261717,
+  "spec": ".2f",
+  "source": "59",
+  "note": "R 比值 B60/B150",
+  "keys": [
+   "points[11].R_uav",
+   "points[7].R_uav"
+  ],
+  "ops": [
+   "/"
+  ]
+ },
+ {
+  "id": "N2.J150",
+  "display": "3.324",
+  "value": 3.323956378178464,
+  "spec": ".3f",
+  "source": "59",
+  "note": "points[7].J[0]",
+  "json_key": "points[7].J[0]"
+ },
+ {
+  "id": "N2.J60",
+  "display": "13.844",
+  "value": 13.844294404718612,
+  "spec": ".3f",
+  "source": "59",
+  "note": "points[11].J[0]",
+  "json_key": "points[11].J[0]"
+ },
+ {
+  "id": "N2.J_ratio",
+  "display": "4.2",
+  "value": 4.165004840498334,
+  "spec": ".1f",
+  "source": "59",
+  "note": "J 比值 B60/B150",
+  "keys": [
+   "points[11].J[0]",
+   "points[7].J[0]"
+  ],
+  "ops": [
+   "/"
+  ]
+ },
+ {
+  "id": "C5b.min",
+  "display": "0.313",
+  "value": 0.31281790197760845,
+  "spec": ".3f",
+  "source": "59",
+  "note": "paced 分支最小 R_uav",
+  "json_key": "points[0].R_uav"
+ },
+ {
+  "id": "C6.x_short",
+  "display": "5.790",
+  "value": 5.790091126650557,
+  "spec": ".3f",
+  "source": "60",
+  "note": "short 窗口交点",
+  "json_key": "brackets.short.x_star"
+ },
+ {
+  "id": "C6.x_base",
+  "display": "7.474",
+  "value": 7.473767856872604,
+  "spec": ".3f",
+  "source": "60",
+  "note": "base 窗口交点",
+  "json_key": "brackets.base.x_star"
+ },
+ {
+  "id": "C6.x_long",
+  "display": "8.155",
+  "value": 8.154643310912109,
+  "spec": ".3f",
+  "source": "60",
+  "note": "long 窗口交点",
+  "json_key": "brackets.long.x_star"
+ },
+ {
+  "id": "C7.xow_s",
+  "display": "0.165",
+  "value": 0.16543117504715876,
+  "spec": ".3f",
+  "source": "60",
+  "note": "x_star_over_W.short.x_star_over_W",
+  "json_key": "x_star_over_W.short.x_star_over_W"
+ },
+ {
+  "id": "C7.xow_m",
+  "display": "0.141",
+  "value": 0.14101448786552082,
+  "spec": ".3f",
+  "source": "60",
+  "note": "x_star_over_W.base.x_star_over_W",
+  "json_key": "x_star_over_W.base.x_star_over_W"
+ },
+ {
+  "id": "C7.xow_l",
+  "display": "0.078",
+  "value": 0.07841003183569335,
+  "spec": ".3f",
+  "source": "60",
+  "note": "x_star_over_W.long.x_star_over_W",
+  "json_key": "x_star_over_W.long.x_star_over_W"
+ },
+ {
+  "id": "C7.W_ratio",
+  "display": "3.0",
+  "value": 2.9714285714285715,
+  "spec": ".1f",
+  "source": "60",
+  "note": "W 长/短",
+  "keys": [
+   "windows.long.W_expected",
+   "windows.short.W_expected"
+  ],
+  "ops": [
+   "/"
+  ]
+ },
+ {
+  "id": "C7.xs_ratio",
+  "display": "1.41",
+  "value": 1.4083790967257874,
+  "spec": ".2f",
+  "source": "60",
+  "note": "x* 长/短",
+  "keys": [
+   "brackets.long.x_star",
+   "brackets.short.x_star"
+  ],
+  "ops": [
+   "/"
+  ]
+ },
+ {
+  "id": "N1.frac_cart",
+  "display": "0.400",
+  "value": 0.4,
+  "spec": ".3f",
+  "source": "58",
+  "note": "90 个初值里 R<1 的比例（CartPole）",
+  "json_key": "F2.primary/200/unpaced.frac_clusters_below_1[1]"
+ },
+ {
+  "id": "N1.median_cart",
+  "display": "1.000",
+  "value": 1.0,
+  "spec": ".3f",
+  "source": "58",
+  "note": "F2.primary/200/unpaced.cluster_ratio_median[1]",
+  "json_key": "F2.primary/200/unpaced.cluster_ratio_median[1]"
+ }
+]

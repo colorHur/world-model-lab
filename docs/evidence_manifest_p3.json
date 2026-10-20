@@ -1,0 +1,142 @@
+{
+ "manifest_version": 1,
+ "purpose": "P3 生成/复现的固定输入（不随 latest 漂移）",
+ "generated_by": "scripts/63_freeze_manifest.py",
+ "note": "生成/复现脚本默认只读本清单。换证据必须 --allow-update，旧版另存 evidence_manifest_p3.v<N>.json；不得手改。",
+ "hash_scheme": "sha256_norm = 行尾归一(\\r\\n→\\n)后的 sha256，权威；sha256_bytes = 工作树原始字节 sha256，仅记录（与 git blob 因换行不同）",
+ "entries": {
+  "58": {
+   "name": "58_p3_confirmation",
+   "run_id": "20261020-050355-613f4be",
+   "path": "results/runs/20261020-050355-613f4be/58_p3_confirmation.json",
+   "sha256_norm": "4d597ca01d80f55743407089ddd4aed05db025ad497e36d4ce6be2b32131b4cc",
+   "sha256_bytes": "504d8235fb972340a5fec8f5328d3c8720795532839e81b342d4a9b8dd412c37",
+   "cells": 96,
+   "checks_failed": 0,
+   "protocol": {
+    "N": 2,
+    "window": 200,
+    "episodes": 30,
+    "n_boot": 10000,
+    "arm": "age",
+    "absorbed": [
+     25.0,
+     1.0
+    ],
+    "budgets": [
+     100,
+     200
+    ],
+    "modes": [
+     "unpaced",
+     "paced"
+    ],
+    "seed_sets": {
+     "primary": [
+      100,
+      130,
+      160
+     ],
+     "secondary": [
+      100,
+      101,
+      102
+     ]
+    }
+   }
+  },
+  "59": {
+   "name": "59_p3_boundary",
+   "run_id": "20261020-072122-58ee7b7",
+   "path": "results/runs/20261020-072122-58ee7b7/59_p3_boundary.json",
+   "sha256_norm": "997e3aa3b31218b5c25acb1da7fa3a4dbc8adbba1778ceb0d60b8172656dd974",
+   "sha256_bytes": "b6617d27e780e6f8f6061c26ba542f12f34f9ef6339d4edf4dbe8942867c2b3d",
+   "cells": 96,
+   "checks_failed": 0,
+   "protocol": {
+    "N": 2,
+    "window": 200,
+    "episodes": 30,
+    "n_boot": 10000,
+    "arm": "age",
+    "absorbed": [
+     25.0,
+     1.0
+    ],
+    "modes": [
+     "unpaced",
+     "paced"
+    ],
+    "seed_sets": {
+     "dev": [
+      0,
+      1,
+      2
+     ],
+     "conf": [
+      100,
+      130,
+      160
+     ]
+    }
+   }
+  },
+  "59b": {
+   "name": "59b_p3_boundary_refine",
+   "run_id": "20261020-071854-58ee7b7",
+   "path": "results/runs/20261020-071854-58ee7b7/59b_p3_boundary_refine.json",
+   "sha256_norm": "91a04c58cd589e87425f84118e54788d32b71beeea1e3308d49332cb1442d900",
+   "sha256_bytes": "925230560bdfa2ac76b9e06cf8ba8c3336b02c8dda07e36e1cadab47093b62ea",
+   "cells": 18,
+   "checks_failed": 0,
+   "protocol": {
+    "N": 2,
+    "window": 200,
+    "episodes": 30,
+    "n_boot": 10000,
+    "arm": "age",
+    "absorbed": [
+     25.0,
+     1.0
+    ],
+    "modes": [
+     "unpaced"
+    ],
+    "seed_sets": {
+     "dev": [
+      0,
+      1,
+      2
+     ]
+    }
+   }
+  },
+  "60": {
+   "name": "60_p3_window_shift",
+   "run_id": "20261020-094752-7fcaaa5",
+   "path": "results/runs/20261020-094752-7fcaaa5/60_p3_window_shift.json",
+   "sha256_norm": "36721cff2dc7a0e24982fc03dacb0e902bf824261fe9b5b5505f8924ebb83d11",
+   "sha256_bytes": "34a754d784980d6bcbbf2da256d4d6630a9a03b5126c95e172c3865c3ddd30fd",
+   "cells": 144,
+   "checks_failed": 0,
+   "protocol": {
+    "N": 2,
+    "window": 200,
+    "episodes": 30,
+    "n_boot": 10000,
+    "arm": "age",
+    "absorbed": "uav := escape_radius (per window); cart := 1.0",
+    "budgets": [
+     200,
+     175,
+     160,
+     150,
+     140,
+     120,
+     100,
+     80
+    ]
+   }
+  }
+ }
+}
