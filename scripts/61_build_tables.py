@@ -20,15 +20,27 @@ v2 §P3 要"主结果表"，而本仓库此前的数字散在 4 份入库 JSON �
    summary 与 cells 不一致 ⇒ FAIL。
 4. **字节稳定**：文档里**不写任何时间戳**，内容只取决于证据字节 ⇒ 重跑两次 `sha256` 相同。
 
+P3-3c 追加的三条（都在检查里，不是口号）
+--------------------------------------
+- `S10c` **派生值可重算**：`fmt_derived` 登记操作数键 + 左结合算子，`fmt_agg` 登记聚合口径，
+  `fmt_reratio` 登记配对重算口径；S10c 逐个重算，差 >1e-9 或格式化后与 `display` 不符 ⇒ FAIL。
+  （这条抓到过一次真错：登记的操作数顺序与算式相反。）
+- `S11` **初稿数字漂移闸**：抽初稿里"整段只由数字/单位/分隔符组成"的 inline code，
+  其中每个小数都必须在 trace 的 `display` 里；抽到的数 <15 个 ⇒ FAIL（非退化守卫）；
+  另有**阴性对照**（改一位小数必须被抓到），不抓到 ⇒ 说明闸没有分辨力，如实记。
+- **§7 资源与耗时**：只从 `58.TIMING` 与 `cells_J[*].elapsed_s` 出，图上/文里强制写明
+  "Python 层实现开销，不是实时预算结论"。
+
 用法
 ----
     D:/devtools/miniconda3/envs/ai-lab/python.exe scripts/61_build_tables.py
     ... --check-only        # 只跑检查，不写 docs/
+    ... --draft <path>      # 指定初稿（默认科研空间里的 2026-10-20-P3-初稿-v0.1.md；缺失 ⇒ S11 SKIP）
 
 产物
 ----
     docs/RESULTS-P3.md              （内容不变则不重写）
-    docs/results_p3_trace.json      （每格 → JSON 原值 + 键路径）
+    docs/results_p3_trace.json      （每格 → JSON 原值 + 键路径；派生量带可重算的操作数/公式）
 
 退出码：0 = 全部检查通过；2 = 有检查 FAIL（不是"研究 Gate 未过"，是**文档与证据不一致**）。
 """
@@ -38,6 +50,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -46,9 +59,14 @@ sys.path.insert(0, str(ROOT))
 
 from wmlab.eval.results_io import latest_result_path  # noqa: E402
 
+# 科研空间里的初稿（不在本仓库内）：缺失 ⇒ SKIP，不算 FAIL（#46：对象不存在不判对错）。
+DEFAULT_DRAFT = Path("D:/workbuddy/researchproject/05-论文与产出/2026-10-20-P3-初稿-v0.1.md")
+
 FAILS: list[str] = []
 SKIPS: list[str] = []
-TRACE: list[dict] = []
+TRACE: list[dict] = []          # 直接取自 JSON 的值（S10 字面 grep）
+TRACE_DERIVED: list[dict] = []  # 由 JSON 值算出来的量（S10c 用公式重算复核）
+DRAFT_PATH: str = str(DEFAULT_DRAFT)
 
 SRC = {
     "58": "58_p3_confirmation",
@@ -101,12 +119,108 @@ def fmt_num(value, source: str, key: str, spec: str = ".3f", derived: bool = Fal
     """
     disp = format(value, spec)
     if not derived:
-        TRACE.append({"display": disp, "value": value, "source": source, "key": key})
+        TRACE.append({"kind": "direct", "display": disp, "value": value, "source": source, "key": key})
     return disp
 
 
 def fmt_calc(value, spec: str = ".3f") -> str:
     return format(value, spec)
+
+
+def fmt_derived(value: float, operands: list[str], ops: list[str], spec: str = ".2f") -> str:
+    """登记一个**由 JSON 值算出来**的量。
+
+    `operands` 是 trace 里已经存在的键（必须能在 `TRACE` 里查到 → S10c 会解析它们），
+    `ops` 是左结合运算符（长度 = len(operands)-1）。这样"派生值"也能被机器重算，
+    不是"脚本里写了算式、嘴上说可复核"。
+    """
+    disp = format(value, spec)
+    TRACE_DERIVED.append({"kind": "derived", "display": disp, "value": value, "spec": spec,
+                          "operands": operands, "ops": ops})
+    return disp
+
+
+def fmt_agg(value: float, data_key: str, field: str, flt: dict, stat: str = "mean",
+            spec: str = ".2f", key: str | None = None) -> str:
+    """登记一个**聚合量**（如"每 cell 墙钟均值"），S10c 会从原始 cells 重新聚合复核。
+
+    `key` 只是给下游（演示页）取用的**语义标签**，不参与溯源判定。
+    """
+    disp = format(value, spec)
+    row = {"kind": "derived", "display": disp, "value": value, "spec": spec,
+           "agg": {"data": data_key, "field": field, "filter": flt, "stat": stat}}
+    if key:
+        row["key"] = key
+    TRACE_DERIVED.append(row)
+    return disp
+
+
+def fmt_reratio(value: float, data_key: str, num: str, den: str, seed_set: str, budget: int,
+                mode: str, user: int, spec: str = ".3f") -> str:
+    """登记一个**重算出来的比值**（ΣJ(num)/ΣJ(den)），S10c 会用同样的配对规则重算复核。"""
+    disp = format(value, spec)
+    TRACE_DERIVED.append({"kind": "derived", "display": disp, "value": value, "spec": spec,
+                          "reratio": {"data": data_key, "num": num, "den": den, "seed_set": seed_set,
+                                      "budget": budget, "mode": mode, "user": user}})
+    return disp
+
+
+def agg_cells(cells: list[dict], field: str, flt: dict, stat: str = "mean") -> tuple[float, int]:
+    vals = [c[field] for c in cells if all(c.get(k) == v for k, v in flt.items())]
+    if not vals:
+        raise RuntimeError(f"聚合无样本：{field} {flt}")
+    return (sum(vals) / len(vals) if stat == "mean" else sum(vals)), len(vals)
+
+
+def apply_op(acc: float, op: str, x: float) -> float:
+    if op == "+":
+        return acc + x
+    if op == "-":
+        return acc - x
+    if op == "*":
+        return acc * x
+    if op == "/":
+        return acc / x
+    if op == "max":
+        return max(acc, x)
+    if op == "maxabs":
+        return max(abs(acc), abs(x))
+    raise RuntimeError(f"未知算子 {op}")
+
+
+# --------------------------------------------------------------- 初稿数字闸（S11）
+# 规则：**凡当结果引用的数**在初稿里写成 inline code；S11 抽"整段只由数字/单位/分隔符组成"的片段，
+# 再要求其中**每一个小数**都能在 trace 的 display 里找到（整数与协议量不在闸内，见预注册 §2）。
+SPAN_OK = re.compile(r"^[\d.,\s\[\]()–—\-+×%µms步]{1,48}$")
+DEC_RE = re.compile(r"\d+\.\d+")
+
+
+def extract_result_tokens(text: str) -> list[tuple[str, int, str]]:
+    """返回 [(片段, 行号, 小数)] —— 一个片段里有几个小数就产生几条（每个都要能溯源）。"""
+    out: list[tuple[str, int, str]] = []
+    for m in re.finditer(r"`([^`\n]+)`", text):
+        s = m.group(1).strip()
+        if not SPAN_OK.match(s):
+            continue
+        line = text.count("\n", 0, m.start()) + 1
+        for num in DEC_RE.findall(s):
+            out.append((s, line, num.replace("−", "-")))
+    return out
+
+
+def mutate_first_token(text: str) -> str:
+    """把第一个受闸小数的末位数字改掉 —— 阴性对照用（#39：先问什么错误能打死这条检查）。"""
+    for m in re.finditer(r"`([^`\n]+)`", text):
+        s = m.group(1).strip()
+        if not SPAN_OK.match(s):
+            continue
+        hit = DEC_RE.search(s)
+        if not hit:
+            continue
+        i = hit.end() - 1
+        new = "1" if s[i] != "1" else "2"
+        return text[: m.start(1)] + s[:i] + new + s[i + 1:] + text[m.end(1):]
+    return text
 
 
 def csv_num(values: list, source: str, keys: list[str], spec: str = ".3f") -> str:
@@ -247,6 +361,8 @@ def checks(data: dict, meta: dict) -> None:
     # ---- S10 字面溯源：每个显示值都能在原 JSON 文本里 grep 到 ----
     bad = []
     for t in TRACE:
+        if t.get("kind", "direct") != "direct":
+            continue
         src_meta = next((m for m in meta.values() if m["path"] == t["source"]), None)
         if src_meta is None:
             bad.append(f"{t['source']} 不在已加载的证据里")
@@ -255,7 +371,68 @@ def checks(data: dict, meta: dict) -> None:
         if lit not in src_meta["text"]:
             bad.append(f"{t['key']} = {lit} 未出现在 {t['source']}")
     check("S10 每个显示值可在证据 JSON 中字面 grep 到", not bad,
-          f"{len(TRACE)} 格，失败 {len(bad)}" + ("" if not bad else "；" + "；".join(bad[:5])))
+          f"{sum(1 for t in TRACE if t.get('kind', 'direct') == 'direct')} 格，失败 {len(bad)}"
+          + ("" if not bad else "；" + "；".join(bad[:5])))
+
+    # ---- S10c 派生值：由它自己声明的操作数键重算一遍 ----
+    km = {t["key"]: t["value"] for t in TRACE}
+    bad_d: list[str] = []
+    for dv in TRACE_DERIVED:
+        try:
+            if "agg" in dv:
+                a = dv["agg"]
+                base = data.get(a["data"], {}).get("cells_J")
+                if not base:
+                    bad_d.append(f"聚合对象 {a['data']}.cells_J 不存在")
+                    continue
+                v, _n = agg_cells(base, a["field"], a["filter"], a["stat"])
+            elif "reratio" in dv:
+                rr = dv["reratio"]
+                base = data.get(rr["data"], {}).get("cells_J")
+                if not base:
+                    bad_d.append(f"重算对象 {rr['data']}.cells_J 不存在")
+                    continue
+                v, _n = reratio(base, num=rr["num"], den=rr["den"], seed_set=rr["seed_set"],
+                                budget=rr["budget"], mode=rr["mode"], user=rr["user"])
+            else:
+                miss = [k for k in dv["operands"] if k not in km]
+                if miss:
+                    bad_d.append(f"{dv['display']} 的操作数未登记：{miss}")
+                    continue
+                vals = [km[k] for k in dv["operands"]]
+                acc = vals[0]
+                for op, x in zip(dv["ops"], vals[1:]):
+                    acc = apply_op(acc, op, x)
+                v = acc
+        except Exception as exc:  # noqa: BLE001
+            bad_d.append(f"{dv['display']} 重算异常：{exc}")
+            continue
+        if abs(v - dv["value"]) > 1e-9:
+            bad_d.append(f"{dv['display']} 重算 {v!r} ≠ 登记 {dv['value']!r}")
+        elif format(v, dv["spec"]) != dv["display"]:
+            bad_d.append(f"{dv['display']} 与重算格式化 {format(v, dv['spec'])} 不一致")
+    check("S10c 每个派生值都能由它的操作数重算（含聚合）", not bad_d,
+          f"{len(TRACE_DERIVED)} 个派生量，失败 {len(bad_d)}" + ("" if not bad_d else "；" + "；".join(bad_d[:5])))
+
+    # ---- S11 初稿数字漂移闸（规则见 2026-10-20-P3-3c 清单与判据） ----
+    dp = Path(DRAFT_PATH)
+    if not dp.exists():
+        skip("S11 初稿数字闸", f"初稿不存在：{dp.as_posix()}（对象不存在 ⇒ SKIP，不判 PASS/FAIL）")
+    else:
+        disp = {t["display"] for t in TRACE} | {d["display"] for d in TRACE_DERIVED}
+        text = dp.read_text(encoding="utf-8")
+        toks = extract_result_tokens(text)
+        missing = [(s, ln) for (s, ln, num) in toks if num not in disp]
+        check("S11a 初稿里的结果数都能在 trace 找到", (not missing) and len(toks) >= 15,
+              f"抽出 {len(toks)} 个结果数，未命中 {len(missing)}"
+              + ("" if not missing else "；" + "；".join(f"L{ln}:`{s}`" for s, ln in missing[:6]))
+              + ("" if len(toks) >= 15 else "；★ 抽到的数 <15 ⇒ 非退化守卫不满足"))
+        mut = mutate_first_token(text)
+        toks2 = extract_result_tokens(mut)
+        miss2 = [(s, ln) for (s, ln, num) in toks2 if num not in disp]
+        check("S11b 阴性对照：改一位小数必须被抓住", len(miss2) >= 1,
+              f"变异后未命中 {len(miss2)} 个"
+              + (f"（如 L{miss2[0][1]}:`{miss2[0][0]}`）" if miss2 else "；★ 说明闸没有分辨力"))
 
 
 # --------------------------------------------------------------------------- 渲染
@@ -324,14 +501,18 @@ def render(data: dict, meta: dict) -> tuple[str, dict]:
                        f"{fmt_num(F1['ci_uav'][1], src, 'F1.ci_uav[1]')}]")
                 cic = (f"[{fmt_num(F1['ci_cart'][0], src, 'F1.ci_cart[0]')}, "
                        f"{fmt_num(F1['ci_cart'][1], src, 'F1.ci_cart[1]')}]")
+                ru_disp = f"**{fmt_num(ru, src, 'F1.R[0]')}**"
+                rc_disp = fmt_num(rc, src, "F1.R[1]")
             else:
                 ciu = cic = "—（未做区间）"
+                ru_disp = fmt_reratio(ru, "58", pred, "zoh", "primary", 200, "unpaced", 0)
+                rc_disp = fmt_reratio(rc, "58", pred, "zoh", "primary", 200, "unpaced", 1)
             jl, jz = sel_cell(cells, seed_set="primary", budget=200, mode="unpaced",
                               predictor=pred, seed=100), \
                 sel_cell(cells, seed_set="primary", budget=200, mode="unpaced", predictor="zoh", seed=100)
-            A(f"| {tag} | **{fmt_calc(ru)}** | {ciu} | {fmt_calc(rc)} | {cic} | "
-              f"{fmt_calc(jl['J_mean'][0])}/{fmt_calc(jz['J_mean'][0])} | "
-              f"{fmt_calc(jl['J_mean'][1])}/{fmt_calc(jz['J_mean'][1])} | "
+            A(f"| {tag} | {ru_disp} | {ciu} | {rc_disp} | {cic} | "
+              f"{fmt_num(jl['J_mean'][0], src, f'{pred}.J_mean[0]')}/{fmt_num(jz['J_mean'][0], src, 'zoh.J_mean[0]')} | "
+              f"{fmt_num(jl['J_mean'][1], src, f'{pred}.J_mean[1]')}/{fmt_num(jz['J_mean'][1], src, 'zoh.J_mean[1]')} | "
               f"{fmt_calc(jl['served'][0],'.0f')}/{fmt_calc(jz['served'][0],'.0f')} |")
         A("")
         A(f"★ 表里 `R` 全部由 `cells_J` 重算（每格 90 个 episode）；`J`/`served` 取 `seed=100` 的 cell（逐种子表见 2c）。")
@@ -383,7 +564,12 @@ def render(data: dict, meta: dict) -> tuple[str, dict]:
               f"{fmt_calc(cl['J_mean'][0])}/{fmt_calc(cz['J_mean'][0])} | "
               f"{late}（{fmt_calc(late / n_ep_tot, '.0f')}/集） |")
         A("")
-        A("★ **`B=100 unpaced` 的 `R_uav` 1.223 与 `paced` 0.476 差 2.6×、符号相反** ⇒ "
+        _ru_unp = d["F2"]["primary/100/unpaced"]["R"][0]
+        _ru_pac = d["F2"]["primary/100/paced"]["R"][0]
+        _ratio = fmt_derived(_ru_unp / _ru_pac,
+                             ["F2.primary/100/unpaced.R[0]", "F2.primary/100/paced.R[0]"], ["/"])
+        A(f"★ **`B=100 unpaced` 的 `R_uav` {fmt_num(_ru_unp, src, 'F2.primary/100/unpaced.R[0]')} 与 `paced` "
+          f"{fmt_num(_ru_pac, src, 'F2.primary/100/paced.R[0]')} 差 {_ratio}×、符号相反** ⇒ "
           "同一预测器在不同时序下相反；`unpaced` 的 `t>B` 发帧为 **0**（断服），`paced` 不为 0。")
         A("★ `B=200` 时 `paced ≡ unpaced`（`B=L` ⇒ 配速 no-op），两行数值相同是恒等式，不是「协同为零」。")
         A("")
@@ -428,6 +614,11 @@ def render(data: dict, meta: dict) -> tuple[str, dict]:
                   f"{fmt_calc(p['J'][0])}/{fmt_calc(p['J_zoh'][0])} | {fmt_calc(p['late'],'.0f')} |")
             A("")
         f1 = d["F1"]
+        # `paced` 分支的取值范围由 points 现算（不再手写 0.313–0.618）
+        dpts = d["points"]
+        _pi = [i for i, p in enumerate(dpts) if p["mode"] == "paced"]
+        rmin = min(_pi, key=lambda i: dpts[i]["R_uav"])
+        rmax = max(_pi, key=lambda i: dpts[i]["R_uav"])
         A("### 3c 形状与交点")
         A("")
         A("| 量 | 值 | 含义 |")
@@ -438,10 +629,11 @@ def render(data: dict, meta: dict) -> tuple[str, dict]:
         A(f"| 判词 | `{f1['verdict_full']}` | 只看方向，不看线性 |")
         A(f"| `x` 跨度 | {fmt_num(f1['x_min'], src, 'F1.x_min')} → {fmt_num(f1['x_max'], src, 'F1.x_max')}"
           f"（{fmt_num(f1['x_span_ratio'], src, 'F1.x_span_ratio', '.1f')}×） | 跨度够，不是「扫不动」 |")
-        A(f"| `paced` 分支取值范围 | 0.313–0.618（全 <1） | 见上表 `paced` 各行 |")
+        A(f"| `paced` 分支取值范围 | {fmt_num(dpts[rmin]['R_uav'], src, f'points[{rmin}].R_uav')}"
+          f"–{fmt_num(dpts[rmax]['R_uav'], src, f'points[{rmax}].R_uav')}（全 <1） | 见上表 `paced` 各行 |")
         A(f"| 交点（未补点） | `x≈{fmt_num(d['verdicts']['F2']['unpaced'][0]['x'], src, 'verdicts.F2.unpaced[0].x', '.2f')}`，"
-          f"bracket ({fmt_calc(d['verdicts']['F2']['unpaced'][0]['between'][0],'.2f')}, "
-          f"{fmt_calc(d['verdicts']['F2']['unpaced'][0]['between'][1],'.2f')}) | **只能给区间，不能给数** |")
+          f"bracket ({fmt_num(d['verdicts']['F2']['unpaced'][0]['between'][0], src, 'verdicts.F2.unpaced[0].between[0]', '.2f')}, "
+          f"{fmt_num(d['verdicts']['F2']['unpaced'][0]['between'][1], src, 'verdicts.F2.unpaced[0].between[1]', '.2f')}) | **只能给区间，不能给数** |")
         A("")
         A("### 3d 确认集落点复核（不参与任何选择）")
         A("")
@@ -451,9 +643,11 @@ def render(data: dict, meta: dict) -> tuple[str, dict]:
             o = d["F3"][key]
             A(f"| {key} | {fmt_num(o['R_dev'][0], src, f'F3.{key}.R_dev[0]')} | "
               f"{fmt_num(o['R_conf'][0], src, f'F3.{key}.R_conf[0]')} | "
-              f"{fmt_calc(o['d_uav'])} |")
+              f"{fmt_num(o['d_uav'], src, f'F3.{key}.d_uav')} |")
         A("")
-        A("★ 三格 |Δ| ≤ 0.029 ⇒ 落点一致；这条只说明「表不是开发集挑出来的」，**不构成第二次独立确认**。")
+        _deltas = [abs(d["F3"][k]["d_uav"]) for k in ("150/unpaced", "150/paced", "200/unpaced")]
+        A(f"★ 三格 |Δ| 的最大者 = {fmt_derived(max(_deltas), ['F3.150/unpaced.d_uav', 'F3.150/paced.d_uav', 'F3.200/unpaced.d_uav'], ['maxabs', 'maxabs'], '.3f')}"
+          "（逐格值见上表）⇒ 落点一致；这条只说明「表不是开发集挑出来的」，**不构成第二次独立确认**。")
         A("")
     else:
         A("**59 证据缺失 ⇒ 本节 SKIP**")
@@ -486,7 +680,15 @@ def render(data: dict, meta: dict) -> tuple[str, dict]:
           f"[{fmt_calc(d['brackets']['long']['bracket'][0])}, {fmt_calc(d['brackets']['long']['bracket'][1])}] "
           f"两两重叠 ⇒ **本设计分不清位移**。")
         A("")
-        A("★ `W` ×3.0 而 `x*` 只 ×1.41；`x*/W` 0.165 → 0.078（单调降 2.1×）⇒ **「门槛按窗口成比例」不成立**（附加量，预注册标「只报不判」）。")
+        _W_s, _W_l = d["windows"]["short"]["W_expected"], d["windows"]["long"]["W_expected"]
+        _xs_s, _xs_l = d["brackets"]["short"]["x_star"], d["brackets"]["long"]["x_star"]
+        _rat_s, _rat_l = d["x_star_over_W"]["short"]["x_star_over_W"], d["x_star_over_W"]["long"]["x_star_over_W"]
+        A(f"★ `W` ×{fmt_derived(_W_l / _W_s, ['windows.long.W_expected', 'windows.short.W_expected'], ['/'], '.1f')} "
+          f"而 `x*` 只 ×{fmt_derived(_xs_l / _xs_s, ['brackets.long.x_star', 'brackets.short.x_star'], ['/'])}；"
+          f"`x*/W` {fmt_num(_rat_s, src, 'x_star_over_W.short.x_star_over_W')} → "
+          f"{fmt_num(_rat_l, src, 'x_star_over_W.long.x_star_over_W')}"
+          f"（单调降 {fmt_derived(_rat_s / _rat_l, ['x_star_over_W.short.x_star_over_W', 'x_star_over_W.long.x_star_over_W'], ['/'], '.1f')}×）"
+          "⇒ **「门槛按窗口成比例」不成立**（附加量，预注册标「只报不判」）。")
         A("★ **不得**把 `INCONCLUSIVE` 写成「窗口无关」：点估计单调（5.79 < 7.47 < 8.16），方向不反。")
         A("★ **结构性限制**：改窗口 ⇒ 改存活 ⇒ 改横轴（`age` 均值同时是「陈旧度」与「存活时长」的函数）；"
           "`x*/W` 的下降有一部分是**选择效应**。")
@@ -533,10 +735,12 @@ def render(data: dict, meta: dict) -> tuple[str, dict]:
         j150 = d59["points"][pts[(150, "unpaced")]]
         j60 = d59["points"][pts[(60, "unpaced")]]
         k150, k60 = pts[(150, "unpaced")], pts[(60, "unpaced")]
-        n2_row = (f"| N2 | 比值**掩盖绝对危害** | `R` 只 {fmt_calc(j150['R_uav'])}→{fmt_calc(j60['R_uav'])}（"
-                  f"{fmt_calc((j60['R_uav'] / j150['R_uav'] - 1) * 100, '+.0f')}%），而 `J_uav` "
+        n2_row = (f"| N2 | 比值**掩盖绝对危害** | `R` 只 "
+                  f"{fmt_num(j150['R_uav'], s59, f'points[{k150}].R_uav')}→"
+                  f"{fmt_num(j60['R_uav'], s59, f'points[{k60}].R_uav')}"
+                  f"（×{fmt_derived(j60['R_uav'] / j150['R_uav'], [f'points[{k60}].R_uav', f'points[{k150}].R_uav'], ['/'])}），而 `J_uav` "
                   f"{fmt_num(j150['J'][0], s59, f'points[{k150}].J[0]')} → {fmt_num(j60['J'][0], s59, f'points[{k60}].J[0]')} m"
-                  f"（{fmt_calc(j60['J'][0] / j150['J'][0], '.1f')}×） |")
+                  f"（{fmt_derived(j60['J'][0] / j150['J'][0], [f'points[{k60}].J[0]', f'points[{k150}].J[0]'], ['/'], '.1f')}×） |")
     if "60" in data:
         d60 = data["60"]
         s60 = meta["60"]["path"]
@@ -567,13 +771,44 @@ def render(data: dict, meta: dict) -> tuple[str, dict]:
     A("- 论文图：`scripts/61c_plot_paper_fig.py` → `assets/paper_p3.png`（2×2，数据同入口）。")
     A("- 旧单面板图保留：`assets/59_p3_boundary.png`、`assets/60_window_shift.png`（不删）。")
     A("")
+
+    # ---------------- 7 资源与耗时 ----------------
+    A("## 7 资源与耗时（`58`；**Python 层实现开销，不是实时预算结论**）")
+    A("")
+    if "58" in data:
+        d7 = data["58"]
+        s7 = meta["58"]["path"]
+        tm = d7["TIMING"]
+        c7 = d7["cells_J"]
+        A("| 预测器 | 每次调用中位耗时(µs) | 调用数 | 每 cell 墙钟(s)（`B=200 unpaced`，n=3 种子） |")
+        A("|---|---|---|---|")
+        for pred in ("zoh", "linear"):
+            med = tm[f"primary/{pred}"]["median_us"]
+            ncall = tm[f"primary/{pred}"]["n_calls"]
+            flt = {"predictor": pred, "seed_set": "primary", "budget": 200, "mode": "unpaced"}
+            em, n_cell = agg_cells(c7, "elapsed_s", flt)
+            A(f"| `{pred}` | {fmt_num(med, s7, f'TIMING.primary/{pred}.median_us', '.1f')} | "
+              f"{fmt_num(ncall, s7, f'TIMING.primary/{pred}.n_calls', 'd')} | "
+              f"{fmt_agg(em, '58', 'elapsed_s', flt, 'mean', '.2f', f'58.elapsed.{pred}.mean')}（n={n_cell}） |")
+        A("")
+        A("★ 源 JSON 自带的 `predict_timing.note` 原文写明：**「Python 层实现开销，不是实时预算结论」** —— "
+          "这里的 µs 只用于比较两种预测器的**相对**开销，不能当成上下行实时性预算。")
+        A("★ 每 cell 墙钟时间由环境步进主导（见 `assets/paper_p3_cost.png` 面板 b 的逐 cell 散点），"
+          "预测器开销在总量里是小量；**不得**据此声称「预测可以免费实时跑」。")
+        A("")
+    else:
+        A("**58 证据缺失 ⇒ 本节 SKIP**")
+        A("")
     return "\n".join(L), {"n_trace": len(TRACE)}
 
 
 def main() -> int:
+    global DRAFT_PATH
     ap = argparse.ArgumentParser()
     ap.add_argument("--check-only", action="store_true", help="只跑检查，不写 docs/")
+    ap.add_argument("--draft", default=str(DEFAULT_DRAFT), help="论文初稿路径（S11 用）")
     args = ap.parse_args()
+    DRAFT_PATH = args.draft
 
     print("[61] P3 主结果表：只读入库 JSON")
     data, meta = load_all()
@@ -587,7 +822,7 @@ def main() -> int:
     checks(data, meta)
 
     if args.check_only:
-        print(f"\n[check-only] 跳过写盘（trace {info['n_trace']} 格）")
+        print(f"\n[check-only] 跳过写盘（trace {info['n_trace']} + {len(TRACE_DERIVED)} 派生）")
     else:
         out = ROOT / "docs" / "RESULTS-P3.md"
         old = out.read_text(encoding="utf-8") if out.exists() else None
@@ -598,13 +833,15 @@ def main() -> int:
             out.write_text(text, encoding="utf-8")
             print(f"\n[out] {out.relative_to(ROOT).as_posix()}（{len(text)} B）")
         tr = ROOT / "docs" / "results_p3_trace.json"
-        tr_txt = json.dumps(TRACE, ensure_ascii=False, indent=1)
+        rows = TRACE + TRACE_DERIVED
+        tr_txt = json.dumps(rows, ensure_ascii=False, indent=1)
         old_tr = tr.read_text(encoding="utf-8") if tr.exists() else None
         if old_tr == tr_txt:
             print(f"[unchanged] {tr.relative_to(ROOT).as_posix()}")
         else:
             tr.write_text(tr_txt, encoding="utf-8")
-            print(f"[out] {tr.relative_to(ROOT).as_posix()}（{info['n_trace']} 格）")
+            print(f"[out] {tr.relative_to(ROOT).as_posix()}（{len(rows)} 格："
+                  f"direct {len(TRACE)} + derived {len(TRACE_DERIVED)}）")
 
     print(f"\n{'ALL CHECKS PASS' if not FAILS else 'FAILED: ' + '; '.join(FAILS)}")
     if SKIPS:
