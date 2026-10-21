@@ -758,6 +758,19 @@ X9（想象训练）跑出的是一张「全员平坦」的曲线 —— **但�
 | 完整实验史（§①–㉘）、当前状态清单、结果图索引、参考定义 | [`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md) |
 | 每个编号的预写判据 / 结算 / 更正说明 | 父项目 `04-实验与代码/实验记录/` |
 | 怎么跑起来（环境、自检、缓存复现） | [`docs/REPRODUCE.md`](docs/REPRODUCE.md) |
+| ★ **P3 主结果那一格，秒级重算 + 逐位对账** | [`docs/REPRODUCE-P3.md`](docs/REPRODUCE-P3.md)（`scripts/62_min_repro.py`，4 cell / 约 3 s） |
 | 调度基线库的统一接口 | [`wmlab/eval/scheduling.py`](wmlab/eval/scheduling.py) |
+
+### 诊断 / 判据脚本（不产出结论，只回答"有没有资格下结论"）
+
+| 脚本 | 回答什么 | 用时 |
+|---|---|---|
+| [`scripts/62_min_repro.py`](scripts/62_min_repro.py) | 主结果那一格能否由当前代码**逐位重算**（`expected/compared/skipped/failed/invalid` 显式打印） | 约 3 s |
+| [`scripts/64_gate_selftest.py`](scripts/64_gate_selftest.py) | 62/61 的判据**有没有分辨力**（9 条反例：未知种子、缺格、NaN、错条件、改末位…） | 约 25 s |
+| [`scripts/65_precheck.py`](scripts/65_precheck.py) | 正文/摘要/结论的每个结果数是否绑到 claim-id、文献是否一手核对 | 约 5 s |
+| [`scripts/70_csi_identifiability.py`](scripts/70_csi_identifiability.py) | 某个备选（CSI 噪声）**在现架构下有没有通道**能影响决策（AST 消费面 + 变异测试 + 解析代验）；`--no-persist` 只看不写 | 约 2 s |
+
+★ 这四个的共同点：**判词是分层的**（匹配 / 不匹配 / 未验证 / 仅冒烟），退出码能区分，
+**"没比对"不会被当成"通过"**。详见 [`docs/REPRODUCE-P3.md`](docs/REPRODUCE-P3.md) §3–§4b。
 
 ★ 判据：**不进版本库的图不算对外可验证的产出**（`outputs/` 已 gitignore）。
