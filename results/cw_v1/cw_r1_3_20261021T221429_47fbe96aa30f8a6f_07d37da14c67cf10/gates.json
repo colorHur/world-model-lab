@@ -1,0 +1,116 @@
+{
+  "n_checks": 5,
+  "n_fail": 1,
+  "all_pass": false,
+  "rows": [
+    {
+      "name": "K0 预注册：≥6/4 格 中位比<0.9 且 胜率≥0.7",
+      "pass": false,
+      "detail": {
+        "n_cells": 4,
+        "n_win_cells": 0,
+        "cells": [
+          {
+            "rho": 0.85,
+            "budget_ratio": 0.5,
+            "best_policy": "periodic4",
+            "best_ratio": 0.730016,
+            "best_win_fraction": 0.25,
+            "pass_ratio": true,
+            "pass_fraction": false,
+            "pass": false
+          },
+          {
+            "rho": 0.85,
+            "budget_ratio": 0.8,
+            "best_policy": "periodic1",
+            "best_ratio": 0.782877,
+            "best_win_fraction": 0.0833,
+            "pass_ratio": true,
+            "pass_fraction": false,
+            "pass": false
+          },
+          {
+            "rho": 0.98,
+            "budget_ratio": 0.5,
+            "best_policy": "periodic4",
+            "best_ratio": 0.610619,
+            "best_win_fraction": 0.25,
+            "pass_ratio": true,
+            "pass_fraction": false,
+            "pass": false
+          },
+          {
+            "rho": 0.98,
+            "budget_ratio": 0.8,
+            "best_policy": "periodic1",
+            "best_ratio": 0.470976,
+            "best_win_fraction": 0.1667,
+            "pass_ratio": true,
+            "pass_fraction": false,
+            "pass": false
+          }
+        ],
+        "verdict": "SPACE-VOID"
+      }
+    },
+    {
+      "name": "K1 真信道特权真的接线（关掉 ⇒ 成本必变）",
+      "pass": true,
+      "detail": {
+        "n_cells": 4,
+        "n_changed": 4
+      }
+    },
+    {
+      "name": "K2 真状态特权真的接线（关掉 ⇒ 成本必变）",
+      "pass": true,
+      "detail": {
+        "n_cells": 4,
+        "n_changed": 4
+      }
+    },
+    {
+      "name": "K3 记录上界臂的探测次数（预言：=0；不作判据，结论必须点名）",
+      "pass": true,
+      "detail": [
+        {
+          "rho": 0.85,
+          "budget_ratio": 0.5,
+          "main_probe": 0.0,
+          "probeable_probe": 128.0,
+          "main_attempted": 128.0
+        },
+        {
+          "rho": 0.85,
+          "budget_ratio": 0.8,
+          "main_probe": 0.0,
+          "probeable_probe": 204.0,
+          "main_attempted": 204.0
+        },
+        {
+          "rho": 0.98,
+          "budget_ratio": 0.5,
+          "main_probe": 0.0,
+          "probeable_probe": 128.0,
+          "main_attempted": 128.0
+        },
+        {
+          "rho": 0.98,
+          "budget_ratio": 0.8,
+          "main_probe": 0.0,
+          "probeable_probe": 204.0,
+          "main_attempted": 204.0
+        }
+      ]
+    },
+    {
+      "name": "K4 上界臂 12 项记账恒等式全过",
+      "pass": true,
+      "detail": {
+        "n_failed": 0,
+        "examples": []
+      }
+    }
+  ]
+}

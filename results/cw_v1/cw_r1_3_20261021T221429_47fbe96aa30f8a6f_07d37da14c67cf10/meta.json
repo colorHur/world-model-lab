@@ -1,0 +1,41 @@
+{
+  "run_id": "cw_r1_3_20261021T221429_47fbe96aa30f8a6f_07d37da14c67cf10",
+  "protocol": "CW-POMDP-v1",
+  "phase": "CW-R1-3 ORACLE-KNOWN 上界臂",
+  "note": "R1-3 ORACLE-KNOWN 上界臂首跑（dev 100-111, BOUNDED）",
+  "at_asia_shanghai": "2026-10-21T22:14:29.617456+08:00",
+  "git_head": "65b4ad43f25226075c52e4dafc56c8fec48d7682",
+  "git_dirty_experiments": "?? experiments/cw_v1/oracle_known.py\n?? experiments/cw_v1/r1_3_diag.py\n?? experiments/cw_v1/r1_3_oracle.py",
+  "src_hash": "07d37da14c67cf10",
+  "config_fingerprint_bounded": "47fbe96aa30f8a6f",
+  "plant": "BOUNDED",
+  "episodes": {
+    "split": "dev",
+    "start": 100,
+    "n": 12
+  },
+  "baselines": [
+    "periodic1",
+    "periodic4",
+    "periodic8",
+    "periodic16",
+    "ack_b2c3",
+    "value_csi64",
+    "value_csi8",
+    "value_csi1"
+  ],
+  "rho": [
+    0.85,
+    0.98
+  ],
+  "budget_ratios": [
+    0.5,
+    0.8
+  ],
+  "prereg": {
+    "median_ratio_lt": 0.9,
+    "win_fraction_ge": 0.7,
+    "min_cells": 6
+  },
+  "disclaimer": "ORACLE-KNOWN 是**故意越界的上界臂**：读真信道 log h 与真状态 x 的模，通过 run_episode(allow_truth_keys=True) 显式白名单构造，不经 view._inner。它**不可部署**，任何引用必须带这句。判 SPACE-VOID 时的准确措辞是「在 CW-POMDP-v1（BOUNDED plant）的信息结构下，全知上界也赢不了基线」，限制的是**该协议 + 该 plant**，不是「学习方法不行」。cost_true_per_step 为准；samepot 匹配臂是「给对手同样的钱」的构造。"
+}
