@@ -38,6 +38,15 @@
 ----
     outputs/58_p3_confirmation[_smoke].json                  完整表（不入库）
     results/runs/<run_id>/58_p3_confirmation.json            **入库**（results_io 唯一入口）
+
+字段更正（2026-10-21，不改历史数据）
+-----------------------------------
+★ `served` / `served_late` / `served_total` 按 `attempted_idx` 计数 ⇒ 语义是**发送尝试**
+  （`wmlab.eval.multiuser.delivery_rate` 文档里 `wmserved` 对应 `attempted`，`frames` 才是物理送达）。
+  旧 JSON 里这三列的数**没有错**，只是**标签**写错了。
+★ 键名一律保持原样：旧 JSON 已冻结在 `docs/evidence_manifest_p3.json` 里，改名会让旧记录对不上。
+★ 新增 `delivered`（按用户，= `delivery_rate()["frames"]`）作为「成功送达」的唯一来源；
+  新跑出来的 cell 同时带 `served` 与 `delivered`，可对照 `budget_lost`。
 """
 
 from __future__ import annotations
@@ -415,7 +424,11 @@ def run_cell(budget, mode, pred_name, seed, n_ep, *, timed=False):
         "budget": int(budget), "mode": mode, "predictor": pred_name, "seed": int(seed),
         "J_per_episode": np.asarray(J, dtype=float).tolist(),
         "J_mean": np.asarray(J, dtype=float).mean(axis=0).tolist(),
-        "served": served, "served_late": late, "served_total": int(sum(served)),
+        # ★ 2026-10-21 更正：`served` 计的是 `attempted_idx` ⇒ 语义是**发送尝试**，不是成功送达。
+        #   键名保持不变（旧 JSON 已冻结在 evidence_manifest_p3.json 里，改名会让旧记录无法对账）；
+        #   真正的成功送达数按用户放在新增键 `delivered`（= delivery_rate 的 `frames`）。
+        "served": served, "delivered": dr["frames"],
+        "served_late": late, "served_total": int(sum(served)),
         "alive_steps": dr["alive_steps"], "frames": dr["frames"], "attempts": dr["attempts"],
         "link_q": dr["link_q"], "p_eff": dr["p_eff"],
         "budget_reserved": dr["budget_reserved"], "budget_attempted": dr["budget_attempted"],

@@ -859,7 +859,9 @@ def render(data: dict, meta: dict) -> tuple[str, dict]:
       f"臂 = `{c58.get('arm')}`（仅 `age`），`absorbed={c58.get('absorbed')}`（P3-2 里 `absorbed_uav := escape_radius`）。")
     A("- 指标：`R_i = Σ_e J_i(linear) / Σ_e J_i(zoh)`，**同种子同 episode 配对**；")
     A("  区间 = **cluster bootstrap，重采样单位 = `reset()` 初值**（不是 episode 次），`n_boot=10000`。")
-    A("- `J_uav` 单位 m（越大越坏）；`served` = 实际送达帧数；`t>B` = **预算用完后**（`t>B`）仍在发的帧数。")
+    A("- `J_uav` 单位 m（越大越坏）；`served` = **发送尝试**帧数（按 `attempted_idx` 计数，"
+      "**不是成功送达**；送达数见 `delivery_rate()[\"frames\"]`）；"
+      "`t>B` = **预算用完后**（`t>B`）仍在发的帧数。")
     A("- GATE=0.90 / 非牺牲门 `max r_i ≤1.10` **只记录不判**（`R_cart≈1` ⇒ 任何档都过不了，T21 已定，非新结论）。")
     A("")
 
@@ -925,8 +927,11 @@ def render(data: dict, meta: dict) -> tuple[str, dict]:
         A("")
         A("★ 上表每一行的 `J` 都是 **90 集均值**（`n=90`，不是 `seed=100` 的 30 集），因此 `J_lin/J_zoh` 与 `R` 逐行自洽。")
         A("★ `hybrid`/`TrueDyn` 的 `R` 是**点估计**（该轮未对它们做 bootstrap），只能与 `Linear` 比方向，不能比区间。")
-        A("★ `served` 是**任务级**计数（用户 0 / 用户 1），两用户合计恒为 `6000`（= 30 集 × `B=200` 的预算上限）⇒")
+        A("★ `served` 是**任务级发送尝试**计数（用户 0 / 用户 1；按 `attempted_idx`，非送达），"
+          "两用户合计恒为 `6000`（= 30 集 × `B=200` 的预算上限）⇒")
         A("  它**不是**「总资源可自由伸缩」的证据：总量被预算钉死，变化只能在两个用户之间挪。")
+        A("  汇总尝试数恒等只说明「预算打满」，**不说明送达**：真正送达 = 尝试 − `budget_lost`，"
+          "两者差额随链路成功率变化。")
         A("")
         A("### 2b 断言（预注册 §4 判据，逐条给值）")
         A("")
@@ -1002,7 +1007,7 @@ def render(data: dict, meta: dict) -> tuple[str, dict]:
         A("横轴 `x` = **实测** UAV `age` 算术均值（`alive` 且 `t≥41` 的决策点，`linear` 轨迹）；纵轴 `R_uav`。")
         A("★ 轴**内生**：预测改了轨迹 ⇒ 改了 `age` 分布（`x_zoh` 列给出替代轴的同口径值，见 trace）。")
         A("")
-        A("| B | `mode` | `x`（实测均值） | `R_uav` | 95% 区间 | `J_uav` lin/zoh | `J_cart` lin/zoh | `served` lin/zoh | `alive` lin/zoh | `t>B` 发帧 |")
+        A("| B | `mode` | `x`（实测均值） | `R_uav` | 95% 区间 | `J_uav` lin/zoh | `J_cart` lin/zoh | `served` lin/zoh（尝试） | `alive` lin/zoh | `t>B` 发帧 |")
         A("|---|---|---|---|---|---|---|---|---|---|")
         pts = sorted(d["points"], key=lambda p: (p["mode"], p["x"]))
         for p in pts:
@@ -1140,15 +1145,15 @@ def render(data: dict, meta: dict) -> tuple[str, dict]:
           f"{cdisp('C1.R_uav')}，区间 [{cdisp('C1.ci_uav_lo')}, {cdisp('C1.ci_uav_hi')}]；逐 cluster 改善 "
           f"{claim('C1.frac_uav', '58', 'F2.primary/200/unpaced.frac_clusters_below_1[0]', '.3f', '90 个初值里 R<1 的比例（UAV）')}"
           f"（= 90/90） | `C1.*` |")
-        _sz0 = claim('C2.sz0', '58', 'F1.served.zoh[0]', '.1f', 'zoh UAV 送达帧（30 集合计均值）')
-        _sz1 = claim('C2.sz1', '58', 'F1.served.zoh[1]', '.1f', 'zoh CartPole 送达帧')
-        _sl0 = claim('C2.sl0', '58', 'F1.served.linear[0]', '.1f', 'linear UAV 送达帧')
-        _sl1 = claim('C2.sl1', '58', 'F1.served.linear[1]', '.1f', 'linear CartPole 送达帧')
-        _tot_z = claim_calc('C2.total_zoh', '58', ['F1.served.zoh[0]', 'F1.served.zoh[1]'], ['+'], '.1f', 'zoh 两用户合计')
-        _tot_l = claim_calc('C2.total_lin', '58', ['F1.served.linear[0]', 'F1.served.linear[1]'], ['+'], '.1f', 'linear 两用户合计')
-        _r_u = claim_calc('C2.uav_ratio', '58', ['F1.served.linear[0]', 'F1.served.zoh[0]'], ['/'], '.3f', 'served 比 UAV linear/zoh')
-        _r_c = claim_calc('C2.cart_ratio', '58', ['F1.served.linear[1]', 'F1.served.zoh[1]'], ['/'], '.3f', 'served 比 CartPole linear/zoh')
-        A(f"| C2 | 该设置下**汇总**送达帧数未增加（任务间重分配未隔离） | 两用户合计 "
+        _sz0 = claim('C2.sz0', '58', 'F1.served.zoh[0]', '.1f', 'zoh UAV 发送尝试（30 集合计均值）')
+        _sz1 = claim('C2.sz1', '58', 'F1.served.zoh[1]', '.1f', 'zoh CartPole 发送尝试')
+        _sl0 = claim('C2.sl0', '58', 'F1.served.linear[0]', '.1f', 'linear UAV 发送尝试')
+        _sl1 = claim('C2.sl1', '58', 'F1.served.linear[1]', '.1f', 'linear CartPole 发送尝试')
+        _tot_z = claim_calc('C2.total_zoh', '58', ['F1.served.zoh[0]', 'F1.served.zoh[1]'], ['+'], '.1f', 'zoh 两用户尝试合计')
+        _tot_l = claim_calc('C2.total_lin', '58', ['F1.served.linear[0]', 'F1.served.linear[1]'], ['+'], '.1f', 'linear 两用户尝试合计')
+        _r_u = claim_calc('C2.uav_ratio', '58', ['F1.served.linear[0]', 'F1.served.zoh[0]'], ['/'], '.3f', '尝试数比 UAV linear/zoh')
+        _r_c = claim_calc('C2.cart_ratio', '58', ['F1.served.linear[1]', 'F1.served.zoh[1]'], ['/'], '.3f', '尝试数比 CartPole linear/zoh')
+        A(f"| C2 | 该设置下**汇总**发送尝试数未增加（任务间重分配未隔离；送达数未单独列出） | 两用户合计 "
           f"`{_tot_z}` → `{_tot_l}`（= 30 集 × B = 预算上限，左右恒等）；但**按用户拆开不是常数**："
           f"UAV `{_sz0}`→`{_sl0}`（×`{_r_u}`）、CartPole `{_sz1}`→`{_sl1}`（×`{_r_c}`） | `C2.*` |")
         for rank, (b, mode) in enumerate(((100, "unpaced"), (100, "paced")), start=3):
@@ -1206,6 +1211,9 @@ def render(data: dict, meta: dict) -> tuple[str, dict]:
     A("★ C3 的 `t>B` 发帧 = 0 与 C4 的 `t>B` 发帧 ≠ 0 见 §2d（R17 必须同报）。")
     A("★ C2 的边界：**汇总帧数不变 ≠ 没有重分配**。两个用户的 `served` 一降一升，"
       "而且存活时长也在变 ⇒ 想作因果归因（补偿 vs 调度 vs 存活）必须另做固定发送时序的对照，本文未做。")
+    A("★ 另注（2026-10-21 更正）：C2 里的 `served` 是**发送尝试**（按 `attempted_idx`），不是送达。"
+      "「尝试总数恒为预算上限」只说明预算打满；**本行没有论证送达数不变** —— "
+      "送达需另看 `delivery_rate()[\"frames\"]`（= 尝试 − `budget_lost`）。")
     A("")
 
     # ---------------- 6 入口 ----------------

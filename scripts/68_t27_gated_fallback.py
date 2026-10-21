@@ -37,6 +37,12 @@ T25 说"按误差门控触发率为 0"、T26 说"`age` 与危害同号且小 `ag
 ----
     outputs/68_t27_gated_fallback.json（仅真跑时写，不入库）
     results/runs/<run_id>/68_t27_gated_fallback.json（**入库**，results_io 唯一入口）
+
+字段更正（2026-10-21，不改历史数据）
+-----------------------------------
+★ `served` / `served_late` / `served_total` 按 `attempted_idx` 计数 ⇒ 语义是**发送尝试**，
+  不是成功送达（`delivery_rate()` 的 `frames` 才是）。旧 JSON 的数没错、标签错。
+★ 键名保持不变（旧记录已冻结）；新增 `delivered`（按用户）作为送达数来源。
 """
 
 from __future__ import annotations
@@ -307,7 +313,10 @@ def run_cell(budget, arm, seed, n_ep):
     return {"budget": int(budget), "arm": arm, "seed": int(seed), "mode": "unpaced",
             "J_per_episode": np.asarray(J, dtype=float).tolist(),
             "J_mean": np.asarray(J, dtype=float).mean(axis=0).tolist(),
-            "served": served, "served_late": late, "served_total": int(sum(served)),
+            # ★ 2026-10-21 更正：`served` = `attempted_idx` 计数 ⇒ **发送尝试**，不是成功送达。
+            #   键名不变（旧 JSON 已冻结），成功送达另置 `delivered`（= delivery_rate 的 `frames`）。
+            "served": served, "delivered": dr["frames"],
+            "served_late": late, "served_total": int(sum(served)),
             "alive_steps": dr["alive_steps"], "frames": dr["frames"],
             "budget_reserved": dr["budget_reserved"],
             "budget_attempted": dr["budget_attempted"],
@@ -607,9 +616,9 @@ def _dump(payload, cells, n_ep, *, run_id=None, allow_overwrite=False, persist=T
         print("[smoke] 不写 results/（smoke 数字不进证据链）")
         return
     keep = ("budget", "mode", "arm", "seed", "J_per_episode", "J_mean", "served",
-            "served_late", "served_total", "alive_steps", "frames", "budget_reserved",
-            "budget_attempted", "budget_wasted", "n_hold", "n_extrap", "gate_share_ge",
-            "n_decision", "elapsed_s")
+            "delivered", "served_late", "served_total", "alive_steps", "frames",
+            "budget_reserved", "budget_attempted", "budget_wasted", "n_hold",
+            "n_extrap", "gate_share_ge", "n_decision", "elapsed_s")
     slim = [{k: c[k] for k in keep} for c in cells]
     dest = write_result("68_t27_gated_fallback", {**out, "cells_J": slim},
                         run_id=run_id, allow_overwrite=allow_overwrite)
