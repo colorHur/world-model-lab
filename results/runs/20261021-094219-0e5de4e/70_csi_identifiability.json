@@ -1,0 +1,655 @@
+{
+  "task": "T29",
+  "verdict": "NO-CHANNEL",
+  "all_pass": true,
+  "n_fail": 0,
+  "fails": [],
+  "checks": [
+    {
+      "id": "C1-a",
+      "name": "消费面：无无法分类的 csi 读取点",
+      "status": "PASS",
+      "detail": "unknown=[]"
+    },
+    {
+      "id": "C1-b",
+      "name": "消费面：decision 类严格等于 {MaxChannel.__call__}",
+      "status": "PASS",
+      "detail": "decision=[{'file': 'wmlab/eval/allocators.py', 'line': 203, 'owner': 'MaxChannel.__call__', 'cls': 'decision'}]"
+    },
+    {
+      "id": "C1-c",
+      "name": "消费面：扫描器确实扫到了 truth 类（不是空扫）",
+      "status": "PASS",
+      "detail": "truth=[('wmlab/eval/multiuser.py', 387)]"
+    },
+    {
+      "id": "C2",
+      "name": "签名面：预测器无 csi/View 入口，分配器无 csi 显式入参",
+      "status": "PASS",
+      "detail": "bad=[]"
+    },
+    {
+      "id": "C3-a",
+      "name": "变异测试：主线分配器在 csi 互换下动作逐位不变",
+      "status": "PASS",
+      "detail": "changed=[]"
+    },
+    {
+      "id": "C3-b",
+      "name": "阴性对照：MaxChannel 必须被这条测试抓出来（否则无分辨力）",
+      "status": "PASS",
+      "detail": "ctrl=[('__max-channel__', False)]"
+    },
+    {
+      "id": "C3-c",
+      "name": "变异测试：预测器估计不变（结构性恒真，作回归哨兵）",
+      "status": "PASS",
+      "detail": "changed=[]"
+    },
+    {
+      "id": "C4-a",
+      "name": "σ>0 时实测反转率与 Φ(−|Δ|/(σ√2)) 相差 ≤ 0.02（解析代验）",
+      "status": "PASS",
+      "detail": "超差=[]"
+    },
+    {
+      "id": "C4-b",
+      "name": "阴性对照：σ=0 时反转率恰好 0",
+      "status": "PASS",
+      "detail": "σ=0 行"
+    },
+    {
+      "id": "C4-c",
+      "name": "选错时的 q 损失必须 ≥ 0（负值 ⇒ 判据取错了对象）",
+      "status": "PASS",
+      "detail": "负值=[]"
+    },
+    {
+      "id": "C6",
+      "name": "注入自检：给 MaxAge 插一行读 csi ⇒ C1 必须判它为 unknown",
+      "status": "PASS",
+      "detail": "注入点被识别为 unknown"
+    },
+    {
+      "id": "C5",
+      "name": "补偿对比两端（ZOH/Linear）不读 csi ⇒ 补偿收益对该不确定性恒等",
+      "status": "PASS",
+      "detail": "verdict=NO-CHANNEL"
+    }
+  ],
+  "c1_consumers": [
+    {
+      "file": "wmlab/eval/allocators.py",
+      "line": 203,
+      "owner": "MaxChannel.__call__",
+      "cls": "decision"
+    },
+    {
+      "file": "wmlab/eval/multiuser.py",
+      "line": 387,
+      "owner": "SINRSuccess.__call__",
+      "cls": "truth"
+    },
+    {
+      "file": "scripts/41_t9_sinr_success_n1_regression.py",
+      "line": 116,
+      "owner": "CsiRecorder.__call__",
+      "cls": "test"
+    },
+    {
+      "file": "scripts/41_t9_sinr_success_n1_regression.py",
+      "line": 135,
+      "owner": "InvertedSINR.__call__",
+      "cls": "test"
+    }
+  ],
+  "c2_signatures": [
+    {
+      "target": "predictor ZOH.__init__",
+      "params": [
+        "self"
+      ],
+      "csi_params": [],
+      "view_params": [],
+      "ok": true
+    },
+    {
+      "target": "predictor ZOH.observe_delivery",
+      "params": [
+        "self",
+        "i",
+        "obs",
+        "age_before",
+        "env",
+        "action",
+        "action_seq"
+      ],
+      "csi_params": [],
+      "view_params": [],
+      "ok": true
+    },
+    {
+      "target": "predictor ZOH.predict",
+      "params": [
+        "self",
+        "i",
+        "age",
+        "actions_since"
+      ],
+      "csi_params": [],
+      "view_params": [],
+      "ok": true
+    },
+    {
+      "target": "predictor Linear.__init__",
+      "params": [
+        "self"
+      ],
+      "csi_params": [],
+      "view_params": [],
+      "ok": true
+    },
+    {
+      "target": "predictor Linear.observe_delivery",
+      "params": [
+        "self",
+        "i",
+        "obs",
+        "age_before",
+        "env",
+        "action",
+        "action_seq"
+      ],
+      "csi_params": [],
+      "view_params": [],
+      "ok": true
+    },
+    {
+      "target": "predictor Linear.predict",
+      "params": [
+        "self",
+        "i",
+        "age",
+        "actions_since"
+      ],
+      "csi_params": [],
+      "view_params": [],
+      "ok": true
+    },
+    {
+      "target": "predictor Gated.__init__",
+      "params": [
+        "self",
+        "threshold"
+      ],
+      "csi_params": [],
+      "view_params": [],
+      "ok": true
+    },
+    {
+      "target": "predictor Gated.observe_delivery",
+      "params": [
+        "self",
+        "i",
+        "obs",
+        "age_before",
+        "env",
+        "action",
+        "action_seq"
+      ],
+      "csi_params": [],
+      "view_params": [],
+      "ok": true
+    },
+    {
+      "target": "predictor Gated.predict",
+      "params": [
+        "self",
+        "i",
+        "age",
+        "actions_since"
+      ],
+      "csi_params": [],
+      "view_params": [],
+      "ok": true
+    },
+    {
+      "target": "allocator RoundRobin.__call__",
+      "params": [
+        "self",
+        "view",
+        "rng"
+      ],
+      "csi_params": [],
+      "view_params": [],
+      "ok": true
+    },
+    {
+      "target": "allocator MaxAge.__call__",
+      "params": [
+        "self",
+        "view",
+        "rng"
+      ],
+      "csi_params": [],
+      "view_params": [],
+      "ok": true
+    },
+    {
+      "target": "allocator NormalizedAge.__call__",
+      "params": [
+        "self",
+        "view",
+        "rng"
+      ],
+      "csi_params": [],
+      "view_params": [],
+      "ok": true
+    },
+    {
+      "target": "allocator MaxChannel.__call__",
+      "params": [
+        "self",
+        "view",
+        "rng"
+      ],
+      "csi_params": [],
+      "view_params": [],
+      "ok": true
+    }
+  ],
+  "c3_allocators": [
+    {
+      "arm": "rr",
+      "csi_a": [
+        0.9,
+        0.55
+      ],
+      "csi_b": [
+        0.55,
+        0.9
+      ],
+      "served_a": [
+        true,
+        false
+      ],
+      "served_b": [
+        true,
+        false
+      ],
+      "reason_a": "rr:alive-rotation",
+      "reason_b": "rr:alive-rotation",
+      "invariant": true
+    },
+    {
+      "arm": "age",
+      "csi_a": [
+        0.9,
+        0.55
+      ],
+      "csi_b": [
+        0.55,
+        0.9
+      ],
+      "served_a": [
+        false,
+        true
+      ],
+      "served_b": [
+        false,
+        true
+      ],
+      "reason_a": "max-age",
+      "reason_b": "max-age",
+      "invariant": true
+    },
+    {
+      "arm": "na",
+      "csi_a": [
+        0.9,
+        0.55
+      ],
+      "csi_b": [
+        0.55,
+        0.9
+      ],
+      "served_a": [
+        false,
+        true
+      ],
+      "served_b": [
+        false,
+        true
+      ],
+      "reason_a": "na:argmax-age-over-D",
+      "reason_b": "na:argmax-age-over-D",
+      "invariant": true
+    },
+    {
+      "arm": "paced-rr",
+      "csi_a": [
+        0.9,
+        0.55
+      ],
+      "csi_b": [
+        0.55,
+        0.9
+      ],
+      "served_a": [
+        true,
+        false
+      ],
+      "served_b": [
+        true,
+        false
+      ],
+      "reason_a": "paced[rr:alive-rotation]",
+      "reason_b": "paced[rr:alive-rotation]",
+      "invariant": true
+    },
+    {
+      "arm": "paced-age",
+      "csi_a": [
+        0.9,
+        0.55
+      ],
+      "csi_b": [
+        0.55,
+        0.9
+      ],
+      "served_a": [
+        false,
+        true
+      ],
+      "served_b": [
+        false,
+        true
+      ],
+      "reason_a": "paced[max-age]",
+      "reason_b": "paced[max-age]",
+      "invariant": true
+    },
+    {
+      "arm": "paced-na",
+      "csi_a": [
+        0.9,
+        0.55
+      ],
+      "csi_b": [
+        0.55,
+        0.9
+      ],
+      "served_a": [
+        false,
+        true
+      ],
+      "served_b": [
+        false,
+        true
+      ],
+      "reason_a": "paced[na:argmax-age-over-D]",
+      "reason_b": "paced[na:argmax-age-over-D]",
+      "invariant": true
+    },
+    {
+      "arm": "__max-channel__",
+      "csi_a": [
+        0.9,
+        0.55
+      ],
+      "csi_b": [
+        0.55,
+        0.9
+      ],
+      "served_a": [
+        true,
+        false
+      ],
+      "served_b": [
+        false,
+        true
+      ],
+      "reason_a": "max-channel",
+      "reason_b": "max-channel",
+      "invariant": false
+    }
+  ],
+  "c3_predictors": [
+    {
+      "predictor": "ZOH",
+      "est": [
+        0.20000000298023224,
+        0.10000000149011612
+      ],
+      "invariant": true,
+      "note": "结构性恒真（predict 参数里无 csi/View）"
+    },
+    {
+      "predictor": "Linear",
+      "est": [
+        0.3333333432674408,
+        0.1666666716337204
+      ],
+      "invariant": true,
+      "note": "结构性恒真（predict 参数里无 csi/View）"
+    },
+    {
+      "predictor": "Gated",
+      "est": [
+        0.3333333432674408,
+        0.1666666716337204
+      ],
+      "invariant": true,
+      "note": "结构性恒真（predict 参数里无 csi/View）"
+    }
+  ],
+  "c6_injection": {
+    "ok": true,
+    "n_rows": 2,
+    "unknown": [
+      {
+        "file": "wmlab/eval/allocators.py",
+        "line": 125,
+        "owner": "MaxAge.__call__",
+        "cls": "unknown"
+      }
+    ],
+    "detail": "注入点被识别为 unknown"
+  },
+  "c4_dev": [
+    {
+      "sigma": 0.0,
+      "n_pairs": 192000,
+      "flip_raw": 0.0,
+      "flip_clip": 0.0,
+      "analytic": 0.0,
+      "abs_err": 0.0,
+      "dq_median": 0.0,
+      "dq_mean": 0.0,
+      "dq_min": 0.0,
+      "dq_over_gap": 0.0,
+      "abs_delta_flip_median": 0.0,
+      "abs_delta_all_median": 0.3430173915921588
+    },
+    {
+      "sigma": 0.01,
+      "n_pairs": 192000,
+      "flip_raw": 0.0015937500000000003,
+      "flip_clip": 0.0015937500000000003,
+      "analytic": 0.0014749391211924354,
+      "abs_err": 0.00011881087880756492,
+      "dq_median": 0.0027798735640294225,
+      "dq_mean": 0.003716386199560329,
+      "dq_min": 7.764763786055617e-06,
+      "dq_over_gap": 0.019029088739888515,
+      "abs_delta_flip_median": 0.007130372981192401,
+      "abs_delta_all_median": 0.3430173915921588
+    },
+    {
+      "sigma": 0.02,
+      "n_pairs": 192000,
+      "flip_raw": 0.003046875,
+      "flip_clip": 0.003046875,
+      "analytic": 0.003151523027418335,
+      "abs_err": 0.00010464802741833468,
+      "dq_median": 0.006708035174697646,
+      "dq_mean": 0.008457521880406294,
+      "dq_min": 1.8449095209760458e-05,
+      "dq_over_gap": 0.045918562002722804,
+      "abs_delta_flip_median": 0.016301450065774215,
+      "abs_delta_all_median": 0.3430173915921588
+    },
+    {
+      "sigma": 0.05,
+      "n_pairs": 192000,
+      "flip_raw": 0.010786458333333332,
+      "flip_clip": 0.010786458333333332,
+      "analytic": 0.01075110693910522,
+      "abs_err": 3.53513942281114e-05,
+      "dq_median": 0.021145660676820444,
+      "dq_mean": 0.026121353923647166,
+      "dq_min": 0.0,
+      "dq_over_gap": 0.14474854493005582,
+      "abs_delta_flip_median": 0.051631538551739964,
+      "abs_delta_all_median": 0.3430173915921588
+    },
+    {
+      "sigma": 0.1,
+      "n_pairs": 192000,
+      "flip_raw": 0.03899479166666666,
+      "flip_clip": 0.03912499999999999,
+      "analytic": 0.039407941959511326,
+      "abs_err": 0.0004131502928446662,
+      "dq_median": 0.05857496670960505,
+      "dq_mean": 0.06308750011908767,
+      "dq_min": 0.0,
+      "dq_over_gap": 0.4009636459283558,
+      "abs_delta_flip_median": 0.14184594193017064,
+      "abs_delta_all_median": 0.3430173915921588
+    },
+    {
+      "sigma": 0.2,
+      "n_pairs": 192000,
+      "flip_raw": 0.137015625,
+      "flip_clip": 0.14133854166666665,
+      "analytic": 0.1376337365849768,
+      "abs_err": 0.0006181115849767937,
+      "dq_median": 0.10158851809004033,
+      "dq_mean": 0.10458360923550364,
+      "dq_min": 0.0,
+      "dq_over_gap": 0.6954046222473039,
+      "abs_delta_flip_median": 0.251427245711902,
+      "abs_delta_all_median": 0.3430173915921588
+    }
+  ],
+  "c4_confirm": [
+    {
+      "sigma": 0.0,
+      "n_pairs": 540000,
+      "flip_raw": 0.0,
+      "flip_clip": 0.0,
+      "analytic": 0.0,
+      "abs_err": 0.0,
+      "dq_median": 0.0,
+      "dq_mean": 0.0,
+      "dq_min": 0.0,
+      "dq_over_gap": 0.0,
+      "abs_delta_flip_median": 0.0,
+      "abs_delta_all_median": 0.345211415943719
+    },
+    {
+      "sigma": 0.01,
+      "n_pairs": 540000,
+      "flip_raw": 0.0014888888888888896,
+      "flip_clip": 0.0014888888888888896,
+      "analytic": 0.0014870619967774902,
+      "abs_err": 1.826892111399421e-06,
+      "dq_median": 0.002834518899193672,
+      "dq_mean": 0.0039817005641677485,
+      "dq_min": 3.843770132627711e-06,
+      "dq_over_gap": 0.019241467091325442,
+      "abs_delta_flip_median": 0.007055185647931006,
+      "abs_delta_all_median": 0.345211415943719
+    },
+    {
+      "sigma": 0.02,
+      "n_pairs": 540000,
+      "flip_raw": 0.0031166666666666695,
+      "flip_clip": 0.0031166666666666695,
+      "analytic": 0.003106648013864056,
+      "abs_err": 1.0018652802613708e-05,
+      "dq_median": 0.00580741037546495,
+      "dq_mean": 0.0077725847667126135,
+      "dq_min": 2.1431948363903608e-05,
+      "dq_over_gap": 0.03942224398543189,
+      "abs_delta_flip_median": 0.013985346594319381,
+      "abs_delta_all_median": 0.345211415943719
+    },
+    {
+      "sigma": 0.05,
+      "n_pairs": 540000,
+      "flip_raw": 0.01048703703703704,
+      "flip_clip": 0.010490740740740743,
+      "analytic": 0.010407507932306263,
+      "abs_err": 7.952910473077619e-05,
+      "dq_median": 0.02191211889771627,
+      "dq_mean": 0.02660914890184275,
+      "dq_min": 0.0,
+      "dq_over_gap": 0.148745282591538,
+      "abs_delta_flip_median": 0.05222673887042539,
+      "abs_delta_all_median": 0.345211415943719
+    },
+    {
+      "sigma": 0.1,
+      "n_pairs": 540000,
+      "flip_raw": 0.038692592592592584,
+      "flip_clip": 0.03878518518518517,
+      "analytic": 0.03846791106088808,
+      "abs_err": 0.00022468153170450422,
+      "dq_median": 0.05941535924445934,
+      "dq_mean": 0.06403076381920826,
+      "dq_min": 0.0,
+      "dq_over_gap": 0.4033272383354923,
+      "abs_delta_flip_median": 0.14406608641833202,
+      "abs_delta_all_median": 0.345211415943719
+    },
+    {
+      "sigma": 0.2,
+      "n_pairs": 540000,
+      "flip_raw": 0.13663148148148146,
+      "flip_clip": 0.1410314814814815,
+      "analytic": 0.13620248822583308,
+      "abs_err": 0.00042899325564838,
+      "dq_median": 0.10181448657274084,
+      "dq_mean": 0.10488199209912585,
+      "dq_min": 0.0,
+      "dq_over_gap": 0.6911437751806409,
+      "abs_delta_flip_median": 0.25294362576118246,
+      "abs_delta_all_median": 0.345211415943719
+    }
+  ],
+  "inputs": {
+    "physical.py": "b9641e1d57cf184d0ff177ab8e1af2503e66c1e459d0d6e8ceb92b6d80024d94",
+    "multiuser.py": "fb76f55c3e701dc523738e3a72255dc7669e4ca173e596336c3f7b5fb9de1807",
+    "allocators.py": "1766eebaad6c5cf25a12c10c1249ebf74baa656d44afe2f69bf8ddb7f541b1aa",
+    "predictors.py": "7575d39cb04ee0ecdf4548ae20c455d0865bfe6b473752e5e5efb4ec2d70b576",
+    "scripts/42": "9c5e84cf74bae5d10c86632ea69044a76399d5b91c278bc9188dfaa32da87ca4"
+  },
+  "config": {
+    "episodes": 30,
+    "sigmas": [
+      0.0,
+      0.01,
+      0.02,
+      0.05,
+      0.1,
+      0.2
+    ],
+    "q_ref": 0.7,
+    "dev_seeds": "0-31",
+    "confirm_seeds": "100-189",
+    "note": "csi 轨迹由 scripts/42.make_csi 纯函数重算，不消耗 runner 的 rng，不是新实验、不产生新主指标"
+  },
+  "elapsed_s": 1.933
+}

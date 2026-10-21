@@ -39,6 +39,8 @@
 | `68_t27_gated_fallback` | 20261020-225901-ece860c | **current** | 2026-10-20 22:59 | 141889 B | `67f0721eb1dc` | `results/runs/20261020-225901-ece860c/68_t27_gated_fallback.json` |
 | `69_t28_confirm` | 20261021-010622-b7d0421 | **superseded** | 2026-10-21 01:06 | 64043 B | `f0379eb5b784` | `results/runs/20261021-010622-b7d0421/69_t28_confirm.json` |
 | `69_t28_confirm` | 20261021-010749-b7d0421 | **current** | 2026-10-21 01:07 | 64040 B | `6566d67ba983` | `results/runs/20261021-010749-b7d0421/69_t28_confirm.json` |
+| `70_csi_identifiability` | 20261021-094115-0e5de4e | **superseded** | 2026-10-21 09:41 | 15112 B | `2c1a491d8267` | `results/runs/20261021-094115-0e5de4e/70_csi_identifiability.json` |
+| `70_csi_identifiability` | 20261021-094219-0e5de4e | **current** | 2026-10-21 09:42 | 16050 B | `7416bff9d9b9` | `results/runs/20261021-094219-0e5de4e/70_csi_identifiability.json` |
 
 ## 自检快照（`results/selfcheck/`，判定不变则不重写）
 
