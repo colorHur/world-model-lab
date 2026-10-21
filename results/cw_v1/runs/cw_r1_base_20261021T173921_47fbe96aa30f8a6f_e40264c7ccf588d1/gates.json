@@ -1,0 +1,198 @@
+{
+  "n_checks": 9,
+  "n_fail": 0,
+  "all_pass": true,
+  "rows": [
+    {
+      "name": "B0 每格每条基线记账恒等式 12 项全过",
+      "pass": true,
+      "detail": {
+        "n_cells": 64,
+        "cells_failed": [],
+        "n_failed": 0
+      }
+    },
+    {
+      "name": "B1a 每格每条基线 n_attempted > 0（实际发出过）",
+      "pass": true,
+      "detail": {
+        "n_failed": 0,
+        "cells": []
+      }
+    },
+    {
+      "name": "B1b 每格每条基线 n_delivered > 0（实际送达过）",
+      "pass": true,
+      "detail": {
+        "n_failed": 0,
+        "cells": []
+      }
+    },
+    {
+      "name": "B2 ACK 分支与任务价值分支都被真的走到（ack_used>0 且 value_greedy>0）",
+      "pass": true,
+      "detail": {
+        "BOUNDED": {
+          "ack_used_total": 3158,
+          "value_greedy_total": 4608
+        },
+        "R0_DEFAULT": {
+          "ack_used_total": 3158,
+          "value_greedy_total": 4608
+        }
+      }
+    },
+    {
+      "name": "B3 同格子内不同基线动作序列不同（hash 去重 ≥2）",
+      "pass": true,
+      "detail": {
+        "n_grids": 8,
+        "grids_single_hash": [],
+        "n_single": 0
+      }
+    },
+    {
+      "name": "B4 csi_max_age 64→8：探测次数真的变了（≥1.5×），但发送次数与成本逐位相同",
+      "pass": true,
+      "detail": [
+        {
+          "rho": 0.85,
+          "ratio": 0.5,
+          "probe_32": 8.0,
+          "probe_8": 32.0,
+          "att_32": 32.0,
+          "att_8": 32.0,
+          "cost_32": 0.07199564,
+          "cost_8": 0.07199564,
+          "attempted_identical": true,
+          "cost_identical": true
+        },
+        {
+          "rho": 0.85,
+          "ratio": 0.8,
+          "probe_32": 8.0,
+          "probe_8": 32.0,
+          "att_32": 32.0,
+          "att_8": 32.0,
+          "cost_32": 0.07199564,
+          "cost_8": 0.07199564,
+          "attempted_identical": true,
+          "cost_identical": true
+        },
+        {
+          "rho": 0.98,
+          "ratio": 0.5,
+          "probe_32": 8.0,
+          "probe_8": 32.0,
+          "att_32": 32.0,
+          "att_8": 32.0,
+          "cost_32": 0.07357805,
+          "cost_8": 0.07357805,
+          "attempted_identical": true,
+          "cost_identical": true
+        },
+        {
+          "rho": 0.98,
+          "ratio": 0.8,
+          "probe_32": 8.0,
+          "probe_8": 32.0,
+          "att_32": 32.0,
+          "att_8": 32.0,
+          "cost_32": 0.07357805,
+          "cost_8": 0.07357805,
+          "attempted_identical": true,
+          "cost_identical": true
+        }
+      ]
+    },
+    {
+      "name": "B5a B/T=0.5 时至少有基线被预算截断（forced_hold>0）",
+      "pass": true,
+      "detail": {
+        "n_truncated": 2,
+        "keys": [
+          [
+            0.85,
+            "periodic1"
+          ],
+          [
+            0.98,
+            "periodic1"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "B5b 被截断的基线在 B/T=0.8 处 forced_hold 严格下降",
+      "pass": true,
+      "detail": {
+        "at_0.5": {
+          "(0.85, 'periodic1')": 128.0,
+          "(0.98, 'periodic1')": 128.0
+        },
+        "at_0.8": {
+          "(0.85, 'periodic1')": 52.0,
+          "(0.98, 'periodic1')": 52.0
+        }
+      }
+    },
+    {
+      "name": "B6 同格内「只看公开信息的基线」成本跨度 ≥1.5×（通信决策通道存在）",
+      "pass": true,
+      "detail": [
+        {
+          "rho": 0.85,
+          "ratio": 0.5,
+          "best": [
+            "periodic4",
+            0.04854828
+          ],
+          "worst": [
+            "periodic16",
+            0.11455379
+          ],
+          "worst_over_best": 2.36
+        },
+        {
+          "rho": 0.85,
+          "ratio": 0.8,
+          "best": [
+            "periodic1",
+            0.03633852
+          ],
+          "worst": [
+            "periodic16",
+            0.11455379
+          ],
+          "worst_over_best": 3.152
+        },
+        {
+          "rho": 0.98,
+          "ratio": 0.5,
+          "best": [
+            "periodic4",
+            0.05849584
+          ],
+          "worst": [
+            "periodic16",
+            0.09797848
+          ],
+          "worst_over_best": 1.675
+        },
+        {
+          "rho": 0.98,
+          "ratio": 0.8,
+          "best": [
+            "periodic1",
+            0.03510476
+          ],
+          "worst": [
+            "periodic16",
+            0.09797848
+          ],
+          "worst_over_best": 2.791
+        }
+      ]
+    }
+  ]
+}

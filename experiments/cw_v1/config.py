@@ -36,6 +36,49 @@ class PlantConfig:
         return len(self.A)
 
 
+#: ★★ 开发 plant 的两个预设（2026-10-21 18:0x 实测判定后新增，判据见
+#: `experiments/cw_v1/diag_plant_stability.py`）。
+#:
+#: `R0_DEFAULT` = 上面 dataclass 的默认值 `A=(1.01,1.03)`：**开环不稳定**。
+#:   `x_0` 确定 = 0（见 `CWWorld.__init__` 的 `_x_true = zeros`，`prior_var` **只**进
+#:   接收端信念、不进真值），`E[x_t²] = σ_w²·Σ A^{2(t-1-k)}` 按 `A^{2t}` 指数爆
+#:   ⇒ 256 步 `HOLD` 成本末端 15627.85 / 中段 8.10 = **1929 倍**，均值 763~3998 完全由
+#:   最后几十步决定。在这种 plant 上"平均任务成本"不是可比较量，任何基线比较都是噪声。
+#:   它只能用作「协议载体验收」的环境（R0 的 49 项闸就够用），**不得**用来做方法比较。
+#:
+#: `BOUNDED` = `A=(1.00,1.00)`（临界稳定）+ `sigma_meas=0.20` + `B=0.32` + `r_cost=0.02`。
+#:
+#:   ★ 2026-10-21 18:1x 剂量实测定档（40 episode，dev 100–139，rho=0.85，B/T=0.8）：
+#:     hold 0.1639 / paced1 0.0377 / paced16 0.0536（逐 episode 37/40 优于 hold，
+#:     中位比 0.302）⇒ **SEND 确实有价值，且基线之间的差异不是噪声**。
+#:
+#:   ★★ 为什么改 `B` 与 `r_cost`（这两个 R0 之前没人动过）：
+#:     R0 的 `B=0.1, r=0.1` 下 Riccati 解出 `K≈2.79/2.98`、`BK≈0.28-0.30` ⇒
+#:     控制器每步只抵消 30% 误差，开环虽稳定但**闭环接近开环** ⇒ 送达观测几乎
+#:     无法通过控制改善任务成本；实测（A=(1.0,1.0), sigma_meas=0.2）加 `B=0.32`
+#:     + `r_cost=0.02` 后 `BK` 才接近 1（"能压住"）。这两个数是**设计值**，
+#:     不是从任何真实系统拟合的。
+#:
+#:   ★ 必须同时报告的三条（R13/P3-1 纪律）：
+#:     ① `HOLD` 在这套 plant 上会**漂移**（A=1 随机游走，方差线性增长，末/前 64 步比
+#:        7.43 见 D4）⇒ 不许把 HOLD 当"零成本"基线；
+#:     ② `paced16` 与 `paced1` 差距 1.42×，说明**发送频率**在这里是真实权衡；
+#:     ③ 面板主表以 `cost_true_per_step` 的**中位数**为主、均值并报（`A=1` 时均值被
+#:        长尾拖），另报逐 user 与逐 episode 比值。
+BOUNDED_PLANT = PlantConfig(
+    A=(1.00, 1.00), B=0.32, sigma_w=(0.02, 0.03), sigma_meas=0.20,
+    q_cost=1.0, r_cost=0.02,
+)
+
+
+
+def bounded_plant(**overrides: Any) -> PlantConfig:
+    """`BOUNDED` 预设 + 覆盖（用于剂量实验，不改动 dataclass 的默认值）。"""
+    import dataclasses as _dc
+
+    return _dc.replace(BOUNDED_PLANT, **overrides)
+
+
 @dataclass(frozen=True)
 class ChannelConfig:
     """外生信道：每个用户一条独立 AR(1) 幅值过程。

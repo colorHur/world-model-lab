@@ -1,0 +1,70 @@
+{
+  "run_id": "cw_r1_base_20261021T173921_47fbe96aa30f8a6f_e40264c7ccf588d1",
+  "protocol": "CW-POMDP-v1",
+  "phase": "CW-R1-1 强基线补齐",
+  "note": "CW-R1-1 强基线补齐：BOUNDED 面板 8 基线 × 2rho × 2budget × 12ep",
+  "at_asia_shanghai": "2026-10-21T17:39:21.677255+08:00",
+  "git_head": "0b4b59189be5a9670f9a373be678d63524adf95e",
+  "git_dirty": "M experiments/cw_v1/config.py\n?? experiments/cw_v1/diag_plant_stability.py\n?? experiments/cw_v1/r1_baselines.py\n?? results/cw_v1/runs/cw_r1_base_20261021T173921_47fbe96aa30f8a6f_e40264c7ccf588d1/",
+  "src_hash": "e40264c7ccf588d1",
+  "config_fingerprint_bounded": "47fbe96aa30f8a6f",
+  "config_fingerprint_r0default": "fe4359268a703a1a",
+  "episodes": {
+    "split": "dev",
+    "start": 100,
+    "n": 12
+  },
+  "plants": {
+    "R0_DEFAULT": {
+      "A": [
+        1.01,
+        1.03
+      ],
+      "B": 0.1,
+      "sigma_w": [
+        0.02,
+        0.03
+      ],
+      "prior_var": 1.0,
+      "sigma_meas": 0.01,
+      "q_cost": 1.0,
+      "r_cost": 0.1
+    },
+    "BOUNDED": {
+      "A": [
+        1.0,
+        1.0
+      ],
+      "B": 0.32,
+      "sigma_w": [
+        0.02,
+        0.03
+      ],
+      "prior_var": 1.0,
+      "sigma_meas": 0.2,
+      "q_cost": 1.0,
+      "r_cost": 0.02
+    }
+  },
+  "baselines": [
+    "periodic1",
+    "periodic4",
+    "periodic8",
+    "periodic16",
+    "ack_b2c3",
+    "value_csi64",
+    "value_csi8",
+    "value_csi1"
+  ],
+  "rho": [
+    0.85,
+    0.98
+  ],
+  "budget_ratios": [
+    0.5,
+    0.8
+  ],
+  "n_cells": 64,
+  "elapsed_s": 9.26,
+  "disclaimer": "R0_DEFAULT 只用来跑记账恒等式：它是开环不稳定的，cost_true 均值被末端几十步支配（末64/中64 = 1929×），不可用于比较。BOUNDED 是 R1 主面板，其 SEND 价值已由 diag_plant_stability D6a-c 预注册判据确认。所有成本以 cost_true_per_step 为准，cost_est_per_step 只作诊断。"
+}
