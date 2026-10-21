@@ -1,0 +1,41 @@
+{
+  "run_id": "cw_r1_2_20261021T195817_47fbe96aa30f8a6f_3ea00a41c1a785f2",
+  "protocol": "CW-POMDP-v1",
+  "phase": "CW-R1-2 第二个 CSI 消费入口",
+  "note": "CW-R1-2 第二个 CSI 消费入口：存在性 + 匹配预算方向",
+  "at_asia_shanghai": "2026-10-21T19:58:17.536812+08:00",
+  "git_head": "768b9b56616ad0677d1e34c525218f7d7d250ee2",
+  "git_dirty": "M experiments/cw_v1/policies.py\n M experiments/cw_v1/runner.py\n M experiments/cw_v1/world.py\n?? experiments/cw_v1/posterior.py\n?? experiments/cw_v1/r1_2_entry.py\n?? experiments/cw_v1/sched_gates.py\n?? experiments/cw_v1/value_policies.py\n?? results/cw_v1/runs/cw_r1_2_20261021T195817_47fbe96aa30f8a6f_3ea00a41c1a785f2/",
+  "src_hash": "3ea00a41c1a785f2",
+  "config_fingerprint_bounded": "47fbe96aa30f8a6f",
+  "plant": "BOUNDED",
+  "episodes": {
+    "split": "dev",
+    "start": 100,
+    "n": 12
+  },
+  "buyinfo_periods": [
+    32,
+    16
+  ],
+  "baselines": [
+    "periodic1",
+    "periodic4",
+    "periodic8",
+    "periodic16",
+    "ack_b2c3",
+    "value_csi64",
+    "value_csi8",
+    "value_csi1"
+  ],
+  "rho": [
+    0.85,
+    0.98
+  ],
+  "budget_ratios": [
+    0.5,
+    0.8
+  ],
+  "predictor": "nominal",
+  "disclaimer": "只跑 BOUNDED：R0_DEFAULT 开环不稳定（末64/中64 = 1929×），不可比较。所有成本以 cost_true_per_step 为准；cost_est_per_step 只作诊断。★ BuyInfoThenSend 不声称更好：本轮判词只有「CSI 能改变动作」+ 方向原样报。★ 匹配预算臂是「给对手降价」的有利于对手构造；若 buyinfo 在该构造下仍输，结论是「买信息不划算」而不是「预算口径不公平」。★ packet 子流按发送次数取值 ⇒ 不同发送次数的两臂读流的不同位置，不能声称丢包序列逐位相同（runner.py 头注释已写明）。"
+}

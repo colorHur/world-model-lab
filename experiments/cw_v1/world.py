@@ -158,7 +158,8 @@ class CWWorld:
 
     def __init__(self, cfg: CWConfig, rngs: dict[str, np.random.Generator],
                  stream_ids: StreamIDs, *, allow_truth_keys: bool = False,
-                 correct_receiver: bool = True, rho: float | None = None) -> None:
+                 correct_receiver: bool = True, rho: float | None = None,
+                 exact_predictor: bool = False) -> None:
         if not correct_receiver and not allow_truth_keys:
             raise ValueError(
                 "LeakyReceiver（槽末观测当下一步）只允许在 allow_truth_keys=True（诊断/反例）下构造，"
@@ -169,6 +170,8 @@ class CWWorld:
         self.stream_ids = stream_ids
         self.allow_truth_keys = bool(allow_truth_keys)
         self.correct_receiver = bool(correct_receiver)
+        #: ★ 只由 `runner.run_episode(predictor="exact")` 置真；默认 False ⇒ 历史数值不变
+        self.exact_predictor = bool(exact_predictor)
         self.rho = float(rho if rho is not None else cfg.channel.rho_panel[0])
 
         n = cfg.plant.n_users
@@ -308,6 +311,26 @@ class CWWorld:
         for i in range(self.n_users):
             self._x_hat[i] = float(self._nominal_map(i, self._x_hat[i], u[i]))
             self._P_hat[i] = float(self._nominal_map_var(i, self._P_hat[i]))
+        # ★★ 精确预测器（默认关闭；`--predictor exact` 打开）。
+        #   名义滚动**漏掉了"槽内还没有 u_t"的那一半噪声**：真实的
+        #   x_{t+1} = A(A x_t + B u_{t-1} + w_t) + B u_t + w_{t+1}，
+        #   `_nominal_map` 只算 A(A x_t) + B u_t，把 `A*w_t` 这一项当成了确定量。
+        #   ⇒ x_hat 有**偏**、P_hat 有对应的一阶偏（见 `--predictor` 帮助）。
+        #   修法只用**当槽已执行的动作** u_{t-1}（可部署：自己发的），不读任何真值：
+        #       名义项 A(A x_hat + B u_{t-1}) + B u_t
+        #       噪声项 A²·σ_w²（t 槽）+ σ_w²（t+1 槽）
+        #   ★ 只在 `exact_predictor=True` 时生效，P3/CW-R1-1 的证据目录一字不动
+        #     （默认 False 的数值由 `sched_gates.py` 的 S7 反例钉死）。
+        if self.exact_predictor:
+            u_prev = self.control_history[-2] if len(self.control_history) >= 2 \
+                else np.zeros(self.n_users)
+            for i in range(self.n_users):
+                self._x_hat[i] = self._nominal_map(
+                    i, float(self._nominal_map(i, x_prior_t[i], u_prev[i])), u[i])
+                A2 = float(cfg.plant.A[i]) ** 2
+                self._P_hat[i] = (A2 * A2 * P_prior_t[i]
+                                  + A2 * float(cfg.plant.sigma_w[i]) ** 2
+                                  + float(cfg.plant.sigma_w[i]) ** 2)
 
         # 7) 槽末拿到带时间戳 t 的观测/测量 —— 校正**t 时刻**，再按已知 u_t 推到 t+1
         if act.kind == "SEND" and delivered:

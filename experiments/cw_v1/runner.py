@@ -70,6 +70,9 @@ class EpisodeResult:
     elapsed_s: float
     config_fingerprint: str
     policy_trace_hash: str
+    #: ★ 预测器口径（"nominal" / "exact"）。进 EpisodeResult ⇒ 进证据，
+    #:   不同口径的结果不会被误当成同一方法的两次重复。
+    predictor: str = "nominal"
 
 
 def _trace_hash(recs) -> str:
@@ -91,16 +94,22 @@ def run_episode(
     allow_truth_keys: bool = False,
     correct_receiver: bool = True,
     perturb_truth: str | None = None,
+    predictor: str = "nominal",
 ) -> EpisodeResult:
     """跑一个 episode。
 
     `perturb_truth`：`"x"` / `"h"` 在**运行时**把真值换成一个完全不同的序列，
     用于反例 1 的"只改真值 ⇒ 动作应逐位不变"。这只改真值，不改任何子流。
+    `predictor`：`"nominal"`（默认，历史语义）/ `"exact"`（修掉槽内 u 的时序偏差，
+    见 `CWWorld.step` 第 6 步的长注释）。默认值不变 ⇒ 已冻结证据不受影响。
     """
+    if predictor not in ("nominal", "exact"):
+        raise ValueError(f"未知 predictor {predictor!r}")
     t_start = time.perf_counter()
     rngs, sids = make_episode_rngs(cfg.root_seed, split, episode)
     w = CWWorld(cfg, rngs, sids, allow_truth_keys=allow_truth_keys,
-                correct_receiver=correct_receiver, rho=rho)
+                correct_receiver=correct_receiver, rho=rho,
+                exact_predictor=(predictor == "exact"))
     w.budget_total = int(budget_total)
 
     # 显式重置到公开先验（构造时已是初值，这里写出来是为了防止后续改动漏掉）
@@ -177,6 +186,7 @@ def run_episode(
         elapsed_s=round(elapsed, 4),
         config_fingerprint=cfg.fingerprint(),
         policy_trace_hash=_trace_hash(recs),
+        predictor=predictor,
     )
     return res
 

@@ -188,3 +188,12 @@ class ILLEGAL_TruthGreedy:
             if obj is not None:       # pragma: no cover
                 break
         raise AttributeError("未找到任何真值入口（期望行为）")  # pragma: no cover
+
+
+# ---------------------------------------------------------------- R1 第 2 步：值 vs 成本
+#: 帧周期候选：r = ceil(T / d)，d = 一个 horizon 里期望的帧数。
+#: ★ 不是调参：d 决定多久算一次失败，属于问题定义。
+TARGET_FRAME_GRID = (8, 16, 32, 64)
+
+#: ★ R1 第 2 步的两个入口见 `value_policies.py`（本轮 7 个失败版本也记在那里）。
+#: 本文件保持 R0 原样：R0 的 49 项闸与历史证据都建立在它之上，不在本轮改动。

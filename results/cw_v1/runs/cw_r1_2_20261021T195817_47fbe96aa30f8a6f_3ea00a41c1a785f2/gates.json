@@ -1,0 +1,440 @@
+{
+  "n_checks": 8,
+  "n_fail": 0,
+  "all_pass": true,
+  "rows": [
+    {
+      "name": "G0 每格每臂记账恒等式全过（探测也计入 budget_used）",
+      "pass": true,
+      "detail": {
+        "n_cells": 52,
+        "n_failed": 0,
+        "cells_failed": []
+      }
+    },
+    {
+      "name": "G1 buyinfo 与 blind 的动作序列在 ≥80% episode 上不同（CSI 真的进了动作）",
+      "pass": true,
+      "detail": {
+        "missing": [],
+        "pairs": [
+          {
+            "period": 32,
+            "rho": 0.85,
+            "ratio": 0.5,
+            "n": 12,
+            "n_same": 1,
+            "frac_different": 0.9167,
+            "probe_true": 5.75,
+            "probe_blind": 4.0
+          },
+          {
+            "period": 32,
+            "rho": 0.85,
+            "ratio": 0.8,
+            "n": 12,
+            "n_same": 0,
+            "frac_different": 1.0,
+            "probe_true": 10.3333,
+            "probe_blind": 7.0
+          },
+          {
+            "period": 32,
+            "rho": 0.98,
+            "ratio": 0.5,
+            "n": 12,
+            "n_same": 2,
+            "frac_different": 0.8333,
+            "probe_true": 5.3333,
+            "probe_blind": 4.0
+          },
+          {
+            "period": 32,
+            "rho": 0.98,
+            "ratio": 0.8,
+            "n": 12,
+            "n_same": 1,
+            "frac_different": 0.9167,
+            "probe_true": 9.25,
+            "probe_blind": 7.0
+          },
+          {
+            "period": 16,
+            "rho": 0.85,
+            "ratio": 0.5,
+            "n": 12,
+            "n_same": 0,
+            "frac_different": 1.0,
+            "probe_true": 11.5833,
+            "probe_blind": 8.0
+          },
+          {
+            "period": 16,
+            "rho": 0.85,
+            "ratio": 0.8,
+            "n": 12,
+            "n_same": 0,
+            "frac_different": 1.0,
+            "probe_true": 18.6667,
+            "probe_blind": 13.0
+          },
+          {
+            "period": 16,
+            "rho": 0.98,
+            "ratio": 0.5,
+            "n": 12,
+            "n_same": 0,
+            "frac_different": 1.0,
+            "probe_true": 9.6667,
+            "probe_blind": 8.0
+          },
+          {
+            "period": 16,
+            "rho": 0.98,
+            "ratio": 0.8,
+            "n": 12,
+            "n_same": 0,
+            "frac_different": 1.0,
+            "probe_true": 15.5833,
+            "probe_blind": 13.0
+          }
+        ]
+      }
+    },
+    {
+      "name": "G2 每格 buyinfo 的 probe_mean ≥ 1（探测通道真的被走到）",
+      "pass": true,
+      "detail": {
+        "cells": [
+          {
+            "period": 32,
+            "rho": 0.85,
+            "ratio": 0.5,
+            "probe": 5.75,
+            "att_buyinfo": 122.25,
+            "att_periodic1": 128.0,
+            "budget_used_buyinfo": 128.0
+          },
+          {
+            "period": 32,
+            "rho": 0.85,
+            "ratio": 0.8,
+            "probe": 10.3333,
+            "att_buyinfo": 193.6667,
+            "att_periodic1": 204.0,
+            "budget_used_buyinfo": 204.0
+          },
+          {
+            "period": 32,
+            "rho": 0.98,
+            "ratio": 0.5,
+            "probe": 5.3333,
+            "att_buyinfo": 122.6667,
+            "att_periodic1": 128.0,
+            "budget_used_buyinfo": 128.0
+          },
+          {
+            "period": 32,
+            "rho": 0.98,
+            "ratio": 0.8,
+            "probe": 9.25,
+            "att_buyinfo": 194.75,
+            "att_periodic1": 204.0,
+            "budget_used_buyinfo": 204.0
+          },
+          {
+            "period": 16,
+            "rho": 0.85,
+            "ratio": 0.5,
+            "probe": 11.5833,
+            "att_buyinfo": 116.4167,
+            "att_periodic1": 128.0,
+            "budget_used_buyinfo": 128.0
+          },
+          {
+            "period": 16,
+            "rho": 0.85,
+            "ratio": 0.8,
+            "probe": 18.6667,
+            "att_buyinfo": 185.3333,
+            "att_periodic1": 204.0,
+            "budget_used_buyinfo": 204.0
+          },
+          {
+            "period": 16,
+            "rho": 0.98,
+            "ratio": 0.5,
+            "probe": 9.6667,
+            "att_buyinfo": 118.3333,
+            "att_periodic1": 128.0,
+            "budget_used_buyinfo": 128.0
+          },
+          {
+            "period": 16,
+            "rho": 0.98,
+            "ratio": 0.8,
+            "probe": 15.5833,
+            "att_buyinfo": 188.4167,
+            "att_periodic1": 204.0,
+            "budget_used_buyinfo": 204.0
+          }
+        ]
+      }
+    },
+    {
+      "name": "G3 samepot 口径真的成立：基线实际花掉的钱 ≤ 我们给的（=buyinfo 用掉的那笔）",
+      "pass": true,
+      "detail": {
+        "n_pairs": 128,
+        "n_ok": 128,
+        "violations": []
+      }
+    },
+    {
+      "name": "G3a 记录各臂的预算填充率（buyinfo 恒为 1.0；只有 periodic1 与它同档）",
+      "pass": true,
+      "detail": {
+        "fill_ratio": {
+          "periodic1": 1.0,
+          "periodic4": 0.4069,
+          "periodic8": 0.2034,
+          "periodic16": 0.1017,
+          "ack_b2c3": 0.4188,
+          "value_csi64": 0.2543,
+          "value_csi8": 0.4069,
+          "value_csi1": 0.4069
+        },
+        "buyinfo": 1.0
+      }
+    },
+    {
+      "name": "G3b 记录 buyinfo 被纯 HOLD 支配的格子（不设阈值；结论必须点名）",
+      "pass": true,
+      "detail": {
+        "n_grids": 8,
+        "n_dominated": 0,
+        "grids": [
+          {
+            "period": 32,
+            "rho": 0.85,
+            "ratio": 0.5,
+            "buyinfo": 0.08493029,
+            "hold": 0.12477699,
+            "n_hold_better": 3,
+            "n_episodes": 12
+          },
+          {
+            "period": 16,
+            "rho": 0.85,
+            "ratio": 0.5,
+            "buyinfo": 0.07415297,
+            "hold": 0.12477699,
+            "n_hold_better": 1,
+            "n_episodes": 12
+          },
+          {
+            "period": 32,
+            "rho": 0.98,
+            "ratio": 0.5,
+            "buyinfo": 0.09721279,
+            "hold": 0.12477699,
+            "n_hold_better": 2,
+            "n_episodes": 12
+          },
+          {
+            "period": 16,
+            "rho": 0.98,
+            "ratio": 0.5,
+            "buyinfo": 0.11204264,
+            "hold": 0.12477699,
+            "n_hold_better": 4,
+            "n_episodes": 12
+          },
+          {
+            "period": 32,
+            "rho": 0.85,
+            "ratio": 0.8,
+            "buyinfo": 0.05468441,
+            "hold": 0.12477699,
+            "n_hold_better": 0,
+            "n_episodes": 12
+          },
+          {
+            "period": 16,
+            "rho": 0.85,
+            "ratio": 0.8,
+            "buyinfo": 0.05648268,
+            "hold": 0.12477699,
+            "n_hold_better": 0,
+            "n_episodes": 12
+          },
+          {
+            "period": 32,
+            "rho": 0.98,
+            "ratio": 0.8,
+            "buyinfo": 0.07405218,
+            "hold": 0.12477699,
+            "n_hold_better": 1,
+            "n_episodes": 12
+          },
+          {
+            "period": 16,
+            "rho": 0.98,
+            "ratio": 0.8,
+            "buyinfo": 0.0764414,
+            "hold": 0.12477699,
+            "n_hold_better": 1,
+            "n_episodes": 12
+          }
+        ]
+      }
+    },
+    {
+      "name": "G4 两种匹配预算口径下 buyinfo 与该格最好基线比较（记录方向；不预设更好）",
+      "pass": true,
+      "detail": {
+        "n_grids": 8,
+        "n_buyinfo_worse_samepot": 8,
+        "n_buyinfo_worse_minusprobe": 8,
+        "grids": [
+          {
+            "period": 32,
+            "rho": 0.85,
+            "ratio": 0.5,
+            "buyinfo_cost_median": 0.08493029,
+            "best_samepot": {
+              "policy": "periodic4",
+              "cost": 0.04767847,
+              "ratio": 1.7813
+            },
+            "best_minusprobe": {
+              "policy": "periodic4",
+              "cost": 0.04767847,
+              "ratio": 1.7813
+            }
+          },
+          {
+            "period": 32,
+            "rho": 0.85,
+            "ratio": 0.8,
+            "buyinfo_cost_median": 0.05468441,
+            "best_samepot": {
+              "policy": "periodic1",
+              "cost": 0.03549785,
+              "ratio": 1.5405
+            },
+            "best_minusprobe": {
+              "policy": "periodic1",
+              "cost": 0.04490843,
+              "ratio": 1.2177
+            }
+          },
+          {
+            "period": 32,
+            "rho": 0.98,
+            "ratio": 0.5,
+            "buyinfo_cost_median": 0.09721279,
+            "best_samepot": {
+              "policy": "periodic4",
+              "cost": 0.05032579,
+              "ratio": 1.9317
+            },
+            "best_minusprobe": {
+              "policy": "periodic4",
+              "cost": 0.05032579,
+              "ratio": 1.9317
+            }
+          },
+          {
+            "period": 32,
+            "rho": 0.98,
+            "ratio": 0.8,
+            "buyinfo_cost_median": 0.07405218,
+            "best_samepot": {
+              "policy": "periodic1",
+              "cost": 0.03202587,
+              "ratio": 2.3123
+            },
+            "best_minusprobe": {
+              "policy": "periodic1",
+              "cost": 0.03710281,
+              "ratio": 1.9959
+            }
+          },
+          {
+            "period": 16,
+            "rho": 0.85,
+            "ratio": 0.5,
+            "buyinfo_cost_median": 0.07415297,
+            "best_samepot": {
+              "policy": "periodic4",
+              "cost": 0.04767847,
+              "ratio": 1.5553
+            },
+            "best_minusprobe": {
+              "policy": "periodic4",
+              "cost": 0.04767847,
+              "ratio": 1.5553
+            }
+          },
+          {
+            "period": 16,
+            "rho": 0.85,
+            "ratio": 0.8,
+            "buyinfo_cost_median": 0.05648268,
+            "best_samepot": {
+              "policy": "periodic1",
+              "cost": 0.03549785,
+              "ratio": 1.5912
+            },
+            "best_minusprobe": {
+              "policy": "periodic4",
+              "cost": 0.04767847,
+              "ratio": 1.1847
+            }
+          },
+          {
+            "period": 16,
+            "rho": 0.98,
+            "ratio": 0.5,
+            "buyinfo_cost_median": 0.11204264,
+            "best_samepot": {
+              "policy": "periodic4",
+              "cost": 0.05032579,
+              "ratio": 2.2263
+            },
+            "best_minusprobe": {
+              "policy": "periodic1",
+              "cost": 0.04932333,
+              "ratio": 2.2716
+            }
+          },
+          {
+            "period": 16,
+            "rho": 0.98,
+            "ratio": 0.8,
+            "buyinfo_cost_median": 0.0764414,
+            "best_samepot": {
+              "policy": "periodic1",
+              "cost": 0.03202587,
+              "ratio": 2.3869
+            },
+            "best_minusprobe": {
+              "policy": "periodic1",
+              "cost": 0.04581682,
+              "ratio": 1.6684
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "G5 阴性对照：若 buyinfo 与 blind 在所有 episode 上逐位相同 ⇒ G1 无分辨力",
+      "pass": true,
+      "detail": {
+        "n_all_same": 0,
+        "note": "本项只记录；G1 已要求 frac_different>=0.8"
+      }
+    }
+  ]
+}
