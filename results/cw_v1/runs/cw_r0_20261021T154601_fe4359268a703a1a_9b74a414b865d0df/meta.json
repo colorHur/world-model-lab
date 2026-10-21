@@ -1,0 +1,75 @@
+{
+  "run_id": "cw_r0_20261021T154601_fe4359268a703a1a_9b74a414b865d0df",
+  "protocol": "CW-POMDP-v1",
+  "stage": "CW-R0",
+  "note": "R0 final after served-label fix + doccheck + skip-panel guard",
+  "time_utc": "2026-10-21T07:46:01.730656+00:00",
+  "time_local": "2026-10-21T15:46:01.730656+08:00",
+  "host": "DESKTOP-HFU3V46",
+  "platform": "Windows-10-10.0.26100-SP0",
+  "python": "3.11.16",
+  "numpy": "2.4.6",
+  "git_head": "398377bec54a13594c3a2f55462bddae2ba61237",
+  "git_dirty_before": [
+    "M docs/PAPER-P3-v0.3.md",
+    " M docs/RESULTS-P3.md",
+    " M docs/claims_p3.json",
+    " M scripts/58_p3_confirmation.py",
+    " M scripts/61_build_tables.py",
+    " M scripts/68_t27_gated_fallback.py",
+    "?? docs/CW-R0-协议交付.md",
+    "?? experiments/",
+    "?? results/cw_v1/"
+  ],
+  "src_hash": "9b74a414b865d0df",
+  "config": {
+    "plant": {
+      "A": [
+        1.01,
+        1.03
+      ],
+      "B": 0.1,
+      "sigma_w": [
+        0.02,
+        0.03
+      ],
+      "prior_var": 1.0,
+      "sigma_meas": 0.01,
+      "q_cost": 1.0,
+      "r_cost": 0.1
+    },
+    "channel": {
+      "rho_panel": [
+        0.85,
+        0.98
+      ],
+      "kappa": 2.0,
+      "log_h_star": 0.0,
+      "sigma_csi": 0.05,
+      "h_log_init_std": 1.0,
+      "use_ack_for_csi": false
+    },
+    "protocol": {
+      "horizon": 256,
+      "c_probe": 1,
+      "c_data": 1,
+      "budget_ratios": [
+        0.5,
+        0.8
+      ]
+    },
+    "root_seed": 20261021,
+    "protocol_name": "CW-POMDP-v1",
+    "budget_values": [
+      128,
+      204
+    ]
+  },
+  "config_fingerprint": "fe4359268a703a1a",
+  "elapsed_s": 1.27,
+  "n_gate_checks": 49,
+  "n_gate_fail": 0,
+  "gate_all_pass": true,
+  "n_panel_rows": 72,
+  "disclaimer": "R0 只验证协议（信息边界/时序/记账/子流），不训练模型、不声称方法有效。面板数字是开发样本，不是确认集。cost_est_per_step 用先验估计计算，cost_true_per_step 用真状态计算；主表口径以 cost_true 为准，cost_est 只作诊断（两者量级差约 10^3，见 MEMORY 中的说明）。"
+}

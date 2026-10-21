@@ -1,0 +1,481 @@
+{
+  "n_checks": 49,
+  "n_fail": 0,
+  "all_pass": true,
+  "rows": [
+    {
+      "name": "1a 接口拒绝真值与未来键",
+      "pass": true,
+      "detail": {
+        "probed": [
+          "_x_true",
+          "_log_h_true",
+          "true_x",
+          "true_h",
+          "_w",
+          "world",
+          "env",
+          "future_csi",
+          "_future",
+          "packet_rng"
+        ],
+        "escaped": []
+      }
+    },
+    {
+      "name": "1b telemetry/history 无真值字段",
+      "pass": true,
+      "detail": {
+        "slots": [
+          "__w"
+        ],
+        "leaks": []
+      }
+    },
+    {
+      "name": "1d[CSI 敏感] 改真信道后：首次动作分歧之前动作完全一致，且分歧前确有交付差异可解释",
+      "pass": true,
+      "detail": {
+        "first_divergence_at": 1,
+        "prefix_identical": true,
+        "ack_diff_explains": true,
+        "use_ack_for_csi": false
+      }
+    },
+    {
+      "name": "1d[纯 AoI（不看信道）] 改真信道后：首次动作分歧之前动作完全一致，且分歧前确有交付差异可解释",
+      "pass": true,
+      "detail": {
+        "first_divergence_at": 1,
+        "prefix_identical": true,
+        "ack_diff_explains": true,
+        "use_ack_for_csi": false
+      }
+    },
+    {
+      "name": "1d′ 首次交付之前，改真信道不改变任何动作（无合法信息可用时动作必须不变）",
+      "pass": true,
+      "detail": {
+        "first_divergence_at": 1,
+        "first_delivery_at": 0
+      }
+    },
+    {
+      "name": "1c[CSI 敏感] 只改真状态 x ⇒ 整条动作序列逐位不变",
+      "pass": true,
+      "detail": {
+        "identical": true
+      }
+    },
+    {
+      "name": "1c[纯 AoI] 只改真状态 x ⇒ 整条动作序列逐位不变",
+      "pass": true,
+      "detail": {
+        "identical": true
+      }
+    },
+    {
+      "name": "1e 扰动确实改变了真实送达数（上一条不是恒真）",
+      "pass": true,
+      "detail": {
+        "delivered_clean": 59,
+        "delivered_perturb_x": 59,
+        "delivered_perturb_h": 105
+      }
+    },
+    {
+      "name": "1f 越界策略读真值失败",
+      "pass": true,
+      "detail": "ILLEGAL_TruthGreedy 期望抛 AttributeError"
+    },
+    {
+      "name": "1g 未授权时拒绝构造越界策略",
+      "pass": true,
+      "detail": "期望 PermissionError"
+    },
+    {
+      "name": "2a 信息敏感策略随 CSI 改变动作",
+      "pass": true,
+      "detail": {
+        "csi_0_high": "SEND(0)",
+        "csi_1_high": "SEND(1)"
+      }
+    },
+    {
+      "name": "2b 阴性对照：忽略 CSI 的策略不随 CSI 改变动作",
+      "pass": true,
+      "detail": {
+        "csi_0_high": "SEND(0)",
+        "csi_1_high": "SEND(0)"
+      }
+    },
+    {
+      "name": "2c 两者在 CSI 相同时动作一致（结构确实相同）",
+      "pass": true,
+      "detail": "同一 CSI 下应为同一动作"
+    },
+    {
+      "name": "3a PROBE 扣费 1 量子",
+      "pass": true,
+      "detail": {
+        "budget_used": 1,
+        "recorded": 1
+      }
+    },
+    {
+      "name": "3b PROBE 消耗物理时隙",
+      "pass": true,
+      "detail": {
+        "t_before": 0,
+        "t_after": 1
+      }
+    },
+    {
+      "name": "3c PROBE 不刷新任务状态估计与时间戳",
+      "pass": true,
+      "detail": {
+        "stamp": [
+          -1,
+          -1
+        ]
+      }
+    },
+    {
+      "name": "3d PROBE 使被测链路的信道信念收缩",
+      "pass": true,
+      "detail": {
+        "v_h_0_before": 1.0,
+        "v_h_0_after": 0.27930174563591026,
+        "v_h_1_before": 1.0,
+        "v_h_1_after": 1.0
+      }
+    },
+    {
+      "name": "3e 未测用户方差 = 纯 AR 演化（未被本次测量污染）",
+      "pass": true,
+      "detail": {
+        "measured_elsewhere": 1.0,
+        "pure_ar": 1.0
+      }
+    },
+    {
+      "name": "3f budget=0 时拒绝 PROBE 与 SEND",
+      "pass": true,
+      "detail": {
+        "PROBE": true,
+        "SEND": true
+      }
+    },
+    {
+      "name": "3g 预算耗尽后拒绝 SEND、但 HOLD 仍可执行且只推进 1 槽",
+      "pass": true,
+      "detail": {
+        "send_blocked": true,
+        "hold_ok": true,
+        "t": 2,
+        "note": "被拒的 SEND 不得推进物理时间"
+      }
+    },
+    {
+      "name": "4a 全失败环境下 SEND 确实失败",
+      "pass": true,
+      "detail": {
+        "p_true": 8.75651076269652e-27,
+        "ack": 0
+      }
+    },
+    {
+      "name": "4b 失败仍扣尝试资源",
+      "pass": true,
+      "detail": {
+        "attempted": 1,
+        "wasted": 1
+      }
+    },
+    {
+      "name": "4c 失败不刷新任务 AoI（时间戳不变）",
+      "pass": true,
+      "detail": {
+        "stamp": [
+          -1,
+          -1
+        ]
+      }
+    },
+    {
+      "name": "4d NACK 计入事件计数",
+      "pass": true,
+      "detail": {
+        "nack": 1,
+        "ack": 0
+      }
+    },
+    {
+      "name": "4e 成功时 ACK 计数 +1 且时间戳更新",
+      "pass": true,
+      "detail": {
+        "ack": 1,
+        "n_ack": 1,
+        "stamp0": 1
+      }
+    },
+    {
+      "name": "4f HOLD 不产生 ACK、不扣资源、不增加 attempted",
+      "pass": true,
+      "detail": {
+        "ack_field": null,
+        "n_ack": 1,
+        "n_nack": 1
+      }
+    },
+    {
+      "name": "4g ACK 与 NACK 对信道信念的作用方向相反且可区分",
+      "pass": true,
+      "detail": {
+        "m_after_ack": 0.5214723926380368,
+        "m_after_hold": 0.0,
+        "m_after_nack": 0.0,
+        "v_after_ack": 0.5567484662576687,
+        "v_after_hold": 1.0,
+        "v_after_nack": 1.0,
+        "config": "use_ack_for_csi=True（非默认）"
+      }
+    },
+    {
+      "name": "4h 默认协议下 ACK/NACK 不改变信道信念（1d 的前提）",
+      "pass": true,
+      "detail": {
+        "m_after_ack": 0.0,
+        "m_after_nack": 0.0
+      }
+    },
+    {
+      "name": "5a 零噪声下正确接收端的估计与真值逐位一致（不偏移一步）",
+      "pass": true,
+      "detail": {
+        "max_abs_dev": 0.0,
+        "x_hat": 0.0,
+        "x_true": 0.0
+      }
+    },
+    {
+      "name": "5b 错误接收端在估计误差上可分辨（不是恒等）",
+      "pass": true,
+      "detail": {
+        "mean_rel_rmse_diff": -0.022621868503249248,
+        "correct_rmse": [
+          0.409899,
+          0.411912,
+          1.130112,
+          0.143883,
+          0.548534,
+          0.706891
+        ],
+        "leaky_rmse": [
+          0.396445,
+          0.41227,
+          1.13422,
+          0.140312,
+          0.499165,
+          0.712131
+        ],
+        "n_leaky_worse": 3,
+        "n_episodes": 6
+      }
+    },
+    {
+      "name": "5c 正确接收端：观测校正到 t 再按期望动力学推到 t+1（含 K·(y−x̄) 与 A、B·u）",
+      "pass": true,
+      "detail": {
+        "x_hat": -0.009201722861504735,
+        "y_t": -0.009111509454646801,
+        "u_t": -0.0,
+        "A": 1.01,
+        "B": 0.1,
+        "w_t1": 0.0009659748182375333,
+        "w_t": 0.023109221495655082,
+        "prior_var_at_t": 1.0,
+        "K_t": 0.9999020184205369,
+        "P_t": 1.0205,
+        "pred_analytic": -0.009201722861504735,
+        "residual": 0.0
+      }
+    },
+    {
+      "name": "5d 错误接收端：把校正值直接当 t+1（x̂ = x̄ + K(y−x̄)，既不推进也不加噪声）",
+      "pass": true,
+      "detail": {
+        "x_hat": -0.009110616694559143,
+        "y_t": -0.009111509454646801,
+        "u_t": -0.0,
+        "A": 1.01,
+        "B": 0.1,
+        "w_t1": 0.0009659748182375333,
+        "w_t": 0.023109221495655082,
+        "prior_var_at_t": 1.0,
+        "K_t": 0.9999020184205369,
+        "pred_analytic": -0.009110616694559143
+      }
+    },
+    {
+      "name": "5e 两种映射在数值上可区分（差 A·(...) + B·u − (...)，即 (A−1)(x̄+K(y−x̄)) + B·u）",
+      "pass": true,
+      "detail": {
+        "diff": -9.110616694559155e-05
+      }
+    },
+    {
+      "name": "5f 接收端没有偷看 w（真值与估计之差主要由 w 构成）",
+      "pass": true,
+      "detail": {
+        "x_true_next_approx": 0.013906596946461812,
+        "x_hat": -0.009201722861504735,
+        "gap_over_w": 0.9999609814770825,
+        "note": "gap/w ≈ 1 ⇒ 差值主要就是 w，未被估计吃掉"
+      }
+    },
+    {
+      "name": "5d 未加诊断开关时拒绝构造错误接收端",
+      "pass": true,
+      "detail": "期望 ValueError"
+    },
+    {
+      "name": "6a 纯 PROBE 的策略任务成本不优于全 HOLD（探测只保留开销）",
+      "pass": true,
+      "detail": {
+        "probe": 91.83799145107353,
+        "hold": 91.83799145107353,
+        "probe_spent": 128,
+        "hold_spent": 0
+      }
+    },
+    {
+      "name": "6b 纯 PROBE 确实消耗了预算与交付 0 帧数据",
+      "pass": true,
+      "detail": {
+        "spent": 128,
+        "delivered": 0
+      }
+    },
+    {
+      "name": "6c 不读 CSI 的普通策略动作与其无关（trace 不含探测）",
+      "pass": true,
+      "detail": {
+        "n_probe": 0
+      }
+    },
+    {
+      "name": "7a 全部 cell 的记账恒等式成立",
+      "pass": true,
+      "detail": {
+        "n_cells": 24,
+        "n_fail": 0,
+        "failed_items": []
+      }
+    },
+    {
+      "name": "7b 阴性对照：篡改 probe 计数导致恒等式 FAIL",
+      "pass": true,
+      "detail": {
+        "failed": [
+          "slots_eq_probe_plus_attempt_plus_idle",
+          "budget_used_eq_probe_plus_attempt_rsc"
+        ]
+      }
+    },
+    {
+      "name": "7c 逐用户成本齐全且非负",
+      "pass": true,
+      "detail": {
+        "cost_true_by_user": [
+          0.03489164330543223,
+          0.4078434080522567
+        ]
+      }
+    },
+    {
+      "name": "8a 子流 ID 全部唯一",
+      "pass": true,
+      "detail": {
+        "n_streams": 90,
+        "n_unique": 90,
+        "dup": [],
+        "determinism_fail": []
+      }
+    },
+    {
+      "name": "8b 不同策略共享同一 plant/channel 子流 ID",
+      "pass": true,
+      "detail": {
+        "plant": "2-20-0",
+        "channel": "2-20-1"
+      }
+    },
+    {
+      "name": "8c 同 (split,episode) 重新构造的 plant/channel 序列逐位相同",
+      "pass": true,
+      "detail": "5 点抽样"
+    },
+    {
+      "name": "8d 不同 episode 的 plant 序列不同（不被错误复用）",
+      "pass": true,
+      "detail": "5 点抽样"
+    },
+    {
+      "name": "8e 跨 split 子流经验相关（健康检查，仅记录）",
+      "pass": true,
+      "detail": {
+        "n_samples": 2000,
+        "corr_train0_vs_dev0": {
+          "plant": 0.010947842998418321,
+          "channel": -0.00419255631285298,
+          "meas": 0.004871277527522019,
+          "csi": 0.02234089455058236,
+          "packet": 0.023800624131249594
+        },
+        "note": "单次抽样数值，非统计检验；仅作健康检查"
+      }
+    },
+    {
+      "name": "S1 名义 LQR 闭环稳定 |A - B*K| < 1",
+      "pass": true,
+      "detail": [
+        {
+          "i": 0,
+          "K": 2.7913748820159814,
+          "A_closed": 0.7308625117984018,
+          "stable": true
+        },
+        {
+          "i": 1,
+          "K": 2.978162964265168,
+          "A_closed": 0.7321837035734833,
+          "stable": true
+        }
+      ]
+    },
+    {
+      "name": "S2 稳态成功率：蒙特卡洛与解析值一致（<2e-3）",
+      "pass": true,
+      "detail": {
+        "mc": 0.5002824322207461,
+        "analytic": 0.5,
+        "diff": 0.0002824322207460872
+      }
+    },
+    {
+      "name": "S3 不同 rho 档的稳态平均成功率相差 < 0.02（面板可比的前提）",
+      "pass": true,
+      "detail": {
+        "rho_panel": [
+          0.85,
+          0.98
+        ],
+        "mean_succ": [
+          0.4983419852485926,
+          0.49569093315925655
+        ]
+      }
+    }
+  ]
+}
