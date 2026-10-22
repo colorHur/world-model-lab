@@ -2,13 +2,16 @@
 """CW-POMDP-v1 的 episode 运行器：一个策略在一条外生轨迹上跑完 T 个时隙。
 
 ★★ 配对的设计（v4 §7「同一轨迹配对」）
-    外生子流 `plant` / `channel` / `packet` 由 (root_seed, split, episode) 决定，
-    **与策略无关**。所以同一个 (split, episode) 下，不同策略面对的是**同一串**
-    过程噪声、同一条信道序列、同一串「如果发得出去」的随机数。
-    策略的动作只改变**消费哪些**，不改变**未来有什么**。
-    ⚠️ 但要注意：`packet` 流是**按发送次数**取值而不是按时隙，
-    所以不同发送次数会读取流的不同位置 —— 这不是泄漏，但也**不能**说
-    "两策略的丢包序列逐位相同"。这一点必须在证据里写明，不能含糊。
+    外生子流 `plant` / `channel` / `packet` / `meas` / `csi` 由 (root_seed, split, episode)
+    决定，**与策略无关** ⇒ 同一个 (split, episode) 下，不同策略面对同一串过程噪声与同一条
+    信道序列。策略的动作只改变**消费哪些**，不改变**未来有什么**。
+
+    ★★ 但"同一串"到什么粒度，取决于 `config.ProtocolConfig.event_pairing`：
+      · `"slot"`（默认，2026-10-22 18:xx 起）：`packet`/`meas`/`csi` 按 `(t, user)`
+        预生成 ⇒ 两策略若在同一 (t,i) 上都发了，成败与量测噪声**逐位相同**（真配对）。
+      · `"attempt"`（18:xx 前的全部 v1.1 证据）：按动作次数取值 ⇒ 发 128 次与发 64 次
+        的臂读的是流的**不同位置**。分布相同，但**不能**声称"丢包序列逐时隙相同"。
+      ★ 两种口径的数字**不得混表**；`meta.json` 的 `event_pairing` 字段是唯一凭据。
 
 ★ 恒等关系（`check_identities`）：一个 episode 的记账必须满足
         n_slots     = n_probe + n_attempted + n_idle
@@ -100,16 +103,21 @@ def run_episode(
 
     `perturb_truth`：`"x"` / `"h"` 在**运行时**把真值换成一个完全不同的序列，
     用于反例 1 的"只改真值 ⇒ 动作应逐位不变"。这只改真值，不改任何子流。
-    `predictor`：`"nominal"`（默认，历史语义）/ `"exact"`（修掉槽内 u 的时序偏差，
-    见 `CWWorld.step` 第 6 步的长注释）。默认值不变 ⇒ 已冻结证据不受影响。
+    `predictor`：**只剩 `"nominal"`**。2026-10-22 18:xx 撤回 `"exact"`：
+    本环境一槽只推进一次物理，名义滚动 `A x̂ + B u` / `A²P + σ_w²` 本身就是**精确**的
+    一步预测；旧 `"exact"` 分支把控制量与过程噪声各算两遍（零噪声下偏差 0.5997），
+    是缺陷不是改进 ⇒ 传 `"exact"` 直接报错，不给"打开就更精确"的错觉。
     """
-    if predictor not in ("nominal", "exact"):
-        raise ValueError(f"未知 predictor {predictor!r}")
+    if predictor != "nominal":
+        raise ValueError(
+            f"predictor={predictor!r} 不被支持：`exact` 分支已于 2026-10-22 撤回"
+            f"（它不是精确预测器，见 experiments/cw_v1/pred_gates.py）。只允许 'nominal'。"
+        )
     t_start = time.perf_counter()
     rngs, sids = make_episode_rngs(cfg.root_seed, split, episode)
     w = CWWorld(cfg, rngs, sids, allow_truth_keys=allow_truth_keys,
                 correct_receiver=correct_receiver, rho=rho,
-                exact_predictor=(predictor == "exact"))
+                exact_predictor=False)
     w.budget_total = int(budget_total)
 
     # 显式重置到公开先验（构造时已是初值，这里写出来是为了防止后续改动漏掉）

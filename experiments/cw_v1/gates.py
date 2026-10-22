@@ -247,7 +247,12 @@ def counterexample_1(cfg: CWConfig, g: Gate) -> None:
     box_a = [None]
     pol_leak = _LeakyOn(box_a)
     wa = build_prefix(N_PREFIX, lambda v: Action("SEND", v.t % 2))
-    wb = build_prefix(N_PREFIX, lambda v: Action("SEND", v.t % 2), perturb_hidden=5.0)
+    # ★ 2026-10-22 18:xx 修：原来固定扰 `user=1`，能不能翻转 argmax 取决于那条
+    #   随机轨迹（`event_pairing` 一改就翻不动了）⇒ 这条对照**当时是靠运气过的**。
+    #   现在改成"扰**当前不是** argmax 的那个用户、且幅度 50"，翻转是构造保证的。
+    which_flip = 1 - int(np.argmax(np.abs(wa._x_true)))
+    wb = build_prefix(N_PREFIX, lambda v: Action("SEND", v.t % 2),
+                      perturb_hidden=50.0, which=which_flip)
     box_a[0] = wa
     act_a = pol_leak(None)
     box_a[0] = wb
@@ -255,7 +260,7 @@ def counterexample_1(cfg: CWConfig, g: Gate) -> None:
     g.check("1h-ctl 偷看真状态的策略在公开历史相同时给出不同动作（证明 1h 有分辨力）",
             (wa.view().history == wb.view().history) and (act_a != act_b),
             {"public_identical": wa.view().history == wb.view().history,
-             "act_clean": str(act_a), "act_perturbed": str(act_b)})
+             "perturbed_user": which_flip, "act_clean": str(act_a), "act_perturbed": str(act_b)})
 
     # ---------------------------------------------------------------- 1i
     # ★★ v1.1 新增：**白名单本身**要能验。取真实历史行，检查

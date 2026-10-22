@@ -147,7 +147,31 @@ def s_behavior(cfg) -> list[dict]:
     frac = diff / max(1, n)
     rows.append(_row("S4 真 CSI vs 常数 CSI：≥80% episode 动作序列不同",
                      frac >= 0.8,
-                     {"n_episodes": n, "n_different": diff, "fraction": round(frac, 4)}))
+                     {"n_episodes": n, "n_different": diff, "fraction": round(frac, 4),
+                      "verdict": "EFFECT-IS-62.5%-NOT-80%",
+                      "note": ("2026-10-22 18:2x 复核：实测 30/48 = 62.5%，且 attempt 口径同为 "
+                               "30/48 ⇒ **不是配对口径造成的**。阈值 80% 不放松，本条按未命中记结论。"
+                               "CSI 的价值要看下面的成本比，不看这个不同率。")}))
+
+    # S4b（**只记录，不作判据**）：把"不同率"与"成本差"分开报，并给出 attempt 口径的同批对照。
+    #   ★ 为什么必须记：这条判据在 2026-10-22 之前被引用成"CSI 真能改变动作（100%）"，
+    #     而 62.5% 与 100% 是两个不同强度的说法；不记清楚，下一轮会把 FAIL 当成回归错误去调阈值。
+    from . import config as C
+
+    cfg_att = C.CWConfig(plant=cfg.plant,
+                         protocol=C.ProtocolConfig(event_pairing="attempt"))
+    a_att = _episodes(cfg_att, lambda: BuyInfoThenSend(cfg_att, period=32, use_phat=True))
+    b_att = _episodes(cfg_att, lambda: BuyInfoThenSend(cfg_att, period=32, use_phat=False))
+    frac_att = sum(1 for x, y in zip(a_att, b_att) if x["hash"] != y["hash"]) / max(1, len(a_att))
+    cost_true = float(np.mean([x["cost"] for x in a]))
+    cost_blind = float(np.mean([x["cost"] for x in b]))
+    rows.append(_row("S4b（只记录，不作判据）同一 48 格：attempt 口径不同率 / 真 CSI 与盲版成本比",
+                     True,
+                     {"frac_attempt": round(frac_att, 4), "frac_slot": round(frac, 4),
+                      "cost_true_mean": round(cost_true, 6),
+                      "cost_blind_mean": round(cost_blind, 6),
+                      "cost_ratio_true_over_blind": round(cost_true / cost_blind, 4),
+                      "note": "开发面板诊断，不进主表；成本是 cost_true_per_step 的均值（A=1 下会被长尾拖）"}))
     same_frac = sum(1 for x, y in zip(b, a2) if x["hash"] == y["hash"]) / max(1, n)
     rows.append(_row("S4 阴性对照：同一策略跑两遍 ⇒ 100% 相同",
                      same_frac == 1.0,
@@ -217,19 +241,25 @@ def s_default_unchanged(cfg) -> list[dict]:
                         budget_total=204, rho=0.85)
     r_nom = run_episode(cfg, PeriodicSend(8), split="dev", episode=100,
                         budget_total=204, rho=0.85, predictor="nominal")
-    r_ex = run_episode(cfg, PeriodicSend(8), split="dev", episode=100,
-                       budget_total=204, rho=0.85, predictor="exact")
     ok = (r_def.cost_true_per_step == r_nom.cost_true_per_step
           and r_def.policy_trace_hash == r_nom.policy_trace_hash)
+    # ★★ 2026-10-22 18:xx：旧 S10 的第二条断言的是"exact 与 nominal 必须不同"，
+    #    而那个"不同"恰恰来自 exact 分支的缺陷（控制量与噪声各算两遍）——
+    #    **把缺陷当特征验**（与 B4 同族）。现在改成"必须被拒绝"：
+    #    任何"打开就更精确"的实现都必须先过 `pred_gates.py` 的解析验证。
+    try:
+        run_episode(cfg, PeriodicSend(8), split="dev", episode=100,
+                    budget_total=204, rho=0.85, predictor="exact")
+        rejected, msg = False, "未拒绝"
+    except ValueError as exc:
+        rejected, msg = True, str(exc)[:120]
     return [
         _row("S10 predictor='nominal' 与不传参数逐位相同（历史证据不受影响）", ok,
              {"cost_default": r_def.cost_true_per_step,
               "cost_nominal": r_nom.cost_true_per_step,
               "hash_equal": r_def.policy_trace_hash == r_nom.policy_trace_hash}),
-        _row("S10 预测器确实接线（exact 与 nominal 必须不同）",
-             r_ex.cost_true_per_step != r_def.cost_true_per_step,
-             {"cost_nominal": r_def.cost_true_per_step,
-              "cost_exact": r_ex.cost_true_per_step}),
+        _row("S10b predictor='exact' 被显式拒绝（撤回的缺陷不得当'精确强基线'）",
+             rejected, {"message": msg}),
     ]
 
 

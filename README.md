@@ -760,6 +760,8 @@ X9（想象训练）跑出的是一张「全员平坦」的曲线 —— **但�
 | 怎么跑起来（环境、自检、缓存复现） | [`docs/REPRODUCE.md`](docs/REPRODUCE.md) |
 | ★ **P3 主结果那一格，秒级重算 + 逐位对账** | [`docs/REPRODUCE-P3.md`](docs/REPRODUCE-P3.md)（`scripts/62_min_repro.py`，4 cell / 约 3 s） |
 | 调度基线库的统一接口 | [`wmlab/eval/scheduling.py`](wmlab/eval/scheduling.py) |
+| ★ **CW 主线（通信＋世界模型）的协议与两轮纠错** | [`docs/CW-R0-协议交付.md`](docs/CW-R0-协议交付.md) → [`docs/CW-R1.1-纠错交付-1.md`](docs/CW-R1.1-纠错交付-1.md) → [`docs/CW-R1.1-纠错交付-2.md`](docs/CW-R1.1-纠错交付-2.md)（一步预测/协方差 + 外生事件配对，`python -m experiments.cw_v1.r1_4_contract`，约 2 s） |
+| 下一步要做的那件事的**预注册**（有限视界规划参考） | [`docs/research/CW-R1-有限视界参考-预注册-v0.1.md`](docs/research/CW-R1-有限视界参考-预注册-v0.1.md) |
 
 ### 诊断 / 判据脚本（不产出结论，只回答"有没有资格下结论"）
 

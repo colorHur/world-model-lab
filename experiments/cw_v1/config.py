@@ -134,11 +134,31 @@ class ProtocolConfig:
     #:   False = 复现 v1 旧证据的确定初态（**只用于重放，不进新结果表**）。
     init_from_prior: bool = True
 
+    #: ★★ v1.1-2（2026-10-22 18:xx）：**外生事件按什么索引**。
+    #:
+    #:   `"slot"`（默认，新证据一律用它）：`packet` / `meas` / `csi` 三条子流在
+    #:     episode 构造时**一次性预生成** `(horizon, n_users)` 矩阵，取值下标是
+    #:     `(t, user)`。于是"第 t 槽、第 i 个用户的成败/量测噪声"**只由 (seed, split,
+    #:     episode, t, i) 决定，与策略做过什么无关** ⇒ 两策略在同一 (t,i) 上如果都
+    #:     发了，看到的是**同一个**成败与同一条量测噪声。这才是"同一轨迹配对"。
+    #:
+    #:   `"attempt"`（v1.1 前 18:xx 的全部证据都是这个）：一次 SEND 才从 `packet`
+    #:     流里取一个数。于是发 128 次的臂与发 64 次的臂读的是流的**不同位置** ——
+    #:     分布相同，但**不能**声称"两臂的丢包序列逐时隙相同"，也不能把两次 SEND
+    #:     的成败当成同一枚硬币的两次投掷来配对。
+    #:
+    #:   ★ 为什么默认改成 `"slot"`：配对是"同轨迹比较"的定义前提，不是可选项。
+    #:     代价是**数值不再与 18:xx 前的 v1.1 证据逐位相同**（分布相同、实现不同），
+    #:     因此 `attempt` 保留为显式开关，只用于重放旧数字，**不得与新表混**。
+    #:   ★ 归属已核：改这条**只**改外生随机数的取值方式，不改动力学、预算、代价定义。
+    event_pairing: str = "slot"
+
     #: ★ v1.1 只支持 `c_probe == c_data == 1`。多时隙配置（如 (2,1)）在本版
     #:   有已知的"标称 T 槽实际 T·n_substeps 槽"缺陷：horizon 按**动作数**计而
     #:   物理时间按子步计，两者不等价 ⇒ 不同配置的"平均每步成本"不可比。
     #:   `v11_validate()` 会显式拒绝非 (1,1) 的配置，而不是让它安静地跑出错误对比。
-    #:   修法见 `docs/research/`（固定物理时间窗 + 逐子步计量），在修好前不得启用。
+    #:   修法设计见 `docs/research/CW-R1-有限视界参考-预注册-v0.1.md` §4
+    #:   （固定物理时间窗 + 逐子步计成本 + 动作完成才揭示测量），修好前不得启用。
     allow_multislot: bool = False
 
     def budget(self, ratio: float) -> int:
@@ -218,6 +238,13 @@ class CWConfig:
                 f"c_probe={pr.c_probe}, c_data={pr.c_data}：v1.1 只支持 (1,1)。"
                 f"多时隙的时间轴未与 horizon 对齐（标 T 槽实际 T·n_substeps 物理步），"
                 f"不同配置的平均成本不可比。修好前请保持 (1,1)。")
+
+        # ⑥ 配对口径必须是已实现的两个之一；`slot` 的预生成矩阵按 (horizon, n) 定形，
+        #    多时隙下 `t` 会在一个动作里推进多次 ⇒ 只在 (1,1) 下语义清楚。
+        if pr.event_pairing not in ("slot", "attempt"):
+            bad.append(f"event_pairing={pr.event_pairing!r} 未实现（只允许 'slot' / 'attempt'）")
+        if pr.event_pairing == "slot" and (int(pr.c_probe), int(pr.c_data)) != (1, 1):
+            bad.append("event_pairing='slot' 的预生成矩阵按 (horizon, n_users) 定形，只支持 (1,1)")
 
         for i, sw in enumerate(p.sigma_w):
             if float(sw) <= 0.0:

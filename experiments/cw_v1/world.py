@@ -19,6 +19,18 @@
   · `LeakyReceiver`（correct=False，`allow_truth_keys=True` 才可构造）：
     ★★ 这是**故意的错误实现**，用于反例 5。它把槽末的 x_t 观测直接写进接收端，
     当作已经推进到 t+1 的状态。用它跑出来的成本**不得**进任何结果表。
+
+★★ 一步预测（2026-10-22 18:xx 核实，`pred_gates.py` 钉死）
+  本环境**一个时隙只推进一次物理**（`_advance_physics`）⇒ 接收端的一步预测就是
+        x̂_{t+1} = A x̂_t + B u_t ,  P_{t+1} = A² P_t + σ_w²
+  这两条是**精确**的（零噪声逐位 0；独立 Kalman 复算逐位 0；1000 episode 的
+  `E[e²]/E[P̂]` = 1.024 与 0.986，落在 1±3σ 内）。原先名为 `exact` 的分支是
+  "把控制量算两遍 + 把过程噪声加两遍"，已删除。
+
+★★ 外生事件索引（2026-10-22 18:xx）
+  `event_pairing="slot"`（默认）：`packet`/`meas`/`csi` 三条流按 `(t, user)` 预生成 ⇒
+  两策略在同一 (t,i) 上看到**同一枚硬币**，配对是构造出来的，不是事后对齐的。
+  `event_pairing="attempt"`：按动作次数取流（18:xx 前全部证据），只能重放，不许混表。
 """
 
 from __future__ import annotations
@@ -187,14 +199,29 @@ class CWWorld:
                 "LeakyReceiver（槽末观测当下一步）只允许在 allow_truth_keys=True（诊断/反例）下构造，"
                 "不得进入任何结果表。"
             )
+        if exact_predictor:
+            # ★★ 2026-10-22 18:xx 撤回（见 `experiments/cw_v1/pred_gates.py` 与
+            #   `docs/CW-R1.1-纠错交付-2.md`）：这个"精确预测器"**不是精确的**。
+            #   它把一步推进算成两步（先 u_{t-1} 再 u_t），并把过程噪声加了两次
+            #   （A²σ_w² + σ_w²）。零噪声 HOLD 下名义预测器逐位为 0，
+            #   它却从第 2 步起给出 **B·K·x₀ = 0.599666** 的偏差
+            #   （BOUNDED，x0=[0.7,-0.4]；解析值与实测差 1e-16，见 pred_gates.P7）。
+            #   ⇒ 直接拒绝构造，不留"打开就变精确"的错觉。
+            raise ValueError(
+                "exact_predictor 已撤回：本环境的物理推进就是一步一次噪声，"
+                "名义预测器 x̂'=A x̂+B u、P'=A²P+σ_w² 才是**精确**的一步预测"
+                "（零噪声逐位 0，独立 Kalman 复算逐位 0）。见 pred_gates.py。"
+            )
         self.cfg = cfg
         self.rngs = rngs
         self.stream_ids = stream_ids
         self.allow_truth_keys = bool(allow_truth_keys)
         self.correct_receiver = bool(correct_receiver)
         #: ★ 只由 `runner.run_episode(predictor="exact")` 置真；默认 False ⇒ 历史数值不变
-        self.exact_predictor = bool(exact_predictor)
+        self.exact_predictor = False   # ★ 2026-10-22 撤回：True 已在上面直接拒绝
         self.rho = float(rho if rho is not None else cfg.channel.rho_panel[0])
+        #: ★★ 外生事件的索引方式（`config.ProtocolConfig.event_pairing`）
+        self.pairing = str(cfg.protocol.event_pairing)
 
         n = cfg.plant.n_users
         self.n_users = n
@@ -240,6 +267,36 @@ class CWWorld:
         self.truth_override: dict | None = None
         self._w_last = np.zeros(n, dtype=float)
         self._K = np.array([self.nominal_gain(i) for i in range(n)])
+
+        # ★★ 外生事件的预生成（只在 pairing="slot" 下；见 config.ProtocolConfig.event_pairing）
+        #    形状 (horizon+1, n)：下标就是 (t, user)。
+        #    `+1` 只是为越界留一格；正常 loop 的 t 落在 [0, horizon-1]。
+        self._z_meas: np.ndarray | None = None
+        self._z_csi: np.ndarray | None = None
+        self._u_packet: np.ndarray | None = None
+        if self.pairing == "slot":
+            H = int(cfg.protocol.horizon) + 1
+            self._z_meas = self.rngs["meas"].standard_normal((H, n))
+            self._z_csi = self.rngs["csi"].standard_normal((H, n))
+            self._u_packet = self.rngs["packet"].random((H, n))
+
+    # ---------------- 外生抽样（两种索引方式）
+    def _draw_meas(self, i: int) -> float:
+        """任务观测噪声。`slot` ⇒ 由 (t,i) 决定；`attempt` ⇒ 按发送次数取流。"""
+        if self._z_meas is not None:
+            return float(self._z_meas[self.t, i])
+        return float(self.rngs["meas"].standard_normal())
+
+    def _draw_csi(self, i: int) -> float:
+        if self._z_csi is not None:
+            return float(self._z_csi[self.t, i])
+        return float(self.rngs["csi"].standard_normal())
+
+    def _draw_packet(self, i: int) -> float:
+        """发包成败用的均匀数。`slot` ⇒ 由 (t,i) 决定 ⇒ 两策略在同 (t,i) 上同一枚硬币。"""
+        if self._u_packet is not None:
+            return float(self._u_packet[self.t, i])
+        return float(self.rngs["packet"].random())
 
     # ---------------- 控制器（名义 LQR，固定，所有方法同一套）
     def nominal_gain(self, user: int) -> float:
@@ -325,14 +382,14 @@ class CWWorld:
         if act.kind == "SEND":
             i = act.user
             send_sample = float(self._x_true[i]
-                                + cfg.plant.sigma_meas * self.rngs["meas"].standard_normal())
+                                + cfg.plant.sigma_meas * self._draw_meas(i))
 
         # 3) 若是 PROBE：有噪 CSI 读数（y = log h_t + N(0, sigma_csi²)）
         csi_reading = None
         if act.kind == "PROBE":
             i = act.user
             csi_reading = float(self._log_h_true[i]
-                                + cfg.channel.sigma_csi * self.rngs["csi"].standard_normal())
+                                + cfg.channel.sigma_csi * self._draw_csi(i))
 
         # 4) 成败由**真信道**在 t 时刻决定（策略不可见）
         p_true = None
@@ -341,7 +398,7 @@ class CWWorld:
         if act.kind == "SEND":
             i = act.user
             p_true = p_success_from_log_h(float(self._log_h_true[i]), cfg)
-            delivered = int(self.rngs["packet"].random() < p_true)
+            delivered = int(self._draw_packet(i) < p_true)
             ack = delivered
             self.budget_attempted += spend
             self.budget_used += spend
@@ -367,26 +424,15 @@ class CWWorld:
         for i in range(self.n_users):
             self._x_hat[i] = float(self._nominal_map(i, self._x_hat[i], u[i]))
             self._P_hat[i] = float(self._nominal_map_var(i, self._P_hat[i]))
-        # ★★ 精确预测器（默认关闭；`--predictor exact` 打开）。
-        #   名义滚动**漏掉了"槽内还没有 u_t"的那一半噪声**：真实的
-        #   x_{t+1} = A(A x_t + B u_{t-1} + w_t) + B u_t + w_{t+1}，
-        #   `_nominal_map` 只算 A(A x_t) + B u_t，把 `A*w_t` 这一项当成了确定量。
-        #   ⇒ x_hat 有**偏**、P_hat 有对应的一阶偏（见 `--predictor` 帮助）。
-        #   修法只用**当槽已执行的动作** u_{t-1}（可部署：自己发的），不读任何真值：
-        #       名义项 A(A x_hat + B u_{t-1}) + B u_t
-        #       噪声项 A²·σ_w²（t 槽）+ σ_w²（t+1 槽）
-        #   ★ 只在 `exact_predictor=True` 时生效，P3/CW-R1-1 的证据目录一字不动
-        #     （默认 False 的数值由 `sched_gates.py` 的 S7 反例钉死）。
-        if self.exact_predictor:
-            u_prev = self.control_history[-2] if len(self.control_history) >= 2 \
-                else np.zeros(self.n_users)
-            for i in range(self.n_users):
-                self._x_hat[i] = self._nominal_map(
-                    i, float(self._nominal_map(i, x_prior_t[i], u_prev[i])), u[i])
-                A2 = float(cfg.plant.A[i]) ** 2
-                self._P_hat[i] = (A2 * A2 * P_prior_t[i]
-                                  + A2 * float(cfg.plant.sigma_w[i]) ** 2
-                                  + float(cfg.plant.sigma_w[i]) ** 2)
+        # ★★ 2026-10-22 18:xx：「精确预测器」分支已**删除**。
+        #   它原来在这里做「A(A x̂ + B u_{t-1}) + B u_t」并把噪声加两次，
+        #   理由是"名义滚动漏了槽内的 A·w_t"。那个理由是错的：本环境的
+        #   `_advance_physics()` **一个时隙只推进一次、只加一次 w**，
+        #   所以名义滚动 `A x̂ + B u`、`A²P + σ_w²` 就是**精确**的一步预测。
+        #   实测（`pred_gates.py`）：零噪声 HOLD 下名义误差逐位 0，被删掉的
+        #   那条分支给出 0.599666 / 0.685619；有噪声时按用户 RMS 误差
+        #   0.1042 → 0.1514（BOUNDED）、0.0494 → 0.1132（R0_DEFAULT）。
+        #   ⇒ 它是"把控制量算两遍"的缺陷，不是更精确的预测器。
 
         # 7) 槽末拿到带时间戳 t 的观测/测量 —— 校正**t 时刻**，再按已知 u_t 推到 t+1
         if act.kind == "SEND" and delivered:
