@@ -45,7 +45,11 @@ G8 配速（v1.6 新增，判据在看数前写死在 `docs/research/CW-R1.6-配
    G8d 值函数对预算**严格递减**（未饱和区平坦比例 ≤ 10%、无上升）。
        2026-10-22 实测 FAIL：`m` 取整 ⇒ `b` 在一个区间内估计值逐位相同，
        "花一帧的机会成本"在值函数里恒为 0。这条同时解释了 `M1` 抓不住与 `G4` 崩到 0.48。
-   ⇒ FAIL 于：尾部不认预算的机会成本（G8a/G8b/G8d）、闭式解写错（G8c）。
+   ★ v1.6.1 新增（判据在看数前写死在 `docs/research/CW-R1.6.1-连续预算定价-预注册-v0.1.md`）：
+   G8c2 `A²≠1` 那一支的算术：闭式 vs 长程模拟（`R0_DEFAULT` plant，`m∈{2,4}` ≤1%）。
+        `G8c` 用 `bounded_plant()`（`A=1`）⇒ 那条支**从未被走到**，是闸的覆盖漏洞。
+   G8d2 `G8d` 的单变量阴性对照：`m` 取整 ⇒ 平坦比例必须 > 30%。
+   ⇒ FAIL 于：尾部不认预算的机会成本（G8a/G8b/G8d/G8d2）、闭式解写错（G8c/G8c2）。
 """
 
 from __future__ import annotations
@@ -511,16 +515,142 @@ def g8c_closed_form(g: Gate) -> None:
                                 "closed": round(r["Pbar_closed"], 8)} for r in rows]})
 
 
+def _legacy_paced_sumP(pol: PlanRef, P: np.ndarray, steps: int, bud) -> np.ndarray:
+    """**旧实现复刻**（`1a2c7f2` 的 `_paced_sumP` 算术），只作 `G8c2b` 阴性对照。
+
+    ★ 为什么要在闸里养一份旧代码：写死"旧实现差 40–67%"只是回忆；
+      复刻一份就能每次运行都证明"这道闸在旧代码上会 FAIL"——即它有分辨力。
+      四处差异逐条对应 `plan_ref._paced_sumP` 的"更正记录"：
+      `m` 取整、`G` 的分母 `1−A²`、端点平均、暖入段 `X=−Y` 的符号。
+    """
+    steps = int(min(max(int(steps), 0), 400))
+    if steps <= 0:
+        return np.zeros(P.shape[0])
+    a2 = (pol.A ** 2)[None, :]
+    s2 = (pol.sw ** 2)[None, :]
+    c = float(pol.smeas2)
+    n = P.shape[1]
+    bud_arr = np.asarray(bud, dtype=float).reshape(-1, 1)
+    one_minus = 1.0 - a2
+    safe = np.abs(one_minus) > 1e-12
+    Pinf = np.where(safe, s2 / np.where(safe, one_minus, 1.0), 0.0)
+    m = np.maximum(np.round(float(steps) * n / np.maximum(bud_arr, 1.0)), float(n))
+    m = np.minimum(m, float(steps))
+    kk = np.where(safe, a2 ** (m - 1.0), 1.0)
+    G = np.where(safe, s2 * (kk - 1.0) / np.where(safe, one_minus, 1.0), (m - 1.0) * s2)
+    W = G + kk * s2 + (kk - 1.0) * c
+    Pb = 0.5 * (W + np.sqrt(np.maximum(W * W + 4.0 * (G + kk * s2) * c, 0.0)))
+    Ppost = (Pb - G) / np.maximum(kk, 1e-12)
+    Pbar = 0.5 * (Ppost + Pb)
+    lin = (Pb - P) / np.maximum(s2, 1e-300)
+    num, den = Pb - Pinf, P - Pinf
+    ok = safe & (num > 0.0) & (den > 0.0)
+    ratio = np.where(ok, num / np.where(ok, den, 1.0), 1.0)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        logw = np.log(ratio) / np.where(ok, np.log(a2), 1.0)
+    w = np.ceil(np.where(np.isfinite(logw), logw, lin))
+    w = np.clip(w, 0.0, np.minimum(m, float(steps)))
+    warm_lin = w * P + s2 * w * (w + 1.0) / 2.0
+    warm_geo = ((P - Pinf) * (a2 * (a2 ** w - 1.0) / np.where(safe, one_minus, 1.0))
+                + Pinf * w)
+    warm = np.where(safe, warm_geo, warm_lin)
+    rest = np.maximum(float(steps) - w, 0.0) * Pbar
+    paced = warm + rest + np.where(w <= 0.0, P - Pbar, 0.0)
+    free = (P - Pinf) * np.where(safe, a2 * (1.0 - a2 ** steps)
+                                / np.where(safe, one_minus, 1.0), float(steps)) \
+        + Pinf * float(steps)
+    free = np.where(safe, free, float(steps) * P + s2 * (steps * (steps + 1) / 2.0))
+    return np.where(bud_arr > 0.0, paced, free)
+
+
+def g8c2_cross_term(g: Gate) -> None:
+    """`A² ≠ 1` 那一支的算术：闭式 vs 长程逐步模拟（`R0_DEFAULT` plant，`A=(1.01,1.03)`）。
+
+    ★ 为什么必须单独一道：`G8c` 用的 `_cfg()` 是 `bounded_plant()`（`A=(1,1)`），
+      在 `A²=1` 时 `_paced_sumP` 走的是 `safe=False` 分支（`G=(m−1)σ_w²`、等差）——
+      **`A²≠1` 那一整支（`G` 的分母、暖入段的几何和、循环均值）从未被任何闸走到**。
+      v1.6.1 实测：旧实现在这条支上把循环水位低估 **40–67%**（三处解析错误叠加，
+      其中 `G` 的分母写成了 `1−A²`，`A>1` 时噪声和变成负的）。
+      ⇒ 修完 m=2/4 的相对差 0.09%/0.37%，旧实现 66%/58%：**这道闸有 60 倍以上的分辨力**。
+    ★ 判据只判 `m ∈ {2,4}`（≤1%）：`m ≥ 8` 时 128 步里不足 16 个周期，
+      "用循环均值当起点"这个**闸自身的对照物**开始失真（实测 m=8/16 → 1.2%/3.0%），
+      那是被记录的域外近似（与 `G8c` 的 `m≥steps/2` 注释同源），不当作算术错判 FAIL。
+    """
+    from . import config as C
+    cfg = C.CWConfig()                      # R0_DEFAULT：A=(1.01, 1.03)，开环不稳定
+    pol = make(cfg, arm="probe", h_plan=1, m_samples=1)
+    n = int(pol.A.size)
+    c = float(pol.smeas2)
+    steps = 128
+    judged, extra, legacy = [], [], []
+    for m in (2, 4, 8, 16):
+        b = int(round(steps * n / m))
+        for i in range(n):
+            a2 = float(pol.A[i] ** 2)
+            s2 = float(pol.sw[i] ** 2)
+            P = 0.01
+            vals = []
+            for t in range(4096):
+                if t > 0 and t % m == 0:
+                    gg = P / (P + c)
+                    P = a2 * (1.0 - gg) * P + s2
+                else:
+                    P = a2 * P + s2
+                vals.append(P)
+            sim = float(np.mean(vals[2048:]))
+            P0 = np.array([[sim] * n])
+            got = float(pol._paced_sumP(P0, steps, np.array([float(b)]))[0][i]) / steps
+            old = float(_legacy_paced_sumP(pol, P0, steps, np.array([float(b)]))[0][i]) / steps
+            rec = {"m": m, "user": i, "Pbar_sim": round(sim, 10),
+                   "Pbar_closed": round(got, 10),
+                   "rel": abs(got - sim) / max(abs(sim), 1e-300)}
+            rec_old = {"m": m, "user": i, "rel": abs(old - sim) / max(abs(sim), 1e-300)}
+            (judged if m <= 4 else extra).append(rec)
+            (legacy if m <= 4 else []).append(rec_old)
+    bad = [r for r in judged if r["rel"] > 0.01]
+    g.check("G8c2 A²≠1 支的算术：闭式 vs 长程模拟（m∈{2,4} 相对差 ≤ 1%）",
+            not bad, {"judged": judged, "domain_boundary_m8_m16": extra})
+    # 阴性对照：同一对账跑旧实现 ⇒ 必须差 >10%（否则 G8c2 没有分辨力）
+    worst_old = max(r["rel"] for r in legacy)
+    g.check("G8c2b 阴性对照：旧实现（v1.6 算术复刻）在同一对账下相对差 > 10%",
+            worst_old > 0.10, {"legacy_rel": legacy, "worst_old": worst_old})
+
+
+def g8d2_rounding_control(g: Gate) -> None:
+    """`G8d` 的**单变量阴性对照**：把 `m` 取整（`cont_m=False`）⇒ 平坦比例必须 > 30%。
+
+    ★ 没有这道，"平坦比例 ≤10%" 就没有分辨力：它可能因为阈值宽而恒过。
+      取整是**唯一**动的一处（同一 plant、同一 `steps`、同一 `P0`、同一函数），
+      所以对照失败只能归因于"`m` 连续化"。
+    """
+    cfg = _cfg()
+    steps, P0 = 128, 0.01
+    out = {}
+    for tag, cont in (("cont_m_true", True), ("cont_m_false", False)):
+        pol = make(cfg, arm="probe", h_plan=1, m_samples=1, cont_m=cont)
+        n = int(pol.A.size)
+        vals = np.array([float(pol._paced_sumP(np.full((1, n), P0), steps,
+                                               np.array([float(b)]))[0][0])
+                         for b in range(0, steps + 1)])
+        d = np.diff(vals)
+        out[tag] = {"n_flat": int(np.sum(np.abs(d) <= 1e-12)), "n_pairs": int(d.size),
+                    "frac_flat": float(np.mean(np.abs(d) <= 1e-12)),
+                    "n_up": int(np.sum(d > 1e-12))}
+    g.check("G8d2 阴性对照：把 m 取整 ⇒ 平坦比例 > 30%（否则 G8d 无分辨力）",
+            out["cont_m_false"]["frac_flat"] > 0.30, out)
+
+
 def g8d_budget_price(g: Gate) -> None:
     """值函数对预算必须**严格递减**（多一帧 ⇒ 尾部估计不增，且在未饱和时真减）。
 
-    ★ 为什么这条闸必须存在：`m = round(steps·n/b)` 是**整数**，所以 `b` 在一个区间内
-      变化根本不改 `m` ⇒ 尾部估计对预算**完全平**（实测 `steps=128` 时
-      `b=120…135` 的估计值逐位相同）⇒ "这一帧的机会成本"在值函数里是 **0**。
+    ★ 为什么这条闸必须存在：v1.6 里 `m = round(steps·n/b)` 是**整数**，所以 `b` 在一个区间内
+      变化根本不改 `m` ⇒ 尾部估计对预算**完全平**（实测 `steps=128` 时 **100/128（78.1%）**
+      个相邻档逐位相同、0 对上升）⇒ "这一帧的机会成本"在值函数里是 **0**。
       后果有两处可观测：①`M1` 变异（探测不学任何东西但照扣钱）**抓不住**，
       因为花一帧与不花一帧估价值相等 ⇒ 靠 tie-break 才不选它；
       ②`G4` 的动作一致率崩到 0.48 —— 平区里动作由 1e-16 级噪声决定。
-      饱和（`b > steps`，即多到一槽一帧以上）时平是**合法**的，不计入。
+      饱和（`b ≤ n_users`，即 `m` 被夹到 `steps`，多到一槽一帧以上）时平是**合法**的，不计入。
+    ★ v1.6.1 起 `m` 取实数 ⇒ 平坦比例 1.6%（`b=1,2` 两对夹逼饱和），分辨力由 `G8d2` 守住。
     """
     cfg = _cfg()
     pol = make(cfg, arm="probe", h_plan=1, m_samples=1)
@@ -641,5 +771,7 @@ def run_all() -> Gate:
     g7_beats_hold(g)
     g8_pacing(g)
     g8c_closed_form(g)
+    g8c2_cross_term(g)
     g8d_budget_price(g)
+    g8d2_rounding_control(g)
     return g

@@ -38,9 +38,11 @@
 · 根节点：5 个动作各做 `M` 条条件信念采样，每条走 `H` 步 → 取均值最小者；
 · 尾部：每个采样分支按**同一条 1 步贪心**续接（卡 §3「续接」）；
 · `H` 步之后给一个**预算感知的尾部估计**（v1.6 起，见 `_paced_sumP`）：
-  假设**剩余预算 `b` 按可负担速率均匀铺开**（每用户刷新间隔 `m ≈ steps·n/b`），
+  假设**剩余预算 `b` 按可负担速率均匀铺开**（每用户刷新间隔 `m = steps·n/b`），
   `P` 走一个稳态循环（`P_post ↔ P_b`），`x̂_k = α^k x̂`（`α = A − B·K`）。
   **这是估计，不是最优值函数**；`b = 0` 时退回"再无观测"的解析外推。
+  ★ v1.6.1：`m` 取**实数**（原来取整 ⇒ 78.1% 的相邻预算档估计值逐位相同），
+  并修正三处只在 `A²≠1` 才走到的解析错误（见 `_paced_sumP` 的"更正记录"与 `G8c2`）。
 · ★ **为什么必须这样（R1.5 的实测结论，不是审美）**：R1.5 的尾部假设"今后**再无**观测"，
   `A=1` 时 `ΣP_k = steps·P + σ_w²·steps(steps+1)/2` **二次增长** ⇒
   ① 任何"现在发一帧"都显得极贵；② 花掉的预算在尾部估计里**没有价格**
@@ -138,7 +140,7 @@ class PlanRef:
     def __init__(self, cfg: CWConfig, *, h_plan: int = 5, m_samples: int = 16,
                  seed: int = 20261022, use_probe: bool = True,
                  sample_hidden: bool = True, rho: float | None = None,
-                 pacing: bool = True) -> None:
+                 pacing: bool = True, cont_m: bool = True) -> None:
         self.cfg = cfg
         self.H = int(h_plan)
         self.M = int(m_samples)
@@ -147,6 +149,9 @@ class PlanRef:
         #: ★ v1.6：尾部估计是否把**剩余预算的机会成本**算进去（`_paced_sumP`）。
         #:  `False` = 退回 v1.5 的"再无观测"外推 ⇒ 只作 `G8b` 阴性对照，**不进结果表**。
         self.pacing = bool(pacing)
+        #: ★ v1.6.1：刷新间隔 `m` 是否取**实数**（`True` = 值函数对预算连续）。
+        #:  `False` = 旧的 `round(steps·n/b)` 口径，**只作 `G8d2` 单变量阴性对照**，不进结果表。
+        self.cont_m = bool(cont_m)
         self.base_seed = int(seed)
         self.rho = float(rho if rho is not None else cfg.channel.rho_panel[0])
         self.name = (f"plan_ref_H{self.H}_M{self.M}"
@@ -212,22 +217,47 @@ class PlanRef:
                 + self.r * np.sum(u * u, axis=1))
 
     # ------------------------------------------------------------ 尾部估计
+    @staticmethod
+    def _geo_sum(a2, w) -> np.ndarray:
+        """`Σ_{k=0}^{w-1} A^{2k} = (A^{2w} − 1)/(A² − 1)`，`w` 可为**实数**。
+
+        `A² ≈ 1` 取极限 `w`（阈值 1e-9：此时二阶项 `w(w−1)(A²−1)/2` 远小于 1e-9·w²，
+        在 `steps ≤ 400` 的量级下可忽略）。用 `expm1` 保证 `w` 很小时不丢精度。
+        """
+        ww = np.asarray(w, dtype=float)
+        safe = np.abs(a2 - 1.0) > 1e-9
+        num = np.expm1(ww * np.log(a2))
+        return np.where(safe, num / np.where(safe, a2 - 1.0, 1.0), ww)
+
     def _paced_sumP(self, P: np.ndarray, steps: int, bud) -> np.ndarray:
         """`Σ_{k=1..steps} P_k` 的**预算感知**估计（`(M, n)` 向量化）。
 
-        模型（推导写在 `docs/research/CW-R1.6-配速-预注册-v0.1.md` §5，先于运行）：
+        模型（推导写在 `docs/research/CW-R1.6-配速-预注册-v0.1.md` §5，先于运行；
+        解析修正记录在 `docs/research/CW-R1.6.1-连续预算定价-预注册-v0.1.md` §2）：
         剩余预算 `b` 按可负担速率铺开 ⇒ 每个用户每 `m = steps·n_users / b` 步被刷新一次
-        （`m` 取整、且 `m ≥ n_users`，因为一槽最多一帧）。稳态循环满足
+        （`m ≥ n_users`，因为一槽最多一帧）。`m` 是**实数**（v1.6.1 起，见下"更正 4"），
+        稳态循环满足
 
             `P_post = P_b·c/(P_b+c) + σ_w²`（送达 + 量测更新后）
-            `P_b    = A^{2(m-1)}·P_post + G`, `G = σ_w²·(A^{2(m-1)}−1)/(A²−1)`
+            `P_b    = A^{2(m-1)}·P_post + σ_w²·Σ_{k=0}^{m-2} A^{2k}`
 
-        令 `k = A^{2(m-1)}`，消元得二次式 ⇒ **闭式**
+        令 `k = A^{2(m-1)}`、`G = σ_w²·(A^{2(m-1)}−1)/(A²−1)`，消元得二次式 ⇒ **闭式**
 
             `P_b = ½[W + sqrt(W² + 4(G + kσ_w²)·c)]`, `W = G + kσ_w² + (k−1)·c`
 
-        （`A=1` 时 `W = mσ_w²`、`G=(m−1)σ_w²`，退化成 `½[mσ_w² + sqrt(m²σ_w⁴+4mσ_w²c)]`）。
-        循环均值 `P̄ = (P_post + P_b)/2`（`A=1` 时与"逐值平均"恒等，见 `plan_gates.G8c`）。
+        循环均值取**逐相位平均** `P̄ = (1/m)·Σ_{k=0}^{m-1} P_k`（闭式见函数体）——
+        `A=1` 时等于 `(P_post + P_b)/2`，`A>1` 时**不等于**（几何增长是凸的）。
+
+        ★ 更正记录（v1.6.1，逐条都是"只在 `A²≠1` 时才走到的分支"，`A=1` 的 `G8c` 看不见）：
+          ① `G` 的分母原写成 `1−A²` ⇒ `A>1` 时 `G<0`（噪声和恒正）⇒ 循环水位低估
+             40–67%（`R0_DEFAULT` plant 实测；见 `G8c2`）。
+          ② 暖入段 `warm_geo` 的噪声项原写成 `s2(X−w)/(A²−1)`，正确是 `s2(Y−w)/(A²−1)`
+             （`X = A²(A^{2w}−1)/(1−A²) = −Y`）⇒ `A>1` 时会给出**负**的暖入代价。
+          ③ 循环均值原来取端点平均 `(P_post+P_b)/2` ⇒ `A>1` 时系统偏低（凸性）。
+          ④ `m` 原来取整（`round(steps·n/b)`）⇒ `b` 在一个区间内变化根本不改 `m`，
+             `steps=128` 时有 **100/128（78.1%）** 个相邻预算档的估计值**逐位相同**、0 对上升
+             ⇒ "花一帧的机会成本"在值函数里是 0。v1.6.1 起 `m` 用实数（`cont_m=True`），
+             `cont_m=False` 只保留给 `G8d2` 做**单变量阴性对照**。
 
         当前 `P` 低于 `P_b` 时先用 `w` 步"走到 `P_b`"，其余按 `P̄` 计；
         `P ≥ P_b`（比如刚换了信道还没收敛）时 `w=0`，首步仍按 `P` 计 ——
@@ -245,7 +275,7 @@ class PlanRef:
 
         bud_arr = np.asarray(bud, dtype=float).reshape(-1, 1)
 
-        # ---- 旧口径（无观测外推）：bud=0 或 b 太小到 m>steps 时兜底
+        # ---- 旧口径（无观测外推）：bud=0 时兜底
         one_minus = 1.0 - a2
         safe = np.abs(one_minus) > 1e-12
         Pinf = np.where(safe, s2 / np.where(safe, one_minus, 1.0), 0.0)
@@ -255,36 +285,43 @@ class PlanRef:
         sumP_free = np.where(safe, sumP_free,
                              float(steps) * P + s2 * (steps * (steps + 1) / 2.0))
 
-        m = np.maximum(np.round(float(steps) * n / np.maximum(bud_arr, 1.0)), float(n))
-        m = np.minimum(m, float(steps))          # 间隔超过剩余步数 ⇒ 等价于"不会刷新"
+        # ---- 刷新间隔：**实数**（v1.6.1）。`cont_m=False` 仅为 `G8d2` 阴性对照保留。
+        m_raw = float(steps) * n / np.maximum(bud_arr, 1.0)
+        m = np.clip(m_raw, float(n), float(steps))
+        if not self.cont_m:
+            m = np.round(m)
         kk = np.where(safe, a2 ** (m - 1.0), 1.0)
-        G = np.where(safe, s2 * (kk - 1.0) / np.where(safe, one_minus, 1.0),
-                     (m - 1.0) * s2)
+        G = s2 * self._geo_sum(a2, m - 1.0)          # ★ 更正 ①：分母 A²−1
         W = G + kk * s2 + (kk - 1.0) * c
-        Pb = 0.5 * (W + np.sqrt(W * W + 4.0 * (G + kk * s2) * c))
+        Pb = 0.5 * (W + np.sqrt(np.maximum(W * W + 4.0 * (G + kk * s2) * c, 0.0)))
         Ppost = (Pb - G) / np.maximum(kk, 1e-12)
-        Pbar = 0.5 * (Ppost + Pb)
+        Sa_m = self._geo_sum(a2, m)
+        # ★ 更正 ③：逐相位平均，而不是端点平均
+        Pbar = (Ppost * Sa_m + s2 * (Sa_m - m) / np.where(safe, a2 - 1.0, 1.0)) / m
+        Pbar = np.where(safe, Pbar, Ppost + s2 * (m - 1.0) / 2.0)
 
-        # ---- 从当前 P 走到 P_b 需要几步（整数步；A=1 时是线性解的向上取整）
+        # ---- 从当前 P 走到 P_b 需要几步（实数解；`A²≈1` 时退化为线性解）
+        den = P - Pinf
+        ok = safe & (den > 0.0) & (Pb > Pinf)
+        ratio = np.where(ok, (Pb - Pinf) / np.where(ok, den, 1.0), 1.0)
         lin = (Pb - P) / np.maximum(s2, 1e-300)
-        num, den = Pb - Pinf, P - Pinf
-        ok = safe & (num > 0.0) & (den > 0.0)
-        ratio = np.where(ok, num / np.where(ok, den, 1.0), 1.0)
-        logw = np.where(ok, np.log(ratio) / np.where(ok, np.log(a2), 1.0), lin)
-        w = np.ceil(np.where(np.isfinite(logw), logw, lin))
+        with np.errstate(divide="ignore", invalid="ignore"):
+            logw = np.log(ratio) / np.where(ok, np.log(a2), 1.0)
+        w = np.where(ok, logw, lin)
+        w = np.where(np.isfinite(w), w, lin)
         w = np.clip(w, 0.0, np.minimum(m, float(steps)))
 
-        # ---- 暖入段（逐值增长，A=1 时是等差）+ 循环均值段
+        # ---- 暖入段（逐值增长；`A²≈1` 时是等差）+ 循环均值段
         warm_lin = w * P + s2 * w * (w + 1.0) / 2.0
-        warm_geo = ((P - Pinf) * (a2 * (a2 ** w - 1.0)
-                                  / np.where(safe, one_minus, 1.0))
-                    + Pinf * w)
+        Y = a2 * self._geo_sum(a2, w)                # Σ_{k=1..w} A^{2k}
+        # ★ 更正 ②：`P·Y + s2·(Y−w)/(A²−1)`
+        warm_geo = P * Y + s2 * (Y - w) / np.where(safe, a2 - 1.0, 1.0)
         warm = np.where(safe, warm_geo, warm_lin)
         rest = np.maximum(float(steps) - w, 0.0) * Pbar
         paced = warm + rest + np.where(w <= 0.0, P - Pbar, 0.0)
 
         # ★ 只要还有预算就走配速分支（`m` 被夹到 `steps` 时配速分支自己退化成
-        #   "一次刷新 + 之外全自由增长"，与无观测外推只差一次刷新，实测差 <2%）。
+        #   "一次刷新 + 之外全自由增长"，与无观测外推只差一次刷新）。
         #   **不要**写"只在某条件下用配速"—— 那会让口径随预算档跳变，制造假分辨力。
         return np.where(bud_arr > 0.0, paced, sumP_free)
 
@@ -506,9 +543,10 @@ class PlanRef:
 
 def make(cfg: CWConfig, *, arm: str = "probe", h_plan: int = 5, m_samples: int = 16,
          seed: int = 20261022, rho: float | None = None,
-         pacing: bool = True) -> PlanRef:
+         pacing: bool = True, cont_m: bool = True) -> PlanRef:
     """按臂名构造：`probe` / `noprobe` / `nohidden`（后者只给变异闸用）。"""
-    kw = dict(h_plan=h_plan, m_samples=m_samples, seed=seed, rho=rho, pacing=pacing)
+    kw = dict(h_plan=h_plan, m_samples=m_samples, seed=seed, rho=rho, pacing=pacing,
+              cont_m=cont_m)
     if arm == "probe":
         return PlanRef(cfg, use_probe=True, sample_hidden=True, **kw)
     if arm == "noprobe":

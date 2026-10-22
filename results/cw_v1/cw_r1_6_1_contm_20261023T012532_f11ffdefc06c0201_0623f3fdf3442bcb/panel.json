@@ -1,0 +1,4817 @@
+{
+  "cells": [
+    {
+      "rho": 0.85,
+      "budget_ratio": 0.5,
+      "budget": 128,
+      "arms": {
+        "plan_probe": [
+          {
+            "episode": 100,
+            "cost_true": 0.12606753301588022,
+            "cost_est": 0.01245048789712759,
+            "n_probe": 10,
+            "n_attempted": 110,
+            "n_delivered": 62,
+            "n_idle": 136,
+            "n_forced_hold": 0,
+            "budget_used": 120,
+            "budget_wasted": 48,
+            "mean_task_aoi": 4.5,
+            "mean_csi_aoi": 18.0,
+            "cost_true_by_user": [
+              0.03645212706166699,
+              0.08961540595421325
+            ],
+            "send_by_window": [
+              11,
+              4,
+              7,
+              5,
+              10,
+              27,
+              25,
+              31
+            ],
+            "trace_hash": "b5916c7d135a174a",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 8,
+            "planner_probe_diff_argmax": 2
+          },
+          {
+            "episode": 101,
+            "cost_true": 0.11846023448140952,
+            "cost_est": 0.029456738852866662,
+            "n_probe": 14,
+            "n_attempted": 110,
+            "n_delivered": 65,
+            "n_idle": 132,
+            "n_forced_hold": 0,
+            "budget_used": 124,
+            "budget_wasted": 45,
+            "mean_task_aoi": 3.0,
+            "mean_csi_aoi": 45.0,
+            "cost_true_by_user": [
+              0.07107525737338115,
+              0.047384977108028366
+            ],
+            "send_by_window": [
+              9,
+              4,
+              4,
+              9,
+              8,
+              29,
+              30,
+              31
+            ],
+            "trace_hash": "6893bb41cd20b66b",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 13,
+            "planner_probe_diff_argmax": 1
+          },
+          {
+            "episode": 102,
+            "cost_true": 0.17799437152432115,
+            "cost_est": 0.002786080888845859,
+            "n_probe": 13,
+            "n_attempted": 108,
+            "n_delivered": 43,
+            "n_idle": 135,
+            "n_forced_hold": 0,
+            "budget_used": 121,
+            "budget_wasted": 65,
+            "mean_task_aoi": 17.5,
+            "mean_csi_aoi": 37.0,
+            "cost_true_by_user": [
+              0.042358395148071076,
+              0.13563597637625002
+            ],
+            "send_by_window": [
+              9,
+              4,
+              8,
+              7,
+              6,
+              28,
+              29,
+              30
+            ],
+            "trace_hash": "ca5c9c8e028430ae",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 7,
+            "planner_probe_diff_argmax": 6
+          },
+          {
+            "episode": 103,
+            "cost_true": 0.07998688206188764,
+            "cost_est": 0.0052303869296256075,
+            "n_probe": 11,
+            "n_attempted": 108,
+            "n_delivered": 57,
+            "n_idle": 137,
+            "n_forced_hold": 0,
+            "budget_used": 119,
+            "budget_wasted": 51,
+            "mean_task_aoi": 16.5,
+            "mean_csi_aoi": 7.5,
+            "cost_true_by_user": [
+              0.03573137408052218,
+              0.04425550798136547
+            ],
+            "send_by_window": [
+              12,
+              6,
+              4,
+              7,
+              8,
+              26,
+              31,
+              25
+            ],
+            "trace_hash": "8aaaaea04a4daf7a",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 8,
+            "planner_probe_diff_argmax": 3
+          },
+          {
+            "episode": 104,
+            "cost_true": 0.10432519102389165,
+            "cost_est": 0.015792390632303463,
+            "n_probe": 17,
+            "n_attempted": 105,
+            "n_delivered": 45,
+            "n_idle": 134,
+            "n_forced_hold": 0,
+            "budget_used": 122,
+            "budget_wasted": 60,
+            "mean_task_aoi": 8.0,
+            "mean_csi_aoi": 7.0,
+            "cost_true_by_user": [
+              0.07983792419016147,
+              0.024487266833730176
+            ],
+            "send_by_window": [
+              9,
+              5,
+              7,
+              4,
+              10,
+              29,
+              31,
+              27
+            ],
+            "trace_hash": "b3e2ea582127233f",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 12,
+            "planner_probe_diff_argmax": 5
+          },
+          {
+            "episode": 105,
+            "cost_true": 0.12934295496543619,
+            "cost_est": 0.02365100096211813,
+            "n_probe": 13,
+            "n_attempted": 107,
+            "n_delivered": 59,
+            "n_idle": 136,
+            "n_forced_hold": 0,
+            "budget_used": 120,
+            "budget_wasted": 48,
+            "mean_task_aoi": 7.5,
+            "mean_csi_aoi": 12.5,
+            "cost_true_by_user": [
+              0.05086590377848525,
+              0.07847705118695089
+            ],
+            "send_by_window": [
+              13,
+              2,
+              4,
+              3,
+              12,
+              28,
+              30,
+              28
+            ],
+            "trace_hash": "13c6fe9e17a6c7f3",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 7,
+            "planner_probe_diff_argmax": 6
+          },
+          {
+            "episode": 106,
+            "cost_true": 0.05300321787872522,
+            "cost_est": 0.0021770939493395603,
+            "n_probe": 12,
+            "n_attempted": 107,
+            "n_delivered": 47,
+            "n_idle": 137,
+            "n_forced_hold": 0,
+            "budget_used": 119,
+            "budget_wasted": 60,
+            "mean_task_aoi": 12.0,
+            "mean_csi_aoi": 56.0,
+            "cost_true_by_user": [
+              0.02750594902072722,
+              0.02549726885799801
+            ],
+            "send_by_window": [
+              6,
+              3,
+              6,
+              6,
+              13,
+              28,
+              29,
+              28
+            ],
+            "trace_hash": "84055cc6edf62665",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 11,
+            "planner_probe_diff_argmax": 1
+          },
+          {
+            "episode": 107,
+            "cost_true": 0.05185142983442617,
+            "cost_est": 0.0028652487544982832,
+            "n_probe": 9,
+            "n_attempted": 113,
+            "n_delivered": 62,
+            "n_idle": 134,
+            "n_forced_hold": 0,
+            "budget_used": 122,
+            "budget_wasted": 51,
+            "mean_task_aoi": 6.5,
+            "mean_csi_aoi": 49.0,
+            "cost_true_by_user": [
+              0.04028883917973723,
+              0.011562590654688943
+            ],
+            "send_by_window": [
+              8,
+              4,
+              10,
+              5,
+              8,
+              28,
+              32,
+              27
+            ],
+            "trace_hash": "6ca21c3a7474c8a9",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 8,
+            "planner_probe_diff_argmax": 1
+          }
+        ],
+        "plan_noprobe": [
+          {
+            "episode": 100,
+            "cost_true": 0.1289995429890214,
+            "cost_est": 0.012534948480175542,
+            "n_probe": 0,
+            "n_attempted": 117,
+            "n_delivered": 57,
+            "n_idle": 139,
+            "n_forced_hold": 0,
+            "budget_used": 117,
+            "budget_wasted": 60,
+            "mean_task_aoi": 4.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.03483433761071576,
+              0.09416520537830562
+            ],
+            "send_by_window": [
+              11,
+              4,
+              7,
+              5,
+              10,
+              23,
+              27,
+              30
+            ],
+            "trace_hash": "531972db5f9cde6f",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 101,
+            "cost_true": 0.11692795424238675,
+            "cost_est": 0.029364461402613392,
+            "n_probe": 0,
+            "n_attempted": 109,
+            "n_delivered": 70,
+            "n_idle": 147,
+            "n_forced_hold": 0,
+            "budget_used": 109,
+            "budget_wasted": 39,
+            "mean_task_aoi": 2.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.07128413625150681,
+              0.04564381799087994
+            ],
+            "send_by_window": [
+              9,
+              4,
+              4,
+              9,
+              8,
+              23,
+              28,
+              24
+            ],
+            "trace_hash": "5277a1e12030d8b1",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 102,
+            "cost_true": 0.1768781280519267,
+            "cost_est": 0.002931379591760391,
+            "n_probe": 0,
+            "n_attempted": 115,
+            "n_delivered": 47,
+            "n_idle": 141,
+            "n_forced_hold": 0,
+            "budget_used": 115,
+            "budget_wasted": 68,
+            "mean_task_aoi": 18.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.039155104951300895,
+              0.13772302310062579
+            ],
+            "send_by_window": [
+              9,
+              4,
+              8,
+              7,
+              6,
+              26,
+              27,
+              28
+            ],
+            "trace_hash": "bb07cd15007dcdf7",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 103,
+            "cost_true": 0.08133267346041839,
+            "cost_est": 0.005333172724693976,
+            "n_probe": 0,
+            "n_attempted": 116,
+            "n_delivered": 58,
+            "n_idle": 140,
+            "n_forced_hold": 0,
+            "budget_used": 116,
+            "budget_wasted": 58,
+            "mean_task_aoi": 6.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.03576469432951869,
+              0.04556797913089971
+            ],
+            "send_by_window": [
+              12,
+              6,
+              4,
+              7,
+              8,
+              26,
+              27,
+              26
+            ],
+            "trace_hash": "59e96ea1bdf3456d",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 104,
+            "cost_true": 0.10575658547504806,
+            "cost_est": 0.015550865341753416,
+            "n_probe": 0,
+            "n_attempted": 113,
+            "n_delivered": 47,
+            "n_idle": 143,
+            "n_forced_hold": 0,
+            "budget_used": 113,
+            "budget_wasted": 66,
+            "mean_task_aoi": 15.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.0799469223714749,
+              0.025809663103573164
+            ],
+            "send_by_window": [
+              9,
+              5,
+              7,
+              4,
+              9,
+              25,
+              28,
+              26
+            ],
+            "trace_hash": "699b28960343df7c",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 105,
+            "cost_true": 0.1252280169731414,
+            "cost_est": 0.02441102017233732,
+            "n_probe": 0,
+            "n_attempted": 115,
+            "n_delivered": 57,
+            "n_idle": 141,
+            "n_forced_hold": 0,
+            "budget_used": 115,
+            "budget_wasted": 58,
+            "mean_task_aoi": 9.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.04510328763552136,
+              0.08012472933762001
+            ],
+            "send_by_window": [
+              13,
+              2,
+              4,
+              3,
+              10,
+              29,
+              26,
+              28
+            ],
+            "trace_hash": "9aeee4f51fb944d7",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 106,
+            "cost_true": 0.05087725573251817,
+            "cost_est": 0.002273487081909024,
+            "n_probe": 0,
+            "n_attempted": 112,
+            "n_delivered": 53,
+            "n_idle": 144,
+            "n_forced_hold": 0,
+            "budget_used": 112,
+            "budget_wasted": 59,
+            "mean_task_aoi": 11.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.027271317734220486,
+              0.02360593799829768
+            ],
+            "send_by_window": [
+              5,
+              3,
+              6,
+              6,
+              12,
+              29,
+              28,
+              23
+            ],
+            "trace_hash": "74e885855782b78d",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 107,
+            "cost_true": 0.05894049073871732,
+            "cost_est": 0.0031036667236433034,
+            "n_probe": 0,
+            "n_attempted": 113,
+            "n_delivered": 55,
+            "n_idle": 143,
+            "n_forced_hold": 0,
+            "budget_used": 113,
+            "budget_wasted": 58,
+            "mean_task_aoi": 9.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.03806134078817,
+              0.020879149950547318
+            ],
+            "send_by_window": [
+              8,
+              4,
+              10,
+              5,
+              8,
+              25,
+              29,
+              24
+            ],
+            "trace_hash": "22ea339386506fb1",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          }
+        ],
+        "periodic2": [
+          {
+            "episode": 100,
+            "cost_true": 0.05903883001543853,
+            "cost_est": 0.015996718195457792,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 59,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 69,
+            "mean_task_aoi": 7.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.012234601055811326,
+              0.04680422895962719
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "f84c87e986903aa0",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 101,
+            "cost_true": 0.07750266702853653,
+            "cost_est": 0.01729786176981488,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 60,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 68,
+            "mean_task_aoi": 3.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.05183529015520537,
+              0.02566737687333116
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "c560cdb0652977d8",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 102,
+            "cost_true": 0.05147461915945277,
+            "cost_est": 0.00464307086652788,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 64,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 64,
+            "mean_task_aoi": 15.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.012351583035238261,
+              0.039123036124214514
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "2ed5856e88d02159",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 103,
+            "cost_true": 0.047242365075182424,
+            "cost_est": 0.004033502316093245,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 61,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 67,
+            "mean_task_aoi": 26.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.022116827406198976,
+              0.025125537668983455
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "57b05b8b93449195",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 104,
+            "cost_true": 0.10175408981706241,
+            "cost_est": 0.015393654229851929,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 45,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 83,
+            "mean_task_aoi": 5.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.08651278200165424,
+              0.015241307815408181
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "707f50134c4595fc",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 105,
+            "cost_true": 0.2596680681025332,
+            "cost_est": 0.032722296715054555,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 69,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 59,
+            "mean_task_aoi": 5.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.04124790057364419,
+              0.21842016752888901
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "d3a21ab62de83b8b",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 106,
+            "cost_true": 0.046876036778126434,
+            "cost_est": 0.0037306878941244627,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 54,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 74,
+            "mean_task_aoi": 13.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.017321873936011537,
+              0.0295541628421149
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "390b159c0bd0f2bb",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 107,
+            "cost_true": 0.03934938575616528,
+            "cost_est": 0.002971786657952393,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 57,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 71,
+            "mean_task_aoi": 7.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.02869837844029209,
+              0.010651007315873182
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "feb315023cdd74a5",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          }
+        ],
+        "paced_age8": [
+          {
+            "episode": 100,
+            "cost_true": 0.06780234600946539,
+            "cost_est": 0.01632503796514424,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 49,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 79,
+            "mean_task_aoi": 7.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.0158788918969777,
+              0.05192345411248769
+            ],
+            "send_by_window": [
+              27,
+              14,
+              16,
+              14,
+              12,
+              9,
+              19,
+              17
+            ],
+            "trace_hash": "82f87e88f59765b2",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 101,
+            "cost_true": 0.07687639528879102,
+            "cost_est": 0.01744348320205628,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 45,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 83,
+            "mean_task_aoi": 21.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.05027480477749843,
+              0.02660159051129258
+            ],
+            "send_by_window": [
+              21,
+              14,
+              15,
+              21,
+              14,
+              14,
+              21,
+              8
+            ],
+            "trace_hash": "267f5c7c1d6c6a33",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 102,
+            "cost_true": 0.051440579605384465,
+            "cost_est": 0.004616957843448776,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 48,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 80,
+            "mean_task_aoi": 15.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.01704211803864184,
+              0.034398461566742616
+            ],
+            "send_by_window": [
+              15,
+              14,
+              17,
+              12,
+              22,
+              9,
+              24,
+              15
+            ],
+            "trace_hash": "410c165f941644b7",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 103,
+            "cost_true": 0.05705728192708699,
+            "cost_est": 0.004599858217778606,
+            "n_probe": 0,
+            "n_attempted": 125,
+            "n_delivered": 51,
+            "n_idle": 131,
+            "n_forced_hold": 0,
+            "budget_used": 125,
+            "budget_wasted": 74,
+            "mean_task_aoi": 10.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.02277298027405386,
+              0.03428430165303313
+            ],
+            "send_by_window": [
+              20,
+              12,
+              10,
+              13,
+              15,
+              25,
+              13,
+              17
+            ],
+            "trace_hash": "300eb4ef07fa0724",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 104,
+            "cost_true": 0.09902240929276504,
+            "cost_est": 0.016083598687432206,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 37,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 91,
+            "mean_task_aoi": 51.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.06584186012638887,
+              0.033180549166376166
+            ],
+            "send_by_window": [
+              17,
+              15,
+              28,
+              15,
+              13,
+              19,
+              21,
+              0
+            ],
+            "trace_hash": "94347278b770bf9c",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 105,
+            "cost_true": 0.23858218842859025,
+            "cost_est": 0.030286355679168344,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 47,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 81,
+            "mean_task_aoi": 17.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.03987157528931895,
+              0.19871061313927132
+            ],
+            "send_by_window": [
+              16,
+              15,
+              11,
+              10,
+              26,
+              14,
+              26,
+              10
+            ],
+            "trace_hash": "49129c4602ab4ed8",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 106,
+            "cost_true": 0.031677565803948815,
+            "cost_est": 0.0023500407648871444,
+            "n_probe": 0,
+            "n_attempted": 124,
+            "n_delivered": 50,
+            "n_idle": 132,
+            "n_forced_hold": 0,
+            "budget_used": 124,
+            "budget_wasted": 74,
+            "mean_task_aoi": 13.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.01924650848102936,
+              0.012431057322919459
+            ],
+            "send_by_window": [
+              15,
+              11,
+              14,
+              12,
+              19,
+              17,
+              18,
+              18
+            ],
+            "trace_hash": "efc77e15674341b8",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 107,
+            "cost_true": 0.040839234519675846,
+            "cost_est": 0.003527723513517874,
+            "n_probe": 0,
+            "n_attempted": 123,
+            "n_delivered": 52,
+            "n_idle": 133,
+            "n_forced_hold": 0,
+            "budget_used": 123,
+            "budget_wasted": 71,
+            "mean_task_aoi": 8.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.028997739472859857,
+              0.011841495046815986
+            ],
+            "send_by_window": [
+              11,
+              11,
+              17,
+              18,
+              15,
+              14,
+              20,
+              17
+            ],
+            "trace_hash": "d8d6d36b70b5b3b1",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          }
+        ]
+      },
+      "compare": {
+        "plan_noprobe": {
+          "cell": [
+            0.85,
+            0.5,
+            "plan_noprobe"
+          ],
+          "n_pairs": 8,
+          "baseline_median": 0.1113422698587174,
+          "candidate_median": 0.11139271275265059,
+          "median_delta": 0.00011477396306815157,
+          "mean_delta": 0.0004886041096500513,
+          "delta_ci": [
+            -0.0021259621462070555,
+            0.002932009973141164
+          ],
+          "win_fraction": 0.5,
+          "n_wins": 4,
+          "n_ties": 0,
+          "median_pairwise_ratio": 0.9963880017446021,
+          "ratio_of_medians": 1.0004530435206431,
+          "status": "ok",
+          "reasons": []
+        },
+        "periodic2": {
+          "cell": [
+            0.85,
+            0.5,
+            "periodic2"
+          ],
+          "n_pairs": 8,
+          "baseline_median": 0.055256724587445655,
+          "candidate_median": 0.11139271275265059,
+          "median_delta": -0.022623280532483057,
+          "mean_delta": -0.019765719131685032,
+          "delta_ci": [
+            -0.0670287030004417,
+            -0.0025711012068292405
+          ],
+          "win_fraction": 0.125,
+          "n_wins": 1,
+          "n_ties": 0,
+          "median_pairwise_ratio": 1.4230927341413997,
+          "ratio_of_medians": 2.015912336178519,
+          "status": "ok",
+          "reasons": []
+        },
+        "paced_age8": {
+          "cell": [
+            0.85,
+            0.5,
+            "paced_age8"
+          ],
+          "n_pairs": 8,
+          "baseline_median": 0.06242981396827619,
+          "candidate_median": 0.11139271275265059,
+          "median_delta": -0.02212762610478853,
+          "mean_delta": -0.02221672673878375,
+          "delta_ci": [
+            -0.05826518700641484,
+            -0.00530278173112661
+          ],
+          "win_fraction": 0.125,
+          "n_wins": 1,
+          "n_ties": 0,
+          "median_pairwise_ratio": 1.4713940004209727,
+          "ratio_of_medians": 1.7842871165570824,
+          "status": "ok",
+          "reasons": []
+        }
+      },
+      "send_profile": {
+        "plan_probe": [
+          9.625,
+          4.0,
+          6.25,
+          5.75,
+          9.375,
+          27.875,
+          29.625,
+          28.375
+        ],
+        "plan_noprobe": [
+          9.5,
+          4.0,
+          6.25,
+          5.75,
+          8.875,
+          25.75,
+          27.5,
+          26.125
+        ],
+        "periodic2": [
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0
+        ],
+        "paced_age8": [
+          17.75,
+          13.25,
+          16.0,
+          14.375,
+          17.0,
+          15.125,
+          20.25,
+          12.75
+        ]
+      },
+      "profile_cv": {
+        "plan_probe": 0.7028095178848076
+      }
+    },
+    {
+      "rho": 0.98,
+      "budget_ratio": 0.5,
+      "budget": 128,
+      "arms": {
+        "plan_probe": [
+          {
+            "episode": 100,
+            "cost_true": 0.07279280497732374,
+            "cost_est": 0.015378445513361195,
+            "n_probe": 3,
+            "n_attempted": 120,
+            "n_delivered": 63,
+            "n_idle": 133,
+            "n_forced_hold": 0,
+            "budget_used": 123,
+            "budget_wasted": 57,
+            "mean_task_aoi": 20.0,
+            "mean_csi_aoi": 39.0,
+            "cost_true_by_user": [
+              0.024679825803007524,
+              0.0481129791743162
+            ],
+            "send_by_window": [
+              7,
+              8,
+              6,
+              4,
+              9,
+              28,
+              30,
+              31
+            ],
+            "trace_hash": "b9ed827d63330bda",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 2,
+            "planner_probe_diff_argmax": 1
+          },
+          {
+            "episode": 101,
+            "cost_true": 0.2415685570322195,
+            "cost_est": 0.029150881109105947,
+            "n_probe": 7,
+            "n_attempted": 111,
+            "n_delivered": 66,
+            "n_idle": 138,
+            "n_forced_hold": 0,
+            "budget_used": 118,
+            "budget_wasted": 45,
+            "mean_task_aoi": 23.5,
+            "mean_csi_aoi": 40.0,
+            "cost_true_by_user": [
+              0.07622185468710613,
+              0.1653467023451134
+            ],
+            "send_by_window": [
+              12,
+              3,
+              5,
+              5,
+              8,
+              27,
+              30,
+              28
+            ],
+            "trace_hash": "436471ed82746bc9",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 7,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 102,
+            "cost_true": 0.07074416773815373,
+            "cost_est": 0.0030529010776556014,
+            "n_probe": 1,
+            "n_attempted": 119,
+            "n_delivered": 64,
+            "n_idle": 136,
+            "n_forced_hold": 0,
+            "budget_used": 120,
+            "budget_wasted": 55,
+            "mean_task_aoi": 31.0,
+            "mean_csi_aoi": 94.0,
+            "cost_true_by_user": [
+              0.02505775119658126,
+              0.045686416541572454
+            ],
+            "send_by_window": [
+              10,
+              3,
+              5,
+              6,
+              8,
+              30,
+              28,
+              30
+            ],
+            "trace_hash": "8a5a07cfbcb0b87f",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 1,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 103,
+            "cost_true": 0.08846892427246364,
+            "cost_est": 0.003782456671235588,
+            "n_probe": 2,
+            "n_attempted": 120,
+            "n_delivered": 52,
+            "n_idle": 134,
+            "n_forced_hold": 0,
+            "budget_used": 122,
+            "budget_wasted": 68,
+            "mean_task_aoi": 44.0,
+            "mean_csi_aoi": 87.0,
+            "cost_true_by_user": [
+              0.04518611814164407,
+              0.04328280613081956
+            ],
+            "send_by_window": [
+              17,
+              3,
+              5,
+              5,
+              8,
+              26,
+              32,
+              26
+            ],
+            "trace_hash": "260f96e008da4246",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 2,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 104,
+            "cost_true": 0.16984429054686417,
+            "cost_est": 0.014995178271982698,
+            "n_probe": 10,
+            "n_attempted": 116,
+            "n_delivered": 43,
+            "n_idle": 130,
+            "n_forced_hold": 0,
+            "budget_used": 126,
+            "budget_wasted": 73,
+            "mean_task_aoi": 41.5,
+            "mean_csi_aoi": 80.5,
+            "cost_true_by_user": [
+              0.10769096315839255,
+              0.062153327388471624
+            ],
+            "send_by_window": [
+              9,
+              4,
+              2,
+              5,
+              17,
+              27,
+              32,
+              30
+            ],
+            "trace_hash": "0dcdb6d95b9b972e",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 8,
+            "planner_probe_diff_argmax": 2
+          },
+          {
+            "episode": 105,
+            "cost_true": 0.1767664365688116,
+            "cost_est": 0.02044968019229417,
+            "n_probe": 18,
+            "n_attempted": 107,
+            "n_delivered": 70,
+            "n_idle": 131,
+            "n_forced_hold": 0,
+            "budget_used": 125,
+            "budget_wasted": 37,
+            "mean_task_aoi": 12.0,
+            "mean_csi_aoi": 22.5,
+            "cost_true_by_user": [
+              0.06506512016471878,
+              0.11170131640409278
+            ],
+            "send_by_window": [
+              12,
+              5,
+              7,
+              3,
+              8,
+              29,
+              31,
+              30
+            ],
+            "trace_hash": "e604d4e167f92482",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 10,
+            "planner_probe_diff_argmax": 8
+          },
+          {
+            "episode": 106,
+            "cost_true": 0.044210066061338676,
+            "cost_est": 0.0021261019451670328,
+            "n_probe": 0,
+            "n_attempted": 125,
+            "n_delivered": 38,
+            "n_idle": 131,
+            "n_forced_hold": 0,
+            "budget_used": 125,
+            "budget_wasted": 87,
+            "mean_task_aoi": 73.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.0284404681024489,
+              0.015769597958889776
+            ],
+            "send_by_window": [
+              6,
+              7,
+              6,
+              8,
+              6,
+              30,
+              32,
+              30
+            ],
+            "trace_hash": "bd46a792b49df62a",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 107,
+            "cost_true": 0.06183095712914357,
+            "cost_est": 0.0015580209100197122,
+            "n_probe": 0,
+            "n_attempted": 126,
+            "n_delivered": 29,
+            "n_idle": 130,
+            "n_forced_hold": 0,
+            "budget_used": 126,
+            "budget_wasted": 97,
+            "mean_task_aoi": 91.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.037908946995828544,
+              0.02392201013331502
+            ],
+            "send_by_window": [
+              8,
+              7,
+              10,
+              3,
+              9,
+              27,
+              32,
+              30
+            ],
+            "trace_hash": "8b4e26278a0bf63d",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          }
+        ],
+        "plan_noprobe": [
+          {
+            "episode": 100,
+            "cost_true": 0.07263656486942324,
+            "cost_est": 0.015479652673797138,
+            "n_probe": 0,
+            "n_attempted": 120,
+            "n_delivered": 64,
+            "n_idle": 136,
+            "n_forced_hold": 0,
+            "budget_used": 120,
+            "budget_wasted": 56,
+            "mean_task_aoi": 20.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.024702198017875092,
+              0.047934366851548144
+            ],
+            "send_by_window": [
+              7,
+              8,
+              6,
+              4,
+              9,
+              25,
+              30,
+              31
+            ],
+            "trace_hash": "89db5db7f24f52c5",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 101,
+            "cost_true": 0.3315229026556997,
+            "cost_est": 0.02904984196767002,
+            "n_probe": 0,
+            "n_attempted": 113,
+            "n_delivered": 76,
+            "n_idle": 143,
+            "n_forced_hold": 0,
+            "budget_used": 113,
+            "budget_wasted": 37,
+            "mean_task_aoi": 27.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.07806105868424809,
+              0.25346184397145166
+            ],
+            "send_by_window": [
+              12,
+              3,
+              5,
+              5,
+              8,
+              25,
+              28,
+              27
+            ],
+            "trace_hash": "6691ae5e70f7e9ec",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 102,
+            "cost_true": 0.07050666445906817,
+            "cost_est": 0.0029347886770838085,
+            "n_probe": 0,
+            "n_attempted": 118,
+            "n_delivered": 54,
+            "n_idle": 138,
+            "n_forced_hold": 0,
+            "budget_used": 118,
+            "budget_wasted": 64,
+            "mean_task_aoi": 42.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.024789864434365462,
+              0.04571680002470271
+            ],
+            "send_by_window": [
+              10,
+              3,
+              5,
+              6,
+              8,
+              24,
+              32,
+              30
+            ],
+            "trace_hash": "f42f71e7a86f1c92",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 103,
+            "cost_true": 0.09060010583569474,
+            "cost_est": 0.0037650530330687994,
+            "n_probe": 0,
+            "n_attempted": 121,
+            "n_delivered": 52,
+            "n_idle": 135,
+            "n_forced_hold": 0,
+            "budget_used": 121,
+            "budget_wasted": 69,
+            "mean_task_aoi": 44.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.047317299704875165,
+              0.04328280613081956
+            ],
+            "send_by_window": [
+              17,
+              3,
+              5,
+              5,
+              8,
+              25,
+              32,
+              26
+            ],
+            "trace_hash": "a4fc1c2f934df16f",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 104,
+            "cost_true": 0.2173633734163925,
+            "cost_est": 0.014750284993838602,
+            "n_probe": 0,
+            "n_attempted": 125,
+            "n_delivered": 51,
+            "n_idle": 131,
+            "n_forced_hold": 0,
+            "budget_used": 125,
+            "budget_wasted": 74,
+            "mean_task_aoi": 119.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.1056513012684492,
+              0.11171207214794328
+            ],
+            "send_by_window": [
+              9,
+              4,
+              2,
+              13,
+              9,
+              26,
+              32,
+              30
+            ],
+            "trace_hash": "5c03a4c73c602c59",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 105,
+            "cost_true": 0.206841030719277,
+            "cost_est": 0.020286285227548873,
+            "n_probe": 0,
+            "n_attempted": 122,
+            "n_delivered": 69,
+            "n_idle": 134,
+            "n_forced_hold": 0,
+            "budget_used": 122,
+            "budget_wasted": 53,
+            "mean_task_aoi": 24.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.06432719136687978,
+              0.1425138393523972
+            ],
+            "send_by_window": [
+              12,
+              5,
+              7,
+              3,
+              8,
+              28,
+              28,
+              31
+            ],
+            "trace_hash": "af04fe954f3d4f02",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 106,
+            "cost_true": 0.044210066061338676,
+            "cost_est": 0.0021261019451670328,
+            "n_probe": 0,
+            "n_attempted": 125,
+            "n_delivered": 38,
+            "n_idle": 131,
+            "n_forced_hold": 0,
+            "budget_used": 125,
+            "budget_wasted": 87,
+            "mean_task_aoi": 73.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.0284404681024489,
+              0.015769597958889776
+            ],
+            "send_by_window": [
+              6,
+              7,
+              6,
+              8,
+              6,
+              30,
+              32,
+              30
+            ],
+            "trace_hash": "bd46a792b49df62a",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 107,
+            "cost_true": 0.06183095712914357,
+            "cost_est": 0.0015580209100197122,
+            "n_probe": 0,
+            "n_attempted": 126,
+            "n_delivered": 29,
+            "n_idle": 130,
+            "n_forced_hold": 0,
+            "budget_used": 126,
+            "budget_wasted": 97,
+            "mean_task_aoi": 91.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.037908946995828544,
+              0.02392201013331502
+            ],
+            "send_by_window": [
+              8,
+              7,
+              10,
+              3,
+              9,
+              27,
+              32,
+              30
+            ],
+            "trace_hash": "8b4e26278a0bf63d",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          }
+        ],
+        "periodic2": [
+          {
+            "episode": 100,
+            "cost_true": 0.06145590796007058,
+            "cost_est": 0.015929609238050924,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 64,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 64,
+            "mean_task_aoi": 3.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.016976374749445265,
+              0.04447953321062531
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "2ad59199ddf2b0b3",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 101,
+            "cost_true": 0.07350496182443976,
+            "cost_est": 0.017890190185349458,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 53,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 75,
+            "mean_task_aoi": 9.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.04938403445146722,
+              0.02412092737297255
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "e51aa19b0b6ac899",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 102,
+            "cost_true": 0.03011752605717876,
+            "cost_est": 0.004572322823480508,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 86,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 42,
+            "mean_task_aoi": 15.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.009712238321159743,
+              0.020405287736019018
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "9650e245defc855f",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 103,
+            "cost_true": 0.06495752549191004,
+            "cost_est": 0.0053846656979244885,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 82,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 46,
+            "mean_task_aoi": 5.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.03548296810180893,
+              0.029474557390101106
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "f57594d5b951462b",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 104,
+            "cost_true": 0.10976967420266615,
+            "cost_est": 0.014578120384329589,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 27,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 101,
+            "mean_task_aoi": 3.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.09477842055796762,
+              0.014991253644698527
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "5c81909eaa8f1386",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 105,
+            "cost_true": 1.213291854458477,
+            "cost_est": 0.029110683935073406,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 79,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 49,
+            "mean_task_aoi": 5.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.24625236489885255,
+              0.9670394895596246
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "7762e3b905b81461",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 106,
+            "cost_true": 0.054477097961573025,
+            "cost_est": 0.0034499558681127997,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 52,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 76,
+            "mean_task_aoi": 11.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.022584021724053195,
+              0.03189307623751983
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "221f65c1113f3c78",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 107,
+            "cost_true": 0.03556127635183106,
+            "cost_est": 0.0031704883330680076,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 47,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 81,
+            "mean_task_aoi": 5.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.024836524679577986,
+              0.010724751672253076
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "e919a0b0a4419382",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          }
+        ],
+        "paced_age8": [
+          {
+            "episode": 100,
+            "cost_true": 0.0633260054425783,
+            "cost_est": 0.01612738812995572,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 40,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 88,
+            "mean_task_aoi": 44.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.013884481509625535,
+              0.04944152393295276
+            ],
+            "send_by_window": [
+              22,
+              27,
+              20,
+              18,
+              12,
+              9,
+              15,
+              5
+            ],
+            "trace_hash": "3555c7bb504df4ee",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 101,
+            "cost_true": 0.10010626348396828,
+            "cost_est": 0.017401063283354078,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 36,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 92,
+            "mean_task_aoi": 34.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.06059069032079899,
+              0.03951557316316928
+            ],
+            "send_by_window": [
+              20,
+              29,
+              20,
+              10,
+              20,
+              12,
+              15,
+              2
+            ],
+            "trace_hash": "33171e908868c30b",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 102,
+            "cost_true": 0.05846623288339632,
+            "cost_est": 0.004763883960205429,
+            "n_probe": 0,
+            "n_attempted": 90,
+            "n_delivered": 56,
+            "n_idle": 166,
+            "n_forced_hold": 0,
+            "budget_used": 90,
+            "budget_wasted": 34,
+            "mean_task_aoi": 15.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.020976924931999888,
+              0.03748930795139643
+            ],
+            "send_by_window": [
+              11,
+              8,
+              11,
+              9,
+              10,
+              8,
+              13,
+              20
+            ],
+            "trace_hash": "0240d2ab20ec43d4",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 103,
+            "cost_true": 0.0748769110422376,
+            "cost_est": 0.004985837145066923,
+            "n_probe": 0,
+            "n_attempted": 101,
+            "n_delivered": 54,
+            "n_idle": 155,
+            "n_forced_hold": 0,
+            "budget_used": 101,
+            "budget_wasted": 47,
+            "mean_task_aoi": 7.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.033192237892786004,
+              0.041684673149451595
+            ],
+            "send_by_window": [
+              18,
+              10,
+              8,
+              8,
+              10,
+              24,
+              13,
+              10
+            ],
+            "trace_hash": "e8f80e1426034861",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 104,
+            "cost_true": 0.09936969770197471,
+            "cost_est": 0.015151205212218383,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 27,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 101,
+            "mean_task_aoi": 71.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.08836201730692303,
+              0.011007680395051699
+            ],
+            "send_by_window": [
+              18,
+              12,
+              26,
+              32,
+              15,
+              20,
+              5,
+              0
+            ],
+            "trace_hash": "dac8ed040dc2a429",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 105,
+            "cost_true": 0.3127445870896448,
+            "cost_est": 0.02725451107637526,
+            "n_probe": 0,
+            "n_attempted": 113,
+            "n_delivered": 51,
+            "n_idle": 143,
+            "n_forced_hold": 0,
+            "budget_used": 113,
+            "budget_wasted": 62,
+            "mean_task_aoi": 6.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.06272417376739238,
+              0.25002041332225244
+            ],
+            "send_by_window": [
+              26,
+              20,
+              9,
+              8,
+              8,
+              11,
+              16,
+              15
+            ],
+            "trace_hash": "fb6d7703c06e991e",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 106,
+            "cost_true": 0.03996701080072107,
+            "cost_est": 0.002154020831098671,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 43,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 85,
+            "mean_task_aoi": 37.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.02211638157274018,
+              0.01785062922798088
+            ],
+            "send_by_window": [
+              15,
+              10,
+              15,
+              12,
+              17,
+              12,
+              27,
+              20
+            ],
+            "trace_hash": "4b70660bfe2e085c",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 107,
+            "cost_true": 0.03999153945807857,
+            "cost_est": 0.003344230848331914,
+            "n_probe": 0,
+            "n_attempted": 126,
+            "n_delivered": 44,
+            "n_idle": 130,
+            "n_forced_hold": 0,
+            "budget_used": 126,
+            "budget_wasted": 82,
+            "mean_task_aoi": 8.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.01836357966792692,
+              0.021627959790151655
+            ],
+            "send_by_window": [
+              11,
+              11,
+              26,
+              20,
+              13,
+              15,
+              14,
+              16
+            ],
+            "trace_hash": "c23391c7e3759bd7",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          }
+        ]
+      },
+      "compare": {
+        "plan_noprobe": {
+          "cell": [
+            0.98,
+            0.5,
+            "plan_noprobe"
+          ],
+          "n_pairs": 8,
+          "baseline_median": 0.081618335352559,
+          "candidate_median": 0.08063086462489369,
+          "median_delta": 0.0010655907816155483,
+          "mean_delta": 0.021160682602464877,
+          "delta_ci": [
+            -0.00011875163954278012,
+            0.04751908286952833
+          ],
+          "win_fraction": 0.5,
+          "n_wins": 4,
+          "n_ties": 2,
+          "median_pairwise_ratio": 0.9882385260835344,
+          "ratio_of_medians": 0.9879013615825436,
+          "status": "ok",
+          "reasons": []
+        },
+        "periodic2": {
+          "cell": [
+            0.98,
+            0.5,
+            "periodic2"
+          ],
+          "n_pairs": 8,
+          "baseline_median": 0.06320671672599032,
+          "candidate_median": 0.08063086462489369,
+          "median_delta": -0.024890539778933053,
+          "mean_delta": 0.08961370249772847,
+          "delta_ci": [
+            -0.06007461634419803,
+            0.010267031900234348
+          ],
+          "win_fraction": 0.25,
+          "n_wins": 2,
+          "n_ties": 0,
+          "median_pairwise_ratio": 1.4546145761498388,
+          "ratio_of_medians": 1.2756692453183325,
+          "status": "ok",
+          "reasons": []
+        },
+        "paced_age8": {
+          "cell": [
+            0.98,
+            0.5,
+            "paced_age8"
+          ],
+          "n_pairs": 8,
+          "baseline_median": 0.06910145824240796,
+          "candidate_median": 0.08063086462489369,
+          "median_delta": -0.01293497404249172,
+          "mean_delta": -0.01717224455296487,
+          "delta_ci": [
+            -0.07047459284488947,
+            -0.004243055260617606
+          ],
+          "win_fraction": 0.125,
+          "n_wins": 1,
+          "n_ties": 0,
+          "median_pairwise_ratio": 1.1957626014072864,
+          "ratio_of_medians": 1.1668475119879607,
+          "status": "ok",
+          "reasons": []
+        }
+      },
+      "send_profile": {
+        "plan_probe": [
+          10.125,
+          5.0,
+          5.75,
+          4.875,
+          9.125,
+          28.0,
+          30.875,
+          29.375
+        ],
+        "plan_noprobe": [
+          10.125,
+          5.0,
+          5.75,
+          5.875,
+          8.125,
+          26.25,
+          30.75,
+          29.375
+        ],
+        "periodic2": [
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0
+        ],
+        "paced_age8": [
+          17.625,
+          15.875,
+          16.875,
+          14.625,
+          13.125,
+          13.875,
+          14.75,
+          11.0
+        ]
+      },
+      "profile_cv": {
+        "plan_probe": 0.7164887858630193
+      }
+    },
+    {
+      "rho": 0.85,
+      "budget_ratio": 0.8,
+      "budget": 204,
+      "arms": {
+        "plan_probe": [
+          {
+            "episode": 100,
+            "cost_true": 0.12439031125470806,
+            "cost_est": 0.016788151635657875,
+            "n_probe": 14,
+            "n_attempted": 171,
+            "n_delivered": 77,
+            "n_idle": 71,
+            "n_forced_hold": 0,
+            "budget_used": 185,
+            "budget_wasted": 94,
+            "mean_task_aoi": 26.0,
+            "mean_csi_aoi": 85.0,
+            "cost_true_by_user": [
+              0.02741931868454123,
+              0.09697099257016684
+            ],
+            "send_by_window": [
+              15,
+              6,
+              22,
+              28,
+              29,
+              28,
+              29,
+              28
+            ],
+            "trace_hash": "8dddf5d61c7d54b3",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 13,
+            "planner_probe_diff_argmax": 1
+          },
+          {
+            "episode": 101,
+            "cost_true": 0.10056897408373605,
+            "cost_est": 0.029280684021404248,
+            "n_probe": 25,
+            "n_attempted": 171,
+            "n_delivered": 93,
+            "n_idle": 60,
+            "n_forced_hold": 0,
+            "budget_used": 196,
+            "budget_wasted": 78,
+            "mean_task_aoi": 2.5,
+            "mean_csi_aoi": 10.5,
+            "cost_true_by_user": [
+              0.07290202804628734,
+              0.027666946037448712
+            ],
+            "send_by_window": [
+              14,
+              7,
+              23,
+              31,
+              31,
+              32,
+              31,
+              27
+            ],
+            "trace_hash": "0bec9b76c5030a2f",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 19,
+            "planner_probe_diff_argmax": 6
+          },
+          {
+            "episode": 102,
+            "cost_true": 0.06327602184720678,
+            "cost_est": 0.0022585150924921407,
+            "n_probe": 23,
+            "n_attempted": 164,
+            "n_delivered": 79,
+            "n_idle": 69,
+            "n_forced_hold": 0,
+            "budget_used": 187,
+            "budget_wasted": 85,
+            "mean_task_aoi": 18.0,
+            "mean_csi_aoi": 45.5,
+            "cost_true_by_user": [
+              0.022056462400051706,
+              0.041219559447155066
+            ],
+            "send_by_window": [
+              11,
+              10,
+              21,
+              28,
+              27,
+              29,
+              31,
+              30
+            ],
+            "trace_hash": "3f11624c1f0fc461",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 17,
+            "planner_probe_diff_argmax": 6
+          },
+          {
+            "episode": 103,
+            "cost_true": 0.04243547439793707,
+            "cost_est": 0.00448868260188613,
+            "n_probe": 28,
+            "n_attempted": 158,
+            "n_delivered": 97,
+            "n_idle": 70,
+            "n_forced_hold": 0,
+            "budget_used": 186,
+            "budget_wasted": 61,
+            "mean_task_aoi": 12.5,
+            "mean_csi_aoi": 10.5,
+            "cost_true_by_user": [
+              0.024880852769201278,
+              0.0175546216287358
+            ],
+            "send_by_window": [
+              13,
+              6,
+              21,
+              28,
+              31,
+              29,
+              31,
+              27
+            ],
+            "trace_hash": "8338f4b5b5f85537",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 21,
+            "planner_probe_diff_argmax": 7
+          },
+          {
+            "episode": 104,
+            "cost_true": 0.08390109420103894,
+            "cost_est": 0.016270710586089702,
+            "n_probe": 25,
+            "n_attempted": 161,
+            "n_delivered": 73,
+            "n_idle": 70,
+            "n_forced_hold": 0,
+            "budget_used": 186,
+            "budget_wasted": 88,
+            "mean_task_aoi": 17.5,
+            "mean_csi_aoi": 29.0,
+            "cost_true_by_user": [
+              0.06880136603136572,
+              0.015099728169673235
+            ],
+            "send_by_window": [
+              18,
+              5,
+              21,
+              30,
+              29,
+              27,
+              30,
+              26
+            ],
+            "trace_hash": "01e187d0f2c485e3",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 21,
+            "planner_probe_diff_argmax": 4
+          },
+          {
+            "episode": 105,
+            "cost_true": 0.11755944283674317,
+            "cost_est": 0.023742919816989397,
+            "n_probe": 26,
+            "n_attempted": 162,
+            "n_delivered": 92,
+            "n_idle": 68,
+            "n_forced_hold": 0,
+            "budget_used": 188,
+            "budget_wasted": 70,
+            "mean_task_aoi": 8.5,
+            "mean_csi_aoi": 7.0,
+            "cost_true_by_user": [
+              0.03674960713186023,
+              0.08080983570488294
+            ],
+            "send_by_window": [
+              15,
+              5,
+              23,
+              26,
+              29,
+              31,
+              31,
+              28
+            ],
+            "trace_hash": "48fa361516dbddb7",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 14,
+            "planner_probe_diff_argmax": 12
+          },
+          {
+            "episode": 106,
+            "cost_true": 0.040928186194618243,
+            "cost_est": 0.0022171279492012993,
+            "n_probe": 23,
+            "n_attempted": 159,
+            "n_delivered": 71,
+            "n_idle": 74,
+            "n_forced_hold": 0,
+            "budget_used": 182,
+            "budget_wasted": 88,
+            "mean_task_aoi": 12.0,
+            "mean_csi_aoi": 5.5,
+            "cost_true_by_user": [
+              0.018770020585090072,
+              0.022158165609528165
+            ],
+            "send_by_window": [
+              9,
+              7,
+              28,
+              29,
+              27,
+              28,
+              27,
+              27
+            ],
+            "trace_hash": "3e02332c46794837",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 13,
+            "planner_probe_diff_argmax": 10
+          },
+          {
+            "episode": 107,
+            "cost_true": 0.04751936320826138,
+            "cost_est": 0.00288788668997649,
+            "n_probe": 21,
+            "n_attempted": 172,
+            "n_delivered": 87,
+            "n_idle": 63,
+            "n_forced_hold": 0,
+            "budget_used": 193,
+            "budget_wasted": 85,
+            "mean_task_aoi": 4.0,
+            "mean_csi_aoi": 48.0,
+            "cost_true_by_user": [
+              0.03124180784470078,
+              0.016277555363560597
+            ],
+            "send_by_window": [
+              11,
+              11,
+              22,
+              29,
+              31,
+              29,
+              30,
+              30
+            ],
+            "trace_hash": "4f7fd49ea580c755",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 19,
+            "planner_probe_diff_argmax": 2
+          }
+        ],
+        "plan_noprobe": [
+          {
+            "episode": 100,
+            "cost_true": 0.12152888234384375,
+            "cost_est": 0.016692762789095306,
+            "n_probe": 0,
+            "n_attempted": 172,
+            "n_delivered": 83,
+            "n_idle": 84,
+            "n_forced_hold": 0,
+            "budget_used": 172,
+            "budget_wasted": 89,
+            "mean_task_aoi": 4.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.025108719038021608,
+              0.09642016330582212
+            ],
+            "send_by_window": [
+              15,
+              6,
+              22,
+              23,
+              24,
+              25,
+              27,
+              30
+            ],
+            "trace_hash": "ef1a77332016cc24",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 101,
+            "cost_true": 0.11353588642526546,
+            "cost_est": 0.028920517097865504,
+            "n_probe": 0,
+            "n_attempted": 172,
+            "n_delivered": 90,
+            "n_idle": 84,
+            "n_forced_hold": 0,
+            "budget_used": 172,
+            "budget_wasted": 82,
+            "mean_task_aoi": 4.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.07232773074098373,
+              0.04120815568428175
+            ],
+            "send_by_window": [
+              14,
+              7,
+              21,
+              27,
+              28,
+              24,
+              27,
+              24
+            ],
+            "trace_hash": "ecec6c3789daee08",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 102,
+            "cost_true": 0.071641127833771,
+            "cost_est": 0.0025422024038898325,
+            "n_probe": 0,
+            "n_attempted": 169,
+            "n_delivered": 84,
+            "n_idle": 87,
+            "n_forced_hold": 0,
+            "budget_used": 169,
+            "budget_wasted": 85,
+            "mean_task_aoi": 17.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.021601531173727602,
+              0.05003959666004341
+            ],
+            "send_by_window": [
+              11,
+              10,
+              20,
+              26,
+              24,
+              21,
+              29,
+              28
+            ],
+            "trace_hash": "bafa9c58d5b37610",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 103,
+            "cost_true": 0.04821205921009623,
+            "cost_est": 0.004442703712258041,
+            "n_probe": 0,
+            "n_attempted": 171,
+            "n_delivered": 96,
+            "n_idle": 85,
+            "n_forced_hold": 0,
+            "budget_used": 171,
+            "budget_wasted": 75,
+            "mean_task_aoi": 14.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.024054172896016836,
+              0.02415788631407939
+            ],
+            "send_by_window": [
+              13,
+              6,
+              24,
+              24,
+              26,
+              30,
+              26,
+              22
+            ],
+            "trace_hash": "6b130a81ef351c7f",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 104,
+            "cost_true": 0.08875694729292984,
+            "cost_est": 0.016156422252306325,
+            "n_probe": 0,
+            "n_attempted": 178,
+            "n_delivered": 70,
+            "n_idle": 78,
+            "n_forced_hold": 0,
+            "budget_used": 178,
+            "budget_wasted": 108,
+            "mean_task_aoi": 25.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.06881948977101651,
+              0.01993745752191333
+            ],
+            "send_by_window": [
+              18,
+              5,
+              21,
+              28,
+              23,
+              28,
+              29,
+              26
+            ],
+            "trace_hash": "7ae7d14a78f64b36",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 105,
+            "cost_true": 0.12229923918374233,
+            "cost_est": 0.023779894287616506,
+            "n_probe": 0,
+            "n_attempted": 174,
+            "n_delivered": 96,
+            "n_idle": 82,
+            "n_forced_hold": 0,
+            "budget_used": 174,
+            "budget_wasted": 78,
+            "mean_task_aoi": 8.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.03763340628675574,
+              0.08466583289698659
+            ],
+            "send_by_window": [
+              15,
+              5,
+              22,
+              22,
+              25,
+              30,
+              28,
+              27
+            ],
+            "trace_hash": "893ee33c0a1ead9f",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 106,
+            "cost_true": 0.037230200744281,
+            "cost_est": 0.0023060895709008968,
+            "n_probe": 0,
+            "n_attempted": 177,
+            "n_delivered": 75,
+            "n_idle": 79,
+            "n_forced_hold": 0,
+            "budget_used": 177,
+            "budget_wasted": 102,
+            "mean_task_aoi": 11.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.017038158063836968,
+              0.020192042680444035
+            ],
+            "send_by_window": [
+              9,
+              7,
+              26,
+              29,
+              28,
+              27,
+              28,
+              23
+            ],
+            "trace_hash": "b86d6bf5ffb5fa94",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 107,
+            "cost_true": 0.04857940546263048,
+            "cost_est": 0.0026514948812174904,
+            "n_probe": 0,
+            "n_attempted": 185,
+            "n_delivered": 85,
+            "n_idle": 71,
+            "n_forced_hold": 0,
+            "budget_used": 185,
+            "budget_wasted": 100,
+            "mean_task_aoi": 11.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.030039250665467192,
+              0.018540154797163286
+            ],
+            "send_by_window": [
+              11,
+              11,
+              22,
+              30,
+              26,
+              29,
+              30,
+              26
+            ],
+            "trace_hash": "6d5e3821fd438242",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          }
+        ],
+        "periodic2": [
+          {
+            "episode": 100,
+            "cost_true": 0.05903883001543853,
+            "cost_est": 0.015996718195457792,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 59,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 69,
+            "mean_task_aoi": 7.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.012234601055811326,
+              0.04680422895962719
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "f84c87e986903aa0",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 101,
+            "cost_true": 0.07750266702853653,
+            "cost_est": 0.01729786176981488,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 60,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 68,
+            "mean_task_aoi": 3.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.05183529015520537,
+              0.02566737687333116
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "c560cdb0652977d8",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 102,
+            "cost_true": 0.05147461915945277,
+            "cost_est": 0.00464307086652788,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 64,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 64,
+            "mean_task_aoi": 15.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.012351583035238261,
+              0.039123036124214514
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "2ed5856e88d02159",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 103,
+            "cost_true": 0.047242365075182424,
+            "cost_est": 0.004033502316093245,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 61,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 67,
+            "mean_task_aoi": 26.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.022116827406198976,
+              0.025125537668983455
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "57b05b8b93449195",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 104,
+            "cost_true": 0.10175408981706241,
+            "cost_est": 0.015393654229851929,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 45,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 83,
+            "mean_task_aoi": 5.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.08651278200165424,
+              0.015241307815408181
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "707f50134c4595fc",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 105,
+            "cost_true": 0.2596680681025332,
+            "cost_est": 0.032722296715054555,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 69,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 59,
+            "mean_task_aoi": 5.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.04124790057364419,
+              0.21842016752888901
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "d3a21ab62de83b8b",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 106,
+            "cost_true": 0.046876036778126434,
+            "cost_est": 0.0037306878941244627,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 54,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 74,
+            "mean_task_aoi": 13.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.017321873936011537,
+              0.0295541628421149
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "390b159c0bd0f2bb",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 107,
+            "cost_true": 0.03934938575616528,
+            "cost_est": 0.002971786657952393,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 57,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 71,
+            "mean_task_aoi": 7.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.02869837844029209,
+              0.010651007315873182
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "feb315023cdd74a5",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          }
+        ],
+        "paced_age8": [
+          {
+            "episode": 100,
+            "cost_true": 0.06778113443546106,
+            "cost_est": 0.016394550685734123,
+            "n_probe": 0,
+            "n_attempted": 129,
+            "n_delivered": 50,
+            "n_idle": 127,
+            "n_forced_hold": 0,
+            "budget_used": 129,
+            "budget_wasted": 79,
+            "mean_task_aoi": 3.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.0158788918969777,
+              0.051902242538483356
+            ],
+            "send_by_window": [
+              27,
+              14,
+              16,
+              14,
+              12,
+              9,
+              19,
+              18
+            ],
+            "trace_hash": "ec13bde026e2ede3",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 101,
+            "cost_true": 0.0764886719811339,
+            "cost_est": 0.017543092596672822,
+            "n_probe": 0,
+            "n_attempted": 135,
+            "n_delivered": 47,
+            "n_idle": 121,
+            "n_forced_hold": 0,
+            "budget_used": 135,
+            "budget_wasted": 88,
+            "mean_task_aoi": 6.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.05027142494491432,
+              0.02621724703621957
+            ],
+            "send_by_window": [
+              21,
+              14,
+              15,
+              21,
+              14,
+              14,
+              21,
+              15
+            ],
+            "trace_hash": "c23a0ee4fe317a4a",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 102,
+            "cost_true": 0.051440579605384465,
+            "cost_est": 0.004616957843448776,
+            "n_probe": 0,
+            "n_attempted": 133,
+            "n_delivered": 49,
+            "n_idle": 123,
+            "n_forced_hold": 0,
+            "budget_used": 133,
+            "budget_wasted": 84,
+            "mean_task_aoi": 8.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.01704211803864184,
+              0.034398461566742616
+            ],
+            "send_by_window": [
+              15,
+              14,
+              17,
+              12,
+              22,
+              9,
+              24,
+              20
+            ],
+            "trace_hash": "f803352e5f74bca1",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 103,
+            "cost_true": 0.05705728192708699,
+            "cost_est": 0.004599858217778606,
+            "n_probe": 0,
+            "n_attempted": 125,
+            "n_delivered": 51,
+            "n_idle": 131,
+            "n_forced_hold": 0,
+            "budget_used": 125,
+            "budget_wasted": 74,
+            "mean_task_aoi": 10.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.02277298027405386,
+              0.03428430165303313
+            ],
+            "send_by_window": [
+              20,
+              12,
+              10,
+              13,
+              15,
+              25,
+              13,
+              17
+            ],
+            "trace_hash": "300eb4ef07fa0724",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 104,
+            "cost_true": 0.08872385767010865,
+            "cost_est": 0.016379230470663038,
+            "n_probe": 0,
+            "n_attempted": 159,
+            "n_delivered": 45,
+            "n_idle": 97,
+            "n_forced_hold": 0,
+            "budget_used": 159,
+            "budget_wasted": 114,
+            "mean_task_aoi": 5.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.06611292050293179,
+              0.02261093716717687
+            ],
+            "send_by_window": [
+              17,
+              15,
+              28,
+              15,
+              13,
+              19,
+              32,
+              20
+            ],
+            "trace_hash": "1b34f8937f9a91cd",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 105,
+            "cost_true": 0.23854093065840676,
+            "cost_est": 0.03031261808032333,
+            "n_probe": 0,
+            "n_attempted": 133,
+            "n_delivered": 49,
+            "n_idle": 123,
+            "n_forced_hold": 0,
+            "budget_used": 133,
+            "budget_wasted": 84,
+            "mean_task_aoi": 6.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.039947232742591085,
+              0.1985936979158157
+            ],
+            "send_by_window": [
+              16,
+              15,
+              11,
+              10,
+              26,
+              14,
+              26,
+              15
+            ],
+            "trace_hash": "52bddbffd428b98b",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 106,
+            "cost_true": 0.031677565803948815,
+            "cost_est": 0.0023500407648871444,
+            "n_probe": 0,
+            "n_attempted": 124,
+            "n_delivered": 50,
+            "n_idle": 132,
+            "n_forced_hold": 0,
+            "budget_used": 124,
+            "budget_wasted": 74,
+            "mean_task_aoi": 13.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.01924650848102936,
+              0.012431057322919459
+            ],
+            "send_by_window": [
+              15,
+              11,
+              14,
+              12,
+              19,
+              17,
+              18,
+              18
+            ],
+            "trace_hash": "efc77e15674341b8",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 107,
+            "cost_true": 0.040839234519675846,
+            "cost_est": 0.003527723513517874,
+            "n_probe": 0,
+            "n_attempted": 123,
+            "n_delivered": 52,
+            "n_idle": 133,
+            "n_forced_hold": 0,
+            "budget_used": 123,
+            "budget_wasted": 71,
+            "mean_task_aoi": 8.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.028997739472859857,
+              0.011841495046815986
+            ],
+            "send_by_window": [
+              11,
+              11,
+              17,
+              18,
+              15,
+              14,
+              20,
+              17
+            ],
+            "trace_hash": "d8d6d36b70b5b3b1",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          }
+        ]
+      },
+      "compare": {
+        "plan_noprobe": {
+          "cell": [
+            0.85,
+            0.8,
+            "plan_noprobe"
+          ],
+          "n_pairs": 8,
+          "baseline_median": 0.08019903756335042,
+          "candidate_median": 0.07358855802412287,
+          "median_delta": 0.0047978247194450235,
+          "mean_delta": 0.003900610059038797,
+          "delta_ci": [
+            -0.0028614289108643137,
+            0.008365105986564217
+          ],
+          "win_fraction": 0.75,
+          "n_wins": 6,
+          "n_ties": 0,
+          "median_pairwise_ratio": 0.9532673572661157,
+          "ratio_of_medians": 0.9175740789407125,
+          "status": "ok",
+          "reasons": []
+        },
+        "periodic2": {
+          "cell": [
+            0.85,
+            0.8,
+            "periodic2"
+          ],
+          "n_pairs": 8,
+          "baseline_median": 0.055256724587445655,
+          "candidate_median": 0.07358855802412287,
+          "median_delta": -0.0016815433874253771,
+          "mean_delta": 0.007790899213530978,
+          "delta_ci": [
+            -0.02306630705519952,
+            0.017852995616023465
+          ],
+          "win_fraction": 0.5,
+          "n_wins": 4,
+          "n_ties": 0,
+          "median_pairwise_ratio": 1.0529384894347165,
+          "ratio_of_medians": 1.3317575113897036,
+          "status": "ok",
+          "reasons": []
+        },
+        "paced_age8": {
+          "cell": [
+            0.85,
+            0.8,
+            "paced_age8"
+          ],
+          "n_pairs": 8,
+          "baseline_median": 0.06241920818127403,
+          "candidate_median": 0.07358855802412287,
+          "median_delta": -0.007965374539627482,
+          "mean_delta": 0.0039962985721196005,
+          "delta_ci": [
+            -0.024080302102602147,
+            0.014621807529149919
+          ],
+          "win_fraction": 0.375,
+          "n_wins": 3,
+          "n_ties": 0,
+          "median_pairwise_ratio": 1.1968256132046875,
+          "ratio_of_medians": 1.1789409088691336,
+          "status": "ok",
+          "reasons": []
+        }
+      },
+      "send_profile": {
+        "plan_probe": [
+          13.25,
+          7.125,
+          22.625,
+          28.625,
+          29.25,
+          29.125,
+          30.0,
+          27.875
+        ],
+        "plan_noprobe": [
+          13.25,
+          7.125,
+          22.25,
+          26.125,
+          25.5,
+          26.75,
+          28.0,
+          25.75
+        ],
+        "periodic2": [
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0
+        ],
+        "paced_age8": [
+          17.75,
+          13.25,
+          16.0,
+          14.375,
+          17.0,
+          15.125,
+          21.625,
+          17.5
+        ]
+      },
+      "profile_cv": {
+        "plan_probe": 0.34538500845428755
+      }
+    },
+    {
+      "rho": 0.98,
+      "budget_ratio": 0.8,
+      "budget": 204,
+      "arms": {
+        "plan_probe": [
+          {
+            "episode": 100,
+            "cost_true": 0.08537690800234536,
+            "cost_est": 0.015027846323862178,
+            "n_probe": 1,
+            "n_attempted": 193,
+            "n_delivered": 91,
+            "n_idle": 62,
+            "n_forced_hold": 0,
+            "budget_used": 194,
+            "budget_wasted": 102,
+            "mean_task_aoi": 121.0,
+            "mean_csi_aoi": 189.0,
+            "cost_true_by_user": [
+              0.01286307842755401,
+              0.07251382957479136
+            ],
+            "send_by_window": [
+              11,
+              10,
+              23,
+              32,
+              29,
+              27,
+              31,
+              31
+            ],
+            "trace_hash": "f75864d579385952",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 1
+          },
+          {
+            "episode": 101,
+            "cost_true": 0.1257087360015798,
+            "cost_est": 0.029411687040865435,
+            "n_probe": 20,
+            "n_attempted": 161,
+            "n_delivered": 106,
+            "n_idle": 75,
+            "n_forced_hold": 0,
+            "budget_used": 181,
+            "budget_wasted": 55,
+            "mean_task_aoi": 6.0,
+            "mean_csi_aoi": 10.0,
+            "cost_true_by_user": [
+              0.07067232108321587,
+              0.055036414918363925
+            ],
+            "send_by_window": [
+              20,
+              5,
+              17,
+              31,
+              28,
+              24,
+              29,
+              27
+            ],
+            "trace_hash": "60c51cf7a2ac724a",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 15,
+            "planner_probe_diff_argmax": 5
+          },
+          {
+            "episode": 102,
+            "cost_true": 0.04500694049094674,
+            "cost_est": 0.0021603230747867476,
+            "n_probe": 5,
+            "n_attempted": 189,
+            "n_delivered": 117,
+            "n_idle": 62,
+            "n_forced_hold": 0,
+            "budget_used": 194,
+            "budget_wasted": 72,
+            "mean_task_aoi": 35.0,
+            "mean_csi_aoi": 104.0,
+            "cost_true_by_user": [
+              0.016319859004818117,
+              0.02868708148612862
+            ],
+            "send_by_window": [
+              12,
+              6,
+              26,
+              31,
+              30,
+              29,
+              30,
+              30
+            ],
+            "trace_hash": "7f6283eb98136cb7",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 2,
+            "planner_probe_diff_argmax": 3
+          },
+          {
+            "episode": 103,
+            "cost_true": 0.059313740723442476,
+            "cost_est": 0.003735043473276558,
+            "n_probe": 5,
+            "n_attempted": 183,
+            "n_delivered": 106,
+            "n_idle": 68,
+            "n_forced_hold": 0,
+            "budget_used": 188,
+            "budget_wasted": 77,
+            "mean_task_aoi": 52.5,
+            "mean_csi_aoi": 91.0,
+            "cost_true_by_user": [
+              0.033939254551828626,
+              0.025374486171613846
+            ],
+            "send_by_window": [
+              16,
+              4,
+              21,
+              30,
+              28,
+              31,
+              32,
+              26
+            ],
+            "trace_hash": "6ed88736905a7a3e",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 3,
+            "planner_probe_diff_argmax": 2
+          },
+          {
+            "episode": 104,
+            "cost_true": 0.14019395018860548,
+            "cost_est": 0.014999618788179485,
+            "n_probe": 13,
+            "n_attempted": 185,
+            "n_delivered": 72,
+            "n_idle": 58,
+            "n_forced_hold": 0,
+            "budget_used": 198,
+            "budget_wasted": 113,
+            "mean_task_aoi": 81.0,
+            "mean_csi_aoi": 136.0,
+            "cost_true_by_user": [
+              0.09242558252860524,
+              0.04776836766000024
+            ],
+            "send_by_window": [
+              12,
+              6,
+              26,
+              31,
+              32,
+              29,
+              32,
+              30
+            ],
+            "trace_hash": "8c47d097b584495f",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 5,
+            "planner_probe_diff_argmax": 8
+          },
+          {
+            "episode": 105,
+            "cost_true": 0.20427175627392807,
+            "cost_est": 0.020885689619411306,
+            "n_probe": 1,
+            "n_attempted": 190,
+            "n_delivered": 106,
+            "n_idle": 65,
+            "n_forced_hold": 0,
+            "budget_used": 191,
+            "budget_wasted": 84,
+            "mean_task_aoi": 87.0,
+            "mean_csi_aoi": 223.0,
+            "cost_true_by_user": [
+              0.06248807671392085,
+              0.14178367956000723
+            ],
+            "send_by_window": [
+              20,
+              5,
+              19,
+              29,
+              27,
+              29,
+              31,
+              31
+            ],
+            "trace_hash": "ec94f9e762a4c7a3",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 1
+          },
+          {
+            "episode": 106,
+            "cost_true": 0.06284350883022233,
+            "cost_est": 0.001977593697835273,
+            "n_probe": 3,
+            "n_attempted": 195,
+            "n_delivered": 65,
+            "n_idle": 58,
+            "n_forced_hold": 0,
+            "budget_used": 198,
+            "budget_wasted": 130,
+            "mean_task_aoi": 84.0,
+            "mean_csi_aoi": 165.0,
+            "cost_true_by_user": [
+              0.02029913906154664,
+              0.04254436976867569
+            ],
+            "send_by_window": [
+              10,
+              7,
+              24,
+              30,
+              32,
+              32,
+              32,
+              31
+            ],
+            "trace_hash": "f0d0dd3874a2c975",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 3,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 107,
+            "cost_true": 0.052931900146931,
+            "cost_est": 0.0017031121441262544,
+            "n_probe": 10,
+            "n_attempted": 191,
+            "n_delivered": 57,
+            "n_idle": 55,
+            "n_forced_hold": 0,
+            "budget_used": 201,
+            "budget_wasted": 134,
+            "mean_task_aoi": 76.0,
+            "mean_csi_aoi": 169.5,
+            "cost_true_by_user": [
+              0.02007926935734913,
+              0.032852630789581866
+            ],
+            "send_by_window": [
+              10,
+              7,
+              26,
+              32,
+              32,
+              32,
+              32,
+              30
+            ],
+            "trace_hash": "e28bed98fb873e03",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 10,
+            "planner_probe_diff_argmax": 0
+          }
+        ],
+        "plan_noprobe": [
+          {
+            "episode": 100,
+            "cost_true": 0.0858139736009341,
+            "cost_est": 0.015028234593183972,
+            "n_probe": 0,
+            "n_attempted": 194,
+            "n_delivered": 92,
+            "n_idle": 62,
+            "n_forced_hold": 0,
+            "budget_used": 194,
+            "budget_wasted": 102,
+            "mean_task_aoi": 121.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.013300144026142763,
+              0.07251382957479136
+            ],
+            "send_by_window": [
+              11,
+              10,
+              23,
+              32,
+              29,
+              27,
+              31,
+              31
+            ],
+            "trace_hash": "4f3d25540cdf65f5",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 101,
+            "cost_true": 0.13553867523015473,
+            "cost_est": 0.028894987914029963,
+            "n_probe": 0,
+            "n_attempted": 170,
+            "n_delivered": 118,
+            "n_idle": 86,
+            "n_forced_hold": 0,
+            "budget_used": 170,
+            "budget_wasted": 52,
+            "mean_task_aoi": 23.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.0691127883057086,
+              0.06642588692444612
+            ],
+            "send_by_window": [
+              15,
+              5,
+              18,
+              25,
+              29,
+              25,
+              26,
+              27
+            ],
+            "trace_hash": "3ce7309632189be0",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 102,
+            "cost_true": 0.041486033715662764,
+            "cost_est": 0.0021147147289284933,
+            "n_probe": 0,
+            "n_attempted": 185,
+            "n_delivered": 110,
+            "n_idle": 71,
+            "n_forced_hold": 0,
+            "budget_used": 185,
+            "budget_wasted": 75,
+            "mean_task_aoi": 38.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.013869037847742412,
+              0.02761699586792035
+            ],
+            "send_by_window": [
+              12,
+              6,
+              23,
+              26,
+              28,
+              30,
+              30,
+              30
+            ],
+            "trace_hash": "633a28b62da1d3e3",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 103,
+            "cost_true": 0.07387687513084315,
+            "cost_est": 0.004986716876032513,
+            "n_probe": 0,
+            "n_attempted": 186,
+            "n_delivered": 107,
+            "n_idle": 70,
+            "n_forced_hold": 0,
+            "budget_used": 186,
+            "budget_wasted": 79,
+            "mean_task_aoi": 44.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.03644531508385089,
+              0.03743156004699226
+            ],
+            "send_by_window": [
+              17,
+              4,
+              20,
+              28,
+              28,
+              31,
+              32,
+              26
+            ],
+            "trace_hash": "d2354dc33e075111",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 104,
+            "cost_true": 0.317663204322357,
+            "cost_est": 0.01432717719620769,
+            "n_probe": 0,
+            "n_attempted": 199,
+            "n_delivered": 62,
+            "n_idle": 57,
+            "n_forced_hold": 0,
+            "budget_used": 199,
+            "budget_wasted": 137,
+            "mean_task_aoi": 118.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.09242558252860524,
+              0.22523762179375184
+            ],
+            "send_by_window": [
+              12,
+              6,
+              26,
+              32,
+              32,
+              29,
+              32,
+              30
+            ],
+            "trace_hash": "b90aa94e8bc7525f",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 105,
+            "cost_true": 0.20536501092939674,
+            "cost_est": 0.020885407509535592,
+            "n_probe": 0,
+            "n_attempted": 191,
+            "n_delivered": 102,
+            "n_idle": 65,
+            "n_forced_hold": 0,
+            "budget_used": 191,
+            "budget_wasted": 89,
+            "mean_task_aoi": 87.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.06358133136938955,
+              0.14178367956000723
+            ],
+            "send_by_window": [
+              20,
+              11,
+              13,
+              29,
+              27,
+              29,
+              31,
+              31
+            ],
+            "trace_hash": "ced38732fdf79763",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 106,
+            "cost_true": 0.0630440238652516,
+            "cost_est": 0.0019167041082728594,
+            "n_probe": 0,
+            "n_attempted": 203,
+            "n_delivered": 66,
+            "n_idle": 53,
+            "n_forced_hold": 0,
+            "budget_used": 203,
+            "budget_wasted": 137,
+            "mean_task_aoi": 99.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.020621379143507135,
+              0.04242264472174446
+            ],
+            "send_by_window": [
+              10,
+              7,
+              27,
+              32,
+              32,
+              32,
+              32,
+              31
+            ],
+            "trace_hash": "2965ff246b681557",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 107,
+            "cost_true": 0.045550987162729525,
+            "cost_est": 0.0013473481581350452,
+            "n_probe": 0,
+            "n_attempted": 201,
+            "n_delivered": 44,
+            "n_idle": 55,
+            "n_forced_hold": 0,
+            "budget_used": 201,
+            "budget_wasted": 157,
+            "mean_task_aoi": 108.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.024775080549895728,
+              0.020775906612833794
+            ],
+            "send_by_window": [
+              10,
+              8,
+              25,
+              32,
+              32,
+              32,
+              32,
+              30
+            ],
+            "trace_hash": "992a08284f09f2fc",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          }
+        ],
+        "periodic2": [
+          {
+            "episode": 100,
+            "cost_true": 0.06145590796007058,
+            "cost_est": 0.015929609238050924,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 64,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 64,
+            "mean_task_aoi": 3.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.016976374749445265,
+              0.04447953321062531
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "2ad59199ddf2b0b3",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 101,
+            "cost_true": 0.07350496182443976,
+            "cost_est": 0.017890190185349458,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 53,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 75,
+            "mean_task_aoi": 9.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.04938403445146722,
+              0.02412092737297255
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "e51aa19b0b6ac899",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 102,
+            "cost_true": 0.03011752605717876,
+            "cost_est": 0.004572322823480508,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 86,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 42,
+            "mean_task_aoi": 15.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.009712238321159743,
+              0.020405287736019018
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "9650e245defc855f",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 103,
+            "cost_true": 0.06495752549191004,
+            "cost_est": 0.0053846656979244885,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 82,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 46,
+            "mean_task_aoi": 5.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.03548296810180893,
+              0.029474557390101106
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "f57594d5b951462b",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 104,
+            "cost_true": 0.10976967420266615,
+            "cost_est": 0.014578120384329589,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 27,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 101,
+            "mean_task_aoi": 3.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.09477842055796762,
+              0.014991253644698527
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "5c81909eaa8f1386",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 105,
+            "cost_true": 1.213291854458477,
+            "cost_est": 0.029110683935073406,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 79,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 49,
+            "mean_task_aoi": 5.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.24625236489885255,
+              0.9670394895596246
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "7762e3b905b81461",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 106,
+            "cost_true": 0.054477097961573025,
+            "cost_est": 0.0034499558681127997,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 52,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 76,
+            "mean_task_aoi": 11.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.022584021724053195,
+              0.03189307623751983
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "221f65c1113f3c78",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 107,
+            "cost_true": 0.03556127635183106,
+            "cost_est": 0.0031704883330680076,
+            "n_probe": 0,
+            "n_attempted": 128,
+            "n_delivered": 47,
+            "n_idle": 128,
+            "n_forced_hold": 0,
+            "budget_used": 128,
+            "budget_wasted": 81,
+            "mean_task_aoi": 5.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.024836524679577986,
+              0.010724751672253076
+            ],
+            "send_by_window": [
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16,
+              16
+            ],
+            "trace_hash": "e919a0b0a4419382",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          }
+        ],
+        "paced_age8": [
+          {
+            "episode": 100,
+            "cost_true": 0.06279920440724114,
+            "cost_est": 0.016213028803264754,
+            "n_probe": 0,
+            "n_attempted": 142,
+            "n_delivered": 46,
+            "n_idle": 114,
+            "n_forced_hold": 0,
+            "budget_used": 142,
+            "budget_wasted": 96,
+            "mean_task_aoi": 2.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.013938849323424908,
+              0.04886035508381623
+            ],
+            "send_by_window": [
+              22,
+              27,
+              20,
+              18,
+              12,
+              9,
+              15,
+              19
+            ],
+            "trace_hash": "3585f8aa35086016",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 101,
+            "cost_true": 0.09291706983707304,
+            "cost_est": 0.01774611502882651,
+            "n_probe": 0,
+            "n_attempted": 140,
+            "n_delivered": 42,
+            "n_idle": 116,
+            "n_forced_hold": 0,
+            "budget_used": 140,
+            "budget_wasted": 98,
+            "mean_task_aoi": 5.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.061642263049056116,
+              0.03127480678801692
+            ],
+            "send_by_window": [
+              20,
+              29,
+              20,
+              10,
+              20,
+              12,
+              15,
+              14
+            ],
+            "trace_hash": "2ff599e19a6e71cf",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 102,
+            "cost_true": 0.05846623288339632,
+            "cost_est": 0.004763883960205429,
+            "n_probe": 0,
+            "n_attempted": 90,
+            "n_delivered": 56,
+            "n_idle": 166,
+            "n_forced_hold": 0,
+            "budget_used": 90,
+            "budget_wasted": 34,
+            "mean_task_aoi": 15.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.020976924931999888,
+              0.03748930795139643
+            ],
+            "send_by_window": [
+              11,
+              8,
+              11,
+              9,
+              10,
+              8,
+              13,
+              20
+            ],
+            "trace_hash": "0240d2ab20ec43d4",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 103,
+            "cost_true": 0.0748769110422376,
+            "cost_est": 0.004985837145066923,
+            "n_probe": 0,
+            "n_attempted": 101,
+            "n_delivered": 54,
+            "n_idle": 155,
+            "n_forced_hold": 0,
+            "budget_used": 101,
+            "budget_wasted": 47,
+            "mean_task_aoi": 7.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.033192237892786004,
+              0.041684673149451595
+            ],
+            "send_by_window": [
+              18,
+              10,
+              8,
+              8,
+              10,
+              24,
+              13,
+              10
+            ],
+            "trace_hash": "e8f80e1426034861",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 104,
+            "cost_true": 0.09925406292942779,
+            "cost_est": 0.015318326889094005,
+            "n_probe": 0,
+            "n_attempted": 185,
+            "n_delivered": 31,
+            "n_idle": 71,
+            "n_forced_hold": 0,
+            "budget_used": 185,
+            "budget_wasted": 154,
+            "mean_task_aoi": 3.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.08785195615129768,
+              0.011402106778130135
+            ],
+            "send_by_window": [
+              18,
+              12,
+              26,
+              32,
+              15,
+              20,
+              32,
+              30
+            ],
+            "trace_hash": "2f9e108ac3238d33",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 105,
+            "cost_true": 0.3127445870896448,
+            "cost_est": 0.02725451107637526,
+            "n_probe": 0,
+            "n_attempted": 113,
+            "n_delivered": 51,
+            "n_idle": 143,
+            "n_forced_hold": 0,
+            "budget_used": 113,
+            "budget_wasted": 62,
+            "mean_task_aoi": 6.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.06272417376739238,
+              0.25002041332225244
+            ],
+            "send_by_window": [
+              26,
+              20,
+              9,
+              8,
+              8,
+              11,
+              16,
+              15
+            ],
+            "trace_hash": "fb6d7703c06e991e",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 106,
+            "cost_true": 0.03853260441814771,
+            "cost_est": 0.0023466666955542347,
+            "n_probe": 0,
+            "n_attempted": 140,
+            "n_delivered": 44,
+            "n_idle": 116,
+            "n_forced_hold": 0,
+            "budget_used": 140,
+            "budget_wasted": 96,
+            "mean_task_aoi": 17.0,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.02211638157274018,
+              0.016416222845407523
+            ],
+            "send_by_window": [
+              15,
+              10,
+              15,
+              12,
+              17,
+              12,
+              27,
+              32
+            ],
+            "trace_hash": "f0029042e8a8d9f0",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          },
+          {
+            "episode": 107,
+            "cost_true": 0.03999153945807857,
+            "cost_est": 0.003344230848331914,
+            "n_probe": 0,
+            "n_attempted": 126,
+            "n_delivered": 44,
+            "n_idle": 130,
+            "n_forced_hold": 0,
+            "budget_used": 126,
+            "budget_wasted": 82,
+            "mean_task_aoi": 8.5,
+            "mean_csi_aoi": -1.0,
+            "cost_true_by_user": [
+              0.01836357966792692,
+              0.021627959790151655
+            ],
+            "send_by_window": [
+              11,
+              11,
+              26,
+              20,
+              13,
+              15,
+              14,
+              16
+            ],
+            "trace_hash": "c23391c7e3759bd7",
+            "identities_pass": true,
+            "identities_fail": [],
+            "planner_probe_same_argmax": 0,
+            "planner_probe_diff_argmax": 0
+          }
+        ]
+      },
+      "compare": {
+        "plan_noprobe": {
+          "cell": [
+            0.98,
+            0.8,
+            "plan_noprobe"
+          ],
+          "n_pairs": 8,
+          "baseline_median": 0.07984542436588862,
+          "candidate_median": 0.07411020841628385,
+          "median_delta": 0.0007651601270287009,
+          "mean_delta": 0.024086417912416044,
+          "delta_ci": [
+            -0.003520906775283973,
+            0.014563134407400674
+          ],
+          "win_fraction": 0.75,
+          "n_wins": 6,
+          "n_ties": 0,
+          "median_pairwise_ratio": 0.9947916769807581,
+          "ratio_of_medians": 0.9281710129897568,
+          "status": "ok",
+          "reasons": []
+        },
+        "periodic2": {
+          "cell": [
+            0.98,
+            0.8,
+            "periodic2"
+          ],
+          "n_pairs": 8,
+          "baseline_median": 0.06320671672599032,
+          "candidate_median": 0.07411020841628385,
+          "median_delta": -0.016130019114433958,
+          "mean_delta": 0.10843604795626816,
+          "delta_ci": [
+            -0.03042427598593933,
+            0.005643784768467566
+          ],
+          "win_fraction": 0.25,
+          "n_wins": 2,
+          "n_ties": 0,
+          "median_pairwise_ratio": 1.3332015432549778,
+          "ratio_of_medians": 1.1725052692985407,
+          "status": "ok",
+          "reasons": []
+        },
+        "paced_age8": {
+          "cell": [
+            0.98,
+            0.8,
+            "paced_age8"
+          ],
+          "n_pairs": 8,
+          "baseline_median": 0.06883805772473937,
+          "candidate_median": 0.07411020841628385,
+          "median_delta": -0.017759032141978326,
+          "mean_delta": 0.0004918464259057159,
+          "delta_ci": [
+            -0.032791666164506766,
+            0.01556317031879513
+          ],
+          "win_fraction": 0.375,
+          "n_wins": 3,
+          "n_ties": 0,
+          "median_pairwise_ratio": 1.3382453598649202,
+          "ratio_of_medians": 1.0765877316385954,
+          "status": "ok",
+          "reasons": []
+        }
+      },
+      "send_profile": {
+        "plan_probe": [
+          13.875,
+          6.25,
+          22.75,
+          30.75,
+          29.75,
+          29.125,
+          31.125,
+          29.5
+        ],
+        "plan_noprobe": [
+          13.375,
+          7.125,
+          21.875,
+          29.5,
+          29.625,
+          29.375,
+          30.75,
+          29.5
+        ],
+        "periodic2": [
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0,
+          16.0
+        ],
+        "paced_age8": [
+          17.625,
+          15.875,
+          16.875,
+          14.625,
+          13.125,
+          13.875,
+          18.125,
+          19.5
+        ]
+      },
+      "profile_cv": {
+        "plan_probe": 0.36020042621139026
+      }
+    }
+  ],
+  "config": {
+    "plant": {
+      "A": [
+        1.0,
+        1.0
+      ],
+      "B": 0.32,
+      "sigma_w": [
+        0.02,
+        0.03
+      ],
+      "prior_var": 1.0,
+      "sigma_meas": 0.2,
+      "q_cost": 1.0,
+      "r_cost": 0.02
+    },
+    "channel": {
+      "rho_panel": [
+        0.85,
+        0.98
+      ],
+      "kappa": 2.0,
+      "log_h_star": 0.0,
+      "sigma_csi": 0.05,
+      "h_log_init_std": 1.0,
+      "use_ack_for_csi": true
+    },
+    "protocol": {
+      "horizon": 256,
+      "c_probe": 1,
+      "c_data": 1,
+      "budget_ratios": [
+        0.5,
+        0.8
+      ],
+      "init_from_prior": true,
+      "event_pairing": "slot",
+      "allow_multislot": false
+    },
+    "root_seed": 20261021,
+    "protocol_name": "CW-POMDP-v1.1",
+    "budget_values": [
+      128,
+      204
+    ]
+  },
+  "h_plan": 5,
+  "m_samples": 32,
+  "episodes": [
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107
+  ],
+  "src_hash": "0623f3fdf3442bcb",
+  "arms": [
+    "plan_probe",
+    "plan_noprobe",
+    "periodic2",
+    "paced_age8"
+  ]
+}

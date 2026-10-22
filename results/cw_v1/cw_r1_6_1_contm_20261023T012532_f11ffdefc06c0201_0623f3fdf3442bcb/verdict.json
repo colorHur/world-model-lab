@@ -1,0 +1,74 @@
+{
+  "chain": [
+    {
+      "gate": "G8d",
+      "desc": "值函数对预算严格递减（平坦 ≤10%、无上升）",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "G8d2",
+      "desc": "阴性对照：m 取整 ⇒ 平坦 >30%",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "G8c2",
+      "desc": "A²≠1 支算术：闭式 vs 模拟 ≤1%",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "G8c2b",
+      "desc": "阴性对照：旧实现同口径差 >10%",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "M1",
+      "desc": "变异 M1（探测不学但照扣钱）⇒ n_probe == 0",
+      "state": "fail",
+      "observed": false
+    },
+    {
+      "gate": "G4",
+      "desc": "M 16→32 动作一致率 ≥0.90 且成本相对差 ≤10%",
+      "state": "not_reached",
+      "observed": false
+    }
+  ],
+  "stopped_at": "M1",
+  "all_pass": false,
+  "eligible_for_N1N2": false,
+  "rule": "链在第一个 fail 停住；not_reached 一律**不写**成通过",
+  "n_gate_fail": 2,
+  "n_mutation_missed": 1,
+  "mutation_rows": [
+    {
+      "mutation": "M1 PROBE 测量不进信念（钱照扣）",
+      "target": "G5a",
+      "caught": false,
+      "evidence": {
+        "n_probe": 2
+      }
+    },
+    {
+      "mutation": "M2 _pick 无视预算",
+      "target": "G2a",
+      "caught": true,
+      "evidence": {
+        "n_forced_hold": 253,
+        "budget": 3
+      }
+    },
+    {
+      "mutation": "M3 rollout 不扣预算",
+      "target": "G2b",
+      "caught": true,
+      "evidence": {
+        "decrement": 0.0,
+        "expected": 3.0
+      }
+    }
+  ]
+}

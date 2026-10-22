@@ -1,0 +1,519 @@
+{
+  "n_checks": 24,
+  "n_fail": 2,
+  "all_pass": false,
+  "rows": [
+    {
+      "name": "G0 _p_hat 与 posterior.p_succ_expected 逐位一致（≤1e-12）",
+      "pass": true,
+      "detail": {
+        "max_abs_diff": 0.0,
+        "n": 200
+      }
+    },
+    {
+      "name": "G1a plan_ref 的**代码实体**里不出现任何真值入口（AST 检查）",
+      "pass": true,
+      "detail": {
+        "hits": [],
+        "n_forbidden": 8
+      }
+    },
+    {
+      "name": "G1b 同一公开快照（深拷贝重建视图）⇒ 动作相同",
+      "pass": true,
+      "detail": {
+        "a1": "SEND(0)",
+        "a2": "SEND(0)"
+      }
+    },
+    {
+      "name": "G1c 仅改隐藏真值（同视图）⇒ 动作不变",
+      "pass": true,
+      "detail": {
+        "a1": "SEND(0)",
+        "a3": "SEND(0)",
+        "delta_x": 50.0,
+        "delta_logh": 3.0
+      }
+    },
+    {
+      "name": "G1d 阴性对照：改公开 P̂（含向下 / 换人）至少一次改变动作（G1c 不是恒真）",
+      "pass": true,
+      "detail": {
+        "n_changed": 2,
+        "base_action": "SEND(0)",
+        "rows": [
+          {
+            "op": "P_hat[0] + 2.5",
+            "from": 1.0023999999999997,
+            "to": 3.5023999999999997,
+            "action": "SEND(0)",
+            "changed": false
+          },
+          {
+            "op": "P_hat[0] + 12.0",
+            "from": 1.0023999999999997,
+            "to": 13.0024,
+            "action": "SEND(0)",
+            "changed": false
+          },
+          {
+            "op": "P_hat[0] + 60.0",
+            "from": 1.0023999999999997,
+            "to": 61.0024,
+            "action": "SEND(0)",
+            "changed": false
+          },
+          {
+            "op": "P_hat[0] * 0.001",
+            "from": 1.0023999999999997,
+            "to": 0.0010023999999999999,
+            "action": "SEND(1)",
+            "changed": true
+          },
+          {
+            "op": "P_hat[1] + 60.0",
+            "from": 1.0053999999999994,
+            "to": 61.0054,
+            "action": "SEND(1)",
+            "changed": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "G2a 预算 0/1/2/8 下不越支、无强制 HOLD、恒等式全过",
+      "pass": true,
+      "detail": {
+        "failed_budgets": [],
+        "rows": [
+          {
+            "budget": 0,
+            "used": 0,
+            "forced": 0,
+            "probe": 0,
+            "attempted": 0,
+            "ids": true
+          },
+          {
+            "budget": 1,
+            "used": 1,
+            "forced": 0,
+            "probe": 0,
+            "attempted": 1,
+            "ids": true
+          },
+          {
+            "budget": 2,
+            "used": 2,
+            "forced": 0,
+            "probe": 1,
+            "attempted": 1,
+            "ids": true
+          },
+          {
+            "budget": 8,
+            "used": 8,
+            "forced": 0,
+            "probe": 0,
+            "attempted": 8,
+            "ids": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "G2b rollout 内部预算：3 次 SEND + 1 次 PROBE + 1 次 HOLD ⇒ 预算恰减 4",
+      "pass": true,
+      "detail": {
+        "bud_before": 64.0,
+        "bud_after": 60.0,
+        "decrement": 4.0
+      }
+    },
+    {
+      "name": "G3a H=1 的根动作与独立重写的一步值最优一致（4 个时点）",
+      "pass": true,
+      "detail": {
+        "failed_t": [],
+        "rows": [
+          {
+            "t": 3,
+            "chosen": "SEND(1)",
+            "value": 424.82985579744786,
+            "min": 424.82985579744786
+          },
+          {
+            "t": 6,
+            "chosen": "SEND(0)",
+            "value": 179.6648645888608,
+            "min": 179.6648645888608
+          },
+          {
+            "t": 9,
+            "chosen": "SEND(0)",
+            "value": 177.7968912940942,
+            "min": 177.7968912940942
+          },
+          {
+            "t": 12,
+            "chosen": "SEND(0)",
+            "value": 170.38168811883952,
+            "min": 170.38168811883952
+          }
+        ]
+      }
+    },
+    {
+      "name": "G3b H=1 整集 n_probe == 0（PROBE 不动任务估计却花钱 ⇒ 不该被选）",
+      "pass": true,
+      "detail": {
+        "n_probe": 0,
+        "n_attempted": 127
+      }
+    },
+    {
+      "name": "G4 M 加倍（16→32）动作一致率 ≥ 0.90 且成本相对差中位 ≤ 10%",
+      "pass": false,
+      "detail": {
+        "agreement": 0.556640625,
+        "n_compared": 512,
+        "median_rel_cost_diff": 0.36491309506165803,
+        "per_episode": [
+          {
+            "episode": 100,
+            "c16": 0.25098270463336203,
+            "c32": 0.07881878015937711,
+            "rel": 0.6859593163022275
+          },
+          {
+            "episode": 101,
+            "c16": 0.16986772912126685,
+            "c32": 0.17731929536090432,
+            "rel": 0.043866873821088594
+          }
+        ]
+      }
+    },
+    {
+      "name": "G5a 探测臂 n_probe > 0（否则命中 N3：实现缺陷）",
+      "pass": true,
+      "detail": {
+        "probe": 28,
+        "send": 336,
+        "hold": 404,
+        "same_argmax": 21,
+        "diff_argmax": 7
+      }
+    },
+    {
+      "name": "G5b 探测臂 / 禁探测臂动作序列不同（探测真的进了决策）",
+      "pass": true,
+      "detail": {
+        "n_episodes_diff": 3
+      }
+    },
+    {
+      "name": "G5c 探测之后更晚时隙的动作发生变化（续接耦合，不只本槽换人）",
+      "pass": true,
+      "detail": {
+        "n_episodes_late_diff": 3
+      }
+    },
+    {
+      "name": "G5d 存在「探测对象 == 本槽最大 P̂ 用户」（价值不只来自换人）",
+      "pass": true,
+      "detail": {
+        "same": 21,
+        "diff": 7
+      }
+    },
+    {
+      "name": "G6 HOLD 的 cost_est ≡ 0 而 cost_true 明显 > 0（主指标口径更正的可复算依据）",
+      "pass": true,
+      "detail": {
+        "hold_cost_est": 0.0,
+        "hold_cost_true": 3.076084417124051,
+        "A_minus_BK": [
+          0.14333495934998053,
+          0.14333495934998053
+        ],
+        "reason": "A-BK≈0.1433 ⇒ 不发帧时 x̂ 几何衰减 ⇒ q·x̂²+r·u²→0"
+      }
+    },
+    {
+      "name": "G7 规划器优于 HOLD（逐 episode）",
+      "pass": true,
+      "detail": {
+        "plan": [
+          0.080508782797944,
+          0.23860742149019443
+        ],
+        "hold": [
+          3.076084417124051,
+          4.959396245444557
+        ],
+        "ratios": [
+          0.026172488098754696,
+          0.04811219142035016
+        ]
+      }
+    },
+    {
+      "name": "G8a 配速：B/T=0.5、ρ=0.85 的 send_profile 8 窗 CV < 0.30",
+      "pass": false,
+      "detail": {
+        "paced": {
+          "cv": 0.5748169436861408,
+          "profile": [
+            11,
+            6,
+            7,
+            11,
+            9,
+            19,
+            25,
+            31
+          ],
+          "aoi": 7.0,
+          "cost_true": 0.11072746844102208,
+          "sent": 113,
+          "probe": 6
+        },
+        "nopace": {
+          "cv": 0.9411387716484748,
+          "profile": [
+            31,
+            30,
+            31,
+            32,
+            4,
+            0,
+            0,
+            0
+          ],
+          "aoi": 126.5,
+          "cost_true": 0.1762272267536044,
+          "sent": 106,
+          "probe": 22
+        }
+      }
+    },
+    {
+      "name": "G8b 阴性对照：同 planner 关掉配速 ⇒ CV > 0.30（否则 G8a 无分辨力）",
+      "pass": true,
+      "detail": {
+        "cv_nopace": 0.9411387716484748,
+        "cv_paced": 0.5748169436861408
+      }
+    },
+    {
+      "name": "G8a2 同一格 mean_task_aoi ≤ 20（预算空转/反复重试同一用户会让它爆）",
+      "pass": true,
+      "detail": {
+        "aoi_paced": 7.0,
+        "aoi_nopace": 126.5
+      }
+    },
+    {
+      "name": "G8c 稳态循环均值：闭式 vs 长程逐步模拟（m∈{2,4,8,16,32}，两用户）相对差 ≤ 1%",
+      "pass": true,
+      "detail": {
+        "n_cases": 10,
+        "worst": 0.007709609002337597,
+        "bad": [],
+        "rows": [
+          {
+            "m": 2,
+            "user": 0,
+            "sim": 0.00587098,
+            "closed": 0.00587135
+          },
+          {
+            "m": 2,
+            "user": 1,
+            "sim": 0.00898288,
+            "closed": 0.00898372
+          },
+          {
+            "m": 4,
+            "user": 0,
+            "sim": 0.0082399,
+            "closed": 0.00824178
+          },
+          {
+            "m": 4,
+            "user": 1,
+            "sim": 0.01258425,
+            "closed": 0.01258847
+          },
+          {
+            "m": 8,
+            "user": 0,
+            "sim": 0.01162629,
+            "closed": 0.01163416
+          },
+          {
+            "m": 8,
+            "user": 1,
+            "sim": 0.0177982,
+            "closed": 0.01781592
+          },
+          {
+            "m": 16,
+            "user": 0,
+            "sim": 0.01651686,
+            "closed": 0.01654874
+          },
+          {
+            "m": 16,
+            "user": 1,
+            "sim": 0.02550674,
+            "closed": 0.02557845
+          },
+          {
+            "m": 32,
+            "user": 0,
+            "sim": 0.0237151,
+            "closed": 0.02384298
+          },
+          {
+            "m": 32,
+            "user": 1,
+            "sim": 0.0373195,
+            "closed": 0.03760722
+          }
+        ]
+      }
+    },
+    {
+      "name": "G8c2 A²≠1 支的算术：闭式 vs 长程模拟（m∈{2,4} 相对差 ≤ 1%）",
+      "pass": true,
+      "detail": {
+        "judged": [
+          {
+            "m": 2,
+            "user": 0,
+            "Pbar_sim": 0.0006967693,
+            "Pbar_closed": 0.0006961164,
+            "rel": 0.0009369890690363135
+          },
+          {
+            "m": 2,
+            "user": 1,
+            "Pbar_sim": 0.0014814235,
+            "Pbar_closed": 0.0014782281,
+            "rel": 0.002156995983364891
+          },
+          {
+            "m": 4,
+            "user": 0,
+            "Pbar_sim": 0.0011197514,
+            "Pbar_closed": 0.0011239045,
+            "rel": 0.0037090188671666108
+          },
+          {
+            "m": 4,
+            "user": 1,
+            "Pbar_sim": 0.0025046403,
+            "Pbar_closed": 0.0025130495,
+            "rel": 0.0033574596213935405
+          }
+        ],
+        "domain_boundary_m8_m16": [
+          {
+            "m": 8,
+            "user": 0,
+            "Pbar_sim": 0.0019934986,
+            "Pbar_closed": 0.0020181843,
+            "rel": 0.012383119668419318
+          },
+          {
+            "m": 8,
+            "user": 1,
+            "Pbar_sim": 0.004811658,
+            "Pbar_closed": 0.0048751506,
+            "rel": 0.013195581501082953
+          },
+          {
+            "m": 16,
+            "user": 0,
+            "Pbar_sim": 0.0038844313,
+            "Pbar_closed": 0.0039998027,
+            "rel": 0.029700986063083114
+          },
+          {
+            "m": 16,
+            "user": 1,
+            "Pbar_sim": 0.0107358919,
+            "Pbar_closed": 0.0110969247,
+            "rel": 0.03362858529273491
+          }
+        ]
+      }
+    },
+    {
+      "name": "G8c2b 阴性对照：旧实现（v1.6 算术复刻）在同一对账下相对差 > 10%",
+      "pass": true,
+      "detail": {
+        "legacy_rel": [
+          {
+            "m": 2,
+            "user": 0,
+            "rel": 0.6653155029622477
+          },
+          {
+            "m": 2,
+            "user": 1,
+            "rel": 0.6362153805191584
+          },
+          {
+            "m": 4,
+            "user": 0,
+            "rel": 0.5831402663885128
+          },
+          {
+            "m": 4,
+            "user": 1,
+            "rel": 0.5556509664416648
+          }
+        ],
+        "worst_old": 0.6653155029622477
+      }
+    },
+    {
+      "name": "G8d 值函数对预算严格递减（未饱和区平坦比例 ≤ 10%、无上升）",
+      "pass": true,
+      "detail": {
+        "steps": 128,
+        "n_pairs": 128,
+        "n_flat": 2,
+        "n_up": 0,
+        "frac_flat": 0.015625,
+        "example_flat_b": [
+          0,
+          1
+        ]
+      }
+    },
+    {
+      "name": "G8d2 阴性对照：把 m 取整 ⇒ 平坦比例 > 30%（否则 G8d 无分辨力）",
+      "pass": true,
+      "detail": {
+        "cont_m_true": {
+          "n_flat": 2,
+          "n_pairs": 128,
+          "frac_flat": 0.015625,
+          "n_up": 0
+        },
+        "cont_m_false": {
+          "n_flat": 100,
+          "n_pairs": 128,
+          "frac_flat": 0.78125,
+          "n_up": 0
+        }
+      }
+    }
+  ]
+}
