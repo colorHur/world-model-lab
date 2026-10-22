@@ -14,7 +14,8 @@
               │                    │             ├─ channel
               │                    │             ├─ meas     (任务观测噪声)
               │                    │             ├─ csi      (探测测量噪声)
-              │                    │             └─ packet   (发包成败)
+              │                    │             ├─ packet   (发包成败)
+              │                    │             └─ init     (★ 初态，v1.1 新增)
               ├─ split=calibration ─┴─ ...
               ├─ split=dev        ...
               └─ split=test       ...
@@ -33,7 +34,11 @@ from dataclasses import dataclass
 import numpy as np
 
 SPLITS = ("train", "calibration", "dev", "test")
-STREAM_NAMES = ("plant", "channel", "meas", "csi", "packet")
+#: ★ `init` 必须**排在最后**：`SeedSequence.spawn(n)` 的第 i 个子序列与 n 无关，
+#:   所以追加第 6 条不会改变前 5 条的 spawn_key ⇒ 旧证据的随机序列可原样重放。
+#:   （2026-10-22 新增：初态必须从**公开先验**采样，且与过程噪声分开，
+#:     见 `world.CWWorld._init_truth`。）
+STREAM_NAMES = ("plant", "channel", "meas", "csi", "packet", "init")
 
 
 @dataclass(frozen=True)

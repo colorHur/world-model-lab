@@ -133,8 +133,9 @@ class SlotRecord:
     data_delivered: int
     ack: int | None
     csi_reading: float | None
-    #: ★ SEND 时被采样的 y_t（含测量噪声）。诊断与结构检验需要它；
-    #:   它不是可部署信息之外的泄漏 —— 接收端在 ACK 时本来就能拿到同一个值。
+    #: ★ SEND 时被采样的 y_t（含测量噪声）。**只有送达时非 None**：
+    #:   未送达的 SEND 没有任何样本到接收端，那时 `y_t` 就是真值 `x_t + 噪声`，
+    #:   公开它等于绕开整个信道（2026-10-22 修正：旧版无论成没成都写进去）。
     y_t: float | None
     p_true: float | None
     #: ★ 本槽推进时抽到的过程噪声（诊断：结构检验与误差分解要用；
@@ -147,6 +148,27 @@ class SlotRecord:
     est_norm: float
     true_norm: float
     budget_left: int
+
+
+#: ★★ 策略可读的历史字段**白名单**（v1.1）。
+#:
+#: 判别标准只有一条：**这个量是不是"策略自己做过的事 + 它收到的回执"**。
+#:   - `cost_est*` 在白名单里：用**自己的估计** `x_hat` 算的，不是真值。
+#:   - `cost_true*` / `w_realized` / `p_true` / `true_norm` 不在：它们是世界内部状态。
+#:   - `y_t` 只在送达时非 None（见 `SchedulerView.history`）。
+#: 新增 `SlotRecord` 字段时**默认不进**这份白名单 —— 想进必须改这里，并写清理由。
+PUBLIC_HISTORY_FIELDS: tuple[str, ...] = (
+    "t", "action", "user", "resource_spent",
+    "probe_done", "data_attempted", "data_delivered", "ack",
+    "csi_reading", "y_t",
+    "cost_est", "cost_est_by_user",
+    "budget_left",
+)
+
+#: 真值字段清单（反例闸用它做"白名单之外一律不可见"的对照）。
+TRUTH_FIELDS: tuple[str, ...] = (
+    "p_true", "w_realized", "cost_true", "cost_true_by_user", "true_norm",
+)
 
 
 # ---------------------------------------------------------------- 世界
@@ -179,8 +201,13 @@ class CWWorld:
         self.action_space = action_space(n)
 
         # ★ 真值：只在内部
+        #    v1.1：从**公开先验**采样，而不是确定取 0。
+        #    旧版 `x_0 ≡ 0` 而策略被告知先验 `N(0, prior_var)` ⇒ 策略"以为在猜、
+        #    其实精确知道"，首次观测前的决策被系统性高估（2026-10-22 验收判为缺陷）。
         self._x_true = np.zeros(n, dtype=float)
         self._log_h_true = np.zeros(n, dtype=float)
+        self.init_record: dict = {}
+        self._sample_init()
 
         # 接收端信念
         self._x_hat = np.zeros(n, dtype=float)
@@ -206,6 +233,9 @@ class CWWorld:
         self.n_nack = 0
         self.control_history: list[np.ndarray] = []
         self.records: list[SlotRecord] = []
+        #: ★ v1.1：与 `records` 同长，但只含白名单字段 —— 视图只引用这一份，
+        #:   这样"视图里能读到什么"由**追加处**决定，不依赖读的人自觉过滤。
+        self._public_records: list[dict] = []
         #: 反例 1 的真值替换：{"x": array} / {"h": array} / None
         self.truth_override: dict | None = None
         self._w_last = np.zeros(n, dtype=float)
@@ -234,6 +264,32 @@ class CWWorld:
     def control_from_estimate(self) -> np.ndarray:
         """u_t = -K_i x̂_i，用**槽开始时刻**的估计。"""
         return -self._K * self._x_hat
+
+    # ---------------- 初态（v1.1）
+    def _sample_init(self) -> None:
+        """按**公开先验**采样真初态。
+
+        公开先验（所有方法共享、也写进 `telemetry` 的初始 `P_hat`/`h_var`）：
+            `x_i(0) ~ N(0, prior_var)`，`log h_i(0) ~ N(0, h_log_init_std²)`。
+
+        ★ 为什么单独一条 `init` 子流：`SeedSequence.spawn(n)` 的第 i 个子序列
+          与 n 无关，所以把 `init` **追加在最后**不会挪动 plant/channel/meas/csi/packet
+          的 spawn_key ⇒ 旧证据的随机序列仍能原样重放。
+        ★ `init_from_prior=False` 时**不消耗**该子流的任何数，真值保持 0 ——
+          这是复现 v1 旧数字的唯一开关，不进新结果表。
+        """
+        n = self.n_users
+        if not self.cfg.protocol.init_from_prior:
+            self.init_record = {"mode": "zero", "x0": [0.0] * n, "h0": [0.0] * n}
+            return
+        g = self.rngs["init"]
+        x0 = g.standard_normal(n) * float(np.sqrt(self.cfg.plant.prior_var))
+        h0 = g.standard_normal(n) * float(self.cfg.channel.h_log_init_std)
+        self._x_true = np.asarray(x0, dtype=float)
+        self._log_h_true = np.asarray(h0, dtype=float)
+        self.init_record = {"mode": "prior",
+                            "x0": [float(v) for v in x0],
+                            "h0": [float(v) for v in h0]}
 
     # ---------------- 时隙推进
     def step(self, act: Action, *, n_substeps: int = 1) -> SlotRecord:
@@ -393,7 +449,7 @@ class CWWorld:
             t=t, action=act.kind, user=act.user, resource_spent=spend,
             probe_done=int(act.kind == "PROBE"), data_attempted=int(act.kind == "SEND"),
             data_delivered=delivered, ack=ack, csi_reading=csi_reading,
-            y_t=send_sample, p_true=p_true,
+            y_t=(send_sample if delivered else None), p_true=p_true,
             w_realized=tuple(float(x) for x in self._w_last),
             cost_est=cost_est, cost_true=cost_true,
             cost_est_by_user=cost_est_by_user, cost_true_by_user=cost_true_by_user,
@@ -402,6 +458,7 @@ class CWWorld:
             budget_left=self.budget_total - self.budget_used,
         )
         self.records.append(rec)
+        self._public_records.append({f: getattr(rec, f) for f in PUBLIC_HISTORY_FIELDS})
         return rec
 
     # ---------------- 内部
@@ -444,7 +501,40 @@ class CWWorld:
         self._v_h[i] = (1.0 - g) * prior_var
 
     def view(self) -> "SchedulerView":
-        return SchedulerView(self)
+        """构造**公开信息快照**。不含 self，也不含任何真值字段。
+
+        ★ 这是 v1.1 的信息边界实现：边界不靠"藏引用"，靠"只拷公开数值"。
+          即使策略把 `view._pub` 全打印出来，也只有这些键。
+        """
+        tel = []
+        for i in range(self.n_users):
+            stamp = int(self._stamp[i])
+            csi_stamp = int(self._csi_stamp[i])
+            tel.append({
+                "i": i,
+                "x_hat": float(self._x_hat[i]),
+                "P_hat": float(self._P_hat[i]),
+                "stamp": stamp,
+                "task_aoi": (self.t - stamp) if stamp >= 0 else -1,
+                "h_mean": float(self._m_h[i]),
+                "h_var": float(self._v_h[i]),
+                "csi_stamp": csi_stamp,
+                "csi_aoi": (self.t - csi_stamp) if csi_stamp >= 0 else -1,
+            })
+        return SchedulerView({
+            "t": int(self.t),
+            "n_users": int(self.n_users),
+            "budget_left": int(self.budget_total - self.budget_used),
+            "budget_total": int(self.budget_total),
+            "prior": {
+                "x_mean": 0.0,
+                "x_var": float(self.cfg.plant.prior_var),
+                "h_log_mean": 0.0,
+                "h_log_var": float(self.cfg.channel.h_log_init_std) ** 2,
+            },
+            "telemetry": tel,
+            "history": tuple(self._public_records),
+        })
 
 
 class BudgetExhausted(RuntimeError):
@@ -452,70 +542,69 @@ class BudgetExhausted(RuntimeError):
 
 
 class SchedulerView:
-    """调度器**能看到的全部信息**。没有 x、没有 h、没有未来。
+    """调度器能看到的**全部**信息 —— 一个纯快照，不含任何世界句柄。
 
-    ★ 内部世界用**双下划线**存（`__w` ⇒ 被改名为 `_SchedulerView__w`），
-      并且 `__slots__` 只放这一个名字。这样 `view._w`、`view.world`、`view.env`
-      一律 AttributeError —— 反例 1 的可访问面因此是"空"。
-      （单下划线 `_w` 是**能**被直接访问的，第一版正是因此漏了。）
+    ★★ v1.1 重新设计（2026-10-22 验收缺陷）：旧版持有 `__w` 指向 `CWWorld`。
+      `__slots__ = ("__w",)` 只是**名字改写**（`_SchedulerView__w`），
+      `view._SchedulerView__w._x_true` 一步就能读到真值 —— 反例 1k 就是这么抓到的。
+      "Python 里用下划线藏引用"不是信息边界，改名不是安全机制。
+      ⇒ 现在 `CWWorld.view()` 只传**公开数值的快照**；即便把 `_pub` 整个打印出来，
+        里面也没有任何真值字段（1i 用白名单逐字段验）。
+    ★ 快照的构造代价是每槽 O(n_users)，`history` 只是把已追加的公开记录元组化。
     """
 
-    __slots__ = ("__w",)
+    __slots__ = ("_pub",)
 
-    def __init__(self, w: CWWorld) -> None:
-        self.__w = w
-
-    @property
-    def _inner(self) -> CWWorld:  # pragma: no cover - 仅供本类内部/测试显式取用
-        return self.__w
+    def __init__(self, pub: dict) -> None:
+        self._pub = pub
 
     @property
     def t(self) -> int:
-        return self.__w.t
+        return self._pub["t"]
 
     @property
     def n_users(self) -> int:
-        return self.__w.n_users
+        return self._pub["n_users"]
 
     @property
     def budget_left(self) -> int:
-        return self.__w.budget_total - self.__w.budget_used
+        return self._pub["budget_left"]
 
     @property
     def budget_total(self) -> int:
-        return self.__w.budget_total
+        return self._pub["budget_total"]
+
+    @property
+    def prior(self) -> dict:
+        """**公开先验**：所有方法共享，且与真初态的采样分布一致（v1.1）。"""
+        return self._pub["prior"]
 
     @property
     def telemetry(self) -> list[dict]:
         """逐用户可部署状态：全部由"收到的观测 + 已执行动作 + ACK"推出。"""
-        w = self.__w
-        out = []
-        for i in range(w.n_users):
-            stamp = int(w._stamp[i])
-            csi_stamp = int(w._csi_stamp[i])
-            out.append({
-                "i": i,
-                "x_hat": float(w._x_hat[i]),
-                "P_hat": float(w._P_hat[i]),
-                "stamp": stamp,
-                "task_aoi": (w.t - stamp) if stamp >= 0 else -1,
-                "h_mean": float(w._m_h[i]),
-                "h_var": float(w._v_h[i]),
-                "csi_stamp": csi_stamp,
-                "csi_aoi": (w.t - csi_stamp) if csi_stamp >= 0 else -1,
-            })
-        return out
+        return self._pub["telemetry"]
 
     @property
     def history(self) -> tuple[dict, ...]:
-        """已发生的记账（可部署部分）。真值字段已剔除。"""
-        return tuple(
-            {k: v for k, v in r.__dict__.items()
-             if k not in ("p_true", "csi_reading", "cost_true", "true_norm")}
-            for r in self.__w.records
-        )
+        """已发生的记账 —— **白名单**输出（见 `PUBLIC_HISTORY_FIELDS`）。
+
+        ★★ 为什么是白名单：旧版是黑名单 `{k: v for k, v in r.__dict__.items()
+          if k not in (...)}`。黑名单的失效模式是"加字段就泄漏"：`SlotRecord`
+          后来加了 `w_realized`（实现的过程噪声）与 `cost_true_by_user`（逐用户真成本），
+          都不在旧的 4 元黑名单里 ⇒ 通过 `view.history` 直接可读。
+        ★ `y_t` 只在**送达**时非 None（未送达的 SEND 没有样本到接收端，
+          那时它是 `x_t + 噪声`，公开它等于绕过整个信道）。
+        ★ `csi_reading` 在白名单里是**对的**：那是调度器自己花钱测的读数。
+        """
+        return self._pub["history"]
 
     def __getattr__(self, name: str):
         raise AttributeError(
             f"SchedulerView 没有属性 {name!r}。真状态/真信道/未来随机数不向调度器开放。"
         )
+
+
+#: 视图对外声明的全部成员（闸用它做"没有多余入口"的对照）
+VIEW_MEMBERS: tuple[str, ...] = (
+    "t", "n_users", "budget_left", "budget_total", "prior", "telemetry", "history",
+)

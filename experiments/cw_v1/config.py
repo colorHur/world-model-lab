@@ -89,6 +89,15 @@ class ChannelConfig:
     稳态 `log h ~ N(0,1)` ⇒ 中位 h=1、`P(h>0.5)=0.7572`。
     发包成功概率 `p_succ = sigmoid(KAPPA * (log h - LOG_H_STAR))`。
     归一化方式刻意选择为「不依赖 rho」，这样不同 rho 档的**平均成功率可比**。
+
+    ★★ 稳态标准差（2026-10-22 更正）：**就是 1.0，且与 rho 无关**。
+      因为更新式已归一（新息系数 `sqrt(1-rho^2)`、新息 sd 为 1），
+      `Var(∞) = (1-rho²)/(1-rho²)·1 = 1`。
+      旧 STATE 里写的「ρ=0.98 时稳态 sd 应为 5.03」是**把未归一 AR 的公式
+      `1/sqrt(1-rho²)` 套到已归一的式子上**算出来的，错。5.025 只对
+      `log h_{t+1} = rho·log h_t + s_t`（新息 sd=1、无 `sqrt(1-rho²)` 因子）成立。
+      ⇒ `h_log_init_std` 不是"一个可调参数"，它是**该稳态 sd 的声明值**，
+        因此必须恒等于 1.0；`protocol.v11_validate()` 会检查这一点。
     """
 
     rho_panel: tuple[float, ...] = (0.85, 0.98)
@@ -99,11 +108,12 @@ class ChannelConfig:
     #: 真值 h 的初始条件：稳态分布 log h ~ N(0,1)（所有方法共享同一公开先验）
     h_log_init_std: float = 1.0
     #: ★ ACK/NACK 是否用于更新**信道信念**。
-    #: R0 默认 False —— 理由见 `gates.counterexample_1` 的长注释：
-    #:   一旦 ACK 进信念，"只改真信道 ⇒ 动作不变"（反例 1d）就不可能成立，
-    #:   因为 ACK 是慢信道的合法结果。ACK→信念属于预测/学习（R2），不是 R0 协议验收面。
-    #: 置 True 只用于单独验 ACK 的方向性（反例 4g）。
-    use_ack_for_csi: bool = False
+    #: v1.1 起默认 **True**：v4 §3.3 要求 ACK 是合法信息，任何部署方法都该能用它。
+    #: 旧版默认 False 的唯一理由是"为了让反例 1d（只改真信道 ⇒ 动作不变）通过"——
+    #: 那是**关掉信息去迁就判据**，2026-10-22 验收判为不合理；1d 已改写成
+    #: "公开历史相同 ⇒ 当前动作相同"（见 `gates.counterexample_1`）。
+    #: 置 False 只用于单独对照"没有 ACK 通道"的世界，**不得**进主表。
+    use_ack_for_csi: bool = True
 
 
 @dataclass(frozen=True)
@@ -115,6 +125,21 @@ class ProtocolConfig:
     c_data: int = 1
     #: 预算档：floor(0.5T) / floor(0.8T)
     budget_ratios: tuple[float, ...] = (0.5, 0.8)
+
+    #: ★★ v1.1（2026-10-22）：真初态是否从**公开先验**采样。
+    #:   旧版真值 `x_0 ≡ 0`、`log h_0 ≡ 0`（确定值），而策略被告知先验是
+    #:   `N(0, prior_var)` / `N(0, h_log_init_std²)` ⇒ **公开先验与真实初态不一致**：
+    #:   策略以为自己在猜，其实是精确已知 0。这会让"首次观测前"的所有决策被系统性高估。
+    #:   True = 用 `init` 子流按公开先验采样（v1.1 默认，进新证据目录）；
+    #:   False = 复现 v1 旧证据的确定初态（**只用于重放，不进新结果表**）。
+    init_from_prior: bool = True
+
+    #: ★ v1.1 只支持 `c_probe == c_data == 1`。多时隙配置（如 (2,1)）在本版
+    #:   有已知的"标称 T 槽实际 T·n_substeps 槽"缺陷：horizon 按**动作数**计而
+    #:   物理时间按子步计，两者不等价 ⇒ 不同配置的"平均每步成本"不可比。
+    #:   `v11_validate()` 会显式拒绝非 (1,1) 的配置，而不是让它安静地跑出错误对比。
+    #:   修法见 `docs/research/`（固定物理时间窗 + 逐子步计量），在修好前不得启用。
+    allow_multislot: bool = False
 
     def budget(self, ratio: float) -> int:
         """`floor(ratio * T)`，用有理数整数运算实现以避免浮点误差。
@@ -140,9 +165,64 @@ class CWConfig:
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
-        d["protocol_name"] = "CW-POMDP-v1"
+        d["protocol_name"] = "CW-POMDP-v1.1"
         d["budget_values"] = [self.protocol.budget(r) for r in self.protocol.budget_ratios]
         return d
+
+    #: 协议版本号。写进 run-id 与证据目录，禁止用 v1 与 v1.1 的数字混表。
+    PROTOCOL_VERSION = "CW-POMDP-v1.1"
+
+    def v11_validate(self) -> list[str]:
+        """v1.1 的**结构**自洽检查。返回问题清单（空 = 通过）。
+
+        ★ 这些不是"数值容差"，是**定义级恒等式**：
+          ① 归一 AR(1) 的稳态方差 = 1.0（新息系数 `sqrt(1-rho²)`、新息 sd=1）；
+             写成 `1/(1-rho²)` 是把**未归一**的 AR 公式套过来，与更新式矛盾。
+          ② `h_log_init_std` 是上面这个稳态 sd 的**声明值**，不是自由参数 ⇒ 必须 = 1.0。
+             若它 ≠ 稳态 sd，信道信念的初始方差与真信道分布不一致，
+             `P(h>h*)` 之类的概率从一开始就是错的。
+          ③ 初态先验 `prior_var` 与 `init_from_prior=True` 必须同时成立，
+             否则又回到"策略以为在猜、其实精确已知 0"。
+          ④ 多时隙在 v1.1 未修，`(c_probe, c_data) != (1,1)` 必须被拒绝。
+          ⑤ 估计协方差的地板：`P_hat ≥ sigma_w²`（过程噪声方差，由 `A²P+σ_w²` 决定），
+             与 Riccati 的稳态解 `P_ss` 不是同一个量 —— 后者是**控制代价**的稳态值，
+             随 `q/r` 变；前者是**估计误差**的稳态值，与 `q/r` 无关。混用会让
+             "估计已经收敛到什么程度"被系统性夸大或低估。
+        """
+        p, ch, pr = self.plant, self.channel, self.protocol
+        bad: list[str] = []
+
+        # ① 用**与实际代码同一个递推**算稳态方差，而不是背公式：
+        #    `world._v_h ← rho²·v + (1-rho²)`。从 v=1 出发迭代 ⇒ 应恒为 1。
+        for rho in ch.rho_panel:
+            v = 1.0
+            for _ in range(500):
+                v = rho * rho * v + (1.0 - rho * rho)
+            if abs(v - 1.0) > 1e-12:
+                bad.append(f"rho={rho}：方差递推稳态 {v}，应为 1.0")
+        if abs(float(ch.h_log_init_std) - 1.0) > 1e-12:
+            bad.append(
+                f"h_log_init_std={ch.h_log_init_std} 必须 =1.0（归一 AR 的稳态 sd）；"
+                f"旧写法 1/sqrt(1-rho^2) 只在未归一 AR 下成立")
+
+        if pr.init_from_prior and float(p.prior_var) <= 0.0:
+            bad.append(f"init_from_prior=True 要求 prior_var>0，实为 {p.prior_var}")
+        if (not pr.init_from_prior) and float(p.prior_var) > 0.0:
+            # 不是错，而是必须意识到：确定初态 + 非零公开先验 = 先验与真值不一致
+            bad.append(
+                "init_from_prior=False（复现 v1 旧证据）与 prior_var>0 并存 ⇒ "
+                "公开先验与真实初态不一致，只允许用于重放旧数字")
+
+        if (int(pr.c_probe), int(pr.c_data)) != (1, 1) and not pr.allow_multislot:
+            bad.append(
+                f"c_probe={pr.c_probe}, c_data={pr.c_data}：v1.1 只支持 (1,1)。"
+                f"多时隙的时间轴未与 horizon 对齐（标 T 槽实际 T·n_substeps 物理步），"
+                f"不同配置的平均成本不可比。修好前请保持 (1,1)。")
+
+        for i, sw in enumerate(p.sigma_w):
+            if float(sw) <= 0.0:
+                bad.append(f"sigma_w[{i}]={sw} 必须为正（估计协方差地板依赖它）")
+        return bad
 
     def fingerprint(self) -> str:
         """配置内容哈希：run-id 与证据记录的组成部分。"""

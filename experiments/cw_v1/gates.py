@@ -195,6 +195,140 @@ def counterexample_1(cfg: CWConfig, g: Gate) -> None:
         blocked = True
     g.check("1g 未授权时拒绝构造越界策略", blocked, "期望 PermissionError")
 
+    # ---------------------------------------------------------------- 1h
+    # ★★ v1.1 新增（验收要求的正形式）：
+    #    「**公开历史完全相同** ⇒ 当前动作不受隐藏真值影响」。
+    #    旧形式（"改真值后整条动作序列不变"）在 POMDP 里不成立：改真信道会合法地
+    #    改变 ACK，ACK 是合法信息 ⇒ 要求整条不变等于要求仿真里没有信道。
+    #
+    #    构造方式（比"分歧点解释"更直接）：两个**同种子**世界，用同一策略跑同样的
+    #    前 i 步 ⇒ 公开历史逐字段相同；然后只扰动其中一个世界的**隐藏真值**
+    #    （不改任何子流，也不再推进）⇒ 两者公开信息此刻完全一样。
+    #    合法策略必须给出**相同动作**；偷看真值的策略必然不同。
+    from experiments.cw_v1.world import PUBLIC_HISTORY_FIELDS, VIEW_MEMBERS
+
+    def build_prefix(n_steps, policy, *, perturb_hidden: float = 0.0,
+                     which: int = 1):
+        rngs, sids = make_episode_rngs(cfg.root_seed, "dev", 11)
+        w = CWWorld(cfg, rngs, sids, rho=0.85)
+        w.budget_total = int(cfg.protocol.horizon)
+        for _ in range(int(n_steps)):
+            w.step(policy(w.view()))
+        if perturb_hidden:
+            w._x_true[which] += float(perturb_hidden)
+            w._log_h_true[which] -= float(perturb_hidden)
+        return w
+
+    N_PREFIX = 20
+    for tag, policy in (("CSI 敏感", pol), ("纯 AoI", pol_aoi)):
+        wa = build_prefix(N_PREFIX, policy)
+        wb = build_prefix(N_PREFIX, policy, perturb_hidden=5.0)
+        ha, hb = wa.view().history, wb.view().history
+        same_pub = (ha == hb) and (wa.view().telemetry == wb.view().telemetry)
+        act_a, act_b = policy(wa.view()), policy(wb.view())
+        g.check(f"1h[{tag}] 公开历史相同 ⇒ 隐藏真值变化不改变当前动作",
+                same_pub and (act_a == act_b),
+                {"public_identical": same_pub, "act_clean": str(act_a),
+                 "act_perturbed": str(act_b), "prefix_steps": N_PREFIX})
+
+    # 1h-ctl：同一构造下，**偷看真状态**的策略必须给出不同动作。
+    # ★ 没有这一条，1h 可能是恒真（"两个世界当然一样"）—— 阳性对照才有分辨力。
+    class _LeakyOn:
+        """故意偷看真状态：按 |x_true| 最大的用户发。不读 view。"""
+
+        name = "LEAKY_PEEK"
+
+        def __init__(self, world_box: list) -> None:
+            self.box = world_box
+
+        def __call__(self, view):  # noqa: ARG002 - 故意不读 view
+            return Action("SEND", int(np.argmax(np.abs(self.box[0]._x_true))))
+
+    box_a = [None]
+    pol_leak = _LeakyOn(box_a)
+    wa = build_prefix(N_PREFIX, lambda v: Action("SEND", v.t % 2))
+    wb = build_prefix(N_PREFIX, lambda v: Action("SEND", v.t % 2), perturb_hidden=5.0)
+    box_a[0] = wa
+    act_a = pol_leak(None)
+    box_a[0] = wb
+    act_b = pol_leak(None)
+    g.check("1h-ctl 偷看真状态的策略在公开历史相同时给出不同动作（证明 1h 有分辨力）",
+            (wa.view().history == wb.view().history) and (act_a != act_b),
+            {"public_identical": wa.view().history == wb.view().history,
+             "act_clean": str(act_a), "act_perturbed": str(act_b)})
+
+    # ---------------------------------------------------------------- 1i
+    # ★★ v1.1 新增：**白名单本身**要能验。取真实历史行，检查
+    #    (a) 白名单外的字段一个都读不到（含 w_realized / cost_true_by_user）；
+    #    (b) 白名单内的字段确实存在（否则上面那条会被"全空表"满足 = 恒真）。
+    rngs, sids = make_episode_rngs(cfg.root_seed, "dev", 7)
+    w = CWWorld(cfg, rngs, sids, rho=0.85)
+    w.budget_total = _budget(cfg, 0.5)
+    for _ in range(24):
+        w.step(Action("SEND", 0))
+    hist = w.view().history
+    row0 = hist[0]
+    leaked = sorted({k for row in hist for k in row} - set(PUBLIC_HISTORY_FIELDS))
+    missing = sorted(set(PUBLIC_HISTORY_FIELDS) - set(row0))
+    g.check("1i 公开历史 = 白名单（无多余字段、无缺字段）",
+            (not leaked) and (not missing),
+            {"leaked_fields": leaked, "missing_fields": missing,
+             "n_rows": len(hist)})
+
+    # 1i-ctl：把一条真值字段塞回白名单，判据必须 FAIL（否则"无多余字段"是空话）
+    import experiments.cw_v1.world as _W
+    saved = _W.PUBLIC_HISTORY_FIELDS
+    try:
+        _W.PUBLIC_HISTORY_FIELDS = saved + ("cost_true_by_user",)
+        rngs, sids = make_episode_rngs(cfg.root_seed, "dev", 7)
+        w2 = CWWorld(cfg, rngs, sids, rho=0.85)
+        w2.budget_total = _budget(cfg, 0.5)
+        for _ in range(8):
+            w2.step(Action("SEND", 0))
+        h2 = w2.view().history
+        leaked2 = sorted({k for row in h2 for k in row} - set(saved))
+    finally:
+        _W.PUBLIC_HISTORY_FIELDS = saved
+    g.check("1i-ctl 白名单被篡改后立刻出现越界字段（证明 1i 有分辨力）",
+            "cost_true_by_user" in leaked2, {"leaked_fields": leaked2})
+
+    # ---------------------------------------------------------------- 1j
+    # ★★ v1.1 新增：**未送达的 SEND 没有样本** —— `y_t` 必须为 None。
+    #    旧版无论成没成都把采样值写进记录；未送达时那个值就是 `x_t + 噪声`，
+    #    公开它等于绕过信道。
+    rngs, sids = make_episode_rngs(cfg.root_seed, "dev", 8)
+    w = CWWorld(cfg, rngs, sids, rho=0.85)
+    w.budget_total = 60
+    w._log_h_true[:] = -30.0          # 必然失败
+    rec_fail = w.step(Action("SEND", 0))
+    w._log_h_true[:] = 30.0           # 必然成功
+    rec_ok = w.step(Action("SEND", 0))
+    g.check("1j 失败的 SEND 不公开 y_t；成功的 SEND 才公开",
+            (rec_fail.data_delivered == 0 and rec_fail.y_t is None
+             and rec_ok.data_delivered == 1 and rec_ok.y_t is not None),
+            {"fail_delivered": rec_fail.data_delivered, "fail_y_t": rec_fail.y_t,
+             "ok_delivered": rec_ok.data_delivered,
+             "ok_y_t": None if rec_ok.y_t is None else "finite"})
+
+    # 1k：视图上不存在 world 句柄（`_inner` 已删）
+    rngs, sids = make_episode_rngs(cfg.root_seed, "dev", 9)
+    w = CWWorld(cfg, rngs, sids)
+    vv = w.view()
+    handles = [h for h in ("_inner", "_SchedulerView__w", "_w", "world", "env",
+                           "_CWWorld__x_true", "_x_true")
+               if hasattr(vv, h)]
+    # 快照里**任何**值都不能是真值：把 _pub 全展开扫一遍字段名
+    import json as _json
+    blob = _json.dumps(vv._pub, ensure_ascii=False, default=str)
+    bad_keys = [k for k in ("p_true", "w_realized", "cost_true", "true_norm",
+                            "cost_true_by_user")
+                if k in blob]
+    g.check("1k 视图无 world 句柄，且快照里不含任何真值字段名",
+            (not handles) and (not bad_keys),
+            {"found_handles": handles, "truth_keys_in_snapshot": bad_keys,
+             "slots": list(SchedulerView.__slots__),
+             "declared_members": list(VIEW_MEMBERS)})
+
 
 # ============================================================ 2 消费者接线
 def counterexample_2(cfg: CWConfig, g: Gate) -> None:
@@ -339,9 +473,9 @@ def counterexample_4(cfg: CWConfig, g: Gate) -> None:
             and w.budget_attempted == att_before,
             {"ack_field": rec3.ack, "n_ack": w.n_ack, "n_nack": w.n_nack})
 
-    # 4g：ACK/NACK 是信息 —— 打开 `use_ack_for_csi` 后，信念应随结果朝相反方向更新。
-    # ★ 这条与 1d 是**互相排斥**的两条路径，见反例 1 的长注释：
-    #   默认协议关掉 ACK→信念（1d 才成立），这里用单独配置验证 ACK 的**方向性**。
+    # 4g：ACK/NACK 是信息 —— v1.1 起**默认接入**信念更新（旧版默认关闭，
+    #     理由是"关掉它才能让 1d 通过"，属于关信息迁就判据，已废）。
+    #     这里验**方向性**：ACK 抬均值、NACK 不抬且不收缩到与 ACK 同水平。
     from dataclasses import replace as _replace
 
     cfg_ack = CWConfig(plant=cfg.plant,
@@ -370,23 +504,35 @@ def counterexample_4(cfg: CWConfig, g: Gate) -> None:
             and (v_nack > v_ack),
             {"m_after_ack": m_ack, "m_after_hold": m_hold, "m_after_nack": m_nack,
              "v_after_ack": v_ack, "v_after_hold": v_hold, "v_after_nack": v_nack,
-             "config": "use_ack_for_csi=True（非默认）"})
+             "config": "use_ack_for_csi=True（v1.1 默认）"})
 
-    # 4h：默认协议下，ACK 不进信念 —— 与 1d 的前提一致，必须显式验一次
-    def belief_default(act: Action, force_success: bool | None) -> float:
-        rngs3, sids3 = make_episode_rngs(cfg.root_seed, "dev", 5)
-        w3 = CWWorld(cfg, rngs3, sids3)
+    # 4h：默认协议下 ACK **确实**进入信念 —— 这条防的是"开关写着 True 但没接线"。
+    # ★ 与旧版**方向相反**：旧版断言"默认不变"，那是为了让 1d 的旧形式成立。
+    def belief_of(c, act: Action, force_success: bool | None) -> float:
+        rngs3, sids3 = make_episode_rngs(c.root_seed, "dev", 5)
+        w3 = CWWorld(c, rngs3, sids3)
         w3.budget_total = 50
         if force_success is not None:
             w3._log_h_true[:] = 30.0 if force_success else -30.0
         w3.step(act)
         return float(w3._m_h[0])
 
-    d_ack = belief_default(Action("SEND", 0), True)
-    d_nack = belief_default(Action("SEND", 0), False)
-    g.check("4h 默认协议下 ACK/NACK 不改变信道信念（1d 的前提）",
-            abs(d_ack - d_nack) < 1e-15,
-            {"m_after_ack": d_ack, "m_after_nack": d_nack})
+    d_ack = belief_of(cfg, Action("SEND", 0), True)
+    d_nack = belief_of(cfg, Action("SEND", 0), False)
+    g.check("4h 默认协议下 ACK 与 NACK 给出不同的信道信念（接线活着）",
+            abs(d_ack - d_nack) > 1e-6,
+            {"m_after_ack": d_ack, "m_after_nack": d_nack,
+             "default_use_ack_for_csi": bool(cfg.channel.use_ack_for_csi)})
+
+    # 4i：显式关闭开关后必须**逐位**相同 —— 否则 4h 通过也不能说明是开关在起作用
+    cfg_noack = CWConfig(plant=cfg.plant,
+                         channel=_replace(cfg.channel, use_ack_for_csi=False),
+                         protocol=cfg.protocol, root_seed=cfg.root_seed)
+    n_ack = belief_of(cfg_noack, Action("SEND", 0), True)
+    n_nack = belief_of(cfg_noack, Action("SEND", 0), False)
+    g.check("4i 关闭 use_ack_for_csi 后 ACK 不影响信念（阴性对照）",
+            abs(n_ack - n_nack) < 1e-15,
+            {"m_after_ack": n_ack, "m_after_nack": n_nack})
 
 
 # ============================================================ 5 时序正确性
