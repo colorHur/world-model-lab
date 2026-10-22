@@ -1,0 +1,231 @@
+{
+  "n_checks": 16,
+  "n_fail": 1,
+  "all_pass": false,
+  "rows": [
+    {
+      "name": "G0 _p_hat 与 posterior.p_succ_expected 逐位一致（≤1e-12）",
+      "pass": true,
+      "detail": {
+        "max_abs_diff": 0.0,
+        "n": 200
+      }
+    },
+    {
+      "name": "G1a plan_ref 的**代码实体**里不出现任何真值入口（AST 检查）",
+      "pass": true,
+      "detail": {
+        "hits": [],
+        "n_forbidden": 8
+      }
+    },
+    {
+      "name": "G1b 同一公开快照（深拷贝重建视图）⇒ 动作相同",
+      "pass": true,
+      "detail": {
+        "a1": "SEND(1)",
+        "a2": "SEND(1)"
+      }
+    },
+    {
+      "name": "G1c 仅改隐藏真值（同视图）⇒ 动作不变",
+      "pass": true,
+      "detail": {
+        "a1": "SEND(1)",
+        "a3": "SEND(1)",
+        "delta_x": 50.0,
+        "delta_logh": 3.0
+      }
+    },
+    {
+      "name": "G1d 阴性对照：改公开 P̂ 至少一次改变动作（G1c 不是恒真）",
+      "pass": true,
+      "detail": {
+        "n_changed": 1,
+        "bumps": [
+          2.5,
+          12.0,
+          60.0
+        ]
+      }
+    },
+    {
+      "name": "G2a 预算 0/1/2/8 下不越支、无强制 HOLD、恒等式全过",
+      "pass": true,
+      "detail": {
+        "failed_budgets": [],
+        "rows": [
+          {
+            "budget": 0,
+            "used": 0,
+            "forced": 0,
+            "probe": 0,
+            "attempted": 0,
+            "ids": true
+          },
+          {
+            "budget": 1,
+            "used": 1,
+            "forced": 0,
+            "probe": 0,
+            "attempted": 1,
+            "ids": true
+          },
+          {
+            "budget": 2,
+            "used": 2,
+            "forced": 0,
+            "probe": 0,
+            "attempted": 2,
+            "ids": true
+          },
+          {
+            "budget": 8,
+            "used": 8,
+            "forced": 0,
+            "probe": 0,
+            "attempted": 8,
+            "ids": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "G2b rollout 内部预算：3 次 SEND + 1 次 PROBE + 1 次 HOLD ⇒ 预算恰减 4",
+      "pass": true,
+      "detail": {
+        "bud_before": 64.0,
+        "bud_after": 60.0,
+        "decrement": 4.0
+      }
+    },
+    {
+      "name": "G3a H=1 的根动作与独立重写的一步值最优一致（4 个时点）",
+      "pass": true,
+      "detail": {
+        "failed_t": [],
+        "rows": [
+          {
+            "t": 3,
+            "chosen": "SEND(1)",
+            "value": 424.82985579744786,
+            "min": 424.82985579744786
+          },
+          {
+            "t": 6,
+            "chosen": "SEND(0)",
+            "value": 179.6648645888608,
+            "min": 179.6648645888608
+          },
+          {
+            "t": 9,
+            "chosen": "SEND(0)",
+            "value": 177.7968912940942,
+            "min": 177.7968912940942
+          },
+          {
+            "t": 12,
+            "chosen": "SEND(0)",
+            "value": 170.38168811883952,
+            "min": 170.38168811883952
+          }
+        ]
+      }
+    },
+    {
+      "name": "G3b H=1 整集 n_probe == 0（PROBE 与 HOLD 同值 ⇒ 不花钱）",
+      "pass": true,
+      "detail": {
+        "n_probe": 0,
+        "n_attempted": 128
+      }
+    },
+    {
+      "name": "G4 M 加倍（16→32）动作一致率 ≥ 0.90 且成本相对差中位 ≤ 10%",
+      "pass": false,
+      "detail": {
+        "agreement": 0.91015625,
+        "n_compared": 512,
+        "median_rel_cost_diff": 0.2771561760936379,
+        "per_episode": [
+          {
+            "episode": 100,
+            "c16": 0.20644538285462757,
+            "c32": 0.1194026157181853,
+            "rel": 0.42162612664355437
+          },
+          {
+            "episode": 101,
+            "c16": 0.3661470989968815,
+            "c32": 0.41472977555656104,
+            "rel": 0.13268622554372142
+          }
+        ]
+      }
+    },
+    {
+      "name": "G5a 探测臂 n_probe > 0（否则命中 N3：实现缺陷）",
+      "pass": true,
+      "detail": {
+        "probe": 9,
+        "send": 375,
+        "hold": 384,
+        "same_argmax": 8,
+        "diff_argmax": 1
+      }
+    },
+    {
+      "name": "G5b 探测臂 / 禁探测臂动作序列不同（探测真的进了决策）",
+      "pass": true,
+      "detail": {
+        "n_episodes_diff": 3
+      }
+    },
+    {
+      "name": "G5c 探测之后更晚时隙的动作发生变化（续接耦合，不只本槽换人）",
+      "pass": true,
+      "detail": {
+        "n_episodes_late_diff": 3
+      }
+    },
+    {
+      "name": "G5d 存在「探测对象 == 本槽最大 P̂ 用户」（价值不只来自换人）",
+      "pass": true,
+      "detail": {
+        "same": 8,
+        "diff": 1
+      }
+    },
+    {
+      "name": "G6 HOLD 的 cost_est ≡ 0 而 cost_true 明显 > 0（主指标口径更正的可复算依据）",
+      "pass": true,
+      "detail": {
+        "hold_cost_est": 0.0,
+        "hold_cost_true": 3.076084417124051,
+        "A_minus_BK": [
+          0.14333495934998053,
+          0.14333495934998053
+        ],
+        "reason": "A-BK≈0.1433 ⇒ 不发帧时 x̂ 几何衰减 ⇒ q·x̂²+r·u²→0"
+      }
+    },
+    {
+      "name": "G7 规划器优于 HOLD（逐 episode）",
+      "pass": true,
+      "detail": {
+        "plan": [
+          0.11854093752477163,
+          0.3575157754981731
+        ],
+        "hold": [
+          3.076084417124051,
+          4.959396245444557
+        ],
+        "ratios": [
+          0.03853630832264353,
+          0.07208856840720651
+        ]
+      }
+    }
+  ]
+}

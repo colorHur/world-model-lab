@@ -1,0 +1,6 @@
+{
+  "eligible": false,
+  "reason": "G4 未通过：M 加倍后逐 episode 成本相对差远超判据 ⇒ 待测效应与规划器自身方差不可分离，本轮**不出** N1/N2 判词",
+  "n_gate_fail": 1,
+  "n_mutation_missed": 0
+}

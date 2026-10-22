@@ -1,0 +1,426 @@
+# -*- coding: utf-8 -*-
+"""CW-R1 有限视界规划参考（Planning Reference）——**不是上界，不是最优策略**。
+
+问题（`docs/research/CW-R1-有限视界参考-预注册-v0.1.md` §1）
+------------------------------------------------------------
+在"预算有限、信道未知、状态未知"的**同一信息集**下，"现在花一帧预算去测信道"
+能不能换来更低的后续任务代价？
+
+本文件的纪律（违反任一条，结果作废）
+------------------------------------
+1. **只吃 `SchedulerView`**：`prior` / `telemetry` / `history` / `budget_left` / `t`。
+   不读 `_x_true` / `_log_h_true` / `w_realized` / `cost_true*` / 未来随机数。
+   `plan_gates.G1` 用 AST + 深拷贝重建视图两道检查钉住这条。
+2. **已知生成参数**：`A, B, σ_w, σ_meas, ρ, κ, log h*, σ_csi, q, r` 来自 `cfg`。
+   "上帝知道参数、但不知道当前实现"——这**不等于**读真状态。
+3. **条件信念采样**（卡 §2.3）：隐藏量从**当前后验**采样
+   `x_true ~ N(x̂, P̂)`、`log h_true ~ N(m_h, v_h)`，不是从先验重采样。
+   ★ 这一步是**探测价值的唯一来源**：若不采样隐藏量（把信念当真相），
+     投递概率恒等于 `p̂` 本身，"测得更准"在数值上不可能改变任何期望 ⇒
+     探测价值恒为 0（`plan_gates.M3` 就是把这个采样关掉，要求闸 FAIL）。
+
+目标函数（看数前写定，理由是可解析的，不是结果驱动的）
+------------------------------------------------------
+规划器最小化**给定信念下真实代价的贝叶斯期望**：
+
+    E[q·Σ_i x_i² + r·Σ_i u_i² | 信念] = q·Σ_i (P_i + x̂_i²) + r·Σ_i u_i²
+
+★ 为什么必须含 `P`：`cost_est`（世界记的 `q·x̂² + r·u²`）在 `HOLD` 下几何衰减
+  （`A−BK = 0.143335`，`u = -K x̂` ⇒ `x̂_{t+1} = 0.143 x̂_t`）⇒ **什么都不做的策略
+  `cost_est` 恒等于 0**（实测：40 集 `HOLD`，`cost_est = 0.000000`，
+  而 `cost_true = 3.076`）。用 `cost_est` 当主指标会奖励"不发帧"，
+  所以本线主指标改为 `cost_true_per_step`，`cost_est` 只作诊断。
+  若目标函数也写成 `q·x̂²`（不含 `P`），SEND 的价值恒为 0 ⇒ 规划器退化成 HOLD，
+  那正是卡 §5 的 N3（实现缺陷），不是科学结论。
+
+结构（对齐卡 §3，一处**明写的偏离**）
+------------------------------------
+· 根节点：5 个动作各做 `M` 条条件信念采样，每条走 `H` 步 → 取均值最小者；
+· 尾部：每个采样分支按**同一条 1 步贪心**续接（卡 §3「续接」）；
+· `H` 步之后给一个**保守尾部估计**：无新信息的名义外推
+  `P_k = A^{2k}(P−P_∞) + P_∞`、`x̂_k = α^k x̂`（`α = A − B·K`），把剩下每一步的
+  期望代价加起来。**这是估计，不是最优值函数**。
+· ★ **明写的偏离（卡 §3 说"尾部用同一规划器的 1 步贪心"，本实现照做，但记录其后果）**：
+  1 步贪心 + "无新信息"尾部**在预算上是近视的** —— 每次 SEND 都降低 `P`，
+  而尾部估计里 `P` 的权重是"剩余步数"，于是它会把预算**前紧后松地一次花光**
+  （`n_attempted` 集中在前 `B` 槽）。这不是要掩盖的对象，而是**必须同报的机制量**：
+  `r1_5_plan` 输出逐 1/8 窗口的 `n_attempted` 与 `mean_task_aoi`，
+  `docs/CW-R1.1-纠错交付-3.md` 里逐条写明"与周期基线的比较受此混淆"。
+  ⇒ **干净的科学比较是同一规划器的 `use_probe=True/False` 消融**（同代码路径、
+  同近视程度），而不是"规划器 vs periodic4"。
+
+信息时序（严格对齐 `world.step` 的顺序，`pred_gates` 已验证该顺序）
+------------------------------------------------------------------
+一个槽：① 用**槽初**信念算 `u = -K x̂`；② 若 SEND，用**当前真值**判成败；
+③ 若 PROBE，用**当前真值**加噪读数；④ 记本槽代价（`x_true` 与 `u` 都是 t 时刻的）；
+⑤ 用带时间戳 t 的观测校正**t 时刻**的信念，再按已知 `u` 推到 t+1；
+⑥ 信道信念按 `ρ` 归一演化；⑦ 隐藏量推进到 t+1。
+
+★ 公共随机数（CRN）：同一个槽里 5 个根动作**共用同一段随机数**
+  （按 `(base_seed, 调用序号)` 播种）⇒ 动作之间的比较是配对的，
+  不是"5 次独立抽样比大小"。这是压低 Monte-Carlo 噪声的必要手段，不是调参。
+"""
+
+from __future__ import annotations
+
+import numpy as np
+
+from .config import CWConfig
+from .posterior import NODES80, WEIGHTS80
+from .world import Action
+
+#: 尾部终止估计的步数上限（防止数值溢出；真实剩余步数 ≤ horizon=256）
+_TERM_MAX_STEPS = 400
+
+#: 值相等判定容差（`_pick` 的并列处理用它）
+_TIE_EPS = 1e-12
+
+
+def _sigmoid(z: np.ndarray) -> np.ndarray:
+    """数值稳定 sigmoid（与 `world.p_success_from_log_h` 同一形状）。"""
+    out = np.empty_like(z, dtype=float)
+    pos = z >= 0
+    out[pos] = 1.0 / (1.0 + np.exp(-z[pos]))
+    ez = np.exp(z[~pos])
+    out[~pos] = ez / (1.0 + ez)
+    return out
+
+
+class _St:
+    """一条采样分支的信念/隐藏量状态（全部是 `(M, n)` 数组）。"""
+
+    __slots__ = ("xh", "P", "mh", "vh", "xt", "ht", "bud")
+
+    def __init__(self, xh, P, mh, vh, xt, ht, bud) -> None:
+        self.xh = xh      # 信念均值（策略可见）
+        self.P = P        # 信念方差（策略可见）
+        self.mh = mh      # 信道信念均值
+        self.vh = vh      # 信道信念方差
+        self.xt = xt      # ★ 采样出来的隐藏真状态（**本规划器自己的抽样**，不是世界的）
+        self.ht = ht      # ★ 采样出来的隐藏真 log h（同上）
+        self.bud = bud    # 每分支剩余预算
+
+    def copy(self) -> "_St":
+        return _St(self.xh.copy(), self.P.copy(), self.mh.copy(),
+                   self.vh.copy(), self.xt.copy(), self.ht.copy(), self.bud.copy())
+
+
+class _Draws:
+    """一个时隙内**所有根动作共用**的随机数面板（严格公共随机数 CRN）。
+
+    ★ 为什么必须这样（这是 G4 第一次失败后改的，实测记录在交付文档）：
+      最初的做法是"每个根动作用同一 seed 新建生成器"。那只配对到**第一步**：
+      第一步之后各分支消耗随机数的次数不同，从第二步起就各走各的路径 ⇒
+      根动作之间的差值不是配对差，M=16 时动作一致率只有 **65.6%**、M=128 仍不稳。
+      改成"按 `(步 k, 样本 m, 用户 i)` 预生成、所有分支按同一索引取"之后，
+      任意两个根动作在同一 `(k, m)` 上看到**同一个**世界实现 ⇒ 比较变成配对差，
+      方差坍缩。**这不是调参，是让 Monte-Carlo 比较成立的必要条件。**
+    """
+
+    __slots__ = ("udeliv", "eps_meas", "eps_csi", "s_h", "w", "init_x", "init_h")
+
+    def __init__(self, rng: np.random.Generator, H: int, M: int, n: int) -> None:
+        self.udeliv = rng.random((H, M, n))
+        self.eps_meas = rng.standard_normal((H, M, n))
+        self.eps_csi = rng.standard_normal((H, M, n))
+        self.s_h = rng.standard_normal((H, M, n))
+        self.w = rng.standard_normal((H, M, n))
+        self.init_x = rng.standard_normal((M, n))
+        self.init_h = rng.standard_normal((M, n))
+
+
+class PlanRef:
+    """有限视界规划参考。`use_probe=False` 是**同代码路径**的消融臂。"""
+
+    def __init__(self, cfg: CWConfig, *, h_plan: int = 5, m_samples: int = 16,
+                 seed: int = 20261022, use_probe: bool = True,
+                 sample_hidden: bool = True, rho: float | None = None) -> None:
+        self.cfg = cfg
+        self.H = int(h_plan)
+        self.M = int(m_samples)
+        self.use_probe = bool(use_probe)
+        self.sample_hidden = bool(sample_hidden)
+        self.base_seed = int(seed)
+        self.rho = float(rho if rho is not None else cfg.channel.rho_panel[0])
+        self.name = (f"plan_ref_H{self.H}_M{self.M}"
+                     f"{'' if self.use_probe else '_noprobe'}")
+        # 诊断计数（每 episode 新建实例；runner 不 reset 它）
+        self.n_probe = 0
+        self.n_send = 0
+        self.n_hold = 0
+        #: 根节点选到探测时，本槽"P 最大"的用户是否就是被探测的用户
+        #: （回答"探测价值是否只来自本槽换人"；验收 §3 P0-C 明令不许只这样写）
+        self.probe_same_argmax = 0
+        self.probe_diff_argmax = 0
+        self._call_i = 0
+        self._steps_left = int(cfg.protocol.horizon)   # 每次 `__call__` 覆盖
+
+        p = cfg.plant
+        self.A = np.asarray(p.A, dtype=float)
+        self.B = float(p.B)
+        self.sw = np.asarray(p.sigma_w, dtype=float)
+        self.q = float(p.q_cost)
+        self.r = float(p.r_cost)
+        self.smeas2 = float(p.sigma_meas) ** 2
+        self.scsi2 = float(cfg.channel.sigma_csi) ** 2
+        self.kappa = float(cfg.channel.kappa)
+        self.logh_star = float(cfg.channel.log_h_star)
+        self.ack_var = 0.63          # 与 `world.CWWorld.ACK_VAR` 同一常数（其注释有依据）
+        self.use_ack = bool(cfg.channel.use_ack_for_csi)
+        self.T = int(cfg.protocol.horizon)
+        self.K = np.asarray([self._riccati_k(i) for i in range(p.n_users)], dtype=float)
+        self.alpha = self.A - self.B * self.K
+        self._cand = self._build_candidates()
+
+    # ------------------------------------------------------------ 标量解析量
+    def _riccati_k(self, i: int) -> float:
+        """与 `world.CWWorld.nominal_gain` 同一个 DARE 不动点（此处独立重算以便对账）。"""
+        A, B = float(self.A[i]), self.B
+        P = self.q
+        for _ in range(100000):
+            Pn = self.q + A * A * P - (A * P * B) ** 2 / (self.r + B * B * P)
+            if abs(Pn - P) < 1e-15:
+                P = Pn
+                break
+            P = Pn
+        return float(A * P * B / (self.r + B * B * P))
+
+    def _p_hat(self, mh: np.ndarray, vh: np.ndarray) -> np.ndarray:
+        """`E[sigmoid(κ(log h − log h*))]`，`log h ~ N(mh, vh)`，80 点求积。
+
+        与 `posterior.p_succ_expected` **同点数、同归一化**
+        （`plan_gates.G0` 对账：随机 200 组 `(m, v)` 逐位一致）。
+        这里向量化成 `(M, n, 80)`，避免逐元素 Python 循环。
+        """
+        z = (mh[:, :, None]
+             + np.sqrt(np.maximum(vh, 0.0))[:, :, None] * NODES80[None, None, :])
+        sig = _sigmoid(self.kappa * (z - self.logh_star))
+        return np.sum(WEIGHTS80[None, None, :] * sig, axis=2) / np.sqrt(2.0 * np.pi)
+
+    def _immediate_cost(self, st: _St) -> np.ndarray:
+        """本槽代价的贝叶斯期望 `q·Σ(P + x̂²) + r·Σ u²`，`u = -K x̂`。"""
+        u = -self.K[None, :] * st.xh
+        return (self.q * np.sum(st.P + st.xh ** 2, axis=1)
+                + self.r * np.sum(u * u, axis=1))
+
+    # ------------------------------------------------------------ 尾部估计
+    def _terminal(self, P: np.ndarray, xh: np.ndarray, steps: int) -> np.ndarray:
+        """H 步之后"再无观测"的名义外推代价（**估计**，不是最优值函数）。
+
+        `P_k = A^{2k}(P−P_∞) + P_∞`、`x̂_k = α^k x̂`，`k = 1..steps`。
+        用闭式解而不是循环：`steps` 可达 250，循环会让每槽多 250 次 numpy 调用。
+        """
+        steps = int(min(max(steps, 0), _TERM_MAX_STEPS))
+        if steps <= 0:
+            return np.zeros(P.shape[0])
+        a2 = (self.A ** 2)[None, :]
+        sw2 = (self.sw ** 2)[None, :]
+        one_minus = 1.0 - a2
+        safe = np.abs(one_minus) > 1e-12
+        Pinf = np.where(safe, sw2 / np.where(safe, one_minus, 1.0), 0.0)
+        geo = np.where(safe, a2 * (1.0 - a2 ** steps) / np.where(safe, one_minus, 1.0),
+                       float(steps))
+        sumP = (P - Pinf) * geo + Pinf * float(steps)
+        if np.any(~safe):                       # A=1（本面板）：Σ P_k 是等差数列
+            sumP = np.where(safe, sumP,
+                            float(steps) * P + sw2 * (steps * (steps + 1) / 2.0))
+        al2 = (self.alpha ** 2)[None, :]
+        one_minus_a = 1.0 - al2
+        safe_a = np.abs(one_minus_a) > 1e-12
+        geo_a = np.where(safe_a,
+                         al2 * (1.0 - al2 ** steps) / np.where(safe_a, one_minus_a, 1.0),
+                         float(steps))
+        sumX2 = (xh ** 2) * geo_a
+        return (self.q * np.sum(sumP + sumX2, axis=1)
+                + self.r * np.sum((self.K ** 2)[None, :] * sumX2, axis=1))
+
+    def _expect_after(self, st: _St, act: Action, steps_after: int) -> np.ndarray:
+        """动作 `act` 之后、还剩 `steps_after` 步时的期望尾部代价（对投递做**解析**期望）。
+
+        ★ 近似（明写）：送达会把 `x̂` 拉向观测值，但 `E[y] = x̂`（一阶无偏），
+          所以这里只用 `P` 的下降刻画收益，`x̂` 一律按名义 `α·x̂` 外推。
+          这个近似对本问题是**保守**的（不虚增 SEND 的收益）。
+        """
+        a2 = (self.A ** 2)[None, :]
+        if act.kind == "SEND":
+            i = int(act.user)
+            g = st.P[:, i] / (st.P[:, i] + self.smeas2)
+            P_del = a2[:, i] * ((1.0 - g) * st.P[:, i]) + self.sw[i] ** 2
+            P_nodel = a2[:, i] * st.P[:, i] + self.sw[i] ** 2
+            p = self._p_hat(st.mh, st.vh)[:, i]
+            P2 = st.P.copy()
+            P2[:, i] = p * P_del + (1.0 - p) * P_nodel
+            return self._terminal(P2, self.alpha[None, :] * st.xh, steps_after)
+        # HOLD / PROBE：本槽不动任务估计（PROBE 只动信道信念）
+        P2 = a2 * st.P + (self.sw ** 2)[None, :]
+        return self._terminal(P2, self.alpha[None, :] * st.xh, steps_after)
+
+    # ------------------------------------------------------------ 动作选择
+    def _build_candidates(self) -> tuple[Action, ...]:
+        acts = []
+        if self.use_probe:
+            acts += [Action("PROBE", 0), Action("PROBE", 1)]
+        acts += [Action("SEND", 0), Action("SEND", 1), Action("HOLD")]
+        return tuple(acts)
+
+    @staticmethod
+    def _need(act: Action) -> int:
+        return 1 if act.kind in ("PROBE", "SEND") else 0
+
+    def _pick(self, values: dict[Action, float], budget_left: int) -> Action:
+        """取最小者；并列（±1e-12）时**先选不花预算的**，再按固定顺序。
+
+        ★ 这条 tie-break 就是"没有证明的收益就不花钱"：`H=1` 时 PROBE 与 HOLD
+          的估计值严格相等（PROBE 不动任务估计）⇒ 选 HOLD ⇒ **探测在 `H=1` 上不会出现**。
+          这是"探测的价值只可能来自续接"这一结构事实，不是为了过判据。
+        """
+        feas = [a for a in self._cand if budget_left >= self._need(a) and np.isfinite(values[a])]
+        if not feas:
+            return Action("HOLD")
+        best = min(values[a] for a in feas)
+        near = [a for a in feas if values[a] <= best + _TIE_EPS]
+        near.sort(key=lambda a: (0 if a.kind == "HOLD" else 1,
+                                 0 if a.kind == "SEND" else 1,
+                                 -1 if a.user is None else a.user))
+        return near[0]
+
+    def _greedy(self, st: _St) -> Action:
+        """同一规划器的 1 步贪心（尾部续接用）。
+
+        ★ 买不起某动作的**分支**退化为 HOLD 的值（不是 +inf）—— 那些分支本来
+          就只能 HOLD，把它们的值扔掉会让其余分支的动作被"最少预算的分支"绑架。
+        """
+        hold_v = self._expect_after(st, Action("HOLD"), max(0, self._steps_left - 1))
+        vals: dict[Action, float] = {}
+        for a in self._cand:
+            need = self._need(a)
+            tval = self._expect_after(st, a, max(0, self._steps_left - 1))
+            eff = np.where(st.bud >= need, tval, hold_v)
+            vals[a] = float(np.mean(eff))
+        return self._pick(vals, int(np.max(st.bud)))
+
+    # ------------------------------------------------------------ 单步推进（采样）
+    def _advance(self, st: _St, act: Action, *, k: int, d: _Draws) -> None:
+        """按 `world.step` 的顺序推进一条分支（原地改 `st`）。
+
+        `k` = 本时隙内的第几步；`d` = 本时隙的公共随机数面板（见 `_Draws`）。
+        """
+        u = -self.K[None, :] * st.xh
+        i = act.user
+
+        if act.kind == "SEND":
+            aff = st.bud >= 1
+            src_h = st.ht if self.sample_hidden else st.mh
+            p = _sigmoid(self.kappa * (src_h[:, i] - self.logh_star))
+            deliv = (d.udeliv[k, :, i] < p) & aff
+            src_x = st.xt if self.sample_hidden else st.xh
+            y = src_x[:, i] + np.sqrt(self.smeas2) * d.eps_meas[k, :, i]
+            g = st.P[:, i] / (st.P[:, i] + self.smeas2)
+            xc = np.where(deliv, st.xh[:, i] + g * (y - st.xh[:, i]), st.xh[:, i])
+            Pc = np.where(deliv, (1.0 - g) * st.P[:, i], st.P[:, i])
+            st.xh[:, i] = self.A[i] * xc + self.B * u[:, i]
+            st.P[:, i] = self.A[i] ** 2 * Pc + self.sw[i] ** 2
+            if self.use_ack:
+                dd = np.where(deliv, 1.0, -1.5) * aff
+                gg = st.vh[:, i] / (st.vh[:, i] + self.ack_var)
+                st.mh[:, i] = st.mh[:, i] + gg * dd
+                st.vh[:, i] = (1.0 - gg) * st.vh[:, i]
+            st.bud = st.bud - np.where(aff, 1.0, 0.0)
+        elif act.kind == "PROBE":
+            aff = st.bud >= 1
+            src_h = st.ht if self.sample_hidden else st.mh
+            y = src_h[:, i] + np.sqrt(self.scsi2) * d.eps_csi[k, :, i]
+            g = st.vh[:, i] / (st.vh[:, i] + self.scsi2)
+            st.mh[:, i] = np.where(aff, st.mh[:, i] + g * (y - st.mh[:, i]), st.mh[:, i])
+            st.vh[:, i] = np.where(aff, (1.0 - g) * st.vh[:, i], st.vh[:, i])
+            st.bud = st.bud - np.where(aff, 1.0, 0.0)
+
+        # 信道信念按 ρ 归一演化（所有用户、每个时隙）
+        st.mh = self.rho * st.mh
+        st.vh = self.rho * self.rho * st.vh + (1.0 - self.rho * self.rho)
+
+        # 隐藏量推进（只有采样臂需要；无采样臂的隐藏量不参与任何计算）
+        if self.sample_hidden:
+            st.ht = (self.rho * st.ht
+                     + np.sqrt(max(1e-12, 1.0 - self.rho ** 2)) * d.s_h[k])
+            st.xt = self.A[None, :] * st.xt + self.B * u + d.w[k] * self.sw[None, :]
+
+    # ------------------------------------------------------------ 根节点
+    def _init_state(self, v, d: _Draws) -> _St:
+        """从**公开快照**构造信念，并做条件信念采样。"""
+        tel = v.telemetry
+        n = v.n_users
+        M = self.M
+        xh = np.tile(np.asarray([r["x_hat"] for r in tel], dtype=float), (M, 1))
+        P = np.tile(np.asarray([r["P_hat"] for r in tel], dtype=float), (M, 1))
+        mh = np.tile(np.asarray([r["h_mean"] for r in tel], dtype=float), (M, 1))
+        vh = np.tile(np.asarray([r["h_var"] for r in tel], dtype=float), (M, 1))
+        if self.sample_hidden:
+            xt = xh + np.sqrt(np.maximum(P, 0.0)) * d.init_x
+            ht = mh + np.sqrt(np.maximum(vh, 0.0)) * d.init_h
+        else:
+            # ★ 诊断臂：把信念当真相（= `plan_gates.M1` 的破坏对象；**不得**进结果表）
+            xt, ht = xh.copy(), mh.copy()
+        return _St(xh, P, mh, vh, xt, ht, np.full(M, int(v.budget_left), dtype=float))
+
+    def __call__(self, v) -> Action:
+        self._call_i += 1
+        steps_left = int(self.T - v.t)
+        H = int(min(self.H, max(steps_left, 1)))
+        self._steps_left = steps_left
+        seed = (self.base_seed * 1_000_003 + self._call_i * 7919) % (2 ** 63 - 1)
+        acts = [a for a in self._cand if int(v.budget_left) >= self._need(a)]
+        if not acts:
+            self.n_hold += 1
+            return Action("HOLD")
+
+        # ★ 一个时隙只抽一次随机数面板，5 个根动作共用（严格 CRN 配对）
+        d = _Draws(np.random.default_rng(seed), H, self.M, int(v.n_users))
+        vals: dict[Action, float] = {}
+        for a in acts:
+            st = self._init_state(v, d)
+            total = np.zeros(self.M)
+            act = a
+            for k in range(H):
+                total = total + self._immediate_cost(st)
+                left_after = max(steps_left - (k + 1), 0)
+                if k == H - 1:
+                    total = total + self._expect_after(st, act, left_after)
+                else:
+                    self._advance(st, act, k=k, d=d)
+                    # ★ 尾部贪心的终止估计必须用**当前**剩余步数：
+                    #   `_steps_left` 是根节点剩余时隙，若沿用到尾部会把终止权重
+                    #   系统性放大（→ 尾部更爱发帧）。第一次实现就写错了这一处。
+                    self._steps_left = max(steps_left - (k + 1), 1)
+                    act = self._greedy(st)
+            self._steps_left = steps_left
+            vals[a] = float(np.mean(total))
+        for a in self._cand:
+            vals.setdefault(a, float("inf"))
+
+        chosen = self._pick(vals, int(v.budget_left))
+        if chosen.kind == "PROBE":
+            self.n_probe += 1
+            argmax_P = int(np.argmax([r["P_hat"] for r in v.telemetry]))
+            if argmax_P == chosen.user:
+                self.probe_same_argmax += 1
+            else:
+                self.probe_diff_argmax += 1
+        elif chosen.kind == "SEND":
+            self.n_send += 1
+        else:
+            self.n_hold += 1
+        return chosen
+
+
+def make(cfg: CWConfig, *, arm: str = "probe", h_plan: int = 5, m_samples: int = 16,
+         seed: int = 20261022, rho: float | None = None) -> PlanRef:
+    """按臂名构造：`probe` / `noprobe` / `nohidden`（后者只给变异闸用）。"""
+    kw = dict(h_plan=h_plan, m_samples=m_samples, seed=seed, rho=rho)
+    if arm == "probe":
+        return PlanRef(cfg, use_probe=True, sample_hidden=True, **kw)
+    if arm == "noprobe":
+        return PlanRef(cfg, use_probe=False, sample_hidden=True, **kw)
+    if arm == "nohidden":
+        return PlanRef(cfg, use_probe=True, sample_hidden=False, **kw)
+    raise ValueError(f"未知臂 {arm!r}")
