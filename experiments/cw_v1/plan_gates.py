@@ -36,6 +36,16 @@ G5 探测必须**接进后续**（四条子检）：
 G6 指标口径更正的可复算依据：`HOLD` 的 `cost_est == 0` 而 `cost_true > 1`。
    ⇒ 这条不是"规划器的闸"，是把"主指标为什么从 `cost_est` 改成 `cost_true`"钉成可复算事实。
 G7 规划器必须优于 HOLD（弱但必要：比什么都不做还差的"参考"没有比较价值）。
+G8 配速（v1.6 新增，判据在看数前写死在 `docs/research/CW-R1.6-配速-预注册-v0.1.md`）：
+   G8a `B/T=0.5`、`ρ=0.85` 的 `send_profile` 8 窗 CV < 0.30（v1.5 实测 0.94–1.2）。
+   G8b 阴性对照：同一 planner、`pacing=False`（退回"再无观测"外推）⇒ CV 必须 > 0.30。
+   G8a2 同一格的 `mean_task_aoi` ≤ 20（预算空转/反复重试同一用户会让它爆）。
+   G8c 稳态循环均值：闭式 vs 长程逐步模拟（`m∈{2..64}`）相对差 ≤ 1%。
+       ⇒ FAIL 于：循环不动点/闭式解写错（`P̄` 与 `P_b` 的二次式）。
+   G8d 值函数对预算**严格递减**（未饱和区平坦比例 ≤ 10%、无上升）。
+       2026-10-22 实测 FAIL：`m` 取整 ⇒ `b` 在一个区间内估计值逐位相同，
+       "花一帧的机会成本"在值函数里恒为 0。这条同时解释了 `M1` 抓不住与 `G4` 崩到 0.48。
+   ⇒ FAIL 于：尾部不认预算的机会成本（G8a/G8b/G8d）、闭式解写错（G8c）。
 """
 
 from __future__ import annotations
@@ -151,18 +161,29 @@ def g1_info_boundary(g: Gate) -> None:
     g.check("G1c 仅改隐藏真值（同视图）⇒ 动作不变", (a1 == a3),
             {"a1": repr(a1), "a3": repr(a3), "delta_x": 50.0, "delta_logh": 3.0})
 
-    # 阴性对照：改公开快照里的一格 P̂ 必须能改变动作（否则 G1c 没有分辨力）
+    # 阴性对照：改公开快照里的 P̂ 必须能改变动作（否则 G1c 没有分辨力）
+    # ★ 2026-10-22 R1.6 修正：旧版只**向上**加 2.5/12/60，而该时点的动作为 `SEND(0)` 且
+    #   用户 0 本来就是最该发的那个 ⇒ 把它弄得更该发，动作当然不变（**控制无分辨力**，
+    #   不是"G1c 恒真"）。现在加**向下**（P̂→1e-3·P̂，应当不再发它）与**换人**
+    #   （用户 1 加 60，应当改发用户 1）两个方向，并保留原三个向上档以便对照。
+    perturbs = [("up_u0", 0, "+", 2.5), ("up_u0", 0, "+", 12.0), ("up_u0", 0, "+", 60.0),
+                ("down_u0", 0, "*", 1e-3), ("up_u1", 1, "+", 60.0)]
     changed = 0
-    for bump in (2.5, 12.0, 60.0):
+    detail = []
+    for tag, idx, op, mag in perturbs:
         pub2 = copy.deepcopy(v._pub)
         tel = [dict(r) for r in pub2["telemetry"]]
-        tel[0]["P_hat"] = float(tel[0]["P_hat"]) + bump
+        old = float(tel[idx]["P_hat"])
+        tel[idx]["P_hat"] = old * mag if op == "*" else old + mag
         pub2["telemetry"] = tel
         aa = make(cfg, arm="probe", seed=seed, rho=RHO_DEFAULT)(SchedulerView(pub2))
+        detail.append({"op": f"P_hat[{idx}] {op} {mag}", "from": old,
+                       "to": float(tel[idx]["P_hat"]), "action": repr(aa),
+                       "changed": bool(aa != a1)})
         if aa != a1:
             changed += 1
-    g.check("G1d 阴性对照：改公开 P̂ 至少一次改变动作（G1c 不是恒真）", changed >= 1,
-            {"n_changed": changed, "bumps": [2.5, 12.0, 60.0]})
+    g.check("G1d 阴性对照：改公开 P̂（含向下 / 换人）至少一次改变动作（G1c 不是恒真）",
+            changed >= 1, {"n_changed": changed, "base_action": repr(a1), "rows": detail})
 
 
 # ---------------------------------------------------------------- G2
@@ -255,7 +276,10 @@ def g3_h1_degenerate(g: Gate) -> None:
         for _ in range(3):
             w.step(Action("HOLD") if k % 2 == 0 else Action("SEND", k % 2))
         v = w.view()
-        pol = make(cfg, arm="probe", h_plan=1, seed=1000 + k, rho=RHO_DEFAULT)
+        # ★ `pacing=False`：本闸的独立实现对"尾部"用的是**无预算**的显式循环（v1.5 口径），
+        #   所以被测的规划器也必须关掉配速，否则比的是两个不同模型（配速的算术正确性由 G8c 管）。
+        pol = make(cfg, arm="probe", h_plan=1, seed=1000 + k, rho=RHO_DEFAULT,
+                   pacing=False)
         chosen = pol(v)
         tel = v.telemetry
         acts = tuple(a for a in pol._cand)
@@ -272,7 +296,7 @@ def g3_h1_degenerate(g: Gate) -> None:
     pol = make(cfg, arm="probe", h_plan=1, seed=321, rho=RHO_DEFAULT)
     r = run_episode(cfg, pol, split="dev", episode=100,
                     budget_total=cfg.protocol.budget(0.5), rho=RHO_DEFAULT)
-    g.check("G3b H=1 整集 n_probe == 0（PROBE 与 HOLD 同值 ⇒ 不花钱）", r.n_probe == 0,
+    g.check("G3b H=1 整集 n_probe == 0（PROBE 不动任务估计却花钱 ⇒ 不该被选）", r.n_probe == 0,
             {"n_probe": r.n_probe, "n_attempted": r.n_attempted})
 
 
@@ -382,6 +406,141 @@ def g7_beats_hold(g: Gate) -> None:
             {"plan": cp, "hold": ch, "ratios": [p / h for p, h in zip(cp, ch)]})
 
 
+# ---------------------------------------------------------------- G8
+def _send_profile(acts, horizon: int, n_win: int = 8) -> list[int]:
+    """把资源动作（SEND + PROBE）按 `horizon/n_win` 槽一个窗计数。"""
+    win = int(horizon) // int(n_win)
+    out = [0] * int(n_win)
+    for (t, k, _u) in acts:
+        if k in ("SEND", "PROBE"):
+            out[min(int(t) // win, int(n_win) - 1)] += 1
+    return out
+
+
+def _cv(prof: list[int]) -> float:
+    m = float(np.mean(prof)) if prof else 0.0
+    return float(np.std(prof) / m) if m > 0 else float("inf")
+
+
+def g8_pacing(g: Gate) -> None:
+    """配速判据 + 单变量阴性对照（`pacing=False` 退回 v1.5 的"再无观测"外推）。"""
+    cfg = _cfg()
+    rho = 0.85
+    budget = cfg.protocol.budget(0.5)
+    rows = {}
+    for tag, pace in (("paced", True), ("nopace", False)):
+        pol = _Rec(make(cfg, arm="probe", h_plan=5, m_samples=8, seed=1100,
+                        rho=rho, pacing=pace))
+        r = run_episode(cfg, pol, split="dev", episode=100, budget_total=budget, rho=rho)
+        prof = _send_profile(pol.acts, cfg.protocol.horizon)
+        rows[tag] = {"cv": _cv(prof), "profile": prof,
+                     "aoi": r.mean_task_aoi, "cost_true": r.cost_true_per_step,
+                     "sent": r.n_attempted, "probe": r.n_probe}
+
+    g.check("G8a 配速：B/T=0.5、ρ=0.85 的 send_profile 8 窗 CV < 0.30", rows["paced"]["cv"] < 0.30,
+            rows)
+    g.check("G8b 阴性对照：同 planner 关掉配速 ⇒ CV > 0.30（否则 G8a 无分辨力）",
+            rows["nopace"]["cv"] > 0.30, {"cv_nopace": rows["nopace"]["cv"],
+                                          "cv_paced": rows["paced"]["cv"]})
+    g.check("G8a2 同一格 mean_task_aoi ≤ 20（预算空转/反复重试同一用户会让它爆）",
+            rows["paced"]["aoi"] <= 20.0, {"aoi_paced": rows["paced"]["aoi"],
+                                           "aoi_nopace": rows["nopace"]["aoi"]})
+
+
+def _cycle_mean_sim(pol: PlanRef, m: int, i: int, n_steps: int = 4096) -> float:
+    """**长时间逐步模拟**"每 `m` 步刷新一次"的循环，返回后半段均值（不用任何闭式解）。
+
+    后半段长度 2048 对所有测试用的 `m ∈ {2,4,8,16,32,64}` 都是整数倍周期 ⇒ 均值
+    与相位无关，可以直接和 `P̄ = (P_post + P_b)/2` 比。
+    """
+    a2 = float(pol.A[i] ** 2)
+    s2 = float(pol.sw[i] ** 2)
+    c = float(pol.smeas2)
+    P = 0.01
+    vals = []
+    for t in range(int(n_steps)):
+        if t > 0 and t % m == 0:
+            g = P / (P + c)
+            P = a2 * (1.0 - g) * P + s2
+        else:
+            P = a2 * P + s2
+        vals.append(P)
+    return float(np.mean(vals[n_steps // 2:]))
+
+
+def g8c_closed_form(g: Gate) -> None:
+    """`_paced_sumP` 闭式 vs 长程逐步模拟：**稳态循环均值**对账。
+
+    ★ 2026-10-22 R1.6 第一次实现用的是"闭式 vs 逐步模拟同一条均匀时间表"的逐点对账，
+    判据 FAIL（最差 8.47×，出现在 `b=4/1`、`P0=1.0`）。逐条查明后**不是算术错**，
+    是那个对照物本身不对：
+      ① `P0 ≫ P_b`（冷启动）时闭式走"一步压到循环均值"的**约定**（`w=0` 分支），
+         逐步模拟铺的是"按 `m` 均匀铺开"的时间表 —— 二者是不同的模型，本来就不可比；
+      ② `m ≥ steps/2` 时尾部里不足两个周期，"均值代替逐相位值"的近似误差被放大。
+    ⇒ 本闸只判**算术**：`m` 为整数、初值就在循环上的稳态均值。
+      **不判**冷启动约定与短尾近似 —— 它们是被记录的近似（`G8c` 证据里存档了域外差），
+      所以 `_expect_after` 在 `P ≫ P_b` 的早期时隙**不保证**数值准。
+    """
+    cfg = _cfg()
+    pol = make(cfg, arm="probe", h_plan=1, m_samples=1)
+    n = int(pol.A.size)
+    # ★ `steps` 必须 ≤ `plan_ref._TERM_MAX_STEPS`（400），否则函数内部会截断，
+    #   而闸按未截断的步数做除法 ⇒ 系统性偏低（本轮第一次就是这么假 FAIL 的：
+    #   传 1024 被截成 400，2.3488/1024 = 2.29e-3，恰好等于 0.39× 的"怪系数"）。
+    steps = 400
+    rows, bad = [], []
+    # m 上限 32：steps 被 _TERM_MAX_STEPS 钉在 400，m=64 时不足 7 个周期，
+    # "均值代替逐相位值"的相位误差会盖过要判的算术误差（实测 m=64 时 2.4–3.3%）。
+    for m in (2, 4, 8, 16, 32):
+        b = int(round(steps * n / m))
+        got = pol._paced_sumP(np.full((1, n), 0.0), steps, np.array([float(b)]))[0]
+        for i in range(n):
+            Pbar_sim = _cycle_mean_sim(pol, m, i)
+            got_i = float(pol._paced_sumP(np.array([[Pbar_sim, Pbar_sim]]),
+                                          steps, np.array([float(b)]))[0][i]) / steps
+            rel = abs(got_i - Pbar_sim) / max(abs(Pbar_sim), 1e-12)
+            rows.append({"m": m, "b": b, "user": i, "Pbar_sim": Pbar_sim,
+                         "Pbar_closed": got_i, "rel": rel})
+            if rel > 0.01:
+                bad.append((m, i, rel))
+    g.check("G8c 稳态循环均值：闭式 vs 长程逐步模拟（m∈{2,4,8,16,32}，两用户）相对差 ≤ 1%",
+            not bad, {"n_cases": len(rows),
+                      "worst": max(r["rel"] for r in rows), "bad": bad,
+                      "rows": [{"m": r["m"], "user": r["user"],
+                                "sim": round(r["Pbar_sim"], 8),
+                                "closed": round(r["Pbar_closed"], 8)} for r in rows]})
+
+
+def g8d_budget_price(g: Gate) -> None:
+    """值函数对预算必须**严格递减**（多一帧 ⇒ 尾部估计不增，且在未饱和时真减）。
+
+    ★ 为什么这条闸必须存在：`m = round(steps·n/b)` 是**整数**，所以 `b` 在一个区间内
+      变化根本不改 `m` ⇒ 尾部估计对预算**完全平**（实测 `steps=128` 时
+      `b=120…135` 的估计值逐位相同）⇒ "这一帧的机会成本"在值函数里是 **0**。
+      后果有两处可观测：①`M1` 变异（探测不学任何东西但照扣钱）**抓不住**，
+      因为花一帧与不花一帧估价值相等 ⇒ 靠 tie-break 才不选它；
+      ②`G4` 的动作一致率崩到 0.48 —— 平区里动作由 1e-16 级噪声决定。
+      饱和（`b > steps`，即多到一槽一帧以上）时平是**合法**的，不计入。
+    """
+    cfg = _cfg()
+    pol = make(cfg, arm="probe", h_plan=1, m_samples=1)
+    n = int(pol.A.size)
+    steps = 128
+    P0 = 0.01
+    vals = np.array([float(pol._paced_sumP(np.full((1, n), P0), steps,
+                                           np.array([float(b)]))[0][0])
+                     for b in range(0, steps + 1)])
+    d = np.diff(vals)                       # d[b] = s(b+1) - s(b)
+    n_flat = int(np.sum(np.abs(d) <= 1e-12))
+    n_up = int(np.sum(d > 1e-12))
+    frac_flat = n_flat / max(d.size, 1)
+    g.check("G8d 值函数对预算严格递减（未饱和区平坦比例 ≤ 10%、无上升）",
+            n_up == 0 and frac_flat <= 0.10,
+            {"steps": steps, "n_pairs": int(d.size), "n_flat": n_flat,
+             "n_up": n_up, "frac_flat": frac_flat,
+             "example_flat_b": [int(b) for b in np.arange(d.size)[np.abs(d) <= 1e-12][:12]]})
+
+
 # ---------------------------------------------------------------- 变异闸
 def mutation_gates() -> tuple[list[dict], int]:
     """三次单变量破坏，要求指定闸从 PASS 翻成 FAIL。
@@ -480,4 +639,7 @@ def run_all() -> Gate:
     g5_probe_coupling(g)
     g6_metric(g)
     g7_beats_hold(g)
+    g8_pacing(g)
+    g8c_closed_form(g)
+    g8d_budget_price(g)
     return g

@@ -37,17 +37,20 @@
 ------------------------------------
 · 根节点：5 个动作各做 `M` 条条件信念采样，每条走 `H` 步 → 取均值最小者；
 · 尾部：每个采样分支按**同一条 1 步贪心**续接（卡 §3「续接」）；
-· `H` 步之后给一个**保守尾部估计**：无新信息的名义外推
-  `P_k = A^{2k}(P−P_∞) + P_∞`、`x̂_k = α^k x̂`（`α = A − B·K`），把剩下每一步的
-  期望代价加起来。**这是估计，不是最优值函数**。
-· ★ **明写的偏离（卡 §3 说"尾部用同一规划器的 1 步贪心"，本实现照做，但记录其后果）**：
-  1 步贪心 + "无新信息"尾部**在预算上是近视的** —— 每次 SEND 都降低 `P`，
-  而尾部估计里 `P` 的权重是"剩余步数"，于是它会把预算**前紧后松地一次花光**
-  （`n_attempted` 集中在前 `B` 槽）。这不是要掩盖的对象，而是**必须同报的机制量**：
-  `r1_5_plan` 输出逐 1/8 窗口的 `n_attempted` 与 `mean_task_aoi`，
-  `docs/CW-R1.1-纠错交付-3.md` 里逐条写明"与周期基线的比较受此混淆"。
-  ⇒ **干净的科学比较是同一规划器的 `use_probe=True/False` 消融**（同代码路径、
-  同近视程度），而不是"规划器 vs periodic4"。
+· `H` 步之后给一个**预算感知的尾部估计**（v1.6 起，见 `_paced_sumP`）：
+  假设**剩余预算 `b` 按可负担速率均匀铺开**（每用户刷新间隔 `m ≈ steps·n/b`），
+  `P` 走一个稳态循环（`P_post ↔ P_b`），`x̂_k = α^k x̂`（`α = A − B·K`）。
+  **这是估计，不是最优值函数**；`b = 0` 时退回"再无观测"的解析外推。
+· ★ **为什么必须这样（R1.5 的实测结论，不是审美）**：R1.5 的尾部假设"今后**再无**观测"，
+  `A=1` 时 `ΣP_k = steps·P + σ_w²·steps(steps+1)/2` **二次增长** ⇒
+  ① 任何"现在发一帧"都显得极贵；② 花掉的预算在尾部估计里**没有价格**
+  ⇒ 规划器把 128 帧在**前 128 槽**花光（`send_profile` 前 4 窗 31.25/31.25/31.13/29.75，
+  后 4 窗 4.63/0/0/0），`mean_task_aoi` **122.8**，比 `periodic2` 差 1.37–2.02 倍。
+  ⇒ 配速残差比"探测 vs 不探测"的待测效应大一个数量级，**必须先把配速修掉**。
+  推导与量级代验见 `docs/research/CW-R1.6-配速-预注册-v0.1.md` §5（**看数前**写定）；
+  实测见 `docs/CW-R1.6-配速交付.md`。
+  ⚠️ 仍然保留的近似：均匀配速是**假定**的分摊方式（不按 `P_i` 加权），
+  所以它是"会配速的估计"，不是"最优配速"。
 
 信息时序（严格对齐 `world.step` 的顺序，`pred_gates` 已验证该顺序）
 ------------------------------------------------------------------
@@ -134,16 +137,21 @@ class PlanRef:
 
     def __init__(self, cfg: CWConfig, *, h_plan: int = 5, m_samples: int = 16,
                  seed: int = 20261022, use_probe: bool = True,
-                 sample_hidden: bool = True, rho: float | None = None) -> None:
+                 sample_hidden: bool = True, rho: float | None = None,
+                 pacing: bool = True) -> None:
         self.cfg = cfg
         self.H = int(h_plan)
         self.M = int(m_samples)
         self.use_probe = bool(use_probe)
         self.sample_hidden = bool(sample_hidden)
+        #: ★ v1.6：尾部估计是否把**剩余预算的机会成本**算进去（`_paced_sumP`）。
+        #:  `False` = 退回 v1.5 的"再无观测"外推 ⇒ 只作 `G8b` 阴性对照，**不进结果表**。
+        self.pacing = bool(pacing)
         self.base_seed = int(seed)
         self.rho = float(rho if rho is not None else cfg.channel.rho_panel[0])
         self.name = (f"plan_ref_H{self.H}_M{self.M}"
-                     f"{'' if self.use_probe else '_noprobe'}")
+                     f"{'' if self.use_probe else '_noprobe'}"
+                     f"{'' if self.pacing else '_nopace'}")
         # 诊断计数（每 episode 新建实例；runner 不 reset 它）
         self.n_probe = 0
         self.n_send = 0
@@ -204,26 +212,96 @@ class PlanRef:
                 + self.r * np.sum(u * u, axis=1))
 
     # ------------------------------------------------------------ 尾部估计
-    def _terminal(self, P: np.ndarray, xh: np.ndarray, steps: int) -> np.ndarray:
-        """H 步之后"再无观测"的名义外推代价（**估计**，不是最优值函数）。
+    def _paced_sumP(self, P: np.ndarray, steps: int, bud) -> np.ndarray:
+        """`Σ_{k=1..steps} P_k` 的**预算感知**估计（`(M, n)` 向量化）。
 
-        `P_k = A^{2k}(P−P_∞) + P_∞`、`x̂_k = α^k x̂`，`k = 1..steps`。
-        用闭式解而不是循环：`steps` 可达 250，循环会让每槽多 250 次 numpy 调用。
+        模型（推导写在 `docs/research/CW-R1.6-配速-预注册-v0.1.md` §5，先于运行）：
+        剩余预算 `b` 按可负担速率铺开 ⇒ 每个用户每 `m = steps·n_users / b` 步被刷新一次
+        （`m` 取整、且 `m ≥ n_users`，因为一槽最多一帧）。稳态循环满足
+
+            `P_post = P_b·c/(P_b+c) + σ_w²`（送达 + 量测更新后）
+            `P_b    = A^{2(m-1)}·P_post + G`, `G = σ_w²·(A^{2(m-1)}−1)/(A²−1)`
+
+        令 `k = A^{2(m-1)}`，消元得二次式 ⇒ **闭式**
+
+            `P_b = ½[W + sqrt(W² + 4(G + kσ_w²)·c)]`, `W = G + kσ_w² + (k−1)·c`
+
+        （`A=1` 时 `W = mσ_w²`、`G=(m−1)σ_w²`，退化成 `½[mσ_w² + sqrt(m²σ_w⁴+4mσ_w²c)]`）。
+        循环均值 `P̄ = (P_post + P_b)/2`（`A=1` 时与"逐值平均"恒等，见 `plan_gates.G8c`）。
+
+        当前 `P` 低于 `P_b` 时先用 `w` 步"走到 `P_b`"，其余按 `P̄` 计；
+        `P ≥ P_b`（比如刚换了信道还没收敛）时 `w=0`，首步仍按 `P` 计 ——
+        这一项就是"刚发过一帧、暂时不值得再发"的价格。
+
+        ★ `bud = 0` 是**真的**没有钱 ⇒ 退回"再无观测"的解析外推，不是缺陷。
+        """
+        steps = int(min(max(int(steps), 0), _TERM_MAX_STEPS))
+        if steps <= 0:
+            return np.zeros(P.shape[0])
+        a2 = (self.A ** 2)[None, :]
+        s2 = (self.sw ** 2)[None, :]
+        c = float(self.smeas2)
+        n = P.shape[1]
+
+        bud_arr = np.asarray(bud, dtype=float).reshape(-1, 1)
+
+        # ---- 旧口径（无观测外推）：bud=0 或 b 太小到 m>steps 时兜底
+        one_minus = 1.0 - a2
+        safe = np.abs(one_minus) > 1e-12
+        Pinf = np.where(safe, s2 / np.where(safe, one_minus, 1.0), 0.0)
+        geo = np.where(safe, a2 * (1.0 - a2 ** steps) / np.where(safe, one_minus, 1.0),
+                       float(steps))
+        sumP_free = (P - Pinf) * geo + Pinf * float(steps)
+        sumP_free = np.where(safe, sumP_free,
+                             float(steps) * P + s2 * (steps * (steps + 1) / 2.0))
+
+        m = np.maximum(np.round(float(steps) * n / np.maximum(bud_arr, 1.0)), float(n))
+        m = np.minimum(m, float(steps))          # 间隔超过剩余步数 ⇒ 等价于"不会刷新"
+        kk = np.where(safe, a2 ** (m - 1.0), 1.0)
+        G = np.where(safe, s2 * (kk - 1.0) / np.where(safe, one_minus, 1.0),
+                     (m - 1.0) * s2)
+        W = G + kk * s2 + (kk - 1.0) * c
+        Pb = 0.5 * (W + np.sqrt(W * W + 4.0 * (G + kk * s2) * c))
+        Ppost = (Pb - G) / np.maximum(kk, 1e-12)
+        Pbar = 0.5 * (Ppost + Pb)
+
+        # ---- 从当前 P 走到 P_b 需要几步（整数步；A=1 时是线性解的向上取整）
+        lin = (Pb - P) / np.maximum(s2, 1e-300)
+        num, den = Pb - Pinf, P - Pinf
+        ok = safe & (num > 0.0) & (den > 0.0)
+        ratio = np.where(ok, num / np.where(ok, den, 1.0), 1.0)
+        logw = np.where(ok, np.log(ratio) / np.where(ok, np.log(a2), 1.0), lin)
+        w = np.ceil(np.where(np.isfinite(logw), logw, lin))
+        w = np.clip(w, 0.0, np.minimum(m, float(steps)))
+
+        # ---- 暖入段（逐值增长，A=1 时是等差）+ 循环均值段
+        warm_lin = w * P + s2 * w * (w + 1.0) / 2.0
+        warm_geo = ((P - Pinf) * (a2 * (a2 ** w - 1.0)
+                                  / np.where(safe, one_minus, 1.0))
+                    + Pinf * w)
+        warm = np.where(safe, warm_geo, warm_lin)
+        rest = np.maximum(float(steps) - w, 0.0) * Pbar
+        paced = warm + rest + np.where(w <= 0.0, P - Pbar, 0.0)
+
+        # ★ 只要还有预算就走配速分支（`m` 被夹到 `steps` 时配速分支自己退化成
+        #   "一次刷新 + 之外全自由增长"，与无观测外推只差一次刷新，实测差 <2%）。
+        #   **不要**写"只在某条件下用配速"—— 那会让口径随预算档跳变，制造假分辨力。
+        return np.where(bud_arr > 0.0, paced, sumP_free)
+
+    def _terminal(self, P: np.ndarray, xh: np.ndarray, steps: int, bud=None) -> np.ndarray:
+        """H 步之后剩 `steps` 步、`bud` 帧预算的期望尾部代价（**估计**，不是最优值函数）。
+
+        `P` 走 `_paced_sumP`（预算感知）；`x̂` 按名义 `α^k` 衰减。
+        ★ 为什么 `x̂` 不跟 `P` 一起"循环"：`E[q·x²|信念] = q·(P + x̂²)`，
+          `x̂` 在 `α=0.14` 下一两步就衰减掉，`Σ x̂²` 与刷新间隔**近似无关**
+          （`1/(1−α²)=1.021` 倍），所以"陈旧度"的全部预算敏感性都在 `P` 上。
+          这个分解在 `A=1`、`α≈0.14` 的本面板上是数量级正确的（见预注册 §5 的代验）。
         """
         steps = int(min(max(steps, 0), _TERM_MAX_STEPS))
         if steps <= 0:
             return np.zeros(P.shape[0])
-        a2 = (self.A ** 2)[None, :]
-        sw2 = (self.sw ** 2)[None, :]
-        one_minus = 1.0 - a2
-        safe = np.abs(one_minus) > 1e-12
-        Pinf = np.where(safe, sw2 / np.where(safe, one_minus, 1.0), 0.0)
-        geo = np.where(safe, a2 * (1.0 - a2 ** steps) / np.where(safe, one_minus, 1.0),
-                       float(steps))
-        sumP = (P - Pinf) * geo + Pinf * float(steps)
-        if np.any(~safe):                       # A=1（本面板）：Σ P_k 是等差数列
-            sumP = np.where(safe, sumP,
-                            float(steps) * P + sw2 * (steps * (steps + 1) / 2.0))
+        sumP = (self._paced_sumP(P, steps, bud) if bud is not None
+                else self._paced_sumP(P, steps, np.zeros(P.shape[0])))
         al2 = (self.alpha ** 2)[None, :]
         one_minus_a = 1.0 - al2
         safe_a = np.abs(one_minus_a) > 1e-12
@@ -234,6 +312,7 @@ class PlanRef:
         return (self.q * np.sum(sumP + sumX2, axis=1)
                 + self.r * np.sum((self.K ** 2)[None, :] * sumX2, axis=1))
 
+
     def _expect_after(self, st: _St, act: Action, steps_after: int) -> np.ndarray:
         """动作 `act` 之后、还剩 `steps_after` 步时的期望尾部代价（对投递做**解析**期望）。
 
@@ -242,6 +321,13 @@ class PlanRef:
           这个近似对本问题是**保守**的（不虚增 SEND 的收益）。
         """
         a2 = (self.A ** 2)[None, :]
+        # ★ 尾部估计必须看到**本动作之后**的剩余预算（v1.6）：
+        #   花掉一帧 ⇒ 之后可负担的刷新率下降 ⇒ 尾部 `P̄` 上升。
+        #   这是"配速"进入值函数的唯一入口；不给它，SEND/PROBE 在尾部就是免费的。
+        bud_after = np.maximum(st.bud - float(self._need(act)), 0.0)
+        if not self.pacing:
+            # ★ 阴性对照（`G8b`）：强制退回"再无观测"外推。单变量 —— 只动这一处。
+            bud_after = np.zeros_like(bud_after)
         if act.kind == "SEND":
             i = int(act.user)
             g = st.P[:, i] / (st.P[:, i] + self.smeas2)
@@ -250,10 +336,12 @@ class PlanRef:
             p = self._p_hat(st.mh, st.vh)[:, i]
             P2 = st.P.copy()
             P2[:, i] = p * P_del + (1.0 - p) * P_nodel
-            return self._terminal(P2, self.alpha[None, :] * st.xh, steps_after)
-        # HOLD / PROBE：本槽不动任务估计（PROBE 只动信道信念）
+            return self._terminal(P2, self.alpha[None, :] * st.xh, steps_after,
+                                  bud=bud_after)
+        # HOLD / PROBE：本槽不动任务估计（PROBE 只动信道信念），但 PROBE 一样花钱
         P2 = a2 * st.P + (self.sw ** 2)[None, :]
-        return self._terminal(P2, self.alpha[None, :] * st.xh, steps_after)
+        return self._terminal(P2, self.alpha[None, :] * st.xh, steps_after,
+                              bud=bud_after)
 
     # ------------------------------------------------------------ 动作选择
     def _build_candidates(self) -> tuple[Action, ...]:
@@ -270,9 +358,12 @@ class PlanRef:
     def _pick(self, values: dict[Action, float], budget_left: int) -> Action:
         """取最小者；并列（±1e-12）时**先选不花预算的**，再按固定顺序。
 
-        ★ 这条 tie-break 就是"没有证明的收益就不花钱"：`H=1` 时 PROBE 与 HOLD
-          的估计值严格相等（PROBE 不动任务估计）⇒ 选 HOLD ⇒ **探测在 `H=1` 上不会出现**。
-          这是"探测的价值只可能来自续接"这一结构事实，不是为了过判据。
+        ★ 这条 tie-break 就是"没有证明的收益就不花钱"。
+          v1.5（尾部不认预算）时 `H=1` 的 PROBE 与 HOLD 估计值**严格相等**
+          （PROBE 不动任务估计）⇒ 靠 tie-break 才选 HOLD。
+          v1.6 起（`_expect_after` 把预算计进尾部）PROBE 已经**严格更差**：
+          同样不动任务估计，却让尾部可负担刷新率下降 ⇒ 不需要 tie-break 也不选它。
+          两种口径都不允许"因为探测看起来免费而探测"。
         """
         feas = [a for a in self._cand if budget_left >= self._need(a) and np.isfinite(values[a])]
         if not feas:
@@ -414,9 +505,10 @@ class PlanRef:
 
 
 def make(cfg: CWConfig, *, arm: str = "probe", h_plan: int = 5, m_samples: int = 16,
-         seed: int = 20261022, rho: float | None = None) -> PlanRef:
+         seed: int = 20261022, rho: float | None = None,
+         pacing: bool = True) -> PlanRef:
     """按臂名构造：`probe` / `noprobe` / `nohidden`（后者只给变异闸用）。"""
-    kw = dict(h_plan=h_plan, m_samples=m_samples, seed=seed, rho=rho)
+    kw = dict(h_plan=h_plan, m_samples=m_samples, seed=seed, rho=rho, pacing=pacing)
     if arm == "probe":
         return PlanRef(cfg, use_probe=True, sample_hidden=True, **kw)
     if arm == "noprobe":

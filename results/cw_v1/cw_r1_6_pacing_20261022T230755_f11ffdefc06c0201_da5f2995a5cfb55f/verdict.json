@@ -1,0 +1,52 @@
+{
+  "T1_pacing_cv": true,
+  "T2_negative_control": true,
+  "T3_aoi": true,
+  "T4_m_stability": false,
+  "T5_vs_periodic2": false,
+  "T5_detail": {
+    "pass": false,
+    "n_cells": 4,
+    "required_cells": 4,
+    "cells": [
+      {
+        "rho": 0.85,
+        "ratio": 0.5,
+        "median_pairwise_ratio": 1.2300742861074512,
+        "status": "ok",
+        "plan_median": 0.07504209070525253,
+        "periodic2_median": 0.055256724587445655
+      },
+      {
+        "rho": 0.98,
+        "ratio": 0.5,
+        "median_pairwise_ratio": 1.2278808975106643,
+        "status": "ok",
+        "plan_median": 0.06693277558928638,
+        "periodic2_median": 0.06320671672599032
+      },
+      {
+        "rho": 0.85,
+        "ratio": 0.8,
+        "median_pairwise_ratio": 0.8481738645242267,
+        "status": "ok",
+        "plan_median": 0.06509663214642972,
+        "periodic2_median": 0.055256724587445655
+      },
+      {
+        "rho": 0.98,
+        "ratio": 0.8,
+        "median_pairwise_ratio": 1.0144489795990048,
+        "status": "ok",
+        "plan_median": 0.05967174347698799,
+        "periodic2_median": 0.06320671672599032
+      }
+    ],
+    "rule": "四格 median_pairwise_ratio(plan_probe / periodic2) ≤ 1.00"
+  },
+  "eligible_for_N1N2": false,
+  "reason": "T4（M 16→32 稳定）未过 ⇒ 规划器自身方差与待测效应不可分离，本轮**不出** N1/N2 科学判词；只报工程可比性（T5）与残差修正（T1–T3）",
+  "n_gate_fail": 2,
+  "n_mutation_missed": 1,
+  "note": "T5 是工程可比性判据，不是「主动测量有价值」的判词"
+}

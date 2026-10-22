@@ -1,0 +1,82 @@
+{
+  "run_id": "cw_r1_6_pacing_20261022T230755_f11ffdefc06c0201_da5f2995a5cfb55f",
+  "kind": "PLANNING-REFERENCE-NOT-UPPER-BOUND",
+  "protocol": "CW-POMDP-v1.1",
+  "pacing": true,
+  "event_pairing": "slot",
+  "h_plan": 5,
+  "m_samples": 32,
+  "episodes": [
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107
+  ],
+  "rhos": [
+    0.85,
+    0.98
+  ],
+  "ratios": [
+    0.5,
+    0.8
+  ],
+  "config": {
+    "plant": {
+      "A": [
+        1.0,
+        1.0
+      ],
+      "B": 0.32,
+      "sigma_w": [
+        0.02,
+        0.03
+      ],
+      "prior_var": 1.0,
+      "sigma_meas": 0.2,
+      "q_cost": 1.0,
+      "r_cost": 0.02
+    },
+    "channel": {
+      "rho_panel": [
+        0.85,
+        0.98
+      ],
+      "kappa": 2.0,
+      "log_h_star": 0.0,
+      "sigma_csi": 0.05,
+      "h_log_init_std": 1.0,
+      "use_ack_for_csi": true
+    },
+    "protocol": {
+      "horizon": 256,
+      "c_probe": 1,
+      "c_data": 1,
+      "budget_ratios": [
+        0.5,
+        0.8
+      ],
+      "init_from_prior": true,
+      "event_pairing": "slot",
+      "allow_multislot": false
+    },
+    "root_seed": 20261021,
+    "protocol_name": "CW-POMDP-v1.1",
+    "budget_values": [
+      128,
+      204
+    ]
+  },
+  "note": "R1.6 配速：尾部估计接入剩余预算机会成本",
+  "panel_from_cache": false,
+  "at_asia_shanghai": "2026-10-22T23:07:55.276993+08:00",
+  "elapsed_s": 219.23,
+  "git_head": "71cba2fce2a3ee7d1a61712419b1d3b71d2d33ad",
+  "git_status_porcelain": "M experiments/cw_v1/plan_gates.py\n M experiments/cw_v1/plan_ref.py\n?? docs/research/CW-R1.6-配速-预注册-v0.1.md\n?? experiments/cw_v1/r1_6_plan.py\n?? results/cw_v1/cw_r1_6_pacing_20261022T230755_f11ffdefc06c0201_da5f2995a5cfb55f/",
+  "src_hash": "da5f2995a5cfb55f",
+  "supersedes": "results/cw_v1/cw_r1_5_plan_* 的 planning 面板（pacing=False 口径）",
+  "disclaimer": "有限视界 + Monte-Carlo 规划参考，不是上界、不是最优策略；8 集/格是开发诊断，不是确认集。T4（M 16→32 稳定）未过 ⇒ 不出「测量值不值」的科学判词。与 R1.5 的 planning 数字不同口径（pacing=True），不得混表。"
+}

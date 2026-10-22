@@ -1,0 +1,32 @@
+{
+  "n_mutations": 3,
+  "n_missed": 1,
+  "rows": [
+    {
+      "mutation": "M1 PROBE 测量不进信念（钱照扣）",
+      "target": "G5a",
+      "caught": false,
+      "evidence": {
+        "n_probe": 18
+      }
+    },
+    {
+      "mutation": "M2 _pick 无视预算",
+      "target": "G2a",
+      "caught": true,
+      "evidence": {
+        "n_forced_hold": 253,
+        "budget": 3
+      }
+    },
+    {
+      "mutation": "M3 rollout 不扣预算",
+      "target": "G2b",
+      "caught": true,
+      "evidence": {
+        "decrement": 0.0,
+        "expected": 3.0
+      }
+    }
+  ]
+}
