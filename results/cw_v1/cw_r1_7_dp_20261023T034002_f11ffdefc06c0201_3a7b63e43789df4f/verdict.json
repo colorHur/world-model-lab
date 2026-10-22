@@ -1,0 +1,80 @@
+{
+  "chain": [
+    {
+      "gate": "D0",
+      "desc": "信息边界（AST，两个文件）",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "D1a",
+      "desc": "b=0 与解析外推一致（≤1e-4）",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "D1b",
+      "desc": "b=0 的斜率与解析一致（≤1e-12）",
+      "state": "fail",
+      "observed": false
+    },
+    {
+      "gate": "D2",
+      "desc": "对预算单调不增",
+      "state": "not_reached",
+      "observed": true
+    },
+    {
+      "gate": "D3",
+      "desc": "可采纳性 vs 穷举最优（τ≤4）",
+      "state": "not_reached",
+      "observed": false
+    },
+    {
+      "gate": "D4",
+      "desc": "可采纳性 vs 轮询策略（b=τ）",
+      "state": "not_reached",
+      "observed": false
+    },
+    {
+      "gate": "D5",
+      "desc": "加密必须缩小超差（否则不是离散化）",
+      "state": "not_reached",
+      "observed": false
+    }
+  ],
+  "stopped_at": "D1b",
+  "all_pass": false,
+  "usable_as_tail": false,
+  "eligible_for_N1N2": false,
+  "n_gate_fail": 4,
+  "n_checks": 7,
+  "n_mutation_missed": 2,
+  "mutation_rows": [
+    {
+      "mutation": "M1 送达概率置 1（忽略 p̂）",
+      "caught": true,
+      "evidence": {
+        "err": -0.051469955380339494,
+        "base": 0.004343365899247775
+      }
+    },
+    {
+      "mutation": "M2 交换两用户的动力学轴",
+      "caught": false,
+      "evidence": {
+        "err": 0.001995639164013241,
+        "base": 0.004343365899247775
+      }
+    },
+    {
+      "mutation": "M3 递推里预算不减（一帧可无限用）",
+      "caught": false,
+      "evidence": {
+        "err": 0.004343365899247775,
+        "base": 0.004343365899247775
+      }
+    }
+  ],
+  "note": "链在第一个 fail 停住；`not_reached` 一律不写成通过。`usable_as_tail=False` ⇒ 本轮不接 `plan_ref`、不跑面板、不出 N1/N2。"
+}

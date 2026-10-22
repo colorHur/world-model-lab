@@ -1,0 +1,76 @@
+{
+  "run_id": "cw_r1_7_dp_20261023T033945_f11ffdefc06c0201_abdace30f759db95",
+  "kind": "DP-TAIL-REJECTED",
+  "protocol": "CW-POMDP-v1.1",
+  "event_pairing": "slot",
+  "config": {
+    "plant": {
+      "A": [
+        1.0,
+        1.0
+      ],
+      "B": 0.32,
+      "sigma_w": [
+        0.02,
+        0.03
+      ],
+      "prior_var": 1.0,
+      "sigma_meas": 0.2,
+      "q_cost": 1.0,
+      "r_cost": 0.02
+    },
+    "channel": {
+      "rho_panel": [
+        0.85,
+        0.98
+      ],
+      "kappa": 2.0,
+      "log_h_star": 0.0,
+      "sigma_csi": 0.05,
+      "h_log_init_std": 1.0,
+      "use_ack_for_csi": true
+    },
+    "protocol": {
+      "horizon": 256,
+      "c_probe": 1,
+      "c_data": 1,
+      "budget_ratios": [
+        0.5,
+        0.8
+      ],
+      "init_from_prior": true,
+      "event_pairing": "slot",
+      "allow_multislot": false
+    },
+    "root_seed": 20261021,
+    "protocol_name": "CW-POMDP-v1.1",
+    "budget_values": [
+      128,
+      204
+    ]
+  },
+  "panel_run": false,
+  "panel_skip_reason": "D3/D4 未过 ⇒ DP 不可采纳；把它当尾部会把偏差灌进动作选择（预注册 §4 否定条件 1）",
+  "code": [
+    "experiments/cw_v1/plan_dp.py",
+    "experiments/cw_v1/dp_gates.py",
+    "experiments/cw_v1/r1_7_plan.py"
+  ],
+  "prereg": "docs/research/CW-R1.7-小状态DP-预注册-v0.1.md",
+  "note": "首轮：可采纳性闸",
+  "at_asia_shanghai": "2026-10-23T03:39:45.073683+08:00",
+  "elapsed_s": 1.29,
+  "git_head": "8f94320aa939aa079b7bd8e211c37c6abfb090cd",
+  "git_status_porcelain": "?? docs/research/CW-R1.7-小状态DP-预注册-v0.1.md\n?? experiments/cw_v1/dp_gates.py\n?? experiments/cw_v1/plan_dp.py\n?? experiments/cw_v1/r1_7_plan.py\n?? results/cw_v1/cw_r1_7_dp_20261023T033945_f11ffdefc06c0201_abdace30f759db95/",
+  "src_hash": "abdace30f759db95",
+  "dp_cache": {
+    "size": 0,
+    "cap": 3,
+    "keys": []
+  },
+  "does_not_touch": [
+    "wmlab/",
+    "results/（旧）",
+    "plan_ref 的默认行为"
+  ]
+}
