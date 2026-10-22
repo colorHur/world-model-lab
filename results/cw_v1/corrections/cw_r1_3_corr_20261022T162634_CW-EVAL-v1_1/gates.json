@@ -1,0 +1,57 @@
+{
+ "n_checks": 6,
+ "n_fail": 0,
+ "all_pass": true,
+ "rows": [
+  {
+   "name": "C1 复原忠实：用旧公式重算的比值与存盘值逐格一致",
+   "pass": true,
+   "detail": {
+    "n_cells": 32,
+    "max_abs_diff": 4.844584116092676e-07,
+    "tolerance": "存盘 6 位小数 ⇒ 5.1e-7"
+   }
+  },
+  {
+   "name": "C2 中位数之比被翻成倒数（方向确实改对）",
+   "pass": true,
+   "detail": {
+    "max_abs_prod_minus_1": 7.93389651976284e-07,
+    "note": "只比 ratio_of_medians；median_pairwise_ratio 是另一个统计量"
+   }
+  },
+  {
+   "name": "C2b 逐 episode 比值中位数 ≠ 中位数之比（两个统计量不可互换）",
+   "pass": true,
+   "detail": {
+    "max_abs_gap": 0.565035464878906
+   }
+  },
+  {
+   "name": "C3 格数要求由设计推导（4 格 ⇒ 4），不含写死的 6",
+   "pass": true,
+   "detail": {
+    "n_cells": 4
+   }
+  },
+  {
+   "name": "C4 所有配对格都能定义（无 NaN / 非正基线 / 口径冲突）",
+   "pass": true,
+   "detail": {
+    "n_undefined": 0,
+    "statuses": [
+     "ok"
+    ]
+   }
+  },
+  {
+   "name": "C5 逐基线结果已完整报出（不作为研究判据）",
+   "pass": true,
+   "detail": {
+    "n_baselines": 8,
+    "n_baselines_beaten": 0,
+    "note": "诊断臂输给某条基线 ⇒ 只能说'这个贪心臂不够好'，不能说'信息无价值'"
+   }
+  }
+ ]
+}

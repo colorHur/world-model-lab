@@ -1,0 +1,11 @@
+{
+ "run_id": "cw_r1_3_corr_20261022T162634_CW-EVAL-v1_1",
+ "kind": "REANALYSIS-NOT-CONFIRMATION",
+ "eval_version": "CW-EVAL-v1.1",
+ "source_run": "cw_r1_3_20261021T221429_47fbe96aa30f8a6f_07d37da14c67cf10",
+ "source_protocol": "CW-POMDP-v1（确定初态、ACK 不进信念）",
+ "current_protocol": "CW-POMDP-v1.1（初态取自公开先验、ACK 接入信念）",
+ "why_not_confirmation": "本目录只把旧 run 的逐 episode 记录用新评价器重算，用于量化旧判词的错误幅度。旧数据来自不同协议口径，**不得**当作 v1.1 的独立确认；v1.1 的数字必须在新协议下重跑。",
+ "at_asia_shanghai": "2026-10-22T16:26:34.854673+08:00",
+ "elapsed_s": 0.052
+}

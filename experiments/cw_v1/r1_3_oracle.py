@@ -1,29 +1,42 @@
 # -*- coding: utf-8 -*-
-"""CW-R1-3：**`ORACLE-KNOWN` 上界臂的落盘入口**（R1 第 2 步第 1 项）。
+"""CW-R1-3：`ORACLE-KNOWN` **真值辅助贪心诊断臂**的落盘入口（R1 第 2 步第 1 项）。
 
-预注册判据（写于此行、看结果之前；对应 STATE §7）
-------------------------------------------------
-- 每格（ρ × B/T）相对**该格最好基线**的 `samepot` 匹配臂：
-  **中位成本比 < 0.9** 且 **逐 episode 胜率 ≥ 0.7**；
-- 8 格里 **≥ 6 格**同时满足上述两条 ⇒ 判 **`ORACLE-KNOWN` 赢**（进 R2）；
-- 否则判 **`SPACE-VOID`**，本课题在 R1 收口（不进 R2）。
+★★ 2026-10-22 更正（v4.1 验收 §2）——三件事被撤回，历史记录保留：
+  1. **撤回"上界臂"这个名称**。它是**单步真值贪心**，不是最优策略，也不是任何上界：
+     它按真值挑"现在最值得发的用户"，但不做前瞻、不评估"现在测一下信道值不值"、
+     不考虑剩余预算的续接价值 ⇒ **弱于**最优，因此"它赢不了基线"**不能**推出
+     "信息没有价值"。名称与结论一起撤回。
+  2. **撤回 `SPACE-VOID` 作为研究结论**。旧判据的门槛是"≥6/8 格"，而本设计只有
+     4 格（2 ρ × 2 B/T）⇒ **判据不可满足**（见 `evaluate.required_cells_from_design`：
+     格数要求必须从设计推导，不许外部写死）。旧代码还按"该格最好基线"用
+     `min(cost_ratio_median)` 选基线，而**比值方向写反了**
+     （存的是 `baseline/oracle`，门槛却按 `oracle/baseline < 0.9` 判）——
+     于是"选出的最好基线"其实是**赢它最多的**基线，判词必然落在"不过"。
+     这个错误已由 `experiments/cw_v1/evaluate.py`（CW-EVAL-v1.1）+ `eval_gates.py` 14 项反例接管。
+  3. **本臂从未探测**（`probe_mean = 0.0`，实测）。它拿到真状态后没有理由花钱测信道 ⇒
+     它对"测量的价值"**没有信息量**。要回答"测量值不值"，需要的是
+     **同信息 + 已知生成参数的有限视界规划参考**（含 PROBE/SEND/HOLD 与续接价值），
+     那是纠错后的下一步，不是这个臂。
 
-★ 为什么要求"≥6/8 格"而不是"全部"：8 个格子里有两格（`B/T=0.5`、`ρ=0.98`）的
-  HOLD 支配面最大（R1-2 实测 `p32@ρ0.98` 有 4/12 集 HOLD 更便宜），单格波动本来就大。
-  预注册的"6/8"是**下限**；实际落在 6 与 8 之间必须原样写出来，不许取整成"基本全赢"。
+本入口现在只负责：**记录**这个诊断臂的数值与记账恒等式，并按**逐基线**口径报告
+"它相对每条基线是否更好"，**不再给全局结论词**。
+
+比较方向（CW-EVAL-v1.1 固定，不可反）
+--------------------------------------
+`ratio = candidate / baseline`，`delta = baseline - candidate`。
+候选便宜 ⇒ `ratio < 1` 且 `delta > 0`。
 
 ★★ 本入口**只跑 BOUNDED**（`R0_DEFAULT` 开环不稳定，末64/中64=1929×，不可比较）。
-★★ `ORACLE-KNOWN` 是**故意越界的上界臂**（读真信道 + 真状态模），任何结论必须带这句限定。
+★★ `ORACLE-KNOWN` 是**故意越界的诊断臂**（读真信道 + 真状态模），任何引用必须带这句限定。
 
 不做的三件事（写下来防止下一轮"顺手"做了）
 --------------------------------------------
 1. 不扫 `kappa_scale`（那会变成"看到结果再调参"）；只在 §敏感性 里跑 0.25/0.5/1.0 各一遍，
    并**只用于说明结论对 κ 的一阶不敏感**，不进预注册判据。
 2. 不把 `OracleKnownProbeable` 的 `n_probe=0` 当作"探测通道已关闭"的证据（设计使然）。
-3. 不声称"学习方法不行"。判 `SPACE-VOID` 时的准确措辞是
-   **"在 CW-POMDP-v1（BOUNDED plant）的信息结构下，全知上界也赢不了基线"**，
-   它限制的是**这个协议 + 这个 plant**，不是"学习方法"。
+3. 不用本臂的输赢声称"学习方法行或不行"，也不用它声称"信息有无价值"。
 """
+
 
 from __future__ import annotations
 
@@ -48,7 +61,9 @@ RATIOS = (0.5, 0.8)
 #: 预注册门槛（**改它就是改判据**，必须在文档里留痕）
 WIN_MEDIAN_RATIO = 0.9
 WIN_FRACTION = 0.7
-WIN_MIN_CELLS = 6
+#: ★ v1.1：删掉 `WIN_MIN_CELLS = 6`。它在 4 格设计上**不可满足**，
+#:   是"判据写死、与设计脱钩"的典型（教训：格数要求必须从设计推导）。
+#:   现在由 `evaluate.required_cells_from_design(cells)` 给。
 
 
 # ---------------------------------------------------------------- 工具
@@ -274,7 +289,10 @@ def run_all(*, episodes: range, rhos=RHOS, ratios=RATIOS,
                     "n_pairs": len(deltas),
                     "n_oracle_wins": wins,
                     "win_fraction": round(wins / max(1, len(deltas)), 4),
-                    "cost_ratio_median": round(med_m / main["cost_true_median"], 6),
+                    # ★ v1.1 修正方向：candidate(oracle) / baseline。
+                    #   旧代码是 `med_m / main["cost_true_median"]` = baseline/oracle，
+                    #   与门槛 `ratio < 0.9`（"候选便宜 10%"）方向相反 ⇒ 判词必然反。
+                    "cost_ratio_median": round(main["cost_true_median"] / med_m, 6),
                     "deltas": deltas,
                 })
 
@@ -290,30 +308,61 @@ def gates(out: dict, *, n_cells_expected: int) -> dict:
     def _row(name, ok, detail):
         rows.append({"name": name, "pass": bool(ok), "detail": detail})
 
+    from .evaluate import required_cells_from_design
+
     matched = [m for m in out["matched"] if m["mode"] == "samepot_pairwise"]
     by_cell = defaultdict(list)
     for m in matched:
         by_cell[(m["rho"], m["budget_ratio"])].append(m)
+    cells = sorted(by_cell)
 
-    cells = []
-    for key, ms in sorted(by_cell.items()):
-        best = min(ms, key=lambda m: m["cost_ratio_median"])
-        # ★ 该格"最好基线"的匹配臂：成本最低的那个（比值最小）——**先定规则再看数**
-        cells.append({
-            "rho": key[0], "budget_ratio": key[1],
-            "best_policy": best["policy"],
-            "best_ratio": best["cost_ratio_median"],
-            "best_win_fraction": best["win_fraction"],
-            "pass_ratio": best["cost_ratio_median"] < WIN_MEDIAN_RATIO,
-            "pass_fraction": best["win_fraction"] >= WIN_FRACTION,
-            "pass": (best["cost_ratio_median"] < WIN_MEDIAN_RATIO
-                     and best["win_fraction"] >= WIN_FRACTION),
-        })
-    n_win = sum(1 for c in cells if c["pass"])
-    _row(f"K0 预注册：≥{WIN_MIN_CELLS}/{n_cells_expected} 格 中位比<{WIN_MEDIAN_RATIO} 且 "
-         f"胜率≥{WIN_FRACTION}", n_win >= WIN_MIN_CELLS,
-         {"n_cells": len(cells), "n_win_cells": n_win, "cells": cells,
-          "verdict": "ORACLE-KNOWN-WINS" if n_win >= WIN_MIN_CELLS else "SPACE-VOID"})
+    # ★★ v1.1：判据改成**逐基线**，不再"每格挑一个基线再汇总"。
+    #   旧写法有两个错：
+    #     (a) `min(cost_ratio_median)` 在真比例为 candidate/baseline 时选的是
+    #         "候选相对最便宜"的基线 —— 由于旧代码方向反了，实际选的是**赢它最多**的那条；
+    #     (b) 只报"最好的那条基线"会掩盖"它输给其它基线"，与"一个启发式输了 ≠ 信息无空间"矛盾。
+    required = required_cells_from_design(cells)   # 4 格 ⇒ 要求 4，不再写死 6/8
+    by_base = defaultdict(dict)
+    for m in matched:
+        by_base[m["policy"]][(m["rho"], m["budget_ratio"])] = m
+
+    per_baseline = []
+    for pol, cellmap in sorted(by_base.items()):
+        n_pass = 0
+        detail = []
+        for key in cells:
+            m = cellmap.get(key)
+            if m is None:
+                detail.append({"cell": list(key), "status": "missing"})
+                continue
+            ok = (m["cost_ratio_median"] < WIN_MEDIAN_RATIO
+                  and m["win_fraction"] >= WIN_FRACTION)
+            n_pass += int(ok)
+            detail.append({"cell": list(key),
+                           "ratio_oracle_over_baseline": m["cost_ratio_median"],
+                           "win_fraction": m["win_fraction"], "pass": bool(ok)})
+        per_baseline.append({"baseline": pol, "n_cells": len(cells),
+                             "n_pass": n_pass,
+                             "beats_this_baseline": n_pass == required,
+                             "cells": detail})
+
+    n_baselines_beaten = sum(1 for b in per_baseline if b["beats_this_baseline"])
+    _row("K0 逐基线报告：诊断臂相对每条基线，是否在**全部**设计格上 "
+         f"ratio<{WIN_MEDIAN_RATIO} 且 胜率≥{WIN_FRACTION}",
+         True,   # ★ 本条是**记录**，不是"通过/失败"：它测的是诊断臂，不是协议正确性
+         {"design_cells": len(cells), "required_cells": required,
+          "n_baselines": len(per_baseline),
+          "n_baselines_beaten": n_baselines_beaten,
+          "per_baseline": per_baseline,
+          "note": "本项恒为记录项：诊断臂输赢不构成研究判据（v1.1 撤回 SPACE-VOID）"})
+
+    # K0b（真正会 FAIL 的一条）：格数要求必须由设计推导，且不得有缺格
+    missing_cells = [(b["baseline"], c["cell"]) for b in per_baseline
+                     for c in b["cells"] if c.get("status") == "missing"]
+    _row("K0b 每条基线在**每个设计格**都有配对结果（缺格 ⇒ 判据不可满足）",
+         (len(cells) == required) and (not missing_cells),
+         {"n_cells": len(cells), "required": required,
+          "n_missing": len(missing_cells), "examples": missing_cells[:5]})
 
     # ---- 接线判据（阴性对照） ----
     orc = {(o["rho"], o["budget_ratio"], o["variant"]): o for o in out["oracle"]}
@@ -385,8 +434,8 @@ def main(argv: list[str] | None = None) -> int:
         _dump("gates.json", g)
         _dump("meta.json", {
             "run_id": run_id,
-            "protocol": "CW-POMDP-v1",
-            "phase": "CW-R1-3 ORACLE-KNOWN 上界臂",
+            "protocol": C.CWConfig.PROTOCOL_VERSION,
+            "phase": "CW-R1-3 ORACLE-KNOWN 真值辅助贪心诊断臂（v1.1 更正版）",
             "note": args.note,
             "at_asia_shanghai": now.isoformat(),
             "git_head": _git(["rev-parse", "HEAD"]),
@@ -398,15 +447,17 @@ def main(argv: list[str] | None = None) -> int:
             "baselines": list(BASELINES),
             "rho": list(RHOS),
             "budget_ratios": list(RATIOS),
-            "prereg": {"median_ratio_lt": WIN_MEDIAN_RATIO,
+            "prereg": {"ratio": "candidate(oracle)/baseline",
+                       "median_ratio_lt": WIN_MEDIAN_RATIO,
                        "win_fraction_ge": WIN_FRACTION,
-                       "min_cells": WIN_MIN_CELLS},
+                       "required_cells": "由设计格数推导（不再写死 min_cells）"},
             "disclaimer": (
-                "ORACLE-KNOWN 是**故意越界的上界臂**：读真信道 log h 与真状态 x 的模，"
-                "通过 run_episode(allow_truth_keys=True) 显式白名单构造，不经 view._inner。"
-                "它**不可部署**，任何引用必须带这句。"
-                "判 SPACE-VOID 时的准确措辞是「在 CW-POMDP-v1（BOUNDED plant）的信息结构下，"
-                "全知上界也赢不了基线」，限制的是**该协议 + 该 plant**，不是「学习方法不行」。"
+                "ORACLE-KNOWN 是**真值辅助的单步贪心诊断臂**，不是上界：它按真值挑当前"
+                "最值得发的用户，无前瞻、不评估测量的价值、不考虑预算续接。"
+                "它读真信道 log h 与真状态 x 的模，通过 run_episode(allow_truth_keys=True) "
+                "显式白名单构造。它**不可部署**，任何引用必须带这两句。"
+                "★ 2026-10-22 撤回：①「上界」一名；②由它输赢推出的「SPACE-VOID / 信息无空间」结论。"
+                "理由：它不是最优策略，且**从不探测**（probe_mean=0）⇒ 对「测量的价值」无信息量。"
                 "cost_true_per_step 为准；samepot 匹配臂是「给对手同样的钱」的构造。"
             ),
         })

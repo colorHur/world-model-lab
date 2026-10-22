@@ -1,0 +1,440 @@
+{
+  "n_checks": 6,
+  "n_fail": 0,
+  "all_pass": true,
+  "rows": [
+    {
+      "name": "K0 逐基线报告：诊断臂相对每条基线，是否在**全部**设计格上 ratio<0.9 且 胜率≥0.7",
+      "pass": true,
+      "detail": {
+        "design_cells": 4,
+        "required_cells": 4,
+        "n_baselines": 8,
+        "n_baselines_beaten": 0,
+        "per_baseline": [
+          {
+            "baseline": "ack_b2c3",
+            "n_cells": 4,
+            "n_pass": 0,
+            "beats_this_baseline": false,
+            "cells": [
+              {
+                "cell": [
+                  0.85,
+                  0.5
+                ],
+                "ratio_oracle_over_baseline": 2.339354,
+                "win_fraction": 0.0833,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.85,
+                  0.8
+                ],
+                "ratio_oracle_over_baseline": 2.053049,
+                "win_fraction": 0.25,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.98,
+                  0.5
+                ],
+                "ratio_oracle_over_baseline": 6.876994,
+                "win_fraction": 0.0,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.98,
+                  0.8
+                ],
+                "ratio_oracle_over_baseline": 6.85091,
+                "win_fraction": 0.0,
+                "pass": false
+              }
+            ]
+          },
+          {
+            "baseline": "periodic1",
+            "n_cells": 4,
+            "n_pass": 0,
+            "beats_this_baseline": false,
+            "cells": [
+              {
+                "cell": [
+                  0.85,
+                  0.5
+                ],
+                "ratio_oracle_over_baseline": 2.489986,
+                "win_fraction": 0.0833,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.85,
+                  0.8
+                ],
+                "ratio_oracle_over_baseline": 2.91843,
+                "win_fraction": 0.0,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.98,
+                  0.5
+                ],
+                "ratio_oracle_over_baseline": 5.237847,
+                "win_fraction": 0.0,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.98,
+                  0.8
+                ],
+                "ratio_oracle_over_baseline": 7.498461,
+                "win_fraction": 0.0,
+                "pass": false
+              }
+            ]
+          },
+          {
+            "baseline": "periodic16",
+            "n_cells": 4,
+            "n_pass": 1,
+            "beats_this_baseline": false,
+            "cells": [
+              {
+                "cell": [
+                  0.85,
+                  0.5
+                ],
+                "ratio_oracle_over_baseline": 0.712577,
+                "win_fraction": 0.6667,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.85,
+                  0.8
+                ],
+                "ratio_oracle_over_baseline": 0.625367,
+                "win_fraction": 0.75,
+                "pass": true
+              },
+              {
+                "cell": [
+                  0.98,
+                  0.5
+                ],
+                "ratio_oracle_over_baseline": 2.329825,
+                "win_fraction": 0.25,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.98,
+                  0.8
+                ],
+                "ratio_oracle_over_baseline": 2.320988,
+                "win_fraction": 0.25,
+                "pass": false
+              }
+            ]
+          },
+          {
+            "baseline": "periodic4",
+            "n_cells": 4,
+            "n_pass": 0,
+            "beats_this_baseline": false,
+            "cells": [
+              {
+                "cell": [
+                  0.85,
+                  0.5
+                ],
+                "ratio_oracle_over_baseline": 2.835298,
+                "win_fraction": 0.0833,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.85,
+                  0.8
+                ],
+                "ratio_oracle_over_baseline": 2.488297,
+                "win_fraction": 0.25,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.98,
+                  0.5
+                ],
+                "ratio_oracle_over_baseline": 5.076818,
+                "win_fraction": 0.0833,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.98,
+                  0.8
+                ],
+                "ratio_oracle_over_baseline": 5.057562,
+                "win_fraction": 0.0833,
+                "pass": false
+              }
+            ]
+          },
+          {
+            "baseline": "periodic8",
+            "n_cells": 4,
+            "n_pass": 0,
+            "beats_this_baseline": false,
+            "cells": [
+              {
+                "cell": [
+                  0.85,
+                  0.5
+                ],
+                "ratio_oracle_over_baseline": 1.503426,
+                "win_fraction": 0.3333,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.85,
+                  0.8
+                ],
+                "ratio_oracle_over_baseline": 1.319427,
+                "win_fraction": 0.4167,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.98,
+                  0.5
+                ],
+                "ratio_oracle_over_baseline": 3.783625,
+                "win_fraction": 0.1667,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.98,
+                  0.8
+                ],
+                "ratio_oracle_over_baseline": 3.769274,
+                "win_fraction": 0.1667,
+                "pass": false
+              }
+            ]
+          },
+          {
+            "baseline": "value_csi1",
+            "n_cells": 4,
+            "n_pass": 0,
+            "beats_this_baseline": false,
+            "cells": [
+              {
+                "cell": [
+                  0.85,
+                  0.5
+                ],
+                "ratio_oracle_over_baseline": 2.122437,
+                "win_fraction": 0.25,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.85,
+                  0.8
+                ],
+                "ratio_oracle_over_baseline": 1.86268,
+                "win_fraction": 0.5,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.98,
+                  0.5
+                ],
+                "ratio_oracle_over_baseline": 3.613431,
+                "win_fraction": 0.0833,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.98,
+                  0.8
+                ],
+                "ratio_oracle_over_baseline": 3.599725,
+                "win_fraction": 0.0833,
+                "pass": false
+              }
+            ]
+          },
+          {
+            "baseline": "value_csi64",
+            "n_cells": 4,
+            "n_pass": 0,
+            "beats_this_baseline": false,
+            "cells": [
+              {
+                "cell": [
+                  0.85,
+                  0.5
+                ],
+                "ratio_oracle_over_baseline": 1.567531,
+                "win_fraction": 0.3333,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.85,
+                  0.8
+                ],
+                "ratio_oracle_over_baseline": 1.375687,
+                "win_fraction": 0.4167,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.98,
+                  0.5
+                ],
+                "ratio_oracle_over_baseline": 3.294179,
+                "win_fraction": 0.0833,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.98,
+                  0.8
+                ],
+                "ratio_oracle_over_baseline": 3.281685,
+                "win_fraction": 0.0833,
+                "pass": false
+              }
+            ]
+          },
+          {
+            "baseline": "value_csi8",
+            "n_cells": 4,
+            "n_pass": 0,
+            "beats_this_baseline": false,
+            "cells": [
+              {
+                "cell": [
+                  0.85,
+                  0.5
+                ],
+                "ratio_oracle_over_baseline": 1.573472,
+                "win_fraction": 0.3333,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.85,
+                  0.8
+                ],
+                "ratio_oracle_over_baseline": 1.380901,
+                "win_fraction": 0.4167,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.98,
+                  0.5
+                ],
+                "ratio_oracle_over_baseline": 3.151593,
+                "win_fraction": 0.0833,
+                "pass": false
+              },
+              {
+                "cell": [
+                  0.98,
+                  0.8
+                ],
+                "ratio_oracle_over_baseline": 3.13964,
+                "win_fraction": 0.0833,
+                "pass": false
+              }
+            ]
+          }
+        ],
+        "note": "本项恒为记录项：诊断臂输赢不构成研究判据（v1.1 撤回 SPACE-VOID）"
+      }
+    },
+    {
+      "name": "K0b 每条基线在**每个设计格**都有配对结果（缺格 ⇒ 判据不可满足）",
+      "pass": true,
+      "detail": {
+        "n_cells": 4,
+        "required": 4,
+        "n_missing": 0,
+        "examples": []
+      }
+    },
+    {
+      "name": "K1 真信道特权真的接线（关掉 ⇒ 成本必变）",
+      "pass": true,
+      "detail": {
+        "n_cells": 4,
+        "n_changed": 4
+      }
+    },
+    {
+      "name": "K2 真状态特权真的接线（关掉 ⇒ 成本必变）",
+      "pass": true,
+      "detail": {
+        "n_cells": 4,
+        "n_changed": 4
+      }
+    },
+    {
+      "name": "K3 记录上界臂的探测次数（预言：=0；不作判据，结论必须点名）",
+      "pass": true,
+      "detail": [
+        {
+          "rho": 0.85,
+          "budget_ratio": 0.5,
+          "main_probe": 0.0,
+          "probeable_probe": 128.0,
+          "main_attempted": 128.0
+        },
+        {
+          "rho": 0.85,
+          "budget_ratio": 0.8,
+          "main_probe": 0.0,
+          "probeable_probe": 204.0,
+          "main_attempted": 204.0
+        },
+        {
+          "rho": 0.98,
+          "budget_ratio": 0.5,
+          "main_probe": 0.0,
+          "probeable_probe": 128.0,
+          "main_attempted": 128.0
+        },
+        {
+          "rho": 0.98,
+          "budget_ratio": 0.8,
+          "main_probe": 0.0,
+          "probeable_probe": 204.0,
+          "main_attempted": 204.0
+        }
+      ]
+    },
+    {
+      "name": "K4 上界臂 12 项记账恒等式全过",
+      "pass": true,
+      "detail": {
+        "n_failed": 0,
+        "examples": []
+      }
+    }
+  ]
+}

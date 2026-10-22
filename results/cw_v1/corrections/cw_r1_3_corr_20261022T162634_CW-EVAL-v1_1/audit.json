@@ -1,0 +1,290 @@
+[
+ {
+  "rho": 0.85,
+  "budget_ratio": 0.5,
+  "policy": "periodic1",
+  "stored_old_ratio": 0.964483,
+  "recomputed_old_formula": 0.964483,
+  "abs_diff": 8.795018102691898e-08,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.85,
+  "budget_ratio": 0.5,
+  "policy": "periodic4",
+  "stored_old_ratio": 0.730016,
+  "recomputed_old_formula": 0.730016,
+  "abs_diff": 2.360330918493858e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.85,
+  "budget_ratio": 0.5,
+  "policy": "periodic8",
+  "stored_old_ratio": 1.143125,
+  "recomputed_old_formula": 1.143125,
+  "abs_diff": 2.863200858627124e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.85,
+  "budget_ratio": 0.5,
+  "policy": "periodic16",
+  "stored_old_ratio": 1.475375,
+  "recomputed_old_formula": 1.475375,
+  "abs_diff": 2.8815743369214886e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.85,
+  "budget_ratio": 0.5,
+  "policy": "ack_b2c3",
+  "stored_old_ratio": 0.823889,
+  "recomputed_old_formula": 0.823889,
+  "abs_diff": 3.506468690961384e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.85,
+  "budget_ratio": 0.5,
+  "policy": "value_csi64",
+  "stored_old_ratio": 1.003546,
+  "recomputed_old_formula": 1.003546,
+  "abs_diff": 1.584725024539324e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.85,
+  "budget_ratio": 0.5,
+  "policy": "value_csi8",
+  "stored_old_ratio": 1.003546,
+  "recomputed_old_formula": 1.003546,
+  "abs_diff": 1.584725024539324e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.85,
+  "budget_ratio": 0.5,
+  "policy": "value_csi1",
+  "stored_old_ratio": 1.003546,
+  "recomputed_old_formula": 1.003546,
+  "abs_diff": 1.584725024539324e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.98,
+  "budget_ratio": 0.5,
+  "policy": "periodic1",
+  "stored_old_ratio": 0.782802,
+  "recomputed_old_formula": 0.782802,
+  "abs_diff": 9.456059413270879e-08,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.98,
+  "budget_ratio": 0.5,
+  "policy": "periodic4",
+  "stored_old_ratio": 0.610619,
+  "recomputed_old_formula": 0.610619,
+  "abs_diff": 4.844584116092676e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.98,
+  "budget_ratio": 0.5,
+  "policy": "periodic8",
+  "stored_old_ratio": 0.875236,
+  "recomputed_old_formula": 0.875236,
+  "abs_diff": 4.090194906103406e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.98,
+  "budget_ratio": 0.5,
+  "policy": "periodic16",
+  "stored_old_ratio": 1.026152,
+  "recomputed_old_formula": 1.026152,
+  "abs_diff": 1.6917232725788267e-08,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.98,
+  "budget_ratio": 0.5,
+  "policy": "ack_b2c3",
+  "stored_old_ratio": 0.646962,
+  "recomputed_old_formula": 0.646962,
+  "abs_diff": 1.4959074035036934e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.98,
+  "budget_ratio": 0.5,
+  "policy": "value_csi64",
+  "stored_old_ratio": 0.830165,
+  "recomputed_old_formula": 0.830165,
+  "abs_diff": 4.824538057945915e-08,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.98,
+  "budget_ratio": 0.5,
+  "policy": "value_csi8",
+  "stored_old_ratio": 0.830165,
+  "recomputed_old_formula": 0.830165,
+  "abs_diff": 4.824538057945915e-08,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.98,
+  "budget_ratio": 0.5,
+  "policy": "value_csi1",
+  "stored_old_ratio": 0.830165,
+  "recomputed_old_formula": 0.830165,
+  "abs_diff": 4.824538057945915e-08,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.85,
+  "budget_ratio": 0.8,
+  "policy": "periodic1",
+  "stored_old_ratio": 0.782877,
+  "recomputed_old_formula": 0.782877,
+  "abs_diff": 1.5295986277585882e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.85,
+  "budget_ratio": 0.8,
+  "policy": "periodic4",
+  "stored_old_ratio": 1.051511,
+  "recomputed_old_formula": 1.051511,
+  "abs_diff": 1.4366312983682406e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.85,
+  "budget_ratio": 0.8,
+  "policy": "periodic8",
+  "stored_old_ratio": 1.646551,
+  "recomputed_old_formula": 1.646551,
+  "abs_diff": 1.8783353095130906e-08,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.85,
+  "budget_ratio": 0.8,
+  "policy": "periodic16",
+  "stored_old_ratio": 2.125121,
+  "recomputed_old_formula": 2.125121,
+  "abs_diff": 1.603339097044909e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.85,
+  "budget_ratio": 0.8,
+  "policy": "ack_b2c3",
+  "stored_old_ratio": 1.186724,
+  "recomputed_old_formula": 1.186724,
+  "abs_diff": 4.222402627540589e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.85,
+  "budget_ratio": 0.8,
+  "policy": "value_csi64",
+  "stored_old_ratio": 1.445502,
+  "recomputed_old_formula": 1.445502,
+  "abs_diff": 5.4239691182900174e-08,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.85,
+  "budget_ratio": 0.8,
+  "policy": "value_csi8",
+  "stored_old_ratio": 1.445502,
+  "recomputed_old_formula": 1.445502,
+  "abs_diff": 5.4239691182900174e-08,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.85,
+  "budget_ratio": 0.8,
+  "policy": "value_csi1",
+  "stored_old_ratio": 1.445502,
+  "recomputed_old_formula": 1.445502,
+  "abs_diff": 5.4239691182900174e-08,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.98,
+  "budget_ratio": 0.8,
+  "policy": "periodic1",
+  "stored_old_ratio": 0.470976,
+  "recomputed_old_formula": 0.470976,
+  "abs_diff": 1.81555770417674e-08,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.98,
+  "budget_ratio": 0.8,
+  "policy": "periodic4",
+  "stored_old_ratio": 0.740097,
+  "recomputed_old_formula": 0.740097,
+  "abs_diff": 2.426093703711274e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.98,
+  "budget_ratio": 0.8,
+  "policy": "periodic8",
+  "stored_old_ratio": 1.060824,
+  "recomputed_old_formula": 1.060824,
+  "abs_diff": 4.0402747436552033e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.98,
+  "budget_ratio": 0.8,
+  "policy": "periodic16",
+  "stored_old_ratio": 1.243742,
+  "recomputed_old_formula": 1.243742,
+  "abs_diff": 1.8578936678004254e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.98,
+  "budget_ratio": 0.8,
+  "policy": "ack_b2c3",
+  "stored_old_ratio": 0.784147,
+  "recomputed_old_formula": 0.784147,
+  "abs_diff": 1.44181365402396e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.98,
+  "budget_ratio": 0.8,
+  "policy": "value_csi64",
+  "stored_old_ratio": 1.006197,
+  "recomputed_old_formula": 1.006197,
+  "abs_diff": 2.1222654345010028e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.98,
+  "budget_ratio": 0.8,
+  "policy": "value_csi8",
+  "stored_old_ratio": 1.006197,
+  "recomputed_old_formula": 1.006197,
+  "abs_diff": 2.1222654345010028e-07,
+  "n_pairs": 12
+ },
+ {
+  "rho": 0.98,
+  "budget_ratio": 0.8,
+  "policy": "value_csi1",
+  "stored_old_ratio": 1.006197,
+  "recomputed_old_formula": 1.006197,
+  "abs_diff": 2.1222654345010028e-07,
+  "n_pairs": 12
+ }
+]

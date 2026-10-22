@@ -1,0 +1,137 @@
+{
+ "n_cells": 4,
+ "cells": [
+  [
+   0.85,
+   0.5
+  ],
+  [
+   0.85,
+   0.8
+  ],
+  [
+   0.98,
+   0.5
+  ],
+  [
+   0.98,
+   0.8
+  ]
+ ],
+ "n_baselines": 8,
+ "n_baselines_beaten": 0,
+ "per_baseline": [
+  {
+   "baseline": "ack_b2c3",
+   "n_cells": 4,
+   "n_pass": 0,
+   "beats_this_baseline_in_all_cells": false,
+   "ratio_range": [
+    1.0396922794521277,
+    1.780673460148916
+   ],
+   "win_range": [
+    0.25,
+    0.4166666666666667
+   ]
+  },
+  {
+   "baseline": "periodic1",
+   "n_cells": 4,
+   "n_pass": 0,
+   "beats_this_baseline_in_all_cells": false,
+   "ratio_range": [
+    0.9123396767704439,
+    1.558214894908354
+   ],
+   "win_range": [
+    0.08333333333333333,
+    0.5833333333333334
+   ]
+  },
+  {
+   "baseline": "periodic16",
+   "n_cells": 4,
+   "n_pass": 1,
+   "beats_this_baseline_in_all_cells": false,
+   "ratio_range": [
+    0.5548567878890298,
+    1.045651022410301
+   ],
+   "win_range": [
+    0.5,
+    0.75
+   ]
+  },
+  {
+   "baseline": "periodic4",
+   "n_cells": 4,
+   "n_pass": 0,
+   "beats_this_baseline_in_all_cells": false,
+   "ratio_range": [
+    1.1148685977367043,
+    1.5078828864701141
+   ],
+   "win_range": [
+    0.25,
+    0.5
+   ]
+  },
+  {
+   "baseline": "periodic8",
+   "n_cells": 4,
+   "n_pass": 0,
+   "beats_this_baseline_in_all_cells": false,
+   "ratio_range": [
+    0.8942487200117348,
+    1.1740745212662875
+   ],
+   "win_range": [
+    0.4166666666666667,
+    0.5833333333333334
+   ]
+  },
+  {
+   "baseline": "value_csi1",
+   "n_cells": 4,
+   "n_pass": 0,
+   "beats_this_baseline_in_all_cells": false,
+   "ratio_range": [
+    0.8361029211180044,
+    1.2236101917157112
+   ],
+   "win_range": [
+    0.4166666666666667,
+    0.5833333333333334
+   ]
+  },
+  {
+   "baseline": "value_csi64",
+   "n_cells": 4,
+   "n_pass": 0,
+   "beats_this_baseline_in_all_cells": false,
+   "ratio_range": [
+    0.8361029211180044,
+    1.2236101917157112
+   ],
+   "win_range": [
+    0.4166666666666667,
+    0.5833333333333334
+   ]
+  },
+  {
+   "baseline": "value_csi8",
+   "n_cells": 4,
+   "n_pass": 0,
+   "beats_this_baseline_in_all_cells": false,
+   "ratio_range": [
+    0.8361029211180044,
+    1.2236101917157112
+   ],
+   "win_range": [
+    0.4166666666666667,
+    0.5833333333333334
+   ]
+  }
+ ]
+}

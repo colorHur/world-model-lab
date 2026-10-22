@@ -1,0 +1,2434 @@
+[
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic1",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.26994803,
+    "matched_cost_median": 0.10841347,
+    "matched_budget_used_mean": 128.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic4",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.26994803,
+    "matched_cost_median": 0.09520974,
+    "matched_budget_used_mean": 64.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic8",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.26994803,
+    "matched_cost_median": 0.17955526,
+    "matched_budget_used_mean": 32.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic16",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.26994803,
+    "matched_cost_median": 0.37883343,
+    "matched_budget_used_mean": 16.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "ack_b2c3",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.26994803,
+    "matched_cost_median": 0.11539424,
+    "matched_budget_used_mean": 63.9167
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi64",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.26994803,
+    "matched_cost_median": 0.17221222,
+    "matched_budget_used_mean": 40.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi8",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.26994803,
+    "matched_cost_median": 0.17156197,
+    "matched_budget_used_mean": 64.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi1",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.26994803,
+    "matched_cost_median": 0.12718778,
+    "matched_budget_used_mean": 64.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic1",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 1,
+    "win_fraction": 0.0833,
+    "cost_ratio_median": 2.489986,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": -0.0726841
+      },
+      {
+        "episode": 101,
+        "delta": -0.48860927
+      },
+      {
+        "episode": 102,
+        "delta": -0.13174069
+      },
+      {
+        "episode": 103,
+        "delta": -0.03989002
+      },
+      {
+        "episode": 104,
+        "delta": -1.00332369
+      },
+      {
+        "episode": 105,
+        "delta": -0.11769506
+      },
+      {
+        "episode": 106,
+        "delta": -0.67709838
+      },
+      {
+        "episode": 107,
+        "delta": -0.00509416
+      },
+      {
+        "episode": 108,
+        "delta": -0.30693871
+      },
+      {
+        "episode": 109,
+        "delta": 0.00044391
+      },
+      {
+        "episode": 110,
+        "delta": -1.13421562
+      },
+      {
+        "episode": 111,
+        "delta": -0.04040794
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic4",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 1,
+    "win_fraction": 0.0833,
+    "cost_ratio_median": 2.835298,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": -0.09925353
+      },
+      {
+        "episode": 101,
+        "delta": -0.52200232
+      },
+      {
+        "episode": 102,
+        "delta": -0.19396393
+      },
+      {
+        "episode": 103,
+        "delta": -0.02355415
+      },
+      {
+        "episode": 104,
+        "delta": -0.89163449
+      },
+      {
+        "episode": 105,
+        "delta": 0.00812396
+      },
+      {
+        "episode": 106,
+        "delta": -0.66045889
+      },
+      {
+        "episode": 107,
+        "delta": -0.01476848
+      },
+      {
+        "episode": 108,
+        "delta": -0.189883
+      },
+      {
+        "episode": 109,
+        "delta": -0.00854285
+      },
+      {
+        "episode": 110,
+        "delta": -1.23521425
+      },
+      {
+        "episode": 111,
+        "delta": -0.02879403
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic8",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 4,
+    "win_fraction": 0.3333,
+    "cost_ratio_median": 1.503426,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": 0.4737766
+      },
+      {
+        "episode": 101,
+        "delta": -0.50608027
+      },
+      {
+        "episode": 102,
+        "delta": -0.10296716
+      },
+      {
+        "episode": 103,
+        "delta": -0.03532853
+      },
+      {
+        "episode": 104,
+        "delta": -0.38633509
+      },
+      {
+        "episode": 105,
+        "delta": 0.26635036
+      },
+      {
+        "episode": 106,
+        "delta": -0.61718942
+      },
+      {
+        "episode": 107,
+        "delta": 0.00621775
+      },
+      {
+        "episode": 108,
+        "delta": -0.18676824
+      },
+      {
+        "episode": 109,
+        "delta": 0.22374103
+      },
+      {
+        "episode": 110,
+        "delta": -1.13530937
+      },
+      {
+        "episode": 111,
+        "delta": -0.01810094
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic16",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 8,
+    "win_fraction": 0.6667,
+    "cost_ratio_median": 0.712577,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": 0.58602186
+      },
+      {
+        "episode": 101,
+        "delta": -0.38012855
+      },
+      {
+        "episode": 102,
+        "delta": -0.10718263
+      },
+      {
+        "episode": 103,
+        "delta": 0.01174958
+      },
+      {
+        "episode": 104,
+        "delta": 2.39914201
+      },
+      {
+        "episode": 105,
+        "delta": 0.58184499
+      },
+      {
+        "episode": 106,
+        "delta": -0.60766385
+      },
+      {
+        "episode": 107,
+        "delta": 0.00526335
+      },
+      {
+        "episode": 108,
+        "delta": 0.03638479
+      },
+      {
+        "episode": 109,
+        "delta": 1.43466174
+      },
+      {
+        "episode": 110,
+        "delta": -0.63670804
+      },
+      {
+        "episode": 111,
+        "delta": 0.02588826
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "ack_b2c3",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 1,
+    "win_fraction": 0.0833,
+    "cost_ratio_median": 2.339354,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": 0.00548422
+      },
+      {
+        "episode": 101,
+        "delta": -0.5173604
+      },
+      {
+        "episode": 102,
+        "delta": -0.18510047
+      },
+      {
+        "episode": 103,
+        "delta": -0.04579665
+      },
+      {
+        "episode": 104,
+        "delta": -0.87149452
+      },
+      {
+        "episode": 105,
+        "delta": -0.03583935
+      },
+      {
+        "episode": 106,
+        "delta": -0.67172455
+      },
+      {
+        "episode": 107,
+        "delta": -0.0330608
+      },
+      {
+        "episode": 108,
+        "delta": -0.29177774
+      },
+      {
+        "episode": 109,
+        "delta": -0.01964583
+      },
+      {
+        "episode": 110,
+        "delta": -1.17446762
+      },
+      {
+        "episode": 111,
+        "delta": -0.02894224
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi64",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 4,
+    "win_fraction": 0.3333,
+    "cost_ratio_median": 1.567531,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": 0.13482636
+      },
+      {
+        "episode": 101,
+        "delta": -0.48465092
+      },
+      {
+        "episode": 102,
+        "delta": -0.14227676
+      },
+      {
+        "episode": 103,
+        "delta": -0.01947869
+      },
+      {
+        "episode": 104,
+        "delta": -0.86359944
+      },
+      {
+        "episode": 105,
+        "delta": 0.11512493
+      },
+      {
+        "episode": 106,
+        "delta": -0.62034107
+      },
+      {
+        "episode": 107,
+        "delta": 0.01054741
+      },
+      {
+        "episode": 108,
+        "delta": -0.17073497
+      },
+      {
+        "episode": 109,
+        "delta": 0.22496255
+      },
+      {
+        "episode": 110,
+        "delta": -1.09692485
+      },
+      {
+        "episode": 111,
+        "delta": -0.02802827
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi8",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 4,
+    "win_fraction": 0.3333,
+    "cost_ratio_median": 1.573472,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": 0.13317208
+      },
+      {
+        "episode": 101,
+        "delta": -0.48449994
+      },
+      {
+        "episode": 102,
+        "delta": -0.14227676
+      },
+      {
+        "episode": 103,
+        "delta": -0.01947869
+      },
+      {
+        "episode": 104,
+        "delta": -0.86359944
+      },
+      {
+        "episode": 105,
+        "delta": 0.12107868
+      },
+      {
+        "episode": 106,
+        "delta": -0.62034107
+      },
+      {
+        "episode": 107,
+        "delta": 0.00496732
+      },
+      {
+        "episode": 108,
+        "delta": -0.05150778
+      },
+      {
+        "episode": 109,
+        "delta": 0.22496255
+      },
+      {
+        "episode": 110,
+        "delta": -1.10677858
+      },
+      {
+        "episode": 111,
+        "delta": -0.02099854
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi1",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 3,
+    "win_fraction": 0.25,
+    "cost_ratio_median": 2.122437,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": 0.13482636
+      },
+      {
+        "episode": 101,
+        "delta": -0.48465092
+      },
+      {
+        "episode": 102,
+        "delta": -0.14227676
+      },
+      {
+        "episode": 103,
+        "delta": 0.00618047
+      },
+      {
+        "episode": 104,
+        "delta": -0.86808022
+      },
+      {
+        "episode": 105,
+        "delta": 0.11512493
+      },
+      {
+        "episode": 106,
+        "delta": -0.62034107
+      },
+      {
+        "episode": 107,
+        "delta": -0.00208748
+      },
+      {
+        "episode": 108,
+        "delta": -0.17073497
+      },
+      {
+        "episode": 109,
+        "delta": -0.04803588
+      },
+      {
+        "episode": 110,
+        "delta": -1.08949333
+      },
+      {
+        "episode": 111,
+        "delta": -0.02140943
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic1",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.6134343,
+    "matched_cost_median": 0.11711574,
+    "matched_budget_used_mean": 128.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic4",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.6134343,
+    "matched_cost_median": 0.12083047,
+    "matched_budget_used_mean": 64.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic8",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.6134343,
+    "matched_cost_median": 0.16212872,
+    "matched_budget_used_mean": 32.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic16",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.6134343,
+    "matched_cost_median": 0.26329634,
+    "matched_budget_used_mean": 16.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "ack_b2c3",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.6134343,
+    "matched_cost_median": 0.08920094,
+    "matched_budget_used_mean": 69.0833
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi64",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.6134343,
+    "matched_cost_median": 0.18621764,
+    "matched_budget_used_mean": 40.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi8",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.6134343,
+    "matched_cost_median": 0.19464259,
+    "matched_budget_used_mean": 64.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi1",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.6134343,
+    "matched_cost_median": 0.16976507,
+    "matched_budget_used_mean": 64.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic1",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 0,
+    "win_fraction": 0.0,
+    "cost_ratio_median": 5.237847,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": -0.43653987
+      },
+      {
+        "episode": 101,
+        "delta": -0.55609724
+      },
+      {
+        "episode": 102,
+        "delta": -0.1754239
+      },
+      {
+        "episode": 103,
+        "delta": -0.09137792
+      },
+      {
+        "episode": 104,
+        "delta": -4.43689228
+      },
+      {
+        "episode": 105,
+        "delta": -1.66490027
+      },
+      {
+        "episode": 106,
+        "delta": -0.67434805
+      },
+      {
+        "episode": 107,
+        "delta": -0.23019108
+      },
+      {
+        "episode": 108,
+        "delta": -0.77958707
+      },
+      {
+        "episode": 109,
+        "delta": -0.04697268
+      },
+      {
+        "episode": 110,
+        "delta": -1.14380365
+      },
+      {
+        "episode": 111,
+        "delta": -0.14782063
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic4",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 1,
+    "win_fraction": 0.0833,
+    "cost_ratio_median": 5.076818,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": -0.10383469
+      },
+      {
+        "episode": 101,
+        "delta": -0.60296223
+      },
+      {
+        "episode": 102,
+        "delta": -0.2619602
+      },
+      {
+        "episode": 103,
+        "delta": -0.04674144
+      },
+      {
+        "episode": 104,
+        "delta": -4.3602285
+      },
+      {
+        "episode": 105,
+        "delta": -1.43192323
+      },
+      {
+        "episode": 106,
+        "delta": -0.64699671
+      },
+      {
+        "episode": 107,
+        "delta": -0.23224142
+      },
+      {
+        "episode": 108,
+        "delta": -0.61668153
+      },
+      {
+        "episode": 109,
+        "delta": 0.03629888
+      },
+      {
+        "episode": 110,
+        "delta": -1.14706384
+      },
+      {
+        "episode": 111,
+        "delta": -0.13365865
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic8",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 2,
+    "win_fraction": 0.1667,
+    "cost_ratio_median": 3.783625,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": 0.25641777
+      },
+      {
+        "episode": 101,
+        "delta": -0.57514097
+      },
+      {
+        "episode": 102,
+        "delta": -0.23836279
+      },
+      {
+        "episode": 103,
+        "delta": -0.03099398
+      },
+      {
+        "episode": 104,
+        "delta": -3.85759655
+      },
+      {
+        "episode": 105,
+        "delta": -1.21397833
+      },
+      {
+        "episode": 106,
+        "delta": -0.647901
+      },
+      {
+        "episode": 107,
+        "delta": -0.25145272
+      },
+      {
+        "episode": 108,
+        "delta": -0.65757568
+      },
+      {
+        "episode": 109,
+        "delta": 0.7915604
+      },
+      {
+        "episode": 110,
+        "delta": -1.08021481
+      },
+      {
+        "episode": 111,
+        "delta": -0.11628854
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic16",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 3,
+    "win_fraction": 0.25,
+    "cost_ratio_median": 2.329825,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": 0.21623622
+      },
+      {
+        "episode": 101,
+        "delta": -0.46563501
+      },
+      {
+        "episode": 102,
+        "delta": -0.22427707
+      },
+      {
+        "episode": 103,
+        "delta": 0.01381674
+      },
+      {
+        "episode": 104,
+        "delta": -3.24635058
+      },
+      {
+        "episode": 105,
+        "delta": -1.04991257
+      },
+      {
+        "episode": 106,
+        "delta": -0.58925588
+      },
+      {
+        "episode": 107,
+        "delta": -0.25153163
+      },
+      {
+        "episode": 108,
+        "delta": -0.46875612
+      },
+      {
+        "episode": 109,
+        "delta": 1.44146545
+      },
+      {
+        "episode": 110,
+        "delta": -0.95376484
+      },
+      {
+        "episode": 111,
+        "delta": -0.08542313
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "ack_b2c3",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 0,
+    "win_fraction": 0.0,
+    "cost_ratio_median": 6.876994,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": -0.26499184
+      },
+      {
+        "episode": 101,
+        "delta": -0.59195413
+      },
+      {
+        "episode": 102,
+        "delta": -0.25831655
+      },
+      {
+        "episode": 103,
+        "delta": -0.07432095
+      },
+      {
+        "episode": 104,
+        "delta": -4.35616792
+      },
+      {
+        "episode": 105,
+        "delta": -1.46678979
+      },
+      {
+        "episode": 106,
+        "delta": -0.665069
+      },
+      {
+        "episode": 107,
+        "delta": -0.23829714
+      },
+      {
+        "episode": 108,
+        "delta": -0.66058864
+      },
+      {
+        "episode": 109,
+        "delta": -0.06810415
+      },
+      {
+        "episode": 110,
+        "delta": -1.08486386
+      },
+      {
+        "episode": 111,
+        "delta": -0.13039666
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi64",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 1,
+    "win_fraction": 0.0833,
+    "cost_ratio_median": 3.294179,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": -0.24238526
+      },
+      {
+        "episode": 101,
+        "delta": -0.50678062
+      },
+      {
+        "episode": 102,
+        "delta": -0.25039604
+      },
+      {
+        "episode": 103,
+        "delta": -0.03543693
+      },
+      {
+        "episode": 104,
+        "delta": -4.30238682
+      },
+      {
+        "episode": 105,
+        "delta": -1.22980779
+      },
+      {
+        "episode": 106,
+        "delta": -0.63916484
+      },
+      {
+        "episode": 107,
+        "delta": -0.24851634
+      },
+      {
+        "episode": 108,
+        "delta": -0.4373838
+      },
+      {
+        "episode": 109,
+        "delta": 0.15051278
+      },
+      {
+        "episode": 110,
+        "delta": -1.06677664
+      },
+      {
+        "episode": 111,
+        "delta": -0.10913561
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi8",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 1,
+    "win_fraction": 0.0833,
+    "cost_ratio_median": 3.151593,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": -0.23752571
+      },
+      {
+        "episode": 101,
+        "delta": -0.47613176
+      },
+      {
+        "episode": 102,
+        "delta": -0.19512646
+      },
+      {
+        "episode": 103,
+        "delta": -0.03924604
+      },
+      {
+        "episode": 104,
+        "delta": -4.32870021
+      },
+      {
+        "episode": 105,
+        "delta": -1.25199368
+      },
+      {
+        "episode": 106,
+        "delta": -0.6366946
+      },
+      {
+        "episode": 107,
+        "delta": -0.2497845
+      },
+      {
+        "episode": 108,
+        "delta": -0.44065019
+      },
+      {
+        "episode": 109,
+        "delta": 0.79575565
+      },
+      {
+        "episode": 110,
+        "delta": -1.08057561
+      },
+      {
+        "episode": 111,
+        "delta": -0.12343672
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.5,
+    "budget": 128,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi1",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 1,
+    "win_fraction": 0.0833,
+    "cost_ratio_median": 3.613431,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": -0.24388983
+      },
+      {
+        "episode": 101,
+        "delta": -0.52588678
+      },
+      {
+        "episode": 102,
+        "delta": -0.20253004
+      },
+      {
+        "episode": 103,
+        "delta": -0.03924604
+      },
+      {
+        "episode": 104,
+        "delta": -4.30247285
+      },
+      {
+        "episode": 105,
+        "delta": -1.2050936
+      },
+      {
+        "episode": 106,
+        "delta": -0.64170486
+      },
+      {
+        "episode": 107,
+        "delta": -0.20364414
+      },
+      {
+        "episode": 108,
+        "delta": -0.6715633
+      },
+      {
+        "episode": 109,
+        "delta": 0.13217331
+      },
+      {
+        "episode": 110,
+        "delta": -1.08057561
+      },
+      {
+        "episode": 111,
+        "delta": -0.12816979
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic1",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.23691008,
+    "matched_cost_median": 0.08117722,
+    "matched_budget_used_mean": 204.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic4",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.23691008,
+    "matched_cost_median": 0.09520974,
+    "matched_budget_used_mean": 64.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic8",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.23691008,
+    "matched_cost_median": 0.17955526,
+    "matched_budget_used_mean": 32.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic16",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.23691008,
+    "matched_cost_median": 0.37883343,
+    "matched_budget_used_mean": 16.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "ack_b2c3",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.23691008,
+    "matched_cost_median": 0.11539424,
+    "matched_budget_used_mean": 63.9167
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi64",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.23691008,
+    "matched_cost_median": 0.17221222,
+    "matched_budget_used_mean": 40.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi8",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.23691008,
+    "matched_cost_median": 0.17156197,
+    "matched_budget_used_mean": 64.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi1",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.23691008,
+    "matched_cost_median": 0.12718778,
+    "matched_budget_used_mean": 64.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic1",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 0,
+    "win_fraction": 0.0,
+    "cost_ratio_median": 2.91843,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": -0.08683855
+      },
+      {
+        "episode": 101,
+        "delta": -0.49721545
+      },
+      {
+        "episode": 102,
+        "delta": -0.03091013
+      },
+      {
+        "episode": 103,
+        "delta": -0.0655429
+      },
+      {
+        "episode": 104,
+        "delta": -1.00106159
+      },
+      {
+        "episode": 105,
+        "delta": -0.11235159
+      },
+      {
+        "episode": 106,
+        "delta": -0.43974477
+      },
+      {
+        "episode": 107,
+        "delta": -0.04515654
+      },
+      {
+        "episode": 108,
+        "delta": -0.33121957
+      },
+      {
+        "episode": 109,
+        "delta": -0.02678513
+      },
+      {
+        "episode": 110,
+        "delta": -0.69137493
+      },
+      {
+        "episode": 111,
+        "delta": -0.04923722
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic4",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 3,
+    "win_fraction": 0.25,
+    "cost_ratio_median": 2.488297,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": -0.09258335
+      },
+      {
+        "episode": 101,
+        "delta": -0.50252877
+      },
+      {
+        "episode": 102,
+        "delta": -0.00292524
+      },
+      {
+        "episode": 103,
+        "delta": -0.01664792
+      },
+      {
+        "episode": 104,
+        "delta": -0.88104736
+      },
+      {
+        "episode": 105,
+        "delta": 0.00286309
+      },
+      {
+        "episode": 106,
+        "delta": -0.41690765
+      },
+      {
+        "episode": 107,
+        "delta": 0.00229494
+      },
+      {
+        "episode": 108,
+        "delta": -0.18890973
+      },
+      {
+        "episode": 109,
+        "delta": 0.04368894
+      },
+      {
+        "episode": 110,
+        "delta": -0.6633857
+      },
+      {
+        "episode": 111,
+        "delta": -0.03539682
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic8",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 5,
+    "win_fraction": 0.4167,
+    "cost_ratio_median": 1.319427,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": 0.48044678
+      },
+      {
+        "episode": 101,
+        "delta": -0.48660672
+      },
+      {
+        "episode": 102,
+        "delta": 0.08807153
+      },
+      {
+        "episode": 103,
+        "delta": -0.0284223
+      },
+      {
+        "episode": 104,
+        "delta": -0.37574796
+      },
+      {
+        "episode": 105,
+        "delta": 0.26108949
+      },
+      {
+        "episode": 106,
+        "delta": -0.37363818
+      },
+      {
+        "episode": 107,
+        "delta": 0.02328117
+      },
+      {
+        "episode": 108,
+        "delta": -0.18579497
+      },
+      {
+        "episode": 109,
+        "delta": 0.27597282
+      },
+      {
+        "episode": 110,
+        "delta": -0.56348082
+      },
+      {
+        "episode": 111,
+        "delta": -0.02470373
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic16",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 9,
+    "win_fraction": 0.75,
+    "cost_ratio_median": 0.625367,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": 0.59269204
+      },
+      {
+        "episode": 101,
+        "delta": -0.360655
+      },
+      {
+        "episode": 102,
+        "delta": 0.08385606
+      },
+      {
+        "episode": 103,
+        "delta": 0.01865581
+      },
+      {
+        "episode": 104,
+        "delta": 2.40972914
+      },
+      {
+        "episode": 105,
+        "delta": 0.57658412
+      },
+      {
+        "episode": 106,
+        "delta": -0.36411261
+      },
+      {
+        "episode": 107,
+        "delta": 0.02232677
+      },
+      {
+        "episode": 108,
+        "delta": 0.03735806
+      },
+      {
+        "episode": 109,
+        "delta": 1.48689353
+      },
+      {
+        "episode": 110,
+        "delta": -0.06487949
+      },
+      {
+        "episode": 111,
+        "delta": 0.01928547
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "ack_b2c3",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 3,
+    "win_fraction": 0.25,
+    "cost_ratio_median": 2.053049,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": 0.0121544
+      },
+      {
+        "episode": 101,
+        "delta": -0.49788685
+      },
+      {
+        "episode": 102,
+        "delta": 0.00593822
+      },
+      {
+        "episode": 103,
+        "delta": -0.03889042
+      },
+      {
+        "episode": 104,
+        "delta": -0.86090739
+      },
+      {
+        "episode": 105,
+        "delta": -0.04110022
+      },
+      {
+        "episode": 106,
+        "delta": -0.42817331
+      },
+      {
+        "episode": 107,
+        "delta": -0.01599738
+      },
+      {
+        "episode": 108,
+        "delta": -0.29080447
+      },
+      {
+        "episode": 109,
+        "delta": 0.03258596
+      },
+      {
+        "episode": 110,
+        "delta": -0.60263907
+      },
+      {
+        "episode": 111,
+        "delta": -0.03554503
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi64",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 5,
+    "win_fraction": 0.4167,
+    "cost_ratio_median": 1.375687,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": 0.14149654
+      },
+      {
+        "episode": 101,
+        "delta": -0.46517737
+      },
+      {
+        "episode": 102,
+        "delta": 0.04876193
+      },
+      {
+        "episode": 103,
+        "delta": -0.01257246
+      },
+      {
+        "episode": 104,
+        "delta": -0.85301231
+      },
+      {
+        "episode": 105,
+        "delta": 0.10986406
+      },
+      {
+        "episode": 106,
+        "delta": -0.37678983
+      },
+      {
+        "episode": 107,
+        "delta": 0.02761083
+      },
+      {
+        "episode": 108,
+        "delta": -0.1697617
+      },
+      {
+        "episode": 109,
+        "delta": 0.27719434
+      },
+      {
+        "episode": 110,
+        "delta": -0.5250963
+      },
+      {
+        "episode": 111,
+        "delta": -0.03463106
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi8",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 5,
+    "win_fraction": 0.4167,
+    "cost_ratio_median": 1.380901,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": 0.13984226
+      },
+      {
+        "episode": 101,
+        "delta": -0.46502639
+      },
+      {
+        "episode": 102,
+        "delta": 0.04876193
+      },
+      {
+        "episode": 103,
+        "delta": -0.01257246
+      },
+      {
+        "episode": 104,
+        "delta": -0.85301231
+      },
+      {
+        "episode": 105,
+        "delta": 0.11581781
+      },
+      {
+        "episode": 106,
+        "delta": -0.37678983
+      },
+      {
+        "episode": 107,
+        "delta": 0.02203074
+      },
+      {
+        "episode": 108,
+        "delta": -0.05053451
+      },
+      {
+        "episode": 109,
+        "delta": 0.27719434
+      },
+      {
+        "episode": 110,
+        "delta": -0.53495003
+      },
+      {
+        "episode": 111,
+        "delta": -0.02760133
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.85,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi1",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 6,
+    "win_fraction": 0.5,
+    "cost_ratio_median": 1.86268,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": 0.14149654
+      },
+      {
+        "episode": 101,
+        "delta": -0.46517737
+      },
+      {
+        "episode": 102,
+        "delta": 0.04876193
+      },
+      {
+        "episode": 103,
+        "delta": 0.0130867
+      },
+      {
+        "episode": 104,
+        "delta": -0.85749309
+      },
+      {
+        "episode": 105,
+        "delta": 0.10986406
+      },
+      {
+        "episode": 106,
+        "delta": -0.37678983
+      },
+      {
+        "episode": 107,
+        "delta": 0.01497594
+      },
+      {
+        "episode": 108,
+        "delta": -0.1697617
+      },
+      {
+        "episode": 109,
+        "delta": 0.00419591
+      },
+      {
+        "episode": 110,
+        "delta": -0.51766478
+      },
+      {
+        "episode": 111,
+        "delta": -0.02801222
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic1",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.61110763,
+    "matched_cost_median": 0.08149774,
+    "matched_budget_used_mean": 204.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic4",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.61110763,
+    "matched_cost_median": 0.12083047,
+    "matched_budget_used_mean": 64.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic8",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.61110763,
+    "matched_cost_median": 0.16212872,
+    "matched_budget_used_mean": 32.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic16",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.61110763,
+    "matched_cost_median": 0.26329634,
+    "matched_budget_used_mean": 16.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "ack_b2c3",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.61110763,
+    "matched_cost_median": 0.08920094,
+    "matched_budget_used_mean": 69.0833
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi64",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.61110763,
+    "matched_cost_median": 0.18621764,
+    "matched_budget_used_mean": 40.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi8",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.61110763,
+    "matched_cost_median": 0.19464259,
+    "matched_budget_used_mean": 64.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi1",
+    "mode": "samepot",
+    "n_pairs": 12,
+    "ref_cost_median": 0.61110763,
+    "matched_cost_median": 0.16976507,
+    "matched_budget_used_mean": 64.0
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic1",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 0,
+    "win_fraction": 0.0,
+    "cost_ratio_median": 7.498461,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": -0.46074429
+      },
+      {
+        "episode": 101,
+        "delta": -0.58809187
+      },
+      {
+        "episode": 102,
+        "delta": -0.21025731
+      },
+      {
+        "episode": 103,
+        "delta": -0.08236338
+      },
+      {
+        "episode": 104,
+        "delta": -4.43535212
+      },
+      {
+        "episode": 105,
+        "delta": -1.65614751
+      },
+      {
+        "episode": 106,
+        "delta": -0.6852233
+      },
+      {
+        "episode": 107,
+        "delta": -0.26168417
+      },
+      {
+        "episode": 108,
+        "delta": -0.79846994
+      },
+      {
+        "episode": 109,
+        "delta": -0.05688676
+      },
+      {
+        "episode": 110,
+        "delta": -0.6983709
+      },
+      {
+        "episode": 111,
+        "delta": -0.15041924
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic4",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 1,
+    "win_fraction": 0.0833,
+    "cost_ratio_median": 5.057562,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": -0.09871754
+      },
+      {
+        "episode": 101,
+        "delta": -0.60342604
+      },
+      {
+        "episode": 102,
+        "delta": -0.17779772
+      },
+      {
+        "episode": 103,
+        "delta": -0.03476255
+      },
+      {
+        "episode": 104,
+        "delta": -4.33653125
+      },
+      {
+        "episode": 105,
+        "delta": -1.37590516
+      },
+      {
+        "episode": 106,
+        "delta": -0.65056809
+      },
+      {
+        "episode": 107,
+        "delta": -0.23130931
+      },
+      {
+        "episode": 108,
+        "delta": -0.61103423
+      },
+      {
+        "episode": 109,
+        "delta": 0.03691093
+      },
+      {
+        "episode": 110,
+        "delta": -0.65006574
+      },
+      {
+        "episode": 111,
+        "delta": -0.13871956
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic8",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 2,
+    "win_fraction": 0.1667,
+    "cost_ratio_median": 3.769274,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": 0.26153492
+      },
+      {
+        "episode": 101,
+        "delta": -0.57560478
+      },
+      {
+        "episode": 102,
+        "delta": -0.15420031
+      },
+      {
+        "episode": 103,
+        "delta": -0.01901509
+      },
+      {
+        "episode": 104,
+        "delta": -3.8338993
+      },
+      {
+        "episode": 105,
+        "delta": -1.15796026
+      },
+      {
+        "episode": 106,
+        "delta": -0.65147238
+      },
+      {
+        "episode": 107,
+        "delta": -0.25052061
+      },
+      {
+        "episode": 108,
+        "delta": -0.65192838
+      },
+      {
+        "episode": 109,
+        "delta": 0.79217245
+      },
+      {
+        "episode": 110,
+        "delta": -0.58321671
+      },
+      {
+        "episode": 111,
+        "delta": -0.12134945
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "periodic16",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 3,
+    "win_fraction": 0.25,
+    "cost_ratio_median": 2.320988,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": 0.22135337
+      },
+      {
+        "episode": 101,
+        "delta": -0.46609882
+      },
+      {
+        "episode": 102,
+        "delta": -0.14011459
+      },
+      {
+        "episode": 103,
+        "delta": 0.02579563
+      },
+      {
+        "episode": 104,
+        "delta": -3.22265333
+      },
+      {
+        "episode": 105,
+        "delta": -0.9938945
+      },
+      {
+        "episode": 106,
+        "delta": -0.59282726
+      },
+      {
+        "episode": 107,
+        "delta": -0.25059952
+      },
+      {
+        "episode": 108,
+        "delta": -0.46310882
+      },
+      {
+        "episode": 109,
+        "delta": 1.4420775
+      },
+      {
+        "episode": 110,
+        "delta": -0.45676674
+      },
+      {
+        "episode": 111,
+        "delta": -0.09048404
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "ack_b2c3",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 0,
+    "win_fraction": 0.0,
+    "cost_ratio_median": 6.85091,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": -0.25987469
+      },
+      {
+        "episode": 101,
+        "delta": -0.59241794
+      },
+      {
+        "episode": 102,
+        "delta": -0.17415407
+      },
+      {
+        "episode": 103,
+        "delta": -0.06234206
+      },
+      {
+        "episode": 104,
+        "delta": -4.33247067
+      },
+      {
+        "episode": 105,
+        "delta": -1.41077172
+      },
+      {
+        "episode": 106,
+        "delta": -0.66864038
+      },
+      {
+        "episode": 107,
+        "delta": -0.23736503
+      },
+      {
+        "episode": 108,
+        "delta": -0.65494134
+      },
+      {
+        "episode": 109,
+        "delta": -0.0674921
+      },
+      {
+        "episode": 110,
+        "delta": -0.58786576
+      },
+      {
+        "episode": 111,
+        "delta": -0.13545757
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi64",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 1,
+    "win_fraction": 0.0833,
+    "cost_ratio_median": 3.281685,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": -0.23726811
+      },
+      {
+        "episode": 101,
+        "delta": -0.50724443
+      },
+      {
+        "episode": 102,
+        "delta": -0.16623356
+      },
+      {
+        "episode": 103,
+        "delta": -0.02345804
+      },
+      {
+        "episode": 104,
+        "delta": -4.27868957
+      },
+      {
+        "episode": 105,
+        "delta": -1.17378972
+      },
+      {
+        "episode": 106,
+        "delta": -0.64273622
+      },
+      {
+        "episode": 107,
+        "delta": -0.24758423
+      },
+      {
+        "episode": 108,
+        "delta": -0.4317365
+      },
+      {
+        "episode": 109,
+        "delta": 0.15112483
+      },
+      {
+        "episode": 110,
+        "delta": -0.56977854
+      },
+      {
+        "episode": 111,
+        "delta": -0.11419652
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi8",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 1,
+    "win_fraction": 0.0833,
+    "cost_ratio_median": 3.13964,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": -0.23240856
+      },
+      {
+        "episode": 101,
+        "delta": -0.47659557
+      },
+      {
+        "episode": 102,
+        "delta": -0.11096398
+      },
+      {
+        "episode": 103,
+        "delta": -0.02726715
+      },
+      {
+        "episode": 104,
+        "delta": -4.30500296
+      },
+      {
+        "episode": 105,
+        "delta": -1.19597561
+      },
+      {
+        "episode": 106,
+        "delta": -0.64026598
+      },
+      {
+        "episode": 107,
+        "delta": -0.24885239
+      },
+      {
+        "episode": 108,
+        "delta": -0.43500289
+      },
+      {
+        "episode": 109,
+        "delta": 0.7963677
+      },
+      {
+        "episode": 110,
+        "delta": -0.58357751
+      },
+      {
+        "episode": 111,
+        "delta": -0.12849763
+      }
+    ]
+  },
+  {
+    "plant": "BOUNDED",
+    "rho": 0.98,
+    "budget_ratio": 0.8,
+    "budget": 204,
+    "config_fingerprint": "afa4d24d773cf39e",
+    "policy": "value_csi1",
+    "mode": "samepot_pairwise",
+    "n_pairs": 12,
+    "n_oracle_wins": 1,
+    "win_fraction": 0.0833,
+    "cost_ratio_median": 3.599725,
+    "deltas": [
+      {
+        "episode": 100,
+        "delta": -0.23877268
+      },
+      {
+        "episode": 101,
+        "delta": -0.52635059
+      },
+      {
+        "episode": 102,
+        "delta": -0.11836756
+      },
+      {
+        "episode": 103,
+        "delta": -0.02726715
+      },
+      {
+        "episode": 104,
+        "delta": -4.2787756
+      },
+      {
+        "episode": 105,
+        "delta": -1.14907553
+      },
+      {
+        "episode": 106,
+        "delta": -0.64527624
+      },
+      {
+        "episode": 107,
+        "delta": -0.20271203
+      },
+      {
+        "episode": 108,
+        "delta": -0.665916
+      },
+      {
+        "episode": 109,
+        "delta": 0.13278536
+      },
+      {
+        "episode": 110,
+        "delta": -0.58357751
+      },
+      {
+        "episode": 111,
+        "delta": -0.1332307
+      }
+    ]
+  }
+]

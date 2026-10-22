@@ -1,0 +1,42 @@
+{
+  "run_id": "cw_r1_3_20261022T162956_afa4d24d773cf39e_ad298a614b6d163e",
+  "protocol": "CW-POMDP-v1.1",
+  "phase": "CW-R1-3 ORACLE-KNOWN 真值辅助贪心诊断臂（v1.1 更正版）",
+  "note": "v1.1 corrected protocol: init from public prior, ACK into belief, value baseline consumes CSI, ratio direction fixed",
+  "at_asia_shanghai": "2026-10-22T16:29:56.284101+08:00",
+  "git_head": "14a411b6a589a07143c9d0ab8fa83573c7823741",
+  "git_dirty_experiments": "M experiments/cw_v1/config.py\n M experiments/cw_v1/gates.py\n M experiments/cw_v1/r1_3_oracle.py\n M experiments/cw_v1/r1_baselines.py\n M experiments/cw_v1/streams.py\n M experiments/cw_v1/world.py\n?? experiments/cw_v1/eval_gates.py\n?? experiments/cw_v1/evaluate.py\n?? experiments/cw_v1/r1_3_correction.py",
+  "src_hash": "ad298a614b6d163e",
+  "config_fingerprint_bounded": "afa4d24d773cf39e",
+  "plant": "BOUNDED",
+  "episodes": {
+    "split": "dev",
+    "start": 100,
+    "n": 12
+  },
+  "baselines": [
+    "periodic1",
+    "periodic4",
+    "periodic8",
+    "periodic16",
+    "ack_b2c3",
+    "value_csi64",
+    "value_csi8",
+    "value_csi1"
+  ],
+  "rho": [
+    0.85,
+    0.98
+  ],
+  "budget_ratios": [
+    0.5,
+    0.8
+  ],
+  "prereg": {
+    "ratio": "candidate(oracle)/baseline",
+    "median_ratio_lt": 0.9,
+    "win_fraction_ge": 0.7,
+    "required_cells": "由设计格数推导（不再写死 min_cells）"
+  },
+  "disclaimer": "ORACLE-KNOWN 是**真值辅助的单步贪心诊断臂**，不是上界：它按真值挑当前最值得发的用户，无前瞻、不评估测量的价值、不考虑预算续接。它读真信道 log h 与真状态 x 的模，通过 run_episode(allow_truth_keys=True) 显式白名单构造。它**不可部署**，任何引用必须带这两句。★ 2026-10-22 撤回：①「上界」一名；②由它输赢推出的「SPACE-VOID / 信息无空间」结论。理由：它不是最优策略，且**从不探测**（probe_mean=0）⇒ 对「测量的价值」无信息量。cost_true_per_step 为准；samepot 匹配臂是「给对手同样的钱」的构造。"
+}

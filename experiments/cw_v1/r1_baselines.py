@@ -43,6 +43,7 @@ from pathlib import Path
 import numpy as np
 
 from . import config as C
+from .posterior import p_hat_vector
 from .runner import check_identities, run_episode
 from .streams import make_episode_rngs
 from .world import Action, p_success_from_log_h
@@ -91,7 +92,7 @@ class AckAwareBaseline(_Base):
       · 上一槽 NACK ⇒ 立刻换下一个用户重试（不做指数退避 —— 退避属于 R3）；
       · 连续 NACK 达 `backoff_after` 次 ⇒ 跳过 `cooldown` 个槽（避让坏信道）；
       · 其余情况按固定周期 `period` 轮转。
-    ACK 从 `v.history[-1].ack` 读（`history` 已剔除真值字段，见 `SchedulerView`）。
+    ACK 从 `v.history[-1]["ack"]` 读（`history` 是**白名单**字典，见 `SchedulerView`）。
     """
 
     def __init__(self, period: int = 8, backoff_after: int = 2, cooldown: int = 3) -> None:
@@ -144,10 +145,14 @@ class TaskValueBaseline(_Base):
     （探测与数据争用同一预算，这是 v4 协议的核心约束）。
     """
 
-    def __init__(self, period: int = 8, csi_max_age: int = 32, n_users: int = 2) -> None:
+    def __init__(self, period: int = 8, csi_max_age: int = 32, n_users: int = 2,
+                 cfg=None) -> None:
         self.period = int(period)
         self.csi_max_age = int(csi_max_age)
         self._n = int(n_users)
+        #: `p_hat` 需要信道参数（KAPPA / LOG_H_STAR）；这些是**协议级常数**，
+        #: 与 plant 无关 ⇒ 用默认 CWConfig 即可，不引入对具体 plant 的依赖。
+        self._cfg = cfg if cfg is not None else C.CWConfig()
         self._probed = 0
         self.name = f"base_value_p{self.period}_csi{self.csi_max_age}"
         self.ack_used = 0
@@ -155,11 +160,23 @@ class TaskValueBaseline(_Base):
 
     def __call__(self, v):
         tel = v.telemetry
+        # ★★ 2026-10-22 修正（真实缺陷，实测证据见下）：
+        #   旧打分 `P_hat*(1+aoi)` **完全不含 CSI** ⇒ 探测改变 `h_mean/h_var` 但不改变
+        #   任何动作。实测（dev 100，B/T=0.5，ρ=0.85）：
+        #       csi_max_age=1  → n_probe=32，cost=0.31811923
+        #       csi_max_age=8  → n_probe=32，cost=0.31811923
+        #       csi_max_age=64 → n_probe= 8，cost=0.31811923  ← 探测数差 4 倍，成本逐位相同
+        #   也就是说"三档 csi_max_age 对照"实际是**同一个策略**，探测只是白花钱。
+        #   给定这个臂的名字是"任务价值（CSI 感知）"，必须让 CSI 真的进决策：
+        #       score_i = P_hat_i · (1 + aoi_i) · p_hat_i
+        #   `p_hat_i` 是"这次发过去大概能成"的期望成功率（由 h_mean/h_var 算出，可部署）。
+        #   ⇒ 探测把 h_mean 拉开 ⇒ 目标用户会变 ⇒ 探测有了行为后果。
+        ph = p_hat_vector(tel, self._cfg)
         scores = []
         for i, row in enumerate(tel):
             aoi = row["task_aoi"]
             aoi = HORIZON if aoi is None or aoi < 0 else aoi
-            scores.append(float(row["P_hat"]) * (1.0 + float(aoi)))
+            scores.append(float(row["P_hat"]) * (1.0 + float(aoi)) * float(ph[i]))
         best = int(np.argmax(scores))
 
         if v.t % self.period == 0:
@@ -346,45 +363,49 @@ def gates(cells: list[dict], *, episodes_per_cell: int) -> dict:
     bnd = [c for c in cells if c["plant"] == "BOUNDED"]
     by = {(c["rho"], c["budget_ratio"], c["policy"]): c for c in bnd}
 
-    # B4 去噪（**必要条件**，不是充分条件）：只改探测次数、不改发送策略时，
-    #    任务侧资源与动作序列必须逐位相同。
-    #    ★ 2026-10-21 18:2x 第一版这条判据把 `value_csi32` 与 `value_csi1` 对比，
-    #      结果 FAIL —— **FAIL 得正确**：`csi_max_age=1` 且带"从未测过"分支时，
-    #      探测把预算吃光、挤掉了 SEND（实测 n_probe 112 vs 16，cost 0.1278 vs 0.0688）。
-    #      ⇒ 判据对象选错了：两个探测档位本来就是**不同的发送策略**。
-    #      正确做法：把"探测次数"作为唯一变量，在同一套**发送**规则下比较。
-    #    ★★ 第二版（同分钟）：改成 32 vs 8 后仍 FAIL —— `by` 只含 BOUNDED，
-    #      而我把 `value_csi8` 从 BASELINES 换掉了 ⇒ 字典里**没有这个键** ⇒
-    #      `noisy` 为空 ⇒ 判据在"检查对象不存在"时静默 FAIL（教训 #46 同族）。
-    #      正确处置：两个探测档位都留在面板里（64 / 8 / 1），并用 `None` 跳过缺失项
-    #      时**显式报错**，不许空表 PASS/FAIL。
-    noisy = []
-    missing = []
+    # B4 参数接线（历史沿革写在这里，因为判据改过三次）
+    #   ★ 第一版比 `value_csi32` vs `value_csi1`，FAIL —— FAIL 得对：
+    #      `csi_max_age=1` 且带"从未测过"分支时探测把预算吃光、挤掉 SEND
+    #      （实测 n_probe 112 vs 16，cost 0.1278 vs 0.0688）⇒ 两个档位本来就是
+    #      **不同的发送策略**，不能当"只改探测次数"的对照。
+    #   ★ 第二版换 32 vs 8，仍 FAIL：`by` 只含 BOUNDED，而我把 `value_csi8`
+    #      从 BASELINES 换掉了 ⇒ 键不存在 ⇒ 空表判 FAIL（教训 #46 同族）。
+    #   ★ 第三版（旧 B4）改成"探测次数变了但成本**逐位相同**"⇒ PASS。
+    #      这一版把一个**缺陷**当成了特征：成本逐位相同说明 CSI 根本没进决策。
+    #      实测：age=1 → probe 32 / age=8 → probe 32 / age=64 → probe 8，
+    #      三者 cost 全 = 0.31811923 ⇒ 三档其实是同一个策略，探测纯白花钱。
+    #
+    # ★★ B4 v1.1 重写（2026-10-22）：
+    #   旧版判据是"探测次数变了、但成本**逐位相同**" —— 那是在把一个**缺陷**
+    #   当特征来验：`TaskValueBaseline` 的打分 `P_hat*(1+aoi)` 根本不含 CSI，
+    #   所以三档 `csi_max_age` 是同一个策略，探测纯属白花钱。旧判据因此"通过"。
+    #   实测证据（旧代码，dev 100，B/T=0.5，ρ=0.85）：
+    #       age=1 → probe 32 / age=8 → probe 32 / age=64 → probe 8，三者 cost 全 = 0.31811923
+    #   ⇒ 判据改为：**三档必须给出不同的策略轨迹**（参数真的进了决策），
+    #      且探测次数随 `csi_max_age` 单调不增（越大越少探）。
+    trio = ("value_csi1", "value_csi8", "value_csi64")
+    missing, rows4 = [], []
     for rho in sorted({c["rho"] for c in bnd}):
         for ratio in sorted({c["budget_ratio"] for c in bnd}):
-            a = by.get((rho, ratio, "value_csi64"))
-            b = by.get((rho, ratio, "value_csi8"))
-            if a is None or b is None:
-                missing.append([rho, ratio, a is None, b is None])
+            got = [by.get((rho, ratio, nm)) for nm in trio]
+            if any(g is None for g in got):
+                missing.append([rho, ratio, [nm for nm, g in zip(trio, got) if g is None]])
                 continue
-            if a is None or b is None:
-                continue
-            same_att = abs(a["attempted_mean"] - b["attempted_mean"]) < 1e-9
-            noisy.append({"rho": rho, "ratio": ratio,
-                          "probe_32": a["probe_mean"], "probe_8": b["probe_mean"],
-                          "att_32": a["attempted_mean"], "att_8": b["attempted_mean"],
-                          "cost_32": a["cost_true_mean"], "cost_8": b["cost_true_mean"],
-                          "attempted_identical": same_att,
-                          "cost_identical": abs(a["cost_true_mean"] - b["cost_true_mean"]) < 1e-12})
+            # 聚合层不带 trace_hash，从该 cell 的第一条逐集记录取
+            tr = [g["rows"][0]["trace_hash"] for g in got]
+            rows4.append({"rho": rho, "ratio": ratio,
+                          "probe": [g["probe_mean"] for g in got],
+                          "traces": tr,
+                          "n_distinct_traces": len(set(tr)),
+                          "probe_monotone_nonincreasing":
+                              got[0]["probe_mean"] >= got[1]["probe_mean"] >= got[2]["probe_mean"]})
     if missing:
-        add("B4 检查对象缺失（面板里没有 value_csi64 / value_csi8 两个档位）", False,
-            {"missing": missing})
+        add("B4 检查对象缺失（面板里没有 value_csi1/8/64 三档）", False, {"missing": missing})
     else:
-      add("B4 csi_max_age 64→8：探测次数真的变了（≥1.5×），但发送次数与成本逐位相同",
-        len(noisy) == 4
-        and all(r["probe_8"] >= 1.5 * r["probe_32"] for r in noisy)
-        and all(r["attempted_identical"] and r["cost_identical"] for r in noisy),
-        noisy)
+        add("B4a 三档 csi_max_age 给出**不同**策略轨迹（参数真的进入决策）",
+            all(r["n_distinct_traces"] == 3 for r in rows4), rows4)
+        add("B4b 探测次数随 csi_max_age 单调不增（越大越少探）",
+            all(r["probe_monotone_nonincreasing"] for r in rows4), rows4)
 
     # B5 预算有效（**每条基线各自**在低预算处必须被截断）
     def _fh(ratio):
