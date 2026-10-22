@@ -1,0 +1,59 @@
+{
+  "chain": [
+    {
+      "gate": "A0",
+      "desc": "信息边界（AST）",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "A1",
+      "desc": "参考物序关系 exact ≤ brute ≤ round_robin",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "A2",
+      "desc": "修复版可采纳（对角 5 + 非对角 6，≤1e-3）",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "A3",
+      "desc": "阴性对照（活体 legacy_swap）非对角 ≥5 例超差且最大 ≥10%",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "A4",
+      "desc": "加密两档：修复版 ≤tol、legacy ≥100×tol",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "A5",
+      "desc": "两条 P 轴可分辨（V(p0,p1) ≠ V(p1,p0)）",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "A6",
+      "desc": "变异 2/2 被抓",
+      "state": "pass",
+      "observed": true
+    }
+  ],
+  "stopped_at": null,
+  "all_pass": true,
+  "kind": "AXIS-SWAP-CONFIRMED",
+  "fixed_impl_admissible_under_this_prereg": true,
+  "legacy_impl_admissible": false,
+  "r17_verdict_preserved": "DP-TAIL-REJECTED",
+  "plan_ref_wired": false,
+  "panel_run": false,
+  "eligible_for_N1N2": false,
+  "n_gate_fail": 0,
+  "n_checks": 7,
+  "n_mutation_missed": 0,
+  "note": "本轮只做「根因 + 参考物更正」；不接 plan_ref、不跑面板、不出 N1/N2。`R1.7` 的 `DP-TAIL-REJECTED` 指那一版实现，本轮不撤销它。"
+}

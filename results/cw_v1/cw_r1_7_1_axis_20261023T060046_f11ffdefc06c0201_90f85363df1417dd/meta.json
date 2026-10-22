@@ -1,0 +1,73 @@
+{
+  "run_id": "cw_r1_7_1_axis_20261023T060046_f11ffdefc06c0201_90f85363df1417dd",
+  "kind": "AXIS-SWAP-CONFIRMED",
+  "protocol": "CW-POMDP-v1.1",
+  "config": {
+    "plant": {
+      "A": [
+        1.0,
+        1.0
+      ],
+      "B": 0.32,
+      "sigma_w": [
+        0.02,
+        0.03
+      ],
+      "prior_var": 1.0,
+      "sigma_meas": 0.2,
+      "q_cost": 1.0,
+      "r_cost": 0.02
+    },
+    "channel": {
+      "rho_panel": [
+        0.85,
+        0.98
+      ],
+      "kappa": 2.0,
+      "log_h_star": 0.0,
+      "sigma_csi": 0.05,
+      "h_log_init_std": 1.0,
+      "use_ack_for_csi": true
+    },
+    "protocol": {
+      "horizon": 256,
+      "c_probe": 1,
+      "c_data": 1,
+      "budget_ratios": [
+        0.5,
+        0.8
+      ],
+      "init_from_prior": true,
+      "event_pairing": "slot",
+      "allow_multislot": false
+    },
+    "root_seed": 20261021,
+    "protocol_name": "CW-POMDP-v1.1",
+    "budget_values": [
+      128,
+      204
+    ]
+  },
+  "code": [
+    "experiments/cw_v1/plan_dp.py",
+    "experiments/cw_v1/dp_audit.py",
+    "experiments/cw_v1/r1_7_1_audit.py"
+  ],
+  "prereg": "docs/research/CW-R1.7.1-轴错配-预注册-v0.1.md",
+  "does_not_touch": [
+    "wmlab/",
+    "plan_ref 的默认行为",
+    "results/cw_v1/cw_r1_7_dp_*（旧 3 份）"
+  ],
+  "note": "R1.7.1 轴错配根因 + 参考物更正（exact 闭环）；plan_ref 未接线",
+  "at_asia_shanghai": "2026-10-23T06:00:46.729119+08:00",
+  "elapsed_s": 9.96,
+  "git_head": "7161558a082b9d9a1137152ac9b7c057737363bc",
+  "git_status_porcelain": "M experiments/cw_v1/plan_dp.py\n?? docs/research/CW-R1.7.1-轴错配-预注册-v0.1.md\n?? experiments/cw_v1/dp_audit.py\n?? experiments/cw_v1/r1_7_1_audit.py\n?? results/cw_v1/cw_r1_7_1_axis_20261023T060046_f11ffdefc06c0201_90f85363df1417dd/",
+  "src_hash": "90f85363df1417dd",
+  "dp_cache": {
+    "size": 0,
+    "cap": 3,
+    "keys": []
+  }
+}

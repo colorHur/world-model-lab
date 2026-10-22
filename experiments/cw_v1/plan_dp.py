@@ -32,6 +32,18 @@ R1.6.1 实测它把"多花一帧"的价格估成 **0.0225**，而一帧的收益
 4. **分段线性插值 + 出界夹紧**：`p` 轴用分段非均匀结点（细段覆盖 0–0.055 的实际工作区，
    粗段到 1.5 以覆盖 `t=0` 的 `P=prior_var=1.0`）。出界点计数到 `n_clip`，**不静默**。
 
+★ R1.7.1 修复的**轴错配**（`axis_mode`，2026-10-23）
+----------------------------------------------------
+原 `build()` 里 SEND 分支写的是 `_bil(Vprev, m_del[i], m_hold[1-i])`。`_bil` 的第 1/2 个参数
+**恒作用于第 0/1 条 P 轴**（= 用户 0 / 用户 1），所以 `i=0` 时恰好正确，
+而 `i=1` 时把**用户 1 的送达映射作用到了用户 0 的 P 上**、用户 0 的 hold 作用到用户 1 上。
+
+后果（实测）：`τ≤2` 无差（`V_1` 与 `P` 无关）；`τ≥3` 起**每层同号累加**，对角点 +0.44%…+4.8%，
+**非对角点 +15%…+94%**（`(0.002, 0.05)`、`τ=8`），且**加密不收敛**（结构性错，不是离散化）。
+
+`axis_mode="user_axis"`（默认）为修复版；`"legacy_swap"` **逐位复现**旧行为，
+只作闸的**活体阴性对照**（本轮 `dp_audit.A3/A4` 依赖它）。
+
 缓存
 ----
 `V` 只依赖 `(plant, p̂, b_cap, 网格)`，**不依赖 episode** ⇒ 跨 episode 复用。
@@ -79,7 +91,11 @@ class DPTail:
     """`(p0, p1, b)` 网格上的后向 DP（**有限视界、给定 p̂** 的条件最优，不是全局上界）。"""
 
     def __init__(self, cfg: CWConfig, p_hat, *, b_cap: int | None = None,
-                 tau_max: int | None = None, knots: np.ndarray | None = None) -> None:
+                 tau_max: int | None = None, knots: np.ndarray | None = None,
+                 axis_mode: str = "user_axis") -> None:
+        if axis_mode not in ("user_axis", "legacy_swap"):
+            raise ValueError(f"axis_mode={axis_mode!r} 非法（只允许 user_axis / legacy_swap）")
+        self.axis_mode = axis_mode
         p = cfg.plant
         self.A = np.asarray(p.A, dtype=float)
         self.sw2 = np.asarray(p.sigma_w, dtype=float) ** 2
@@ -149,8 +165,15 @@ class DPTail:
                 feas = (np.arange(nb) >= 1)[None, None, :]
                 cand = np.full(V0.shape, np.inf)
                 for i in range(self.A.size):
-                    j = 1 - i
-                    d = self._bil(Vprev, m_del[i], m_hold[j])[:, :, bs]
+                    if self.axis_mode == "legacy_swap":
+                        # ★ 旧行为（轴错配），逐位复现，只作阴性对照
+                        j = 1 - i
+                        d = self._bil(Vprev, m_del[i], m_hold[j])[:, :, bs]
+                    else:
+                        # ★ 按用户轴放置：第 i 个用户用送达映射，其余用 hold
+                        maps = [m_hold[0], m_hold[1]]
+                        maps[i] = m_del[i]
+                        d = self._bil(Vprev, maps[0], maps[1])[:, :, bs]
                     send = self.p_hat[i] * d + (1.0 - self.p_hat[i]) * Vs_
                     cand = np.where(feas, np.minimum(cand, send), cand)
                 best = np.minimum(V0, cand)
@@ -193,14 +216,14 @@ class DPTail:
         return float(self.value(P, [bud], tau)[0] - self.value(P, [bud - 1], tau)[0])
 
 
-def get_dp(cfg: CWConfig, p_hat, *, b_cap: int) -> DPTail:
-    """带 LRU 的构造：同一 `(plant, p̂ 量化, b_cap)` 只建一次。"""
+def get_dp(cfg: CWConfig, p_hat, *, b_cap: int, axis_mode: str = "user_axis") -> DPTail:
+    """带 LRU 的构造：同一 `(plant, p̂ 量化, b_cap, axis_mode)` 只建一次。"""
     ph = np.asarray(p_hat, dtype=float).reshape(-1)
-    key = (_plant_key(cfg), tuple(np.round(ph / PHAT_QUANT).astype(int)), int(b_cap))
+    key = (_plant_key(cfg), tuple(np.round(ph / PHAT_QUANT).astype(int)), int(b_cap), str(axis_mode))
     hit = _CACHE.get(key)
     if hit is not None:
         return hit
-    obj = DPTail(cfg, ph, b_cap=b_cap).build()
+    obj = DPTail(cfg, ph, b_cap=b_cap, axis_mode=axis_mode).build()
     _CACHE[key] = obj
     _ORDER.append(key)
     while len(_ORDER) > _CACHE_MAX:
@@ -211,4 +234,4 @@ def get_dp(cfg: CWConfig, p_hat, *, b_cap: int) -> DPTail:
 
 def cache_stats() -> dict:
     return {"size": len(_CACHE), "cap": _CACHE_MAX,
-            "keys": [{"p_hat_q": k[1], "b_cap": k[2]} for k in _ORDER]}
+            "keys": [{"p_hat_q": k[1], "b_cap": k[2], "axis_mode": k[3]} for k in _ORDER]}

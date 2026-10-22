@@ -1,0 +1,8 @@
+{
+  "kind": "LEGACY-DP-GATES-RERUN (对照，不是新判据)",
+  "why": "R1.7 的 D0-D6 闸在**修复后**的实现上重跑，用来说明旧闸的 PASS/FAIL 语义已变",
+  "command": "python -m experiments.cw_v1.r1_7_plan --no-write",
+  "exit": 2,
+  "stdout": "[R1.7] dp_gates 7 checks / 1 fail\n  PASS D0 plan_dp / plan_ref 的代码实体里不出现真值入口（AST，两个文件）\n  PASS D1a b=0 与解析外推一致（相对 ≤ 1e-4；插值/浮点底噪已记录）\n  PASS D1b b=0 时值函数关于 p 的**斜率**与解析一致（≤ 1e-12）\n  PASS D2 V_τ 对预算单调不增（9 个状态 × 8 个 τ × 全 b）\n  PASS D3 可采纳性 vs 穷举最优（τ≤4；V 必须 ≤ 真最优）\n  PASS D4 可采纳性 vs 轮询策略（b=τ；V 必须 ≤ 任何可行策略的代价）\n  FAIL D5 加密必须显著缩小超差（最细/最粗 ≥10 倍；否则不是离散化误差）\n[R1.7] 变异 3 次 / 1 次未被抓\n[R1.7] 链停止于 D5；usable_as_tail=False\n[R1.7] 总耗时 1.3 s\n",
+  "note": "D5 的 FAIL 理由与 R1.7 完全不同：修复后 err 为负，|err0|/|err| 的分母假设不再成立 ⇒ 不可判定，不是\"不收敛\""
+}

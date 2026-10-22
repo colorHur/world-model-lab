@@ -762,6 +762,7 @@ X9（想象训练）跑出的是一张「全员平坦」的曲线 —— **但�
 | 调度基线库的统一接口 | [`wmlab/eval/scheduling.py`](wmlab/eval/scheduling.py) |
 | ★ **CW 主线（通信＋世界模型）的协议与两轮纠错** | [`docs/CW-R0-协议交付.md`](docs/CW-R0-协议交付.md) → [`docs/CW-R1.1-纠错交付-1.md`](docs/CW-R1.1-纠错交付-1.md) → [`docs/CW-R1.1-纠错交付-2.md`](docs/CW-R1.1-纠错交付-2.md)（一步预测/协方差 + 外生事件配对，`python -m experiments.cw_v1.r1_4_contract`，约 2 s） |
 | 下一步要做的那件事的**预注册**（有限视界规划参考） | [`docs/research/CW-R1-有限视界参考-预注册-v0.1.md`](docs/research/CW-R1-有限视界参考-预注册-v0.1.md) |
+| ★ **尾部值函数 DP 的轴错配（R1.7 判词的根因）** | [`docs/CW-R1.7.1-轴错配交付.md`](docs/CW-R1.7.1-轴错配交付.md)：`build()` 的 SEND 分支 `i=1` 把用户 1 的送达映射压到用户 0 的 P 轴上 ⇒ 非对角高估 **+13.8%…+44.3%**、`nf` 24→96 **不收敛**。修复后 `A0–A6` **7/7**，最大偏差 −0.060%。判词 `AXIS-SWAP-CONFIRMED`；`plan_ref` **未接线**。跑 `python -m experiments.cw_v1.r1_7_1_audit`（10 s） |
 
 ### 诊断 / 判据脚本（不产出结论，只回答"有没有资格下结论"）
 
