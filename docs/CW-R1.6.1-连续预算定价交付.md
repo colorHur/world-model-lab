@@ -1,6 +1,6 @@
 # CW-R1.6.1 交付：连续预算定价（`_paced_sumP` 的四处修正）
 
-> 时间：**2026-10-23 01:2x–01:5x（系统 `date` 实测，+08:00 = Asia/Shanghai）**
+> 时间：**2026-10-23 01:12 开工 → 01:21:10 起跑入口 → 01:27:13 提交（系统 `date` 实测，+08:00 = Asia/Shanghai）**
 > 上游：`docs/research/CW-R1.6-配速-预注册-v0.1.md` §7.2（`G8d` FAIL 的根因钉在"`m` 取整"）。
 > 本卡：`docs/research/CW-R1.6.1-连续预算定价-预注册-v0.1.md`。
 > 证据：`results/cw_v1/cw_r1_6_1_contm_20261023T012532_f11ffdefc06c0201_0623f3fdf3442bcb/`
