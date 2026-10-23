@@ -1,0 +1,99 @@
+{
+  "run_id": "cw_r1_7_6_g4form_20261023T182640_f11ffdefc06c0201_7dd8ba47dede6ce3",
+  "kind": "G4-FORM-DIAGNOSIS-NOT-PANEL-CONCLUSION",
+  "protocol": "CW-POMDP-v1.1",
+  "prereg": "docs/research/CW-R1.7.6-G4改形态-预注册-v0.1.md",
+  "params": {
+    "eps": [
+      100,
+      101
+    ],
+    "seeds": [
+      2001,
+      2002,
+      2003,
+      2004
+    ],
+    "M_list": [
+      16,
+      32
+    ],
+    "rho": 0.98,
+    "ratio": 0.5,
+    "h_plan": 5,
+    "arm": "probe",
+    "tail_dp": {
+      "tail": "dp",
+      "dp_grid": "r173"
+    },
+    "c2": {
+      "ep": 100,
+      "seed": 2001,
+      "h_plan": 1
+    },
+    "lines": {
+      "rel": 0.1,
+      "agree": 0.9,
+      "R": 3.0,
+      "sign": 0.875
+    }
+  },
+  "quick": false,
+  "config": {
+    "plant": {
+      "A": [
+        1.0,
+        1.0
+      ],
+      "B": 0.32,
+      "sigma_w": [
+        0.02,
+        0.03
+      ],
+      "prior_var": 1.0,
+      "sigma_meas": 0.2,
+      "q_cost": 1.0,
+      "r_cost": 0.02
+    },
+    "channel": {
+      "rho_panel": [
+        0.85,
+        0.98
+      ],
+      "kappa": 2.0,
+      "log_h_star": 0.0,
+      "sigma_csi": 0.05,
+      "h_log_init_std": 1.0,
+      "use_ack_for_csi": true
+    },
+    "protocol": {
+      "horizon": 256,
+      "c_probe": 1,
+      "c_data": 1,
+      "budget_ratios": [
+        0.5,
+        0.8
+      ],
+      "init_from_prior": true,
+      "event_pairing": "slot",
+      "allow_multislot": false
+    },
+    "root_seed": 20261021,
+    "protocol_name": "CW-POMDP-v1.1",
+    "budget_values": [
+      128,
+      204
+    ]
+  },
+  "at_asia_shanghai": "2026-10-23T18:26:40.785042+08:00",
+  "elapsed_s": 564.04,
+  "peak_tracemalloc_mib": 2209.2,
+  "n_cells": 24,
+  "n_extra_runs": 2,
+  "hist_evidence": "results\\cw_v1\\cw_r1_7_5_reach_20261023T160758_f11ffdefc06c0201_876e6de425c68273\\cells.json",
+  "git_head": "d414a233cbfe8d15d1474193fd013fabe3cca3cf",
+  "git_status_porcelain": "?? docs/research/CW-R1.7.6-G4改形态-预注册-v0.1.md\n?? experiments/cw_v1/r1_7_6_g4form.py\n?? results/cw_v1/cw_r1_7_6_g4form_20261023T182640_f11ffdefc06c0201_7dd8ba47dede6ce3/",
+  "src_hash": "7dd8ba47dede6ce3",
+  "change_to_subject": "无 —— 本入口只调用 plan_ref.make / runner.run_episode / plan_gates._Rec，未修改任何被测文件一个字节",
+  "disclaimer": "本 run 只回答『G4 该用什么形态』：不是面板科学结论；不读 N1/N2；不改任何阈值；不宣称『世界模型/主动测量有价值或无价值』。2 ep × 4 seed 是开发诊断，不是确认集。"
+}

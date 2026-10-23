@@ -1,0 +1,602 @@
+{
+  "paced16|100|2001": {
+    "cost_est": 0.016564610850432412,
+    "cost_true": 0.13074571146253527,
+    "cost_est_by_user": [
+      0.004942761121960901,
+      0.01162184972847151
+    ],
+    "cost_true_by_user": [
+      0.01665047420006615,
+      0.11409523726246912
+    ],
+    "n_probe": 3,
+    "n_attempted": 116,
+    "n_delivered": 60,
+    "n_idle": 137,
+    "mean_task_aoi": 16.0,
+    "policy_trace_hash": "e7f9f3e3d6b80aa8",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "100",
+      "spawn_keys": "{'plant': '2-100-0', 'channel': '2-100-1', 'meas': '2-100-2', 'csi': '2-100-3', 'packet': '2-100-4', 'init': '2-100-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 25.7784
+  },
+  "paced16|100|2002": {
+    "cost_est": 0.01531068578121575,
+    "cost_true": 0.08411820429268507,
+    "cost_est_by_user": [
+      0.004862705387893571,
+      0.01044798039332218
+    ],
+    "cost_true_by_user": [
+      0.03313791330435399,
+      0.05098029098833108
+    ],
+    "n_probe": 3,
+    "n_attempted": 120,
+    "n_delivered": 67,
+    "n_idle": 133,
+    "mean_task_aoi": 18.5,
+    "policy_trace_hash": "62c21ff0bd6d6238",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "100",
+      "spawn_keys": "{'plant': '2-100-0', 'channel': '2-100-1', 'meas': '2-100-2', 'csi': '2-100-3', 'packet': '2-100-4', 'init': '2-100-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 25.7751
+  },
+  "paced16|100|2003": {
+    "cost_est": 0.01543660669994376,
+    "cost_true": 0.06902025026203551,
+    "cost_est_by_user": [
+      0.005089853715537143,
+      0.010346752984406618
+    ],
+    "cost_true_by_user": [
+      0.022306876230471437,
+      0.04671337403156408
+    ],
+    "n_probe": 4,
+    "n_attempted": 117,
+    "n_delivered": 71,
+    "n_idle": 135,
+    "mean_task_aoi": 11.5,
+    "policy_trace_hash": "baec992643ab92d6",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "100",
+      "spawn_keys": "{'plant': '2-100-0', 'channel': '2-100-1', 'meas': '2-100-2', 'csi': '2-100-3', 'packet': '2-100-4', 'init': '2-100-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 25.8022
+  },
+  "paced16|100|2004": {
+    "cost_est": 0.015298228312842624,
+    "cost_true": 0.0863977802730728,
+    "cost_est_by_user": [
+      0.004977801814219385,
+      0.010320426498623239
+    ],
+    "cost_true_by_user": [
+      0.03299104377843024,
+      0.053406736494642545
+    ],
+    "n_probe": 8,
+    "n_attempted": 117,
+    "n_delivered": 66,
+    "n_idle": 131,
+    "mean_task_aoi": 14.5,
+    "policy_trace_hash": "d9426a42cc1d8cc9",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "100",
+      "spawn_keys": "{'plant': '2-100-0', 'channel': '2-100-1', 'meas': '2-100-2', 'csi': '2-100-3', 'packet': '2-100-4', 'init': '2-100-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 25.6617
+  },
+  "paced16|101|2001": {
+    "cost_est": 0.01968719636643603,
+    "cost_true": 0.12422377630632288,
+    "cost_est_by_user": [
+      0.016930084175177957,
+      0.0027571121912580714
+    ],
+    "cost_true_by_user": [
+      0.058455910762573664,
+      0.06576786554374922
+    ],
+    "n_probe": 9,
+    "n_attempted": 109,
+    "n_delivered": 71,
+    "n_idle": 138,
+    "mean_task_aoi": 6.0,
+    "policy_trace_hash": "cdaa05eeecf0afcb",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "101",
+      "spawn_keys": "{'plant': '2-101-0', 'channel': '2-101-1', 'meas': '2-101-2', 'csi': '2-101-3', 'packet': '2-101-4', 'init': '2-101-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 25.7121
+  },
+  "paced16|101|2002": {
+    "cost_est": 0.019051244250275195,
+    "cost_true": 0.11839400287601759,
+    "cost_est_by_user": [
+      0.016922392566957684,
+      0.002128851683317514
+    ],
+    "cost_true_by_user": [
+      0.05093748263771128,
+      0.06745652023830631
+    ],
+    "n_probe": 17,
+    "n_attempted": 104,
+    "n_delivered": 55,
+    "n_idle": 135,
+    "mean_task_aoi": 12.0,
+    "policy_trace_hash": "68959f3798e10b9f",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "101",
+      "spawn_keys": "{'plant': '2-101-0', 'channel': '2-101-1', 'meas': '2-101-2', 'csi': '2-101-3', 'packet': '2-101-4', 'init': '2-101-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 25.7176
+  },
+  "paced16|101|2003": {
+    "cost_est": 0.019739246129310446,
+    "cost_true": 0.13260574715320128,
+    "cost_est_by_user": [
+      0.016781944932516703,
+      0.0029573011967937426
+    ],
+    "cost_true_by_user": [
+      0.04836876003597194,
+      0.08423698711722935
+    ],
+    "n_probe": 7,
+    "n_attempted": 105,
+    "n_delivered": 68,
+    "n_idle": 144,
+    "mean_task_aoi": 5.5,
+    "policy_trace_hash": "9b0af5b0fd2fa90d",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "101",
+      "spawn_keys": "{'plant': '2-101-0', 'channel': '2-101-1', 'meas': '2-101-2', 'csi': '2-101-3', 'packet': '2-101-4', 'init': '2-101-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 25.7469
+  },
+  "paced16|101|2004": {
+    "cost_est": 0.01899494118008784,
+    "cost_true": 0.1835585805702098,
+    "cost_est_by_user": [
+      0.0168860290388402,
+      0.0021089121412476417
+    ],
+    "cost_true_by_user": [
+      0.04931896569840146,
+      0.13423961487180827
+    ],
+    "n_probe": 14,
+    "n_attempted": 102,
+    "n_delivered": 51,
+    "n_idle": 140,
+    "mean_task_aoi": 3.5,
+    "policy_trace_hash": "dae86e3a90cc0301",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "101",
+      "spawn_keys": "{'plant': '2-101-0', 'channel': '2-101-1', 'meas': '2-101-2', 'csi': '2-101-3', 'packet': '2-101-4', 'init': '2-101-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 25.7462
+  },
+  "paced32|100|2001": {
+    "cost_est": 0.017855318345969803,
+    "cost_true": 0.18333180472849905,
+    "cost_est_by_user": [
+      0.0038960912143971927,
+      0.013959227131572612
+    ],
+    "cost_true_by_user": [
+      0.021798567656811665,
+      0.16153323707168743
+    ],
+    "n_probe": 4,
+    "n_attempted": 121,
+    "n_delivered": 75,
+    "n_idle": 131,
+    "mean_task_aoi": 14.5,
+    "policy_trace_hash": "ca86bd366efa33e0",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "100",
+      "spawn_keys": "{'plant': '2-100-0', 'channel': '2-100-1', 'meas': '2-100-2', 'csi': '2-100-3', 'packet': '2-100-4', 'init': '2-100-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 26.1719
+  },
+  "paced32|100|2002": {
+    "cost_est": 0.016011638906441843,
+    "cost_true": 0.07025709944453253,
+    "cost_est_by_user": [
+      0.005038281367260186,
+      0.010973357539181657
+    ],
+    "cost_true_by_user": [
+      0.018973678230926376,
+      0.05128342121360615
+    ],
+    "n_probe": 5,
+    "n_attempted": 115,
+    "n_delivered": 63,
+    "n_idle": 136,
+    "mean_task_aoi": 15.0,
+    "policy_trace_hash": "c0077fd16b4d741e",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "100",
+      "spawn_keys": "{'plant': '2-100-0', 'channel': '2-100-1', 'meas': '2-100-2', 'csi': '2-100-3', 'packet': '2-100-4', 'init': '2-100-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 26.1206
+  },
+  "paced32|100|2003": {
+    "cost_est": 0.016402849201533277,
+    "cost_true": 0.09267089192081421,
+    "cost_est_by_user": [
+      0.005062637436440648,
+      0.011340211765092627
+    ],
+    "cost_true_by_user": [
+      0.022939283343711106,
+      0.06973160857710309
+    ],
+    "n_probe": 9,
+    "n_attempted": 115,
+    "n_delivered": 65,
+    "n_idle": 132,
+    "mean_task_aoi": 18.0,
+    "policy_trace_hash": "15aed07245c567b6",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "100",
+      "spawn_keys": "{'plant': '2-100-0', 'channel': '2-100-1', 'meas': '2-100-2', 'csi': '2-100-3', 'packet': '2-100-4', 'init': '2-100-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 26.0954
+  },
+  "paced32|100|2004": {
+    "cost_est": 0.016211849078848317,
+    "cost_true": 0.07776404931754974,
+    "cost_est_by_user": [
+      0.004934435027360879,
+      0.011277414051487437
+    ],
+    "cost_true_by_user": [
+      0.01667354137925459,
+      0.06109050793829514
+    ],
+    "n_probe": 2,
+    "n_attempted": 120,
+    "n_delivered": 68,
+    "n_idle": 134,
+    "mean_task_aoi": 19.0,
+    "policy_trace_hash": "0a9102f6fa126650",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "100",
+      "spawn_keys": "{'plant': '2-100-0', 'channel': '2-100-1', 'meas': '2-100-2', 'csi': '2-100-3', 'packet': '2-100-4', 'init': '2-100-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 26.4302
+  },
+  "paced32|101|2001": {
+    "cost_est": 0.026077329286937446,
+    "cost_true": 0.22023599242307934,
+    "cost_est_by_user": [
+      0.023974966293663268,
+      0.0021023629932741747
+    ],
+    "cost_true_by_user": [
+      0.08548284008915544,
+      0.13475315233392385
+    ],
+    "n_probe": 14,
+    "n_attempted": 106,
+    "n_delivered": 52,
+    "n_idle": 136,
+    "mean_task_aoi": 8.0,
+    "policy_trace_hash": "8c73569327771b4e",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "101",
+      "spawn_keys": "{'plant': '2-101-0', 'channel': '2-101-1', 'meas': '2-101-2', 'csi': '2-101-3', 'packet': '2-101-4', 'init': '2-101-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 26.3816
+  },
+  "paced32|101|2002": {
+    "cost_est": 0.018193726020307204,
+    "cost_true": 0.07304916691336748,
+    "cost_est_by_user": [
+      0.016971366207056495,
+      0.0012223598132507065
+    ],
+    "cost_true_by_user": [
+      0.047121788378702234,
+      0.02592737853466524
+    ],
+    "n_probe": 14,
+    "n_attempted": 105,
+    "n_delivered": 59,
+    "n_idle": 137,
+    "mean_task_aoi": 6.0,
+    "policy_trace_hash": "1df28272ffebd073",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "101",
+      "spawn_keys": "{'plant': '2-101-0', 'channel': '2-101-1', 'meas': '2-101-2', 'csi': '2-101-3', 'packet': '2-101-4', 'init': '2-101-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 26.3414
+  },
+  "paced32|101|2003": {
+    "cost_est": 0.020335083856349884,
+    "cost_true": 0.1418986965655797,
+    "cost_est_by_user": [
+      0.01676462385793518,
+      0.0035704599984147005
+    ],
+    "cost_true_by_user": [
+      0.047842977780684415,
+      0.09405571878489527
+    ],
+    "n_probe": 17,
+    "n_attempted": 101,
+    "n_delivered": 50,
+    "n_idle": 138,
+    "mean_task_aoi": 5.0,
+    "policy_trace_hash": "e6db27a874478a23",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "101",
+      "spawn_keys": "{'plant': '2-101-0', 'channel': '2-101-1', 'meas': '2-101-2', 'csi': '2-101-3', 'packet': '2-101-4', 'init': '2-101-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 26.4009
+  },
+  "paced32|101|2004": {
+    "cost_est": 0.01879138454440826,
+    "cost_true": 0.11607310176237065,
+    "cost_est_by_user": [
+      0.016871729731894984,
+      0.001919654812513274
+    ],
+    "cost_true_by_user": [
+      0.04821661268807922,
+      0.06785648907429145
+    ],
+    "n_probe": 23,
+    "n_attempted": 100,
+    "n_delivered": 55,
+    "n_idle": 133,
+    "mean_task_aoi": 4.5,
+    "policy_trace_hash": "a8a170b3e7485cf6",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "101",
+      "spawn_keys": "{'plant': '2-101-0', 'channel': '2-101-1', 'meas': '2-101-2', 'csi': '2-101-3', 'packet': '2-101-4', 'init': '2-101-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 26.3114
+  },
+  "dp16|100|2001": {
+    "cost_est": 0.011458794966305141,
+    "cost_true": 0.10843528189846283,
+    "cost_est_by_user": [
+      0.0038151897459432144,
+      0.00764360522036193
+    ],
+    "cost_true_by_user": [
+      0.0220182438417994,
+      0.08641703805666343
+    ],
+    "n_probe": 0,
+    "n_attempted": 128,
+    "n_delivered": 51,
+    "n_idle": 128,
+    "mean_task_aoi": 30.5,
+    "policy_trace_hash": "c87f9c6dbde9a12c",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "100",
+      "spawn_keys": "{'plant': '2-100-0', 'channel': '2-100-1', 'meas': '2-100-2', 'csi': '2-100-3', 'packet': '2-100-4', 'init': '2-100-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 36.6806
+  },
+  "dp16|100|2002": {
+    "cost_est": 0.024258767026681345,
+    "cost_true": 0.12472242254820004,
+    "cost_est_by_user": [
+      0.00490221423321832,
+      0.019356552793463024
+    ],
+    "cost_true_by_user": [
+      0.015883592684359234,
+      0.1088388298638408
+    ],
+    "n_probe": 1,
+    "n_attempted": 127,
+    "n_delivered": 47,
+    "n_idle": 128,
+    "mean_task_aoi": 32.0,
+    "policy_trace_hash": "c1ab2fe0333ac7b6",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "100",
+      "spawn_keys": "{'plant': '2-100-0', 'channel': '2-100-1', 'meas': '2-100-2', 'csi': '2-100-3', 'packet': '2-100-4', 'init': '2-100-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 15.2274
+  },
+  "dp16|100|2003": {
+    "cost_est": 0.012413231185627507,
+    "cost_true": 0.11875519895444075,
+    "cost_est_by_user": [
+      0.004968036489418743,
+      0.007445194696208764
+    ],
+    "cost_true_by_user": [
+      0.01464115257436692,
+      0.10411404638007385
+    ],
+    "n_probe": 1,
+    "n_attempted": 127,
+    "n_delivered": 44,
+    "n_idle": 128,
+    "mean_task_aoi": 38.0,
+    "policy_trace_hash": "fbaa3fd331438b10",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "100",
+      "spawn_keys": "{'plant': '2-100-0', 'channel': '2-100-1', 'meas': '2-100-2', 'csi': '2-100-3', 'packet': '2-100-4', 'init': '2-100-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 15.3317
+  },
+  "dp16|100|2004": {
+    "cost_est": 0.012078897199558503,
+    "cost_true": 0.11412063642042092,
+    "cost_est_by_user": [
+      0.003631042039342748,
+      0.008447855160215756
+    ],
+    "cost_true_by_user": [
+      0.019579810213760655,
+      0.09454082620666024
+    ],
+    "n_probe": 1,
+    "n_attempted": 127,
+    "n_delivered": 46,
+    "n_idle": 128,
+    "mean_task_aoi": 36.0,
+    "policy_trace_hash": "4c5aaa5552552dff",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "100",
+      "spawn_keys": "{'plant': '2-100-0', 'channel': '2-100-1', 'meas': '2-100-2', 'csi': '2-100-3', 'packet': '2-100-4', 'init': '2-100-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 15.3191
+  },
+  "dp16|101|2001": {
+    "cost_est": 0.0290441650037778,
+    "cost_true": 0.12974648651338594,
+    "cost_est_by_user": [
+      0.027257055284306848,
+      0.0017871097194709557
+    ],
+    "cost_true_by_user": [
+      0.06653519894019817,
+      0.06321128757318774
+    ],
+    "n_probe": 0,
+    "n_attempted": 126,
+    "n_delivered": 81,
+    "n_idle": 130,
+    "mean_task_aoi": 28.0,
+    "policy_trace_hash": "2c6909a882b4aaaa",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "101",
+      "spawn_keys": "{'plant': '2-101-0', 'channel': '2-101-1', 'meas': '2-101-2', 'csi': '2-101-3', 'packet': '2-101-4', 'init': '2-101-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 15.3244
+  },
+  "dp16|101|2002": {
+    "cost_est": 0.01798865960154422,
+    "cost_true": 0.18527753863153612,
+    "cost_est_by_user": [
+      0.01697983216251089,
+      0.0010088274390333257
+    ],
+    "cost_true_by_user": [
+      0.0484532525958037,
+      0.13682428603573243
+    ],
+    "n_probe": 0,
+    "n_attempted": 125,
+    "n_delivered": 84,
+    "n_idle": 131,
+    "mean_task_aoi": 53.0,
+    "policy_trace_hash": "150eb20e0680d7f0",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "101",
+      "spawn_keys": "{'plant': '2-101-0', 'channel': '2-101-1', 'meas': '2-101-2', 'csi': '2-101-3', 'packet': '2-101-4', 'init': '2-101-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 15.2838
+  },
+  "dp16|101|2003": {
+    "cost_est": 0.018202401757697176,
+    "cost_true": 0.09907680902397124,
+    "cost_est_by_user": [
+      0.016985722928342863,
+      0.0012166788293543167
+    ],
+    "cost_true_by_user": [
+      0.04736593835569092,
+      0.051710870668280326
+    ],
+    "n_probe": 1,
+    "n_attempted": 126,
+    "n_delivered": 85,
+    "n_idle": 129,
+    "mean_task_aoi": 23.5,
+    "policy_trace_hash": "24f3534278efcc2b",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "101",
+      "spawn_keys": "{'plant': '2-101-0', 'channel': '2-101-1', 'meas': '2-101-2', 'csi': '2-101-3', 'packet': '2-101-4', 'init': '2-101-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 15.361
+  },
+  "dp16|101|2004": {
+    "cost_est": 0.028261103361744217,
+    "cost_true": 0.24771011346628422,
+    "cost_est_by_user": [
+      0.027426162304662032,
+      0.000834941057082185
+    ],
+    "cost_true_by_user": [
+      0.0683576422553939,
+      0.17935247121089037
+    ],
+    "n_probe": 1,
+    "n_attempted": 127,
+    "n_delivered": 92,
+    "n_idle": 128,
+    "mean_task_aoi": 24.5,
+    "policy_trace_hash": "73e119e09e9c7116",
+    "stream_ids": {
+      "split": "dev",
+      "episode": "101",
+      "spawn_keys": "{'plant': '2-101-0', 'channel': '2-101-1', 'meas': '2-101-2', 'csi': '2-101-3', 'packet': '2-101-4', 'init': '2-101-5'}"
+    },
+    "n_acts": 256,
+    "elapsed_s": 14.8269
+  }
+}

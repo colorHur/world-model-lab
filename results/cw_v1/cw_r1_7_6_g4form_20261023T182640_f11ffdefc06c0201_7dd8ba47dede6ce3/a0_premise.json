@@ -1,0 +1,39 @@
+{
+  "A0a_stream_ids_seed_invariant": {
+    "pass": true,
+    "stream_ids_a": {
+      "split": "dev",
+      "episode": "100",
+      "spawn_keys": "{'plant': '2-100-0', 'channel': '2-100-1', 'meas': '2-100-2', 'csi': '2-100-3', 'packet': '2-100-4', 'init': '2-100-5'}"
+    },
+    "stream_ids_b": {
+      "split": "dev",
+      "episode": "100",
+      "spawn_keys": "{'plant': '2-100-0', 'channel': '2-100-1', 'meas': '2-100-2', 'csi': '2-100-3', 'packet': '2-100-4', 'init': '2-100-5'}"
+    },
+    "rule": "外生流由 (root_seed, split, episode) 决定 ⇒ 只换规划器 seed 必须逐位相同"
+  },
+  "A0b_seed_is_wired": {
+    "pass": true,
+    "cost_true_a": 0.13074571146253527,
+    "cost_true_b": 0.08411820429268507,
+    "trace_a": "e7f9f3e3d6b80aa8",
+    "trace_b": "62c21ff0bd6d6238",
+    "rule": "只换 seed 动作/成本必须变化（否则『跨 seed 地板』其实是 0）"
+  },
+  "A0c_identity_with_r175": {
+    "pass": true,
+    "abs_diff": {
+      "100|2001": 0.0,
+      "100|2002": 0.0,
+      "100|2003": 0.0,
+      "100|2004": 0.0,
+      "101|2001": 0.0,
+      "101|2002": 0.0,
+      "101|2003": 0.0,
+      "101|2004": 0.0
+    },
+    "missing": [],
+    "rule": "本轮 paced@M=16 的 cost_true 必须与 R1.7.5 入库 cells.json 逐位相同（否则 dp 臂与 paced 臂差的就不止 tail 一个因素）"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "runs": {
+    "M16": {
+      "cost_est": 0.016404723978216733,
+      "cost_true": 0.07744838693618783,
+      "policy_trace_hash": "a5dad167d0ce0fc7",
+      "n_probe": 0
+    },
+    "M32": {
+      "cost_est": 0.016404723978216733,
+      "cost_true": 0.07744838693618783,
+      "policy_trace_hash": "a5dad167d0ce0fc7",
+      "n_probe": 0
+    }
+  },
+  "agree": 1.0,
+  "n_acts": 256,
+  "same_trace": true,
+  "object_created": true,
+  "P0d_live": {
+    "status": "EVALUATED",
+    "pass": true,
+    "n_object": 1,
+    "n_violation": 0,
+    "rule": "agree==1.0 ⇒ 两档成本必须逐位相同"
+  },
+  "P0d2_live": {
+    "status": "EVALUATED",
+    "pass": true,
+    "n_object": 1,
+    "n_violation": 0,
+    "rule": "trace 相同 ⇒ 成本必须相同"
+  },
+  "rule": "`H=1 ⇒ PROBE≡HOLD`，两档 M 应退化成同一策略 ⇒ 不变式**有对象**。若仍无对象，记 `C2-NO-OBJECT`，不许改 h_plan 再试"
+}

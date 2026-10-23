@@ -1,0 +1,17 @@
+{
+  "verdict": "G4-UNREACHABLE-ON-BOTH-METRICS",
+  "reason": "两个形态都不过（rel 中位 0.0528、R=6.58）⇒ 下一轮不再调参，改问『面板该比什么量』",
+  "n_fail": 2,
+  "n_skip": 0,
+  "n_checks": 9,
+  "c2_object_created": true,
+  "lines": {
+    "rel": 0.1,
+    "agree": 0.9,
+    "R": 3.0,
+    "sign": 0.875
+  },
+  "no_n1_n2": true,
+  "no_threshold_change": true,
+  "rule": "判词按预注册 §3 映射；0.90/0.10/3.0 一个不改"
+}
