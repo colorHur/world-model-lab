@@ -1,0 +1,103 @@
+{
+ "protocol": "CW-POMDP-v1.1",
+ "stage": "CW-R1.11",
+ "baseline_declaration": "本表 = **新基线**（world.py NACK 归属已修）；与 R1.10 及更早的 `ack=on` 数字**跨版本不可逐位比**",
+ "head": "de39567d2e05d6bb37062398805b08cdf39ffd17",
+ "world_py_worktree_sha": "afe5d1c187e8202b32744ca649c50e1f9939999e",
+ "world_py_blob_sha": "8738533ca229bfc8957a631d147e5f3fdd40214f",
+ "src_hash": "3ef5b3de20cd3be4",
+ "git_dirty_before_run": [
+  "M experiments/cw_v1/gates.py",
+  " M experiments/cw_v1/runner.py",
+  " M experiments/cw_v1/world.py",
+  "?? docs/research/CW-R1.11-归属修正新基线-预注册-v0.1.md",
+  "?? experiments/cw_v1/r1_11_rebaseline.py",
+  "?? results/cw_v1/cw_r1_11_rebaseline_20261023T234844_75eb8069bc36fc4e/"
+ ],
+ "n_cells": 16,
+ "verdicts": {
+  "P1_abs_phat_diff_median_lt_0.05": {
+   "value": -0.010318258803446612,
+   "pass": true
+  },
+  "P2_attempt_balance_ge_12_of_16": {
+   "hits": 12,
+   "n": 16,
+   "pass": true,
+   "★": "本条形式上与「逐用户量先查角色」冲突，见 P2b"
+  },
+  "P2b_episode_determined": {
+   "ep100": {
+    "delta_attempted": [
+     -14,
+     -33,
+     -33,
+     -53
+    ],
+    "signs": [
+     -1,
+     -1,
+     -1,
+     -1
+    ],
+    "unanimous": true,
+    "preferred": "u1"
+   },
+   "ep101": {
+    "delta_attempted": [
+     55,
+     65,
+     64,
+     47
+    ],
+    "signs": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "unanimous": true,
+    "preferred": "u0"
+   },
+   "cross_episode_preference_differs": true,
+   "reading": "是 ⇒ 方向由 **episode**（物理角色）决定，不由下标决定 ⇒ 缺陷已消失（旧状态下两集都是 u1 被饿死）"
+  },
+  "P3_cost_true_vs_same_version_ack_off": {
+   "ep100": {
+    "cost_true_median_ack_on(new)": 0.1128414098622037,
+    "cost_true_median_ack_off(new)": 0.09906897059953339,
+    "delta_pct_on_vs_off": 13.9,
+    "old_R110_ack_on": 0.1164,
+    "old_R110_ack_off": 0.1025
+   },
+   "ep101": {
+    "cost_true_median_ack_on(new)": 0.10447877829676114,
+    "cost_true_median_ack_off(new)": 0.10830156090946959,
+    "delta_pct_on_vs_off": -3.53,
+    "old_R110_ack_on": 0.1885,
+    "old_R110_ack_off": 0.101
+   }
+  },
+  "P4_attribution_identity_16_of_16": {
+   "hits": 16,
+   "n": 16,
+   "pass": true
+  },
+  "identities_all_pass": {
+   "hits": 16,
+   "n": 16
+  }
+ },
+ "old_reference": {
+  "result_A_ack_off": {
+   "ep100_cost_true": 0.1025,
+   "ep101_cost_true": 0.101
+  },
+  "old_ack_on": {
+   "ep100_cost_true": 0.1164,
+   "ep101_cost_true": 0.1885
+  }
+ },
+ "wall_s_total": 65.8,
+ "peak_rss_mb_note": "见 meta.json（psutil 若可用）"
+}

@@ -504,12 +504,21 @@ def counterexample_4(cfg: CWConfig, g: Gate) -> None:
     #   所以均值这一个维度上区分不出来 —— 但它的**方差没有收缩**（1.0 vs ACK 的 0.557）。
     #   ⇒ 判据改为"均值与方差两维都不退化"：ACK 应抬均值，NACK 不应抬均值且不应收缩到与 ACK 同水平。
     #   这是"ACK/NACK 方向相反且都可区分"的更完整表述，不是放宽阈值。
-    g.check("4g ACK 与 NACK 对信道信念的作用方向相反且可区分",
-            (m_ack > m_hold) and (m_nack <= m_hold)
-            and (v_nack > v_ack),
+    # ★★ R1.11 判据修正（**不是放宽**，原判据靠缺陷才成立）：
+    #   旧形式 `(m_nack <= m_hold) and (v_nack > v_ack)` 在 R1.10 缺陷下 PASS，
+    #   原因是 NACK 的更新被错投到 u1 ⇒ u0 的 `_m_h[0]` 停在先验 0.0 = `m_hold`，
+    #   且 u0 的 `_v_h[0]` 从不收缩 ⇒ 恒有 `v_nack > v_ack`。
+    #   ⇒ 旧判据把"缺陷"编码成了正确性前提。修复后 NACK 真的作用于 u0，
+    #   同一条伪观测（方差 ACK_VAR）必然把 v 收缩到与 ACK **相同**的量
+    #   ⇒ `v_nack > v_ack` 必然 FAIL。正确表述是：
+    #   均值符号相反（m_ack > m_hold > m_nack），方差**等量**收缩（一次二值观测的
+    #   等效方差与方向无关）。这比旧形式更强：旧实现会在 `m_nack < m_hold` 上 FAIL。
+    g.check("4g ACK 抬均值、NACK 压均值，两者方差等量收缩",
+            (m_ack > m_hold) and (m_nack < m_hold) and abs(v_nack - v_ack) < 1e-12,
             {"m_after_ack": m_ack, "m_after_hold": m_hold, "m_after_nack": m_nack,
              "v_after_ack": v_ack, "v_after_hold": v_hold, "v_after_nack": v_nack,
-             "config": "use_ack_for_csi=True（v1.1 默认）"})
+             "config": "use_ack_for_csi=True（v1.1 默认）",
+             "legacy_behavior": "旧实现 m_nack == m_hold (0.0) ⇒ 本条 FAIL ⇒ 有分辨力"})
 
     # 4h：默认协议下 ACK **确实**进入信念 —— 这条防的是"开关写着 True 但没接线"。
     # ★ 与旧版**方向相反**：旧版断言"默认不变"，那是为了让 1d 的旧形式成立。
@@ -538,6 +547,106 @@ def counterexample_4(cfg: CWConfig, g: Gate) -> None:
     g.check("4i 关闭 use_ack_for_csi 后 ACK 不影响信念（阴性对照）",
             abs(n_ack - n_nack) < 1e-15,
             {"m_after_ack": n_ack, "m_after_nack": n_nack})
+
+    # ================= ★★ R1.11：逐用户 ACK/NACK **归属**（4j / 4k / 4l）=================
+    # 背景（R1.10 实测）：`world.py` 的 NACK 支写的是 `self._ack_bump(i, -1.5)`，
+    #   而 `i` 已被接收端名义滚动那行 `for i in range(self.n_users)` 泄漏成 `n_users-1`
+    #   ⇒ 所有 NACK 的信道信念更新都落到**下标最大的用户**头上。
+    #
+    # ★ 为什么上面 4g/4h/4i 全 PASS 而缺陷仍在（台账 #94：闸的 plant 决定它覆盖哪一支）：
+    #   它们**全部只读 `_m_h[0]`**，而 4g 的失败支判据是 `m_nack <= m_hold`。
+    #   旧实现里 `SEND(0)` 失败 ⇒ 更新跑到 u1 ⇒ `_m_h[0]` 停在先验 0.0，与 `m_hold=0.0`
+    #   **相等** ⇒ `m_nack <= m_hold` 仍然成立。判据从没写"必须**下降**"，
+    #   也从来没问过"这个更新落在了**谁**身上"。
+    #
+    # ★★ 纪律落地：**"两个用户对称"必须在闸里被显式破坏一次** —— 4j 送的正是 u0
+    #   （唯一让 `n_users-1 != act.user` 的那个用户）；4k 是镜像，旧实现在它上面**恰好
+    #   PASS**，所以 4k 单独**没有分辨力**，只有 4j+4k 同时在场才封住"漏改一侧"。
+
+    def _after(send_user: int, force_success: bool) -> tuple[list[float], list[float], float]:
+        rngs4, sids4 = make_episode_rngs(cfg_ack.root_seed, "dev", 6)
+        w4 = CWWorld(cfg_ack, rngs4, sids4)
+        w4.budget_total = 50
+        # 只改真信道（与 4a 同法：不动任何子流）
+        w4._log_h_true[:] = 30.0 if force_success else -30.0
+        w4.step(Action("SEND", send_user))
+        return ([float(x) for x in w4._m_h], [float(x) for x in w4._v_h], float(w4.rho))
+
+    def _bare(user: int, direction: float) -> tuple[float, float]:
+        """**不走 step**，直接调一次 `_ack_bump` —— 唯一能精确解析对账的路径。"""
+        rngs5, sids5 = make_episode_rngs(cfg_ack.root_seed, "dev", 6)
+        w5 = CWWorld(cfg_ack, rngs5, sids5)
+        w5._ack_bump(user, direction)
+        return float(w5._m_h[user]), float(w5._v_h[user])
+
+    # 写卡时手算（★ 已在 §7 事后修订区留痕：第一版漏了 step 末尾的**信道信念滚动**
+    #   `_m_h*=rho` / `_v_h=rho²v+(1−rho²)`，导致拿裸值去比 step 后的值 ⇒ 误判 FAIL）
+    _g = 1.0 / (1.0 + float(CWWorld.ACK_VAR))
+    expect_m = -_g * 1.5          # 裸效应：Δm = g·direction
+    expect_v = 1.0 - _g           # 裸效应：v' = (1−g)·1
+
+    bare_m, bare_v = _bare(0, -1.5)
+    g.check("4j-1 裸 `_ack_bump` 与解析式逐位对账（g = 1/(1+ACK_VAR)）",
+            abs(bare_m - expect_m) < 1e-12 and abs(bare_v - expect_v) < 1e-12,
+            {"bare_m": bare_m, "bare_v": bare_v,
+             "analytic_m": expect_m, "analytic_v": expect_v,
+             "ACK_VAR": float(CWWorld.ACK_VAR)})
+
+    m0, v0, rho0 = _after(0, False)
+    # step 后必须 = 裸效应经一次信念滚动
+    exp_m0 = expect_m * rho0
+    exp_v0 = rho0 * rho0 * expect_v + (1.0 - rho0 * rho0)
+    g.check("4j-2 ★判别支：SEND(0) 失败 ⇒ 信念下降落在**用户 0** 上，用户 1 逐位不变"
+            "（且数值 = 裸效应经一步滚动，公式对账）",
+            (m0[0] < -1e-6) and (m0[1] == 0.0)
+            and abs(m0[0] - exp_m0) < 1e-12 and abs(v0[0] - exp_v0) < 1e-12,
+            {"m_after_fail_send0": m0, "v_after_fail_send0": v0,
+             "expect_m0_step": exp_m0, "expect_v0_step": exp_v0, "rho": rho0,
+             "legacy_would_give": [0.0, exp_m0],
+             "why_it_fails_on_legacy": "旧实现 _ack_bump(i,-1.5) 的 i = n_users-1 = 1 ⇒ m=[0.0, −0.78] ⇒ 本条 FAIL"})
+
+    m1, v1, rho1 = _after(1, False)
+    g.check("4k 镜像：SEND(1) 失败 ⇒ 下降落在用户 1 上，用户 0 逐位不变，且与 4j 逐位对称"
+            "（★ 旧实现在此**恰好** PASS ⇒ 单靠本条无分辨力，必须与 4j 同时在场）",
+            (m1[1] < -1e-6) and (m1[0] == 0.0)
+            and abs(m1[1] - m0[0]) < 1e-12 and abs(v1[1] - v0[0]) < 1e-12,
+            {"m_after_fail_send1": m1, "v_after_fail_send1": v1,
+             "delta_vs_4j_m": abs(m1[1] - m0[0]), "rho": rho1,
+             "note": "legacy: i=n_users-1=1=act.user ⇒ 恰好正确 ⇒ 本条单独不构成判据"})
+
+    # 4l：真实 episode 上的**逐用户归属恒等** —— 两处**独立代码**对账：
+    #   runner 侧 `n_attempted_by_user - n_delivered_by_user`（从 SlotRecord 数）
+    #   vs world 侧 `n_nack_by_user`（在 SEND 支按 act.user 累加）。
+    # ★ 明写它能证什么、不能证什么：能封"计数归属"，**不能**证明 `_ack_bump` 的实参正确
+    #   （计数器和 `_ack_bump` 是两处代码）⇒ 那一维由 4j/4k 的行为观察钉死。
+    from .policies import AlwaysSend as _AlwaysSend
+
+    att_ok, detail_4l = [], {}
+    for ep4 in (100, 101):
+        res4 = run_episode(cfg_ack, _AlwaysSend(), split="dev", episode=ep4,
+                          budget_total=_budget(cfg_ack, 0.5), rho=0.98)
+        att = [int(x) for x in res4.n_attempted_by_user]
+        dlv = [int(x) for x in res4.n_delivered_by_user]
+        nk = [int(x) for x in (res4.n_nack_by_user or [])]
+        ak = [int(x) for x in (res4.n_ack_by_user or [])]
+        n_u = len(att)
+        ok_ident = (len(nk) == n_u == len(ak) == len(dlv)
+                    and all(att[i] == dlv[i] + nk[i] for i in range(n_u))
+                    and sum(nk) == int(res4.n_nack) and sum(ak) == int(res4.n_ack)
+                    and sum(dlv) == int(res4.n_ack))
+        # 荒谬性检查（R1.10 的直接指纹）：真实失败 > 0 而计数侧 = 0 ⇒ 立刻停
+        absurd = [i for i in range(n_u) if (att[i] - dlv[i]) > 0 and nk[i] == 0]
+        has_fail = int(res4.n_nack) > 0
+        att_ok.append(bool(ok_ident and not absurd and has_fail))
+        detail_4l[f"ep{ep4}"] = {"attempted_by_user": att, "delivered_by_user": dlv,
+                                 "ack_by_user(world)": ak, "nack_by_user(world)": nk,
+                                 "n_ack": int(res4.n_ack), "n_nack": int(res4.n_nack),
+                                 "absurd_users": absurd, "had_nack": has_fail}
+    g.check("4l 真实 episode 上逐用户归属恒等（attempt−deliver == nack，且逐用户/全局双对账）",
+            all(att_ok),
+            {"per_episode": detail_4l,
+             "criterion": "Σ_i nack_i = n_nack 且逐用户 att_i = delv_i + nack_i 且无'真实失败>0 而计数=0'",
+             "★": "本条只封计数归属；实参正确性由 4j/4k 的行为观察覆盖"})
 
 
 # ============================================================ 5 时序正确性

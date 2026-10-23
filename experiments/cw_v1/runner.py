@@ -90,6 +90,14 @@ class EpisodeResult:
     n_attempted_by_user: list = field(default_factory=list)
     #: 全期从未送达的用户个数（>0 时旧 `mean_task_aoi` 会把它从分母里删掉）
     n_never_served: int = 0
+    # ---- ★ R1.11 逐用户**归属**计数（纯记录）----
+    #: ★★ 存在的理由：`Σ_i 计数 = 总数` 对"记到了谁头上"恒等不可见。
+    #:   R1.10 的缺陷里 `Σ NACK = 77` 全对，而 u0 的 71 次真实失败一次也没记到 u0。
+    #:   ⇒ 必须把**逐用户**这一维变成可观测的量，否则归属缺陷只能靠插桩发现。
+    #:   ★ 与 `n_attempted_by_user - n_delivered_by_user` 是**两处独立代码**，
+    #:     两者对账（闸 4l）只封"计数归属"，实参正确性由闸 4j/4k 的行为观察钉死。
+    n_ack_by_user: list = field(default_factory=list)
+    n_nack_by_user: list = field(default_factory=list)
 
 
 def _trace_hash(recs) -> str:
@@ -242,6 +250,8 @@ def run_episode(
         n_delivered_by_user=deliv_u,
         n_attempted_by_user=att_u,
         n_never_served=n_never,
+        n_ack_by_user=[int(x) for x in w.n_ack_by_user],
+        n_nack_by_user=[int(x) for x in w.n_nack_by_user],
     )
     return res
 

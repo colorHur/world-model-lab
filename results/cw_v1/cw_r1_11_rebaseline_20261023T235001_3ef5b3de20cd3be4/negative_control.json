@@ -1,0 +1,60 @@
+{
+ "fixed": {
+  "4a 全失败环境下 SEND 确实失败": true,
+  "4b 失败仍扣尝试资源": true,
+  "4c 失败不刷新任务 AoI（时间戳不变）": true,
+  "4d NACK 计入事件计数": true,
+  "4e 成功时 ACK 计数 +1 且时间戳更新": true,
+  "4f HOLD 不产生 ACK、不扣资源、不增加 attempted": true,
+  "4g ACK 抬均值、NACK 压均值，两者方差等量收缩": true,
+  "4h 默认协议下 ACK 与 NACK 给出不同的信道信念（接线活着）": true,
+  "4i 关闭 use_ack_for_csi 后 ACK 不影响信念（阴性对照）": true,
+  "4j-1 裸 `_ack_bump` 与解析式逐位对账（g = 1/(1+ACK_VAR)）": true,
+  "4j-2 ★判别支：SEND(0) 失败 ⇒ 信念下降落在**用户 0** 上，用户 1 逐位不变（且数值 = 裸效应经一步滚动，公式对账）": true,
+  "4k 镜像：SEND(1) 失败 ⇒ 下降落在用户 1 上，用户 0 逐位不变，且与 4j 逐位对称（★ 旧实现在此**恰好** PASS ⇒ 单靠本条无分辨力，必须与 4j 同时在场）": true,
+  "4l 真实 episode 上逐用户归属恒等（attempt−deliver == nack，且逐用户/全局双对账）": true
+ },
+ "legacy": {
+  "4a 全失败环境下 SEND 确实失败": true,
+  "4b 失败仍扣尝试资源": true,
+  "4c 失败不刷新任务 AoI（时间戳不变）": true,
+  "4d NACK 计入事件计数": true,
+  "4e 成功时 ACK 计数 +1 且时间戳更新": true,
+  "4f HOLD 不产生 ACK、不扣资源、不增加 attempted": true,
+  "4g ACK 抬均值、NACK 压均值，两者方差等量收缩": false,
+  "4h 默认协议下 ACK 与 NACK 给出不同的信道信念（接线活着）": true,
+  "4i 关闭 use_ack_for_csi 后 ACK 不影响信念（阴性对照）": true,
+  "4j-1 裸 `_ack_bump` 与解析式逐位对账（g = 1/(1+ACK_VAR)）": false,
+  "4j-2 ★判别支：SEND(0) 失败 ⇒ 信念下降落在**用户 0** 上，用户 1 逐位不变（且数值 = 裸效应经一步滚动，公式对账）": false,
+  "4k 镜像：SEND(1) 失败 ⇒ 下降落在用户 1 上，用户 0 逐位不变，且与 4j 逐位对称（★ 旧实现在此**恰好** PASS ⇒ 单靠本条无分辨力，必须与 4j 同时在场）": false,
+  "4l 真实 episode 上逐用户归属恒等（attempt−deliver == nack，且逐用户/全局双对账）": true
+ },
+ "restored": {
+  "4a 全失败环境下 SEND 确实失败": true,
+  "4b 失败仍扣尝试资源": true,
+  "4c 失败不刷新任务 AoI（时间戳不变）": true,
+  "4d NACK 计入事件计数": true,
+  "4e 成功时 ACK 计数 +1 且时间戳更新": true,
+  "4f HOLD 不产生 ACK、不扣资源、不增加 attempted": true,
+  "4g ACK 抬均值、NACK 压均值，两者方差等量收缩": true,
+  "4h 默认协议下 ACK 与 NACK 给出不同的信道信念（接线活着）": true,
+  "4i 关闭 use_ack_for_csi 后 ACK 不影响信念（阴性对照）": true,
+  "4j-1 裸 `_ack_bump` 与解析式逐位对账（g = 1/(1+ACK_VAR)）": true,
+  "4j-2 ★判别支：SEND(0) 失败 ⇒ 信念下降落在**用户 0** 上，用户 1 逐位不变（且数值 = 裸效应经一步滚动，公式对账）": true,
+  "4k 镜像：SEND(1) 失败 ⇒ 下降落在用户 1 上，用户 0 逐位不变，且与 4j 逐位对称（★ 旧实现在此**恰好** PASS ⇒ 单靠本条无分辨力，必须与 4j 同时在场）": true,
+  "4l 真实 episode 上逐用户归属恒等（attempt−deliver == nack，且逐用户/全局双对账）": true
+ },
+ "restored_identical": true,
+ "NEG_4j2_discriminates": true,
+ "NEG_4k_no_power": {
+  "before": true,
+  "legacy": false,
+  "reading": "旧实现在 4k 上恰好正确 ⇒ 单独无分辨力（预期）"
+ },
+ "NEG_4l_no_power_on_arg": {
+  "before": true,
+  "legacy": true,
+  "reading": "4l 在负控下仍 PASS ⇒ 它只封计数归属，**不能**证明 `_ack_bump` 实参正确（与预注册 §3 一致）"
+ },
+ "NEG_4g_discriminates": true
+}

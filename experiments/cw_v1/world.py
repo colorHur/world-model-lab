@@ -258,6 +258,13 @@ class CWWorld:
         self.budget_blocked = 0
         self.n_ack = 0
         self.n_nack = 0
+        #: ★★ R1.11 新增（**纯记录**）：逐用户的 ACK / NACK 归属计数。
+        #:   存在的唯一理由：`Σ_i 计数 = 总数` 这类**聚合恒等**对"记到了谁头上"恒等不可见
+        #:   （R1.10：`Σ NACK = 77` 全对，而 u0 的 71 次真实失败一次也没记到 u0）。
+        #:   ⇒ 必须把**逐用户**这一维显式建成可观测量，否则归属缺陷永远只能靠插桩发现。
+        #:   不进决策、不消耗随机数、不改任何既有字段。
+        self.n_ack_by_user = [0] * n
+        self.n_nack_by_user = [0] * n
         self.control_history: list[np.ndarray] = []
         self.records: list[SlotRecord] = []
         #: ★ R1.8：逐槽的**逐用户**任务陈旧度快照 `(task_aoi_0, ..., task_aoi_{n-1})`，
@@ -456,15 +463,24 @@ class CWWorld:
                 self._P_hat[i] = P_corrected_t
                 self._stamp[i] = t
             self.n_ack += 1
+            # ★★ R1.11：逐用户计数 + 实参显式化成 `act.user`。
+            #   旧写法 `_ack_bump(i, ...)` 在本支**恰好**正确（443 行刚把 i 赋成 act.user），
+            #   但那是隐式依赖 —— 同一函数里 467 行就因为没有这层保护而错了 6 轮。
+            self.n_ack_by_user[int(act.user)] += 1
             # ★ ACK 本身也是信息（v4 §3.3-4）：成功说明当时的 h 不差。
             #   但默认**不**用它更新信念 —— 见 config.use_ack_for_csi 的说明。
             if cfg.channel.use_ack_for_csi:
-                self._ack_bump(i, +1.0)
+                self._ack_bump(int(act.user), +1.0)
         elif act.kind == "SEND":
             self.budget_wasted += spend
             self.n_nack += 1
+            # ★★ R1.11 行为修复：旧版这里写 `self._ack_bump(i, -1.5)`，
+            #   而 `i` 已被 428 行 `for i in range(self.n_users)` 泄漏成 `n_users-1`
+            #   ⇒ 所有 NACK 的信道信念更新都落到下标最大的用户头上。
+            #   n_users==1 时 n_users-1==0==act.user ⇒ 缺陷恒等不可见（R0 `4g` 就是单用户口径）。
+            self.n_nack_by_user[int(act.user)] += 1
             if cfg.channel.use_ack_for_csi:
-                self._ack_bump(i, -1.5)
+                self._ack_bump(int(act.user), -1.5)
 
         if act.kind == "PROBE":
             i = act.user

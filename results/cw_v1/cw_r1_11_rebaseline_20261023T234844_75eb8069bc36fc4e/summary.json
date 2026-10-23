@@ -1,0 +1,61 @@
+{
+ "protocol": "CW-POMDP-v1.1",
+ "stage": "CW-R1.11",
+ "baseline_declaration": "本表 = **新基线**（world.py NACK 归属已修）；与 R1.10 及更早的 `ack=on` 数字**跨版本不可逐位比**",
+ "head": "de39567d2e05d6bb37062398805b08cdf39ffd17",
+ "world_py_worktree_sha": "afe5d1c187e8202b32744ca649c50e1f9939999e",
+ "world_py_blob_sha": "8738533ca229bfc8957a631d147e5f3fdd40214f",
+ "src_hash": "75eb8069bc36fc4e",
+ "git_dirty_before_run": [
+  "M experiments/cw_v1/gates.py",
+  " M experiments/cw_v1/runner.py",
+  " M experiments/cw_v1/world.py",
+  "?? docs/research/CW-R1.11-归属修正新基线-预注册-v0.1.md",
+  "?? experiments/cw_v1/r1_11_rebaseline.py"
+ ],
+ "n_cells": 8,
+ "verdicts": {
+  "P1_abs_phat_diff_median_lt_0.05": {
+   "value": -0.010318258803446612,
+   "pass": true
+  },
+  "P2_attempt_balance_ge_12_of_16": {
+   "hits": 4,
+   "n": 8,
+   "pass": false
+  },
+  "P3_cost_true_near_ack_off": {
+   "ep100": {
+    "cost_true_median": 0.1128414098622037,
+    "old_ack_on": 0.1164,
+    "ack_off_ref": 0.1025
+   },
+   "ep101": {
+    "cost_true_median": 0.10447877829676114,
+    "old_ack_on": 0.1885,
+    "ack_off_ref": 0.101
+   }
+  },
+  "P4_attribution_identity_16_of_16": {
+   "hits": 8,
+   "n": 8,
+   "pass": true
+  },
+  "identities_all_pass": {
+   "hits": 8,
+   "n": 8
+  }
+ },
+ "old_reference": {
+  "result_A_ack_off": {
+   "ep100_cost_true": 0.1025,
+   "ep101_cost_true": 0.101
+  },
+  "old_ack_on": {
+   "ep100_cost_true": 0.1164,
+   "ep101_cost_true": 0.1885
+  }
+ },
+ "wall_s_total": 44.4,
+ "peak_rss_mb_note": "见 meta.json（psutil 若可用）"
+}
