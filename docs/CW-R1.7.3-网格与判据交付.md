@@ -1,6 +1,6 @@
 # CW-R1.7.3 交付：`P` 网格重铺 + `W4` 判据重写
 
-- 时间：2026-10-23 10:25–11:5x（`date` 实测，Asia/Shanghai）
+- 时间：2026-10-23 10:25–10:4x（`date` 实测，Asia/Shanghai）
 - 起点 HEAD：`4e2b2c0`（树干净、远端一致、锁 FREE）
 - 判词：**`GRID-REJECTED`**（9 项闸，2 FAIL —— `W4R`、`W5`，都是**近失**：1.5% / 0.037 个百分点）
 - 证据：`results/cw_v1/cw_r1_7_3_grid_20261023T103506_f11ffdefc06c0201_aab0e655560709b7/`
