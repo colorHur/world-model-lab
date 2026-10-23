@@ -1,0 +1,58 @@
+{
+ "kind": "CW-R1.9b",
+ "note": "report-only（预注册 §7 修订 2 T6）",
+ "tag": "swap_dp",
+ "sigma_w": [
+  0.03,
+  0.02
+ ],
+ "tail": "dp",
+ "episode": 100,
+ "seed": 2001,
+ "budget": 128,
+ "rho": 0.98,
+ "n_steps": 256,
+ "n_send0": 121,
+ "n_send1": 7,
+ "n_probe": 0,
+ "n_hold": 128,
+ "n_delivered_by_user": [
+  54,
+  3
+ ],
+ "n_attempted_by_user": [
+  121,
+  7
+ ],
+ "aoi_tavg_by_user": [
+  6.8352941176470585,
+  123.02788844621514
+ ],
+ "cost_true_by_user": [
+  0.020842675021807547,
+  0.16051892007273366
+ ],
+ "P_diff": {
+  "median": -0.0522438569482533,
+  "min": -0.9804605615672225,
+  "max": 0.013680459403530725,
+  "frac_P0_gt_P1": 0.14453125,
+  "frac_abs_lt_1e-3": 0.03515625
+ },
+ "send0_when_P0_gt_P1": 0.17355371900826447,
+ "send1_when_P1_gt_P0": 0.42857142857142855,
+ "rollout_pref": {
+  "u0": 245,
+  "u1": 8,
+  "tie_or_nan": 3
+ },
+ "median_abs_d": 0.03755270966347446,
+ "elapsed_s": 23.9,
+ "n_run_episode": 1,
+ "episode_result": {
+  "cost_true_per_step": 0.1813615950945412,
+  "cost_est_per_step": 0.011105403942527615,
+  "budget_used": 128,
+  "n_attempted": 128
+ }
+}

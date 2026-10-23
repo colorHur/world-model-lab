@@ -1,0 +1,16 @@
+{
+ "P_before": [
+  0.03,
+  0.012
+ ],
+ "P_after_send0": [
+  0.0304,
+  0.012
+ ],
+ "A2P_plus_sw2": [
+  0.0304,
+  0.0129
+ ],
+ "user1_advanced": false,
+ "user1_frozen": true
+}

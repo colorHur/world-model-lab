@@ -1,0 +1,208 @@
+{
+ "paced": {
+  "tail": "paced",
+  "states": [
+   {
+    "tag": "S_main",
+    "budget_left": 128,
+    "t": 8,
+    "cmp": {
+     "rows": {
+      "PROBE(0)": {
+       "self": 5.917020407202097,
+       "perm_of": "PROBE(1)",
+       "perm_val": 5.917020407202097,
+       "rel": 0.0
+      },
+      "PROBE(1)": {
+       "self": 5.917020407202097,
+       "perm_of": "PROBE(0)",
+       "perm_val": 5.917020407202097,
+       "rel": 0.0
+      },
+      "SEND(0)": {
+       "self": 5.518895512591938,
+       "perm_of": "SEND(1)",
+       "perm_val": 5.518895512591938,
+       "rel": 0.0
+      },
+      "SEND(1)": {
+       "self": 5.738983411542761,
+       "perm_of": "SEND(0)",
+       "perm_val": 5.738983411542761,
+       "rel": 0.0
+      },
+      "HOLD": {
+       "self": 5.898080523714547,
+       "perm_of": "HOLD",
+       "perm_val": 5.898080523714547,
+       "rel": 0.0
+      }
+     },
+     "max_rel": 0.0,
+     "worst_action": "PROBE(0)"
+    },
+    "action": "SEND(0)",
+    "action_perm": "SEND(1)",
+    "action_perm_ok": true,
+    "control_no_panel": {
+     "max_rel": 0.00073670712669849,
+     "action": "SEND(1)"
+    }
+   },
+   {
+    "tag": "S_lowbud",
+    "budget_left": 2,
+    "t": 250,
+    "cmp": {
+     "rows": {
+      "PROBE(0)": {
+       "self": 0.89481743105844,
+       "perm_of": "PROBE(1)",
+       "perm_val": 0.89481743105844,
+       "rel": 0.0
+      },
+      "PROBE(1)": {
+       "self": 0.8963325388890605,
+       "perm_of": "PROBE(0)",
+       "perm_val": 0.8963325388890605,
+       "rel": 0.0
+      },
+      "SEND(0)": {
+       "self": 0.8038279034416904,
+       "perm_of": "SEND(1)",
+       "perm_val": 0.8038279034416904,
+       "rel": 0.0
+      },
+      "SEND(1)": {
+       "self": 0.6194246594891661,
+       "perm_of": "SEND(0)",
+       "perm_val": 0.6194246594891661,
+       "rel": 0.0
+      },
+      "HOLD": {
+       "self": 0.7971535158243142,
+       "perm_of": "HOLD",
+       "perm_val": 0.7971535158243142,
+       "rel": 0.0
+      }
+     },
+     "max_rel": 0.0,
+     "worst_action": "PROBE(0)"
+    },
+    "action": "SEND(1)",
+    "action_perm": "SEND(0)",
+    "action_perm_ok": true,
+    "control_no_panel": {
+     "max_rel": 0.049979341315589176,
+     "action": "SEND(0)"
+    }
+   }
+  ],
+  "max_rel": 0.0,
+  "equivariant": true
+ },
+ "dp": {
+  "tail": "dp",
+  "states": [
+   {
+    "tag": "S_main",
+    "budget_left": 128,
+    "t": 8,
+    "cmp": {
+     "rows": {
+      "PROBE(0)": {
+       "self": 7.645988263401005,
+       "perm_of": "PROBE(1)",
+       "perm_val": 7.645988263401005,
+       "rel": 0.0
+      },
+      "PROBE(1)": {
+       "self": 7.645988263401005,
+       "perm_of": "PROBE(0)",
+       "perm_val": 7.645988263401005,
+       "rel": 0.0
+      },
+      "SEND(0)": {
+       "self": 7.492389831023889,
+       "perm_of": "SEND(1)",
+       "perm_val": 7.492389831023889,
+       "rel": 0.0
+      },
+      "SEND(1)": {
+       "self": 7.453217022730662,
+       "perm_of": "SEND(0)",
+       "perm_val": 7.453217022730663,
+       "rel": 1.1916712165919462e-16
+      },
+      "HOLD": {
+       "self": 7.619601030247864,
+       "perm_of": "HOLD",
+       "perm_val": 7.619601030247864,
+       "rel": 0.0
+      }
+     },
+     "max_rel": 1.1916712165919462e-16,
+     "worst_action": "SEND(1)"
+    },
+    "action": "SEND(1)",
+    "action_perm": "SEND(0)",
+    "action_perm_ok": true,
+    "control_no_panel": {
+     "max_rel": 0.0021302603963874733,
+     "action": "SEND(0)"
+    }
+   },
+   {
+    "tag": "S_lowbud",
+    "budget_left": 2,
+    "t": 250,
+    "cmp": {
+     "rows": {
+      "PROBE(0)": {
+       "self": 0.8013298640186504,
+       "perm_of": "PROBE(1)",
+       "perm_val": 0.8013298640186504,
+       "rel": 0.0
+      },
+      "PROBE(1)": {
+       "self": 0.8013298640186504,
+       "perm_of": "PROBE(0)",
+       "perm_val": 0.8013298640186504,
+       "rel": 0.0
+      },
+      "SEND(0)": {
+       "self": 0.7725058410113245,
+       "perm_of": "SEND(1)",
+       "perm_val": 0.7725058410113245,
+       "rel": 0.0
+      },
+      "SEND(1)": {
+       "self": 0.5244219846187561,
+       "perm_of": "SEND(0)",
+       "perm_val": 0.5244219846187561,
+       "rel": 0.0
+      },
+      "HOLD": {
+       "self": 0.7911451497947597,
+       "perm_of": "HOLD",
+       "perm_val": 0.7911451497947597,
+       "rel": 0.0
+      }
+     },
+     "max_rel": 0.0,
+     "worst_action": "PROBE(0)"
+    },
+    "action": "SEND(1)",
+    "action_perm": "SEND(0)",
+    "action_perm_ok": true,
+    "control_no_panel": {
+     "max_rel": 0.07922824681744522,
+     "action": "SEND(0)"
+    }
+   }
+  ],
+  "max_rel": 1.1916712165919462e-16,
+  "equivariant": true
+ }
+}

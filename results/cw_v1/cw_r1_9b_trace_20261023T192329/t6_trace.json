@@ -1,0 +1,52 @@
+{
+ "kind": "CW-R1.9b",
+ "note": "report-only（预注册 §7 修订 2 T6）",
+ "episode": 100,
+ "seed": 2001,
+ "budget": 128,
+ "rho": 0.98,
+ "n_steps": 256,
+ "n_send0": 115,
+ "n_send1": 13,
+ "n_probe": 0,
+ "n_hold": 128,
+ "n_delivered_by_user": [
+  44,
+  7
+ ],
+ "n_attempted_by_user": [
+  115,
+  13
+ ],
+ "aoi_tavg_by_user": [
+  6.231372549019608,
+  60.940239043824704
+ ],
+ "cost_true_by_user": [
+  0.0220182438417994,
+  0.08641703805666343
+ ],
+ "P_diff": {
+  "median": -0.04463434087920925,
+  "min": -0.9905412864207316,
+  "max": 0.0,
+  "frac_P0_gt_P1": 0.0,
+  "frac_abs_lt_1e-3": 0.0078125
+ },
+ "send0_when_P0_gt_P1": 0.0,
+ "send1_when_P1_gt_P0": 0.9230769230769231,
+ "rollout_pref": {
+  "u0": 242,
+  "u1": 13,
+  "tie_or_nan": 1
+ },
+ "median_abs_d": 0.02180210853418929,
+ "elapsed_s": 24.0,
+ "n_run_episode": 1,
+ "episode_result": {
+  "cost_true_per_step": 0.10843528189846283,
+  "cost_est_per_step": 0.011458794966305141,
+  "budget_used": 128,
+  "n_attempted": 128
+ }
+}

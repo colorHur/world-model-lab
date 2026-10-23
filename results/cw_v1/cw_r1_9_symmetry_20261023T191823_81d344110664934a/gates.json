@@ -1,0 +1,82 @@
+{
+ "T1_eq_paced": {
+  "pass": true,
+  "max_rel": 0.0,
+  "per_state": [
+   {
+    "tag": "S_main",
+    "max_rel": 0.0,
+    "act": "SEND(0)",
+    "act_perm": "SEND(1)",
+    "perm_action_ok": true,
+    "no_panel_rel": 0.00073670712669849
+   },
+   {
+    "tag": "S_lowbud",
+    "max_rel": 0.0,
+    "act": "SEND(1)",
+    "act_perm": "SEND(0)",
+    "perm_action_ok": true,
+    "no_panel_rel": 0.049979341315589176
+   }
+  ]
+ },
+ "T1_ctl_stateOnly_paced": {
+  "pass": true,
+  "max_rel": 0.049979341315589176
+ },
+ "T1_eq_dp": {
+  "pass": true,
+  "max_rel": 1.1916712165919462e-16,
+  "per_state": [
+   {
+    "tag": "S_main",
+    "max_rel": 1.1916712165919462e-16,
+    "act": "SEND(1)",
+    "act_perm": "SEND(0)",
+    "perm_action_ok": true,
+    "no_panel_rel": 0.0021302603963874733
+   },
+   {
+    "tag": "S_lowbud",
+    "max_rel": 0.0,
+    "act": "SEND(1)",
+    "act_perm": "SEND(0)",
+    "perm_action_ok": true,
+    "no_panel_rel": 0.07922824681744522
+   }
+  ]
+ },
+ "T1_ctl_stateOnly_dp": {
+  "pass": true,
+  "max_rel": 0.07922824681744522
+ },
+ "T3_ctl_legacy_swap_fails": {
+  "pass": true,
+  "max_rel": 0.05192651147866335
+ },
+ "T2a_sym_witness": {
+  "pass": false,
+  "max_abs_diff": 0.04815839145540668,
+  "dp": {
+   "grid": "r173",
+   "n_knots": 90,
+   "b_cap": 256,
+   "tau_max": 256,
+   "axis_mode": "user_axis",
+   "p_hat": [
+    0.5,
+    0.5
+   ],
+   "mem_mib": 2048.8,
+   "n_lookup": 24,
+   "n_clip": 0,
+   "n_b_clip": 0
+  }
+ },
+ "T2_build_clean": {
+  "pass": true,
+  "n_clip": 0,
+  "n_b_clip": 0
+ }
+}
