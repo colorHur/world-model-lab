@@ -1,0 +1,50 @@
+{
+ "exp": "CW-R1.7.8 判据形态（零成本：分母/角色/幅度/前提）",
+ "prereg": "docs/research/CW-R1.7.8-判据形态-预注册-v0.1.md",
+ "started_at": "2026-10-23T22:45:34.808795+08:00",
+ "tz": "Asia/Shanghai (+08:00)",
+ "run_episode_calls": 0,
+ "src": "experiments/cw_v1/r1_7_8_metric_form.py",
+ "src_hash": "e77ae33db0364d24",
+ "inputs": {
+  "cells.json": {
+   "path": "results/cw_v1/cw_r1_7_6_g4form_20261023T182640_f11ffdefc06c0201_7dd8ba47dede6ce3/cells.json",
+   "worktree_sha": "6afc2f616388c8ed",
+   "blob_sha": "77e0039112d3bf6f"
+  }
+ },
+ "python": {
+  "exe": "D:\\devtools\\miniconda3\\envs\\ai-lab\\python.exe",
+  "version": "3.11.16",
+  "numpy": "2.4.6"
+ },
+ "git": {
+  "head": "71e56b4",
+  "dirty_paths": [
+   "?? docs/research/CW-R1.7.8-判据形态-预注册-v0.1.md",
+   "?? experiments/cw_v1/r1_7_8_metric_form.py"
+  ],
+  "note": "零执行，只读 R1.7.6 入库证据"
+ },
+ "command": "python.exe experiments/cw_v1/r1_7_8_metric_form.py",
+ "arms": {
+  "candidate": "dp16",
+  "baseline": "paced16"
+ },
+ "pairs": [
+  "100|2001",
+  "100|2002",
+  "100|2003",
+  "100|2004",
+  "101|2001",
+  "101|2002",
+  "101|2003",
+  "101|2004"
+ ],
+ "bootstrap": {
+  "B": 20000,
+  "rng_seed": 20261023,
+  "method": "percentile",
+  "note": "n=4 时重采样组合仅 4^4=256 种 ⇒ CI 离散，单格 CI 极宽"
+ }
+}

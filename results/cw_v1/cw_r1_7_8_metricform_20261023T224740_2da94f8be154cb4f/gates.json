@@ -1,0 +1,219 @@
+{
+ "D0_identity": {
+  "pass": true,
+  "max_rel_err": 3.8573712870255017e-16,
+  "n_cells": 24,
+  "n_users": 2,
+  "rule": "cost_est 必须是 cost_est_by_user 的同一分解"
+ },
+ "D1_pairing": {
+  "pass": true,
+  "n_pairs": 8,
+  "mismatched": [],
+  "rule": "同 (ep,seed) 两臂 spawn_keys 逐字相同"
+ },
+ "D2_recon_R1_7_7": {
+  "pass": true,
+  "got": {
+   "u0": {
+    "median_delta": 4.847422043897801e-05,
+    "n_pos": 5,
+    "n_neg": 3,
+    "consistency": 0.625
+   },
+   "u1": {
+    "median_delta": -0.0015072967258024414,
+    "n_pos": 1,
+    "n_neg": 7,
+    "consistency": 0.875
+   }
+  },
+  "ref": {
+   "u0": {
+    "median_delta": 4.84742e-05,
+    "n_pos": 5,
+    "n_neg": 3,
+    "consistency": 0.625
+   },
+   "u1": {
+    "median_delta": -0.0015073,
+    "n_pos": 1,
+    "n_neg": 7,
+    "consistency": 0.875
+   }
+  },
+  "diff": {
+   "u0": {
+    "median_delta_absdiff": 2.043897801115753e-11,
+    "tol": 5e-09,
+    "match": true
+   },
+   "u1": {
+    "median_delta_absdiff": 3.274197558694389e-09,
+    "tol": 5e-09,
+    "match": true
+   }
+  },
+  "rule": "复算 R1.7.7 入库的逐用户中位 Δ 与 c_u（6 位有效，容差 5e-9）"
+ },
+ "D5_role_separation": {
+  "pass": true,
+  "n_ok": 8,
+  "n_pairs": 8,
+  "min_sep": 2.0328193230430993,
+  "line": 1.5,
+  "detail": [
+   {
+    "episode": 100,
+    "seed": 2001,
+    "exp_u": 1,
+    "cheap_u": 0,
+    "sep": 2.3512869511000907,
+    "ok": true
+   },
+   {
+    "episode": 100,
+    "seed": 2002,
+    "exp_u": 1,
+    "cheap_u": 0,
+    "sep": 2.148594158990998,
+    "ok": true
+   },
+   {
+    "episode": 100,
+    "seed": 2003,
+    "exp_u": 1,
+    "cheap_u": 0,
+    "sep": 2.0328193230430993,
+    "ok": true
+   },
+   {
+    "episode": 100,
+    "seed": 2004,
+    "exp_u": 1,
+    "cheap_u": 0,
+    "sep": 2.0732899548435877,
+    "ok": true
+   },
+   {
+    "episode": 101,
+    "seed": 2001,
+    "exp_u": 0,
+    "cheap_u": 1,
+    "sep": 6.140513334516414,
+    "ok": true
+   },
+   {
+    "episode": 101,
+    "seed": 2002,
+    "exp_u": 0,
+    "cheap_u": 1,
+    "sep": 7.949070712425833,
+    "ok": true
+   },
+   {
+    "episode": 101,
+    "seed": 2003,
+    "exp_u": 0,
+    "cheap_u": 1,
+    "sep": 5.67474998850689,
+    "ok": true
+   },
+   {
+    "episode": 101,
+    "seed": 2004,
+    "exp_u": 0,
+    "cheap_u": 1,
+    "sep": 8.006985548886048,
+    "ok": true
+   }
+  ],
+  "rule": "逐配对 max/min(paced 两用户成本) >= 1.5，否则角色标签不可靠"
+ },
+ "D5b_role_stable_within_ep": {
+  "pass": true,
+  "detail": {
+   "ep100": {
+    "exp_u_per_seed": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "stable": true,
+    "exp_u": 1
+   },
+   "ep101": {
+    "exp_u_per_seed": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "stable": true,
+    "exp_u": 0
+   }
+  },
+  "rule": "同 episode 的 4 个 seed 必须给出同一个『贵用户』编号"
+ },
+ "D6_gap_identity": {
+  "pass": true,
+  "max_abs_err": 6.938893903907228e-18,
+  "rule": "Δ_gap = Δ_est − Δ_true 必须恒成立（分解定义）"
+ },
+ "D3_discriminative": {
+  "pass": true,
+  "controls": {
+   "A_identical": {
+    "expect": "NULL",
+    "got": "NULL",
+    "ci_includes_zero": true,
+    "pass": true
+   },
+   "B_plus20pct": {
+    "expect": "DP-HIGHER",
+    "got": "DP-HIGHER",
+    "ci_includes_zero": false,
+    "pass": true
+   },
+   "C_alternating30": {
+    "expect_includes_zero": true,
+    "got": "NULL",
+    "ci_includes_zero": true,
+    "median_rel": 0.0,
+    "pass": true
+   },
+   "D_minus20pct": {
+    "expect": "DP-LOWER",
+    "got": "DP-LOWER",
+    "ci_includes_zero": false,
+    "pass": true
+   },
+   "E_n4_plus25pct": {
+    "expect": "DP-HIGHER",
+    "got": "DP-HIGHER",
+    "ci_includes_zero": false,
+    "pass": true
+   },
+   "F_n4_identical": {
+    "expect": "NULL",
+    "got": "NULL",
+    "ci_includes_zero": true,
+    "pass": true
+   }
+  },
+  "rule": "六个已知答案的合成输入必须各给出对应判词/CI 性质"
+ },
+ "D4_bootstrap_deterministic": {
+  "pass": true,
+  "ci_a": [
+   -0.0011275713760176866,
+   0.01032697110912889
+  ],
+  "ci_b": [
+   -0.0011275713760176866,
+   0.01032697110912889
+  ],
+  "rule": "同一 rng seed 两次 bootstrap 的 CI 端点必须逐位相同"
+ }
+}

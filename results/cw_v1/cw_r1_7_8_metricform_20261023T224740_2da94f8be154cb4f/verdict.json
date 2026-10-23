@@ -1,0 +1,457 @@
+{
+ "P1_denominator": {
+  "primary": "配对差 95% bootstrap CI（百分位法）",
+  "arm_floor_status": "diagnostic-only",
+  "legacy_line_status": "historical-column-only (>=3 无理论依据)"
+ },
+ "P2_role": {
+  "label_source": "paced16 (baseline, exogenous)",
+  "primary_report": "per-episode, no cross-episode pooling",
+  "role_stable": {
+   "ep100": {
+    "exp_u_per_seed": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "stable": true,
+    "exp_u": 1
+   },
+   "ep101": {
+    "exp_u_per_seed": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "stable": true,
+    "exp_u": 0
+   }
+  },
+  "combined": {
+   "EXP": {
+    "ep100": "UNRESOLVED",
+    "ep101": "DP-HIGHER",
+    "combined": "ONE-EP-DP-HIGHER",
+    "pooled": "NULL"
+   },
+   "CHEAP": {
+    "ep100": "UNRESOLVED",
+    "ep101": "DP-LOWER",
+    "combined": "ONE-EP-DP-LOWER",
+    "pooled": "DP-LOWER"
+   }
+  }
+ },
+ "P3_band": {
+  "scale": "delta / cost_paced (per pair)",
+  "thresholds": {
+   "approx0": 0.05,
+   "small": 0.2
+  }
+ },
+ "P4_premise": {
+  "EXP": {
+   "n_pairs": 8,
+   "n_gap_dominates": 6,
+   "frac_gap_dominates": 0.75,
+   "median_delta_est": 0.00013060879568968335,
+   "median_delta_true": 0.013558982367308473,
+   "median_ratio": 5.939269090406115,
+   "est_usable": false
+  },
+  "CHEAP": {
+   "n_pairs": 8,
+   "n_gap_dominates": 8,
+   "frac_gap_dominates": 1.0,
+   "median_delta_est": -0.0011237978101509374,
+   "median_delta_true": -0.005111150813333,
+   "median_ratio": 27.048847779425024,
+   "est_usable": false
+  }
+ },
+ "cells": {
+  "EXP|ep100": {
+   "n": 4,
+   "verdict": "UNRESOLVED",
+   "median_delta": -0.002387064813302668,
+   "median_rel": -0.23093749294886162,
+   "ci95": [
+    -0.003978244508109581,
+    0.008908572400140844
+   ],
+   "ci_includes_zero": true,
+   "bootstrap": {
+    "B": 20000,
+    "n_distinct_medians": 10,
+    "method": "percentile",
+    "rng_seed": 20261023
+   },
+   "baseline_median": 0.010397366688864398,
+   "band_median_rel": "large",
+   "n_pos": 1,
+   "n_neg": 3,
+   "n_approx0": 0,
+   "n_small": 1,
+   "n_large": 3,
+   "bands": [
+    "large",
+    "large",
+    "large",
+    "small"
+   ],
+   "note": ""
+  },
+  "EXP|ep101": {
+   "n": 4,
+   "verdict": "DP-HIGHER",
+   "median_delta": 0.005265374552477525,
+   "median_rel": 0.31106011657221916,
+   "ci95": [
+    5.743959555320685e-05,
+    0.010540133265821833
+   ],
+   "ci_includes_zero": false,
+   "bootstrap": {
+    "B": 20000,
+    "n_distinct_medians": 10,
+    "method": "percentile",
+    "rng_seed": 20261023
+   },
+   "baseline_median": 0.01690421080289894,
+   "band_median_rel": "large",
+   "n_pos": 4,
+   "n_neg": 0,
+   "n_approx0": 2,
+   "n_small": 0,
+   "n_large": 2,
+   "bands": [
+    "large",
+    "approx0",
+    "approx0",
+    "large"
+   ],
+   "note": ""
+  },
+  "EXP|epPOOLED": {
+   "n": 8,
+   "verdict": "NULL",
+   "median_delta": 0.00013060879568968335,
+   "median_rel": 0.007768493809835118,
+   "ci95": [
+    -0.002901558288197854,
+    0.01032697110912889
+   ],
+   "ci_includes_zero": true,
+   "bootstrap": {
+    "B": 20000,
+    "n_distinct_medians": 34,
+    "method": "percentile",
+    "rng_seed": 20261023
+   },
+   "baseline_median": 0.014201897330494106,
+   "band_median_rel": "approx0",
+   "n_pos": 5,
+   "n_neg": 3,
+   "n_approx0": 2,
+   "n_small": 1,
+   "n_large": 5,
+   "bands": [
+    "large",
+    "large",
+    "large",
+    "small",
+    "large",
+    "approx0",
+    "approx0",
+    "large"
+   ],
+   "note": "跨初值混合，不代表任何单一场景"
+  },
+  "CHEAP|ep100": {
+   "n": 4,
+   "verdict": "UNRESOLVED",
+   "median_delta": -0.0006246943010680432,
+   "median_rel": -0.1260295767459354,
+   "ci95": [
+    -0.0013467597748766371,
+    3.9508845324749166e-05
+   ],
+   "ci_includes_zero": true,
+   "bootstrap": {
+    "B": 20000,
+    "n_distinct_medians": 10,
+    "method": "percentile",
+    "rng_seed": 20261023
+   },
+   "baseline_median": 0.0049602814680901434,
+   "band_median_rel": "small",
+   "n_pos": 1,
+   "n_neg": 3,
+   "n_approx0": 2,
+   "n_small": 0,
+   "n_large": 2,
+   "bands": [
+    "large",
+    "approx0",
+    "approx0",
+    "large"
+   ],
+   "note": ""
+  },
+  "CHEAP|ep101": {
+   "n": 4,
+   "verdict": "DP-LOWER",
+   "median_delta": -0.0011969976642248225,
+   "median_rel": -0.557350680093662,
+   "ci95": [
+    -0.001740622367439426,
+    -0.0009700024717871156
+   ],
+   "ci_includes_zero": false,
+   "bootstrap": {
+    "B": 20000,
+    "n_distinct_medians": 10,
+    "method": "percentile",
+    "rng_seed": 20261023
+   },
+   "baseline_median": 0.002442981937287793,
+   "band_median_rel": "large",
+   "n_pos": 0,
+   "n_neg": 4,
+   "n_approx0": 0,
+   "n_small": 0,
+   "n_large": 4,
+   "bands": [
+    "large",
+    "large",
+    "large",
+    "large"
+   ],
+   "note": ""
+  },
+  "CHEAP|epPOOLED": {
+   "n": 8,
+   "verdict": "DP-LOWER",
+   "median_delta": -0.0011237978101509374,
+   "median_rel": -0.3111856968378271,
+   "ci95": [
+    -0.0013467597748766371,
+    -0.0001218172261183998
+   ],
+   "ci_includes_zero": false,
+   "bootstrap": {
+    "B": 20000,
+    "n_distinct_medians": 34,
+    "method": "percentile",
+    "rng_seed": 20261023
+   },
+   "baseline_median": 0.003910003292343657,
+   "band_median_rel": "large",
+   "n_pos": 1,
+   "n_neg": 7,
+   "n_approx0": 2,
+   "n_small": 0,
+   "n_large": 6,
+   "bands": [
+    "large",
+    "approx0",
+    "approx0",
+    "large",
+    "large",
+    "large",
+    "large",
+    "large"
+   ],
+   "note": "跨初值混合，不代表任何单一场景"
+  }
+ },
+ "diagnostics_posthoc": {
+  "S1_ci_edge_margin": {
+   "EXP|ep101": {
+    "verdict": "DP-HIGHER",
+    "edge": 5.743959555320685e-05,
+    "margin_over_abs_median": 0.010908928696474158,
+    "n_distinct_medians": 10,
+    "note": "端点越贴近 0、离散中位值越少 ⇒ 该判词越不稳健"
+   },
+   "CHEAP|ep101": {
+    "verdict": "DP-LOWER",
+    "edge": -0.0009700024717871156,
+    "margin_over_abs_median": 0.8103628777047704,
+    "n_distinct_medians": 10,
+    "note": "端点越贴近 0、离散中位值越少 ⇒ 该判词越不稳健"
+   },
+   "CHEAP|epPOOLED": {
+    "verdict": "DP-LOWER",
+    "edge": -0.0001218172261183998,
+    "margin_over_abs_median": 0.10839781410682632,
+    "n_distinct_medians": 34,
+    "note": "端点越贴近 0、离散中位值越少 ⇒ 该判词越不稳健"
+   }
+  },
+  "S2_drop_approx0": {
+   "EXP|ep101": {
+    "n_kept": 2,
+    "status": "SKIP-NO-OBJECT",
+    "why": "剔除 approx0 后只剩 2 对，<3 ⇒ 不给 CI（#100：空过不算过）"
+   },
+   "CHEAP|ep101": {
+    "n_kept": 4,
+    "verdict_after_drop": "DP-LOWER",
+    "median_delta": -0.0011969976642248225,
+    "ci95": [
+     -0.001740622367439426,
+     -0.0009700024717871156
+    ],
+    "changed": false
+   },
+   "CHEAP|epPOOLED": {
+    "n_kept": 6,
+    "verdict_after_drop": "DP-LOWER",
+    "median_delta": -0.0012007712300915717,
+    "ci95": [
+     -0.0015436910711580315,
+     -0.001045013358035652
+    ],
+    "changed": false
+   }
+  },
+  "S3_compression": {
+   "EXP": {
+    "median_abs_true_over_abs_est": 6.72604697328708,
+    "p10": 1.499116734034914,
+    "p90": 28.351474415554854,
+    "n_same_sign": 4,
+    "n_flip_sign": 4,
+    "n_zero": 0,
+    "note": "符号一致数 > 翻转数 ⇒ 方向可信、幅度被压缩；否则方向也不可信"
+   },
+   "CHEAP": {
+    "median_abs_true_over_abs_est": 27.04884777942502,
+    "p10": 4.123021161449266,
+    "p90": 175.06578748132893,
+    "n_same_sign": 4,
+    "n_flip_sign": 4,
+    "n_zero": 0,
+    "note": "符号一致数 > 翻转数 ⇒ 方向可信、幅度被压缩；否则方向也不可信"
+   }
+  },
+  "S4_effect_vs_floor": {
+   "EXP": {
+    "median_rel_effect_est": 0.3695789334398881,
+    "median_rel_effect_true": 0.29982554498678254,
+    "floor_est": {
+     "per_arm": {
+      "paced": 0.008561303963357598,
+      "dp": 0.46448086818324275
+     },
+     "n": 12,
+     "taken_max": 0.46448086818324275
+    },
+    "floor_true": {
+     "per_arm": {
+      "paced_true": 0.13558168310657634,
+      "dp_true": 0.163184560369634
+     },
+     "n": 12,
+     "taken_max": 0.163184560369634
+    },
+    "ratio_est": 0.7956817142661842,
+    "ratio_true": 1.837340152203365,
+    "est_resolvable": false,
+    "true_resolvable": true,
+    "note": "两量同口径（取较大者=保守）；两个 ratio 都 <1 ⇒ 这块面板测不出任何东西，此时 S3 的『符号翻转』不能反推 cost_est 不可信",
+    "floor_abs": {
+     "est": {
+      "per_arm": {
+       "paced": 0.00011581900051121832,
+       "dp": 0.010274277738879971
+      },
+      "taken_max": 0.010274277738879971,
+      "n": 12
+     },
+     "true": {
+      "per_arm": {
+       "paced_true": 0.007105895293970425,
+       "dp_true": 0.015997505990295494
+      },
+      "taken_max": 0.015997505990295494,
+      "n": 12
+     }
+    },
+    "effect_abs": {
+     "est": 0.0034399013981537174,
+     "true": 0.023358437881399064
+    },
+    "matrix": {
+     "est_rel": 0.7956817142661842,
+     "est_abs": 0.3348071256762338,
+     "true_rel": 1.837340152203365,
+     "true_abs": 1.4601299662315428
+    },
+    "max_ratio_over_all_scales": 1.837340152203365,
+    "any_scale_reaches_2": false
+   },
+   "CHEAP": {
+    "median_rel_effect_est": 0.3698975282562228,
+    "median_rel_effect_true": 0.4467274935317498,
+    "floor_est": {
+     "per_arm": {
+      "paced": 0.03748454893827793,
+      "dp": 0.28022233585151934
+     },
+     "n": 12,
+     "taken_max": 0.28022233585151934
+    },
+    "floor_true": {
+     "per_arm": {
+      "paced_true": 0.3885591705469664,
+      "dp_true": 0.3061730391594854
+     },
+     "n": 12,
+     "taken_max": 0.3885591705469664
+    },
+    "ratio_est": 1.3200144347245018,
+    "ratio_true": 1.149702612610844,
+    "est_resolvable": true,
+    "true_resolvable": true,
+    "note": "两量同口径（取较大者=保守）；两个 ratio 都 <1 ⇒ 这块面板测不出任何东西，此时 S3 的『符号翻转』不能反推 cost_est 不可信",
+    "floor_abs": {
+     "est": {
+      "per_arm": {
+       "paced": 0.00017364079955595646,
+       "dp": 0.0006743565852771346
+      },
+      "taken_max": 0.0006743565852771346,
+      "n": 12
+     },
+     "true": {
+      "per_arm": {
+       "paced_true": 0.016414004341325967,
+       "dp_true": 0.009438754086169947
+      },
+      "taken_max": 0.016414004341325967,
+      "n": 12
+     }
+    },
+    "effect_abs": {
+     "est": 0.0011237978101509374,
+     "true": 0.015332777092332172
+    },
+    "matrix": {
+     "est_rel": 1.3200144347245018,
+     "est_abs": 1.6664741394778546,
+     "true_rel": 1.149702612610844,
+     "true_abs": 0.9341277590458801
+    },
+    "max_ratio_over_all_scales": 1.6664741394778546,
+    "any_scale_reaches_2": false
+   }
+  }
+ },
+ "verdict": "METRIC-FORM-PINNED",
+ "failed_gates": [],
+ "elapsed_s": 0.050771
+}

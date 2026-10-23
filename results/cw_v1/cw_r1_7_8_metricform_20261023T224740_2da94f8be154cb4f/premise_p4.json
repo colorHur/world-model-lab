@@ -1,0 +1,152 @@
+{
+ "EXP": {
+  "rows": [
+   {
+    "episode": 100,
+    "seed": 2001,
+    "delta_est": -0.003978244508109581,
+    "delta_true": -0.027678199205805692,
+    "delta_gap": 0.02369995469769612,
+    "ratio_gap_over_est": 5.957390162767568
+   },
+   {
+    "episode": 100,
+    "seed": 2002,
+    "delta_est": 0.008908572400140844,
+    "delta_true": 0.05785853887550972,
+    "delta_gap": -0.04894996647536888,
+    "ratio_gap_over_est": 5.494703783806593
+   },
+   {
+    "episode": 100,
+    "seed": 2003,
+    "delta_est": -0.002901558288197854,
+    "delta_true": 0.05740067234850977,
+    "delta_gap": -0.06030223063670763,
+    "ratio_gap_over_est": 20.78270523876365
+   },
+   {
+    "episode": 100,
+    "seed": 2004,
+    "delta_est": -0.0018725713384074825,
+    "delta_true": 0.041134089712017693,
+    "delta_gap": -0.04300666105042517,
+    "ratio_gap_over_est": 22.966634257576505
+   },
+   {
+    "episode": 101,
+    "seed": 2001,
+    "delta_est": 0.01032697110912889,
+    "delta_true": 0.00807928817762451,
+    "delta_gap": 0.0022476829315043745,
+    "ratio_gap_over_est": 0.21765171101499992
+   },
+   {
+    "episode": 101,
+    "seed": 2002,
+    "delta_est": 5.743959555320685e-05,
+    "delta_true": -0.0024842300419075786,
+    "delta_gap": 0.002541669637460789,
+    "ratio_gap_over_est": 44.249434784171065
+   },
+   {
+    "episode": 101,
+    "seed": 2003,
+    "delta_est": 0.00020377799582615985,
+    "delta_true": -0.00100282168028102,
+    "delta_gap": 0.0012065996761071798,
+    "ratio_gap_over_est": 5.921148018044662
+   },
+   {
+    "episode": 101,
+    "seed": 2004,
+    "delta_est": 0.010540133265821833,
+    "delta_true": 0.019038676556992436,
+    "delta_gap": -0.008498543291170599,
+    "ratio_gap_over_est": 0.8063032104848773
+   }
+  ],
+  "n_pairs": 8,
+  "n_gap_dominates": 6,
+  "frac_gap_dominates": 0.75,
+  "median_delta_est": 0.00013060879568968335,
+  "median_delta_true": 0.013558982367308473,
+  "median_ratio": 5.939269090406115,
+  "est_usable": false
+ },
+ "CHEAP": {
+  "rows": [
+   {
+    "episode": 100,
+    "seed": 2001,
+    "delta_est": -0.0011275713760176866,
+    "delta_true": 0.005367769641733251,
+    "delta_gap": -0.006495341017750938,
+    "ratio_gap_over_est": 5.760469940883862
+   },
+   {
+    "episode": 100,
+    "seed": 2002,
+    "delta_est": 3.9508845324749166e-05,
+    "delta_true": -0.017254320619994757,
+    "delta_gap": 0.01729382946531951,
+    "ratio_gap_over_est": 437.72044774202226
+   },
+   {
+    "episode": 100,
+    "seed": 2003,
+    "delta_est": -0.0001218172261183998,
+    "delta_true": -0.007665723656104517,
+    "delta_gap": 0.007543906429986119,
+    "ratio_gap_over_est": 61.92807594103191
+   },
+   {
+    "episode": 100,
+    "seed": 2004,
+    "delta_est": -0.0013467597748766371,
+    "delta_true": -0.013411233564669587,
+    "delta_gap": 0.012064473789792952,
+    "ratio_gap_over_est": 8.958148301465311
+   },
+   {
+    "episode": 101,
+    "seed": 2001,
+    "delta_est": -0.0009700024717871156,
+    "delta_true": -0.0025565779705614827,
+    "delta_gap": 0.0015865754987743688,
+    "ratio_gap_over_est": 1.635640676101876
+   },
+   {
+    "episode": 101,
+    "seed": 2002,
+    "delta_est": -0.0011200242442841882,
+    "delta_true": 0.06936776579742612,
+    "delta_gap": -0.07048779004171031,
+    "ratio_gap_over_est": 62.934164507090046
+   },
+   {
+    "episode": 101,
+    "seed": 2003,
+    "delta_est": -0.001740622367439426,
+    "delta_true": -0.032526116448949025,
+    "delta_gap": 0.0307854940815096,
+    "ratio_gap_over_est": 17.686486544923103
+   },
+   {
+    "episode": 101,
+    "seed": 2004,
+    "delta_est": -0.0012739710841654568,
+    "delta_true": 0.0451128563390821,
+    "delta_gap": -0.04638682742324757,
+    "ratio_gap_over_est": 36.41120901392695
+   }
+  ],
+  "n_pairs": 8,
+  "n_gap_dominates": 8,
+  "frac_gap_dominates": 1.0,
+  "median_delta_est": -0.0011237978101509374,
+  "median_delta_true": -0.005111150813333,
+  "median_ratio": 27.048847779425024,
+  "est_usable": false
+ }
+}
