@@ -1,0 +1,112 @@
+{
+ "G0_synthetic_semantics": {
+  "S1_drop_unserved": {
+   "old": 3.0,
+   "tavg_u0": 1.5,
+   "tavg_u1": null,
+   "unserved_u1": 4,
+   "final_u1": -1,
+   "pass": true,
+   "rule": "旧式把从未送达的用户从分母删掉（它只报用户 0 的 3.0），新式必须报 None+未服务槽数"
+  },
+  "S2_terminal_vs_tavg": {
+   "old_terminal": 4.0,
+   "tavg_u0": 2.0,
+   "final_u0": 1,
+   "pass": true,
+   "rule": "末端快照 ≠ 时间平均（4.0 vs 2.0）：旧量丢掉了全部时间信息"
+  },
+  "S3_control": {
+   "old": 8.0,
+   "new_final_mean": 8.0,
+   "pass": true,
+   "rule": "阴性对照：都送达时两个口径必须一致（否则新式自己错了）"
+  },
+  "pass": true
+ },
+ "G1_identity_pure_recording": {
+  "rows": [
+   {
+    "cell": "paced16|100|2001",
+    "cost_est": 0.0,
+    "cost_true": 0.0,
+    "n_delivered_int_eq": true,
+    "n_attempted_int_eq": true,
+    "n_probe_int_eq": true,
+    "trace_eq": true,
+    "mean_task_aoi_old_abs_diff": 0.0,
+    "pass": true
+   },
+   {
+    "cell": "dp16|100|2001",
+    "cost_est": 0.0,
+    "cost_true": 0.0,
+    "n_delivered_int_eq": true,
+    "n_attempted_int_eq": true,
+    "n_probe_int_eq": true,
+    "trace_eq": true,
+    "mean_task_aoi_old_abs_diff": 0.0,
+    "pass": true
+   }
+  ],
+  "pass": true,
+  "rule": "重跑必须与 R1.7.6 入库逐位相同 ⇒ 新增字段是纯记录；不等则停（预注册 N3）"
+ },
+ "G2_u1_recompute_old": {
+  "rows": [
+   {
+    "cell": "paced16|100|2001",
+    "old": 16.0,
+    "new_final_mean": 16.0,
+    "abs_diff": 0.0
+   },
+   {
+    "cell": "dp16|100|2001",
+    "old": 30.5,
+    "new_final_mean": 30.5,
+    "abs_diff": 0.0
+   }
+  ],
+  "pass": true,
+  "rule": "aoi_final_by_user 的 >=0 分量均值必须逐位等于旧 mean_task_aoi"
+ },
+ "G3_count_identities": {
+  "rows": [
+   {
+    "cell": "paced16|100|2001",
+    "sum_delivered": 60,
+    "n_delivered": 60,
+    "sum_attempted": 116,
+    "n_attempted": 116,
+    "pass": true
+   },
+   {
+    "cell": "dp16|100|2001",
+    "sum_delivered": 51,
+    "n_delivered": 51,
+    "sum_attempted": 128,
+    "n_attempted": 128,
+    "pass": true
+   }
+  ],
+  "pass": true,
+  "rule": "逐用户计数之和必须等于 runner 的总计数"
+ },
+ "G4_panel_complete": {
+  "missing": [],
+  "pass": true,
+  "seeds_used": [
+   2001,
+   2002,
+   2003,
+   2004
+  ],
+  "shrunk": false
+ },
+ "G5_identities_all_cells": {
+  "n_cells": 16,
+  "bad_cells": {},
+  "pass": true,
+  "rule": "runner.check_identities 全过；不过则数不可用（与判词无关，是记账错）"
+ }
+}

@@ -25,7 +25,7 @@
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, field, asdict
 
 import numpy as np
 
@@ -76,6 +76,20 @@ class EpisodeResult:
     #: ★ 预测器口径（"nominal" / "exact"）。进 EpisodeResult ⇒ 进证据，
     #:   不同口径的结果不会被误当成同一方法的两次重复。
     predictor: str = "nominal"
+    # ---- ★ R1.8 逐用户机械量（**纯记录**；不改任何已有字段的语义）----
+    #: 用户 i 的时间平均任务陈旧度（只统计首次送达之后的时隙）；全期未送达 ⇒ None
+    aoi_tavg_by_user: list = field(default_factory=list)
+    #: 从未送达过（`stamp<0`）的时隙数
+    n_unserved_slots_by_user: list = field(default_factory=list)
+    #: 末端快照的陈旧度（`-1` = 未送达）—— 旧 `mean_task_aoi` 的两个分量
+    aoi_final_by_user: list = field(default_factory=list)
+    #: 期内最大陈旧度（饥饿守卫）
+    aoi_max_by_user: list = field(default_factory=list)
+    #: 逐用户送达 / 尝试计数（由 SlotRecord 计；`n_delivered` 是 ACK 总数）
+    n_delivered_by_user: list = field(default_factory=list)
+    n_attempted_by_user: list = field(default_factory=list)
+    #: 全期从未送达的用户个数（>0 时旧 `mean_task_aoi` 会把它从分母里删掉）
+    n_never_served: int = 0
 
 
 def _trace_hash(recs) -> str:
@@ -172,6 +186,32 @@ def run_episode(
     aoi_vals = [x["task_aoi"] for x in w.view().telemetry]
     csi_aois = [x["csi_aoi"] for x in w.view().telemetry]
 
+    # ---- ★ R1.8 逐用户机械量（纯记录；不参与任何决策）----
+    #  旧 `mean_task_aoi` 的两个机械缺陷（预注册 §2）：
+    #    D1 它只是**末端单帧**的快照（两个用户 ⇒ 两个整数）；
+    #    D2 它用 `if a >= 0` **剔除**从未送达的用户 ⇒ 用户越被饿死越不进指标。
+    hist = w.aoi_history
+    n_u = w.n_users
+    aoi_tavg: list = []
+    n_unserved: list = []
+    aoi_final: list = []
+    aoi_max: list = []
+    for i in range(n_u):
+        col = [h[i] for h in hist]
+        served = [a for a in col if a >= 0]
+        n_unserved.append(int(len(col) - len(served)))
+        aoi_tavg.append(float(np.mean(served)) if served else None)
+        aoi_max.append(int(max(served)) if served else None)
+        aoi_final.append(int(col[-1]) if col else -1)
+    deliv_u = [0] * n_u
+    att_u = [0] * n_u
+    for r in recs:
+        if r.action == "SEND" and r.user is not None:
+            att_u[r.user] += 1
+            if r.data_delivered:
+                deliv_u[r.user] += 1
+    n_never = int(sum(1 for i in range(n_u) if aoi_tavg[i] is None))
+
     res = EpisodeResult(
         split=split, episode=int(episode), policy=getattr(policy, "name", type(policy).__name__),
         budget_total=int(budget_total), rho=float(rho), T=T,
@@ -195,6 +235,13 @@ def run_episode(
         config_fingerprint=cfg.fingerprint(),
         policy_trace_hash=_trace_hash(recs),
         predictor=predictor,
+        aoi_tavg_by_user=aoi_tavg,
+        n_unserved_slots_by_user=n_unserved,
+        aoi_final_by_user=aoi_final,
+        aoi_max_by_user=aoi_max,
+        n_delivered_by_user=deliv_u,
+        n_attempted_by_user=att_u,
+        n_never_served=n_never,
     )
     return res
 

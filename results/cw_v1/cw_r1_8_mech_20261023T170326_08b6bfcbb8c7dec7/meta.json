@@ -1,0 +1,46 @@
+{
+ "round": "CW-R1.8",
+ "prereg": "docs/research/CW-R1.8-机械量判据-预注册-v0.1.md",
+ "protocol": "CW-POMDP-v1.1",
+ "git_head": "6f58a95c06519429fc2cffd879df2ee9157f8266",
+ "git_status_porcelain": "M experiments/cw_v1/runner.py\n M experiments/cw_v1/world.py\n?? docs/research/CW-R1.8-机械量判据-预注册-v0.1.md\n?? experiments/cw_v1/r1_8_mech.py",
+ "src_hash16": "08b6bfcbb8c7dec7",
+ "started_utc": "20261023T170326",
+ "elapsed_s": 348.5,
+ "peak_mib": 2209.0,
+ "budget": {
+  "probe_wall_s": 61.72,
+  "per_cell_s": 30.86,
+  "n_rest_cells": 14,
+  "est_rest_s": 432.1,
+  "rule": "单格 > 40 s 则缩到 2 episodes × 2 seeds"
+ },
+ "panel": {
+  "eps": [
+   100,
+   101
+  ],
+  "seeds": [
+   2001,
+   2002,
+   2003,
+   2004
+  ],
+  "arms": [
+   "paced16",
+   "dp16"
+  ],
+  "h_plan": 5,
+  "m": 16,
+  "rho": 0.98,
+  "ratio": 0.5,
+  "tail_dp": {
+   "tail": "dp",
+   "dp_grid": "r173"
+  }
+ },
+ "n_run_episode": 16,
+ "reference": "results\\cw_v1\\cw_r1_7_6_g4form_20261023T182640_f11ffdefc06c0201_7dd8ba47dede6ce3\\cells.json",
+ "python": "miniconda ai-lab 3.11 / numpy",
+ "note": "预注册 §4 判据，未改任何阈值"
+}

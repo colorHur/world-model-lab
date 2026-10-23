@@ -1,0 +1,132 @@
+{
+ "kind": "EXPLORATORY-NOT-A-VERDICT",
+ "round": "CW-R1.8b",
+ "premise_p0": {
+  "p_hat_prior": [
+   0.5,
+   0.5
+  ],
+  "symmetric": true,
+  "rule": "先验 m_h=0,v_h=1 ⇒ 两用户 p̂ 必须相同；不同则饿死只是 p̂ 接线问题"
+ },
+ "rows": {
+  "base_(0.02,0.03)": {
+   "sigma_w": [
+    0.02,
+    0.03
+   ],
+   "paced16": {
+    "n_attempted_by_user": [
+     81,
+     35
+    ],
+    "n_delivered_by_user": [
+     32,
+     28
+    ],
+    "aoi_tavg_by_user": [
+     11.48046875,
+     36.44094488188976
+    ],
+    "aoi_max_by_user": [
+     46,
+     126
+    ],
+    "mean_task_aoi_old": 16.0,
+    "n_probe": 3,
+    "policy_trace_hash": "e7f9f3e3d6b80aa8",
+    "elapsed_s": 3.958
+   },
+   "dp16": {
+    "n_attempted_by_user": [
+     115,
+     13
+    ],
+    "n_delivered_by_user": [
+     44,
+     7
+    ],
+    "aoi_tavg_by_user": [
+     6.231372549019608,
+     60.940239043824704
+    ],
+    "aoi_max_by_user": [
+     25,
+     163
+    ],
+    "mean_task_aoi_old": 30.5,
+    "n_probe": 0,
+    "policy_trace_hash": "c87f9c6dbde9a12c",
+    "elapsed_s": 23.8802
+   }
+  },
+  "swap_(0.03,0.02)": {
+   "sigma_w": [
+    0.03,
+    0.02
+   ],
+   "paced16": {
+    "n_attempted_by_user": [
+     93,
+     29
+    ],
+    "n_delivered_by_user": [
+     35,
+     22
+    ],
+    "aoi_tavg_by_user": [
+     13.76171875,
+     55.110236220472444
+    ],
+    "aoi_max_by_user": [
+     66,
+     161
+    ],
+    "mean_task_aoi_old": 21.0,
+    "n_probe": 4,
+    "policy_trace_hash": "06221fe4f56994b3",
+    "elapsed_s": 3.9809
+   },
+   "dp16": {
+    "n_attempted_by_user": [
+     121,
+     7
+    ],
+    "n_delivered_by_user": [
+     54,
+     3
+    ],
+    "aoi_tavg_by_user": [
+     6.8352941176470585,
+     123.02788844621514
+    ],
+    "aoi_max_by_user": [
+     33,
+     248
+    ],
+    "mean_task_aoi_old": 126.0,
+    "n_probe": 0,
+    "policy_trace_hash": "a0a1dffd7402e132",
+    "elapsed_s": 23.8239
+   }
+  }
+ },
+ "probe": {
+  "starved_base": 1,
+  "starved_swap": 1,
+  "attempts_base": [
+   115,
+   13
+  ],
+  "attempts_swap": [
+   121,
+   7
+  ],
+  "follows_label": true,
+  "follows_physics": false,
+  "verdict": "LABEL-DRIVEN",
+  "rule": "H1 下标驱动 = 两次都饿死同一个下标；H2 噪声驱动 = 每次都饿死低噪声用户"
+ },
+ "elapsed_s": 55.6,
+ "note": "探索性探针：不承载判词、不进主表；只用来区分 下标驱动 / 噪声驱动"
+}

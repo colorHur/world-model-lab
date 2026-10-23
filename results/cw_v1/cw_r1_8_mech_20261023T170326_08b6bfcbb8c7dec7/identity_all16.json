@@ -1,0 +1,196 @@
+{
+ "reference": "results\\cw_v1\\cw_r1_7_6_g4form_20261023T182640_f11ffdefc06c0201_7dd8ba47dede6ce3\\cells.json",
+ "new": "results\\cw_v1\\cw_r1_8_mech_20261023T170326_08b6bfcbb8c7dec7",
+ "n_cells": 16,
+ "n_pass": 16,
+ "pass": true,
+ "skipped_not_rerun": [
+  "paced32|100|2001",
+  "paced32|100|2002",
+  "paced32|100|2003",
+  "paced32|100|2004",
+  "paced32|101|2001",
+  "paced32|101|2002",
+  "paced32|101|2003",
+  "paced32|101|2004"
+ ],
+ "rows": [
+  {
+   "cell": "paced16|100|2001",
+   "cost_est": 0.0,
+   "cost_true": 0.0,
+   "mean_task_aoi": 0.0,
+   "n_delivered": true,
+   "n_attempted": true,
+   "n_probe": true,
+   "trace_eq": true,
+   "pass": true
+  },
+  {
+   "cell": "paced16|100|2002",
+   "cost_est": 0.0,
+   "cost_true": 0.0,
+   "mean_task_aoi": 0.0,
+   "n_delivered": true,
+   "n_attempted": true,
+   "n_probe": true,
+   "trace_eq": true,
+   "pass": true
+  },
+  {
+   "cell": "paced16|100|2003",
+   "cost_est": 0.0,
+   "cost_true": 0.0,
+   "mean_task_aoi": 0.0,
+   "n_delivered": true,
+   "n_attempted": true,
+   "n_probe": true,
+   "trace_eq": true,
+   "pass": true
+  },
+  {
+   "cell": "paced16|100|2004",
+   "cost_est": 0.0,
+   "cost_true": 0.0,
+   "mean_task_aoi": 0.0,
+   "n_delivered": true,
+   "n_attempted": true,
+   "n_probe": true,
+   "trace_eq": true,
+   "pass": true
+  },
+  {
+   "cell": "paced16|101|2001",
+   "cost_est": 0.0,
+   "cost_true": 0.0,
+   "mean_task_aoi": 0.0,
+   "n_delivered": true,
+   "n_attempted": true,
+   "n_probe": true,
+   "trace_eq": true,
+   "pass": true
+  },
+  {
+   "cell": "paced16|101|2002",
+   "cost_est": 0.0,
+   "cost_true": 0.0,
+   "mean_task_aoi": 0.0,
+   "n_delivered": true,
+   "n_attempted": true,
+   "n_probe": true,
+   "trace_eq": true,
+   "pass": true
+  },
+  {
+   "cell": "paced16|101|2003",
+   "cost_est": 0.0,
+   "cost_true": 0.0,
+   "mean_task_aoi": 0.0,
+   "n_delivered": true,
+   "n_attempted": true,
+   "n_probe": true,
+   "trace_eq": true,
+   "pass": true
+  },
+  {
+   "cell": "paced16|101|2004",
+   "cost_est": 0.0,
+   "cost_true": 0.0,
+   "mean_task_aoi": 0.0,
+   "n_delivered": true,
+   "n_attempted": true,
+   "n_probe": true,
+   "trace_eq": true,
+   "pass": true
+  },
+  {
+   "cell": "dp16|100|2001",
+   "cost_est": 0.0,
+   "cost_true": 0.0,
+   "mean_task_aoi": 0.0,
+   "n_delivered": true,
+   "n_attempted": true,
+   "n_probe": true,
+   "trace_eq": true,
+   "pass": true
+  },
+  {
+   "cell": "dp16|100|2002",
+   "cost_est": 0.0,
+   "cost_true": 0.0,
+   "mean_task_aoi": 0.0,
+   "n_delivered": true,
+   "n_attempted": true,
+   "n_probe": true,
+   "trace_eq": true,
+   "pass": true
+  },
+  {
+   "cell": "dp16|100|2003",
+   "cost_est": 0.0,
+   "cost_true": 0.0,
+   "mean_task_aoi": 0.0,
+   "n_delivered": true,
+   "n_attempted": true,
+   "n_probe": true,
+   "trace_eq": true,
+   "pass": true
+  },
+  {
+   "cell": "dp16|100|2004",
+   "cost_est": 0.0,
+   "cost_true": 0.0,
+   "mean_task_aoi": 0.0,
+   "n_delivered": true,
+   "n_attempted": true,
+   "n_probe": true,
+   "trace_eq": true,
+   "pass": true
+  },
+  {
+   "cell": "dp16|101|2001",
+   "cost_est": 0.0,
+   "cost_true": 0.0,
+   "mean_task_aoi": 0.0,
+   "n_delivered": true,
+   "n_attempted": true,
+   "n_probe": true,
+   "trace_eq": true,
+   "pass": true
+  },
+  {
+   "cell": "dp16|101|2002",
+   "cost_est": 0.0,
+   "cost_true": 0.0,
+   "mean_task_aoi": 0.0,
+   "n_delivered": true,
+   "n_attempted": true,
+   "n_probe": true,
+   "trace_eq": true,
+   "pass": true
+  },
+  {
+   "cell": "dp16|101|2003",
+   "cost_est": 0.0,
+   "cost_true": 0.0,
+   "mean_task_aoi": 0.0,
+   "n_delivered": true,
+   "n_attempted": true,
+   "n_probe": true,
+   "trace_eq": true,
+   "pass": true
+  },
+  {
+   "cell": "dp16|101|2004",
+   "cost_est": 0.0,
+   "cost_true": 0.0,
+   "mean_task_aoi": 0.0,
+   "n_delivered": true,
+   "n_attempted": true,
+   "n_probe": true,
+   "trace_eq": true,
+   "pass": true
+  }
+ ],
+ "rule": "本轮跑过的 16/16 逐位相同 ⇒ 新增字段确为纯记录（不是只抽 2 格）"
+}

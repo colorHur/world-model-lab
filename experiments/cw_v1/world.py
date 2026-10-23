@@ -260,6 +260,10 @@ class CWWorld:
         self.n_nack = 0
         self.control_history: list[np.ndarray] = []
         self.records: list[SlotRecord] = []
+        #: ★ R1.8：逐槽的**逐用户**任务陈旧度快照 `(task_aoi_0, ..., task_aoi_{n-1})`，
+        #:   与 `view().telemetry[i]["task_aoi"]` 逐位同式（`-1` = 该用户从未送达）。
+        #:   **纯记录**：不参与决策、不消耗随机数、不改任何记账量。
+        self._aoi_hist: list[tuple[int, ...]] = []
         #: ★ v1.1：与 `records` 同长，但只含白名单字段 —— 视图只引用这一份，
         #:   这样"视图里能读到什么"由**追加处**决定，不依赖读的人自觉过滤。
         self._public_records: list[dict] = []
@@ -505,6 +509,10 @@ class CWWorld:
         )
         self.records.append(rec)
         self._public_records.append({f: getattr(rec, f) for f in PUBLIC_HISTORY_FIELDS})
+        # ★ R1.8：逐槽快照（与 `view().telemetry[i]["task_aoi"]` 同式）。纯记录。
+        self._aoi_hist.append(tuple(
+            (int(self.t) - int(self._stamp[i])) if int(self._stamp[i]) >= 0 else -1
+            for i in range(self.n_users)))
         return rec
 
     # ---------------- 内部
@@ -545,6 +553,16 @@ class CWWorld:
         g = prior_var / (prior_var + self.ACK_VAR)
         self._m_h[i] = self._m_h[i] + g * (y - self._m_h[i])
         self._v_h[i] = (1.0 - g) * prior_var
+
+    @property
+    def aoi_history(self) -> list[tuple[int, ...]]:
+        """★ R1.8 新增（**纯记录**）：逐槽的逐用户任务陈旧度，`-1` = 该用户当时尚未送达过。
+
+        与 `view().telemetry[i]["task_aoi"]` 逐位同式；长度 = `len(self.records)`。
+        ★ 这是**评估侧**量，不进 `SchedulerView._pub`：视图能读到什么由 `view()` 的白名单决定，
+          与这个属性无关（它挂在 `CWWorld` 上，策略拿不到 `CWWorld`）。
+        """
+        return self._aoi_hist
 
     def view(self) -> "SchedulerView":
         """构造**公开信息快照**。不含 self，也不含任何真值字段。

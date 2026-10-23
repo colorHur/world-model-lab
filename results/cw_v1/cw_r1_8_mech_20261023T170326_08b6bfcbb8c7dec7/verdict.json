@@ -1,0 +1,22 @@
+{
+ "verdict": "MECH-TRADE",
+ "reason": "['ep100', 'ep101'] 上两用户方向相反（≥2 个 seed 对）⇒ 只能写交易",
+ "per_user_status": {
+  "100|u0": "DP-BETTER",
+  "100|u1": "DP-WORSE",
+  "101|u0": "DP-BETTER",
+  "101|u1": "UNRESOLVED"
+ },
+ "n_unresolved": 1,
+ "trades": [
+  "ep100",
+  "ep101"
+ ],
+ "n_u5_inconsistent": 0,
+ "thresholds": {
+  "LINE_EFFECT": 0.2,
+  "N_BOOT": 20000,
+  "BOOT_SEED": 20261024,
+  "require_sign": "4/4"
+ }
+}
