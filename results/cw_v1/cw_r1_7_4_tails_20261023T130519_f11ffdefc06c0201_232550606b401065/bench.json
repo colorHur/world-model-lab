@@ -1,0 +1,89 @@
+{
+  "G8a": {
+    "pass": false,
+    "detail": {
+      "paced": {
+        "cv": 0.583391467891342,
+        "profile": [
+          11,
+          6,
+          7,
+          11,
+          9,
+          19,
+          30,
+          28
+        ],
+        "aoi": 16.0,
+        "cost_true": 0.11067633547679674,
+        "sent": 110,
+        "probe": 11
+      },
+      "nopace": {
+        "cv": 0.9286036223814766,
+        "profile": [
+          30,
+          29,
+          32,
+          32,
+          5,
+          0,
+          0,
+          0
+        ],
+        "aoi": 128.5,
+        "cost_true": 0.1767897716156801,
+        "sent": 107,
+        "probe": 21
+      }
+    }
+  },
+  "G8a2": {
+    "pass": true,
+    "detail": {
+      "aoi_paced": 16.0,
+      "aoi_nopace": 128.5
+    }
+  },
+  "G8b": {
+    "pass": true,
+    "detail": {
+      "cv_nopace": 0.9286036223814766,
+      "cv_paced": 0.583391467891342
+    }
+  },
+  "G4": {
+    "pass": false,
+    "detail": {
+      "agreement": 0.646484375,
+      "n_compared": 512,
+      "median_rel_cost_diff": 0.3719255758128803,
+      "per_episode": [
+        {
+          "episode": 100,
+          "c16": 0.24604271834394176,
+          "c32": 0.1658671185100418,
+          "rel": 0.32586048623403246
+        },
+        {
+          "episode": 101,
+          "c16": 0.17286430703179453,
+          "c32": 0.24511997375049432,
+          "rel": 0.41799066539172813
+        }
+      ]
+    }
+  },
+  "n_plan_gate_checks": 24,
+  "n_plan_gate_fail": 2,
+  "_scalars": {
+    "cv_paced": 0.583391467891342,
+    "aoi_paced": 16.0,
+    "agreement": 0.646484375,
+    "median_rel": 0.3719255758128803,
+    "cv_nopace": 0.9286036223814766,
+    "pass_G8a": false,
+    "pass_G8a2": true,
+    "pass_G4": false
+  }
+}

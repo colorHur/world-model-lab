@@ -1,0 +1,764 @@
+{
+  "paced": {
+    "rows": [
+      {
+        "episode": 100,
+        "cv": 0.583391467891342,
+        "profile": [
+          11,
+          6,
+          7,
+          11,
+          9,
+          19,
+          30,
+          28
+        ],
+        "n_probe": 11,
+        "n_attempted": 110,
+        "n_delivered": 66,
+        "n_wasted": 44,
+        "n_forced_hold": 0,
+        "budget_used": 121,
+        "cost_true": 0.11067633547679674,
+        "cost_true_by_user": [
+          0.024827112242119906,
+          0.08584922323467685
+        ],
+        "mean_task_aoi": 16.0,
+        "mean_csi_aoi": 16.5,
+        "delivery_rate": 0.6,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 101,
+        "cv": 0.5720182044300409,
+        "profile": [
+          20,
+          8,
+          5,
+          10,
+          6,
+          16,
+          30,
+          23
+        ],
+        "n_probe": 16,
+        "n_attempted": 102,
+        "n_delivered": 52,
+        "n_wasted": 50,
+        "n_forced_hold": 0,
+        "budget_used": 118,
+        "cost_true": 0.15325574142565773,
+        "cost_true_by_user": [
+          0.10217329869466273,
+          0.05108244273099503
+        ],
+        "mean_task_aoi": 2.5,
+        "mean_csi_aoi": 15.0,
+        "delivery_rate": 0.5098039215686274,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 102,
+        "cv": 0.5979391673015199,
+        "profile": [
+          10,
+          7,
+          4,
+          11,
+          12,
+          17,
+          28,
+          30
+        ],
+        "n_probe": 6,
+        "n_attempted": 113,
+        "n_delivered": 48,
+        "n_wasted": 65,
+        "n_forced_hold": 0,
+        "budget_used": 119,
+        "cost_true": 0.04157005202875382,
+        "cost_true_by_user": [
+          0.019997795187088795,
+          0.021572256841665024
+        ],
+        "mean_task_aoi": 14.5,
+        "mean_csi_aoi": 37.0,
+        "delivery_rate": 0.4247787610619469,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 103,
+        "cv": 0.6345363913423006,
+        "profile": [
+          13,
+          4,
+          6,
+          8,
+          9,
+          24,
+          29,
+          28
+        ],
+        "n_probe": 19,
+        "n_attempted": 102,
+        "n_delivered": 59,
+        "n_wasted": 43,
+        "n_forced_hold": 0,
+        "budget_used": 121,
+        "cost_true": 0.053962792496619054,
+        "cost_true_by_user": [
+          0.02605394700298442,
+          0.027908845493634635
+        ],
+        "mean_task_aoi": 9.5,
+        "mean_csi_aoi": 10.5,
+        "delivery_rate": 0.5784313725490197,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 104,
+        "cv": 0.5317723155658899,
+        "profile": [
+          13,
+          6,
+          11,
+          6,
+          10,
+          18,
+          28,
+          25
+        ],
+        "n_probe": 12,
+        "n_attempted": 105,
+        "n_delivered": 43,
+        "n_wasted": 62,
+        "n_forced_hold": 0,
+        "budget_used": 117,
+        "cost_true": 0.10346441648061128,
+        "cost_true_by_user": [
+          0.0779138673283484,
+          0.025550549152262885
+        ],
+        "mean_task_aoi": 19.5,
+        "mean_csi_aoi": 14.0,
+        "delivery_rate": 0.4095238095238095,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 105,
+        "cv": 0.6061141490929886,
+        "profile": [
+          12,
+          9,
+          5,
+          5,
+          12,
+          21,
+          30,
+          28
+        ],
+        "n_probe": 15,
+        "n_attempted": 107,
+        "n_delivered": 63,
+        "n_wasted": 44,
+        "n_forced_hold": 0,
+        "budget_used": 122,
+        "cost_true": 0.12713398661725417,
+        "cost_true_by_user": [
+          0.04568919229995518,
+          0.08144479431729901
+        ],
+        "mean_task_aoi": 3.5,
+        "mean_csi_aoi": 13.5,
+        "delivery_rate": 0.5887850467289719,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 106,
+        "cv": 0.6481113901892065,
+        "profile": [
+          8,
+          7,
+          6,
+          10,
+          8,
+          24,
+          32,
+          27
+        ],
+        "n_probe": 8,
+        "n_attempted": 114,
+        "n_delivered": 48,
+        "n_wasted": 66,
+        "n_forced_hold": 0,
+        "budget_used": 122,
+        "cost_true": 0.03335297077880668,
+        "cost_true_by_user": [
+          0.018481700474999974,
+          0.014871270303806706
+        ],
+        "mean_task_aoi": 10.5,
+        "mean_csi_aoi": 17.5,
+        "delivery_rate": 0.42105263157894735,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 107,
+        "cv": 0.5849976258261415,
+        "profile": [
+          12,
+          5,
+          6,
+          9,
+          12,
+          19,
+          29,
+          28
+        ],
+        "n_probe": 14,
+        "n_attempted": 106,
+        "n_delivered": 52,
+        "n_wasted": 54,
+        "n_forced_hold": 0,
+        "budget_used": 120,
+        "cost_true": 0.03124044897889596,
+        "cost_true_by_user": [
+          0.01832264889942241,
+          0.012917800079473556
+        ],
+        "mean_task_aoi": 6.5,
+        "mean_csi_aoi": 8.5,
+        "delivery_rate": 0.49056603773584906,
+        "identities_pass": true,
+        "identities_fail": []
+      }
+    ],
+    "attempted_median": 106.5,
+    "delivered_median": 52.0,
+    "delivery_rate_median": 0.5001849796522382,
+    "wasted_median": 52.0,
+    "forced_hold_median": 0.0,
+    "aoi_median": 10.0,
+    "cost_median": 0.07871360448861517,
+    "identities_all_pass": true,
+    "n_identity_fail": 0,
+    "elapsed_s": 29.98
+  },
+  "dp_legacy": {
+    "rows": [
+      {
+        "episode": 100,
+        "cv": 0.21423920626253262,
+        "profile": [
+          24,
+          14,
+          16,
+          12,
+          14,
+          18,
+          15,
+          15
+        ],
+        "n_probe": 4,
+        "n_attempted": 124,
+        "n_delivered": 60,
+        "n_wasted": 64,
+        "n_forced_hold": 0,
+        "budget_used": 128,
+        "cost_true": 0.0607704348388792,
+        "cost_true_by_user": [
+          0.014636904429390751,
+          0.04613353040948844
+        ],
+        "mean_task_aoi": 9.5,
+        "mean_csi_aoi": 32.5,
+        "delivery_rate": 0.4838709677419355,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 101,
+        "cv": 0.20009763241977652,
+        "profile": [
+          23,
+          15,
+          17,
+          12,
+          18,
+          13,
+          15,
+          15
+        ],
+        "n_probe": 2,
+        "n_attempted": 126,
+        "n_delivered": 55,
+        "n_wasted": 71,
+        "n_forced_hold": 0,
+        "budget_used": 128,
+        "cost_true": 0.11013299841014094,
+        "cost_true_by_user": [
+          0.07034599804903903,
+          0.03978700036110194
+        ],
+        "mean_task_aoi": 15.5,
+        "mean_csi_aoi": 150.0,
+        "delivery_rate": 0.4365079365079365,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 102,
+        "cv": 0.14657549249448218,
+        "profile": [
+          18,
+          17,
+          13,
+          18,
+          16,
+          15,
+          19,
+          12
+        ],
+        "n_probe": 0,
+        "n_attempted": 128,
+        "n_delivered": 67,
+        "n_wasted": 61,
+        "n_forced_hold": 0,
+        "budget_used": 128,
+        "cost_true": 0.05046447301789264,
+        "cost_true_by_user": [
+          0.01298998849258895,
+          0.037474484525303685
+        ],
+        "mean_task_aoi": 15.0,
+        "mean_csi_aoi": -1.0,
+        "delivery_rate": 0.5234375,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 103,
+        "cv": 0.2096313728906053,
+        "profile": [
+          23,
+          15,
+          13,
+          12,
+          19,
+          14,
+          17,
+          15
+        ],
+        "n_probe": 3,
+        "n_attempted": 125,
+        "n_delivered": 62,
+        "n_wasted": 63,
+        "n_forced_hold": 0,
+        "budget_used": 128,
+        "cost_true": 0.0920073462965989,
+        "cost_true_by_user": [
+          0.03574541458058382,
+          0.05626193171601508
+        ],
+        "mean_task_aoi": 18.5,
+        "mean_csi_aoi": 125.0,
+        "delivery_rate": 0.496,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 104,
+        "cv": 0.184877493221863,
+        "profile": [
+          22,
+          13,
+          19,
+          17,
+          13,
+          14,
+          15,
+          15
+        ],
+        "n_probe": 3,
+        "n_attempted": 125,
+        "n_delivered": 47,
+        "n_wasted": 78,
+        "n_forced_hold": 0,
+        "budget_used": 128,
+        "cost_true": 0.11420615615469058,
+        "cost_true_by_user": [
+          0.061759677151386506,
+          0.05244647900330407
+        ],
+        "mean_task_aoi": 16.0,
+        "mean_csi_aoi": 13.0,
+        "delivery_rate": 0.376,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 105,
+        "cv": 0.17399263633843817,
+        "profile": [
+          21,
+          14,
+          12,
+          16,
+          13,
+          18,
+          18,
+          16
+        ],
+        "n_probe": 5,
+        "n_attempted": 123,
+        "n_delivered": 65,
+        "n_wasted": 58,
+        "n_forced_hold": 0,
+        "budget_used": 128,
+        "cost_true": 0.1265496101407601,
+        "cost_true_by_user": [
+          0.03940898350190209,
+          0.08714062663885801
+        ],
+        "mean_task_aoi": 8.0,
+        "mean_csi_aoi": 43.0,
+        "delivery_rate": 0.5284552845528455,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 106,
+        "cv": 0.20252314682524564,
+        "profile": [
+          22,
+          14,
+          13,
+          17,
+          16,
+          19,
+          16,
+          11
+        ],
+        "n_probe": 2,
+        "n_attempted": 126,
+        "n_delivered": 53,
+        "n_wasted": 73,
+        "n_forced_hold": 0,
+        "budget_used": 128,
+        "cost_true": 0.03190138291132616,
+        "cost_true_by_user": [
+          0.011538135825258367,
+          0.020363247086067786
+        ],
+        "mean_task_aoi": 16.0,
+        "mean_csi_aoi": 85.0,
+        "delivery_rate": 0.42063492063492064,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 107,
+        "cv": 0.1875,
+        "profile": [
+          19,
+          15,
+          12,
+          17,
+          19,
+          12,
+          20,
+          14
+        ],
+        "n_probe": 4,
+        "n_attempted": 124,
+        "n_delivered": 66,
+        "n_wasted": 58,
+        "n_forced_hold": 0,
+        "budget_used": 128,
+        "cost_true": 0.04337310233070871,
+        "cost_true_by_user": [
+          0.02416228538105144,
+          0.019210816949657265
+        ],
+        "mean_task_aoi": 13.5,
+        "mean_csi_aoi": 5.5,
+        "delivery_rate": 0.532258064516129,
+        "identities_pass": true,
+        "identities_fail": []
+      }
+    ],
+    "attempted_median": 125.0,
+    "delivered_median": 61.0,
+    "delivery_rate_median": 0.48993548387096775,
+    "wasted_median": 63.5,
+    "forced_hold_median": 0.0,
+    "aoi_median": 15.25,
+    "cost_median": 0.07638889056773905,
+    "identities_all_pass": true,
+    "n_identity_fail": 0,
+    "elapsed_s": 20.56
+  },
+  "dp_r173": {
+    "rows": [
+      {
+        "episode": 100,
+        "cv": 0.2576941016011038,
+        "profile": [
+          26,
+          15,
+          16,
+          16,
+          13,
+          15,
+          16,
+          11
+        ],
+        "n_probe": 2,
+        "n_attempted": 126,
+        "n_delivered": 55,
+        "n_wasted": 71,
+        "n_forced_hold": 0,
+        "budget_used": 128,
+        "cost_true": 0.13102784789876698,
+        "cost_true_by_user": [
+          0.026142189160238846,
+          0.10488565873852815
+        ],
+        "mean_task_aoi": 20.5,
+        "mean_csi_aoi": 48.0,
+        "delivery_rate": 0.4365079365079365,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 101,
+        "cv": 0.29481191037676885,
+        "profile": [
+          26,
+          12,
+          14,
+          20,
+          13,
+          14,
+          18,
+          11
+        ],
+        "n_probe": 1,
+        "n_attempted": 127,
+        "n_delivered": 62,
+        "n_wasted": 65,
+        "n_forced_hold": 0,
+        "budget_used": 128,
+        "cost_true": 0.10234338463838576,
+        "cost_true_by_user": [
+          0.06566967286014823,
+          0.03667371177823752
+        ],
+        "mean_task_aoi": 15.0,
+        "mean_csi_aoi": 192.0,
+        "delivery_rate": 0.4881889763779528,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 102,
+        "cv": 0.24206145913796356,
+        "profile": [
+          20,
+          14,
+          15,
+          18,
+          19,
+          18,
+          17,
+          7
+        ],
+        "n_probe": 3,
+        "n_attempted": 125,
+        "n_delivered": 68,
+        "n_wasted": 57,
+        "n_forced_hold": 0,
+        "budget_used": 128,
+        "cost_true": 0.055084359090064434,
+        "cost_true_by_user": [
+          0.014452952984775044,
+          0.04063140610528939
+        ],
+        "mean_task_aoi": 18.5,
+        "mean_csi_aoi": 116.5,
+        "delivery_rate": 0.544,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 103,
+        "cv": 0.27775607554111215,
+        "profile": [
+          26,
+          13,
+          14,
+          13,
+          19,
+          17,
+          15,
+          11
+        ],
+        "n_probe": 4,
+        "n_attempted": 124,
+        "n_delivered": 67,
+        "n_wasted": 57,
+        "n_forced_hold": 0,
+        "budget_used": 128,
+        "cost_true": 0.06327370987527021,
+        "cost_true_by_user": [
+          0.03031548755503138,
+          0.03295822232023884
+        ],
+        "mean_task_aoi": 16.5,
+        "mean_csi_aoi": 162.0,
+        "delivery_rate": 0.5403225806451613,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 104,
+        "cv": 0.29481191037676885,
+        "profile": [
+          21,
+          12,
+          20,
+          15,
+          20,
+          16,
+          18,
+          6
+        ],
+        "n_probe": 6,
+        "n_attempted": 122,
+        "n_delivered": 43,
+        "n_wasted": 79,
+        "n_forced_hold": 0,
+        "budget_used": 128,
+        "cost_true": 0.08921306192842521,
+        "cost_true_by_user": [
+          0.06348776204660209,
+          0.025725299881823142
+        ],
+        "mean_task_aoi": 33.5,
+        "mean_csi_aoi": 46.0,
+        "delivery_rate": 0.3524590163934426,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 105,
+        "cv": 0.2460627460628691,
+        "profile": [
+          24,
+          17,
+          13,
+          14,
+          14,
+          15,
+          20,
+          11
+        ],
+        "n_probe": 7,
+        "n_attempted": 121,
+        "n_delivered": 60,
+        "n_wasted": 61,
+        "n_forced_hold": 0,
+        "budget_used": 128,
+        "cost_true": 0.1190034192983381,
+        "cost_true_by_user": [
+          0.03875346469813254,
+          0.08024995460020556
+        ],
+        "mean_task_aoi": 17.5,
+        "mean_csi_aoi": 150.5,
+        "delivery_rate": 0.49586776859504134,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 106,
+        "cv": 0.2049199538844375,
+        "profile": [
+          23,
+          15,
+          13,
+          16,
+          16,
+          17,
+          17,
+          11
+        ],
+        "n_probe": 1,
+        "n_attempted": 127,
+        "n_delivered": 57,
+        "n_wasted": 70,
+        "n_forced_hold": 0,
+        "budget_used": 128,
+        "cost_true": 0.035444674935112136,
+        "cost_true_by_user": [
+          0.013062739506705456,
+          0.02238193542840668
+        ],
+        "mean_task_aoi": 16.5,
+        "mean_csi_aoi": 96.0,
+        "delivery_rate": 0.44881889763779526,
+        "identities_pass": true,
+        "identities_fail": []
+      },
+      {
+        "episode": 107,
+        "cv": 0.2096313728906053,
+        "profile": [
+          21,
+          14,
+          14,
+          14,
+          18,
+          19,
+          18,
+          10
+        ],
+        "n_probe": 2,
+        "n_attempted": 126,
+        "n_delivered": 60,
+        "n_wasted": 66,
+        "n_forced_hold": 0,
+        "budget_used": 128,
+        "cost_true": 0.04384835716895384,
+        "cost_true_by_user": [
+          0.028184399744627074,
+          0.01566395742432676
+        ],
+        "mean_task_aoi": 11.0,
+        "mean_csi_aoi": 140.0,
+        "delivery_rate": 0.47619047619047616,
+        "identities_pass": true,
+        "identities_fail": []
+      }
+    ],
+    "attempted_median": 125.5,
+    "delivered_median": 60.0,
+    "delivery_rate_median": 0.48218972628421447,
+    "wasted_median": 65.5,
+    "forced_hold_median": 0.0,
+    "aoi_median": 17.0,
+    "cost_median": 0.0762433859018477,
+    "identities_all_pass": true,
+    "n_identity_fail": 0,
+    "elapsed_s": 41.21
+  }
+}

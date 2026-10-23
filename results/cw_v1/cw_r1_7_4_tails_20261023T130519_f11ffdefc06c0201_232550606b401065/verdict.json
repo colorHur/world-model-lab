@@ -1,0 +1,85 @@
+{
+  "verdict": "TAILS-SWITCH",
+  "reason": "三臂方向不一致 ⇒ 尾部形状改变行为，须先修尾部",
+  "checks": {
+    "T_A1_repeat_exact": {
+      "pass": true,
+      "diffs": {
+        "cv_paced": 0.0,
+        "aoi_paced": 0.0,
+        "agreement": 0.0,
+        "median_rel": 0.0
+      }
+    },
+    "T_A2_bench_identity": {
+      "pass": true,
+      "diffs": {
+        "cv_paced": 0.0,
+        "aoi_paced": 0.0,
+        "agreement": 0.0,
+        "median_rel": 0.0
+      },
+      "bench": {
+        "cv_paced": 0.583391467891342,
+        "aoi_paced": 16.0,
+        "agreement": 0.646484375,
+        "median_rel": 0.3719255758128803
+      },
+      "arm_paced": {
+        "cv_paced": 0.583391467891342,
+        "aoi_paced": 16.0,
+        "agreement": 0.646484375,
+        "median_rel": 0.3719255758128803
+      },
+      "rule": "paced 臂必须与 plan_gates.run_all() 的同名项逐位相同（rel ≤1e-12）"
+    },
+    "T_C_nopace_fails_G8a": {
+      "pass": true,
+      "cv_nopace": 0.9286036223814766,
+      "line": 0.3,
+      "rule": "pacing=False 的 CV 必须 >0.30；否则判据对已知缺陷不敏感 ⇒ NO-POWER"
+    },
+    "T_C2_bcap8_fails_G8a": {
+      "pass": true,
+      "cv": 0.8838834764831844,
+      "line": 0.3,
+      "b_cap": 8,
+      "rule": "dp@r173 且 dp_b_cap=8 ⇒ 值函数饱和 ⇒ CV 必须 >0.30（证明 dp 支路也有分辨力）"
+    },
+    "T_B_direction_agree": {
+      "pass": false,
+      "per_gate": {
+        "G8a": {
+          "passes": {
+            "paced": false,
+            "dp_legacy": true,
+            "dp_r173": true
+          },
+          "agree": false
+        },
+        "G8a2": {
+          "passes": {
+            "paced": true,
+            "dp_legacy": true,
+            "dp_r173": false
+          },
+          "agree": false
+        },
+        "G4": {
+          "passes": {
+            "paced": false,
+            "dp_legacy": false,
+            "dp_r173": false
+          },
+          "agree": true
+        }
+      },
+      "rule": "G8a/G8a2/G4 每一项在三臂上同过或同不过"
+    }
+  },
+  "n_fail": 1,
+  "n_checks": 5,
+  "no_n1_n2": true,
+  "no_threshold_change": true,
+  "rule": "本轮不读 N1/N2、不改任何阈值、不宣称「测量值不值」"
+}

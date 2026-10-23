@@ -1,0 +1,76 @@
+{
+  "run_id": "cw_r1_7_4b_delivery_20261023T131125_f11ffdefc06c0201_dd78a72a2f637a05",
+  "kind": "SUPPLEMENT-NOT-A-NEW-VERDICT",
+  "parent": "results/cw_v1/cw_r1_7_4_tails_20261023T130519_f11ffdefc06c0201_232550606b401065",
+  "why": "① 主跑漏记 n_delivered（R17：实际送达用 frames）；② tail=dp 的 p̂ 冻结在 0.5 而 paced 逐槽，三臂含两个变量（#35）",
+  "segments": "ab",
+  "panel_cfg": {
+    "h_plan": 5,
+    "m_samples": 8,
+    "seed": 1100,
+    "rho": 0.85,
+    "ratio": 0.5
+  },
+  "panel_eps": [
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107
+  ],
+  "config": {
+    "plant": {
+      "A": [
+        1.0,
+        1.0
+      ],
+      "B": 0.32,
+      "sigma_w": [
+        0.02,
+        0.03
+      ],
+      "prior_var": 1.0,
+      "sigma_meas": 0.2,
+      "q_cost": 1.0,
+      "r_cost": 0.02
+    },
+    "channel": {
+      "rho_panel": [
+        0.85,
+        0.98
+      ],
+      "kappa": 2.0,
+      "log_h_star": 0.0,
+      "sigma_csi": 0.05,
+      "h_log_init_std": 1.0,
+      "use_ack_for_csi": true
+    },
+    "protocol": {
+      "horizon": 256,
+      "c_probe": 1,
+      "c_data": 1,
+      "budget_ratios": [
+        0.5,
+        0.8
+      ],
+      "init_from_prior": true,
+      "event_pairing": "slot",
+      "allow_multislot": false
+    },
+    "root_seed": 20261021,
+    "protocol_name": "CW-POMDP-v1.1",
+    "budget_values": [
+      128,
+      204
+    ]
+  },
+  "note": "第2次：修 _Rec/.n_probe；第1次(T05:08Z)因裸 PlanRef.acts 崩，A段数已见但未落盘",
+  "at_asia_shanghai": "2026-10-23T13:11:25.514867+08:00",
+  "elapsed_s": 164.67,
+  "git_head": "8145d32fa40fb995552c8e24183217dba876d76c",
+  "src_hash": "dd78a72a2f637a05",
+  "disclaimer": "本目录**不改**主跑判词 TAILS-SWITCH，只补两项必要口径与归因排查；仍然不读 N1/N2、不宣称「测量值不值」。"
+}

@@ -1,0 +1,417 @@
+{
+  "phis": {
+    "0.3": {
+      "rows": [
+        {
+          "episode": 100,
+          "cv": 0.48210151939192225,
+          "profile": [
+            28,
+            21,
+            19,
+            18,
+            17,
+            15,
+            10,
+            0
+          ],
+          "n_probe": 3,
+          "n_attempted": 125,
+          "n_delivered": 56,
+          "n_wasted": 69,
+          "n_forced_hold": 0,
+          "budget_used": 128,
+          "cost_true": 0.09343313039798494,
+          "cost_true_by_user": [
+            0.028118814104032053,
+            0.06531431629395287
+          ],
+          "mean_task_aoi": 43.0,
+          "mean_csi_aoi": 175.5,
+          "delivery_rate": 0.448,
+          "identities_pass": true,
+          "identities_fail": []
+        },
+        {
+          "episode": 101,
+          "cv": 0.28641098093474,
+          "profile": [
+            21,
+            18,
+            18,
+            14,
+            17,
+            19,
+            16,
+            5
+          ],
+          "n_probe": 4,
+          "n_attempted": 124,
+          "n_delivered": 56,
+          "n_wasted": 68,
+          "n_forced_hold": 0,
+          "budget_used": 128,
+          "cost_true": 0.12215423415321915,
+          "cost_true_by_user": [
+            0.0680919916936451,
+            0.05406224245957404
+          ],
+          "mean_task_aoi": 23.5,
+          "mean_csi_aoi": 53.0,
+          "delivery_rate": 0.45161290322580644,
+          "identities_pass": true,
+          "identities_fail": []
+        },
+        {
+          "episode": 102,
+          "cv": 0.34938562148434216,
+          "profile": [
+            20,
+            15,
+            16,
+            18,
+            22,
+            22,
+            10,
+            5
+          ],
+          "n_probe": 4,
+          "n_attempted": 124,
+          "n_delivered": 71,
+          "n_wasted": 53,
+          "n_forced_hold": 0,
+          "budget_used": 128,
+          "cost_true": 0.03969034193626894,
+          "cost_true_by_user": [
+            0.004806279867671719,
+            0.03488406206859722
+          ],
+          "mean_task_aoi": 22.5,
+          "mean_csi_aoi": 83.0,
+          "delivery_rate": 0.5725806451612904,
+          "identities_pass": true,
+          "identities_fail": []
+        },
+        {
+          "episode": 103,
+          "cv": 0.31868871959954903,
+          "profile": [
+            24,
+            15,
+            15,
+            16,
+            20,
+            18,
+            15,
+            5
+          ],
+          "n_probe": 8,
+          "n_attempted": 120,
+          "n_delivered": 64,
+          "n_wasted": 56,
+          "n_forced_hold": 0,
+          "budget_used": 128,
+          "cost_true": 0.09297566022195902,
+          "cost_true_by_user": [
+            0.028550670988735205,
+            0.06442498923322382
+          ],
+          "mean_task_aoi": 30.0,
+          "mean_csi_aoi": 64.5,
+          "delivery_rate": 0.5333333333333333,
+          "identities_pass": true,
+          "identities_fail": []
+        }
+      ],
+      "cv_median": 0.3340371705419456,
+      "cv_min": 0.28641098093474,
+      "cv_max": 0.48210151939192225,
+      "aoi_median": 26.75,
+      "cost_median": 0.09320439530997199,
+      "delivered_median": 60.0,
+      "probe_median": 4.0,
+      "elapsed_s": 30.97
+    },
+    "0.5": {
+      "rows": [
+        {
+          "episode": 100,
+          "cv": 0.2576941016011038,
+          "profile": [
+            26,
+            15,
+            16,
+            16,
+            13,
+            15,
+            16,
+            11
+          ],
+          "n_probe": 2,
+          "n_attempted": 126,
+          "n_delivered": 55,
+          "n_wasted": 71,
+          "n_forced_hold": 0,
+          "budget_used": 128,
+          "cost_true": 0.13102784789876698,
+          "cost_true_by_user": [
+            0.026142189160238846,
+            0.10488565873852815
+          ],
+          "mean_task_aoi": 20.5,
+          "mean_csi_aoi": 48.0,
+          "delivery_rate": 0.4365079365079365,
+          "identities_pass": true,
+          "identities_fail": []
+        },
+        {
+          "episode": 101,
+          "cv": 0.29481191037676885,
+          "profile": [
+            26,
+            12,
+            14,
+            20,
+            13,
+            14,
+            18,
+            11
+          ],
+          "n_probe": 1,
+          "n_attempted": 127,
+          "n_delivered": 62,
+          "n_wasted": 65,
+          "n_forced_hold": 0,
+          "budget_used": 128,
+          "cost_true": 0.10234338463838576,
+          "cost_true_by_user": [
+            0.06566967286014823,
+            0.03667371177823752
+          ],
+          "mean_task_aoi": 15.0,
+          "mean_csi_aoi": 192.0,
+          "delivery_rate": 0.4881889763779528,
+          "identities_pass": true,
+          "identities_fail": []
+        },
+        {
+          "episode": 102,
+          "cv": 0.24206145913796356,
+          "profile": [
+            20,
+            14,
+            15,
+            18,
+            19,
+            18,
+            17,
+            7
+          ],
+          "n_probe": 3,
+          "n_attempted": 125,
+          "n_delivered": 68,
+          "n_wasted": 57,
+          "n_forced_hold": 0,
+          "budget_used": 128,
+          "cost_true": 0.055084359090064434,
+          "cost_true_by_user": [
+            0.014452952984775044,
+            0.04063140610528939
+          ],
+          "mean_task_aoi": 18.5,
+          "mean_csi_aoi": 116.5,
+          "delivery_rate": 0.544,
+          "identities_pass": true,
+          "identities_fail": []
+        },
+        {
+          "episode": 103,
+          "cv": 0.27775607554111215,
+          "profile": [
+            26,
+            13,
+            14,
+            13,
+            19,
+            17,
+            15,
+            11
+          ],
+          "n_probe": 4,
+          "n_attempted": 124,
+          "n_delivered": 67,
+          "n_wasted": 57,
+          "n_forced_hold": 0,
+          "budget_used": 128,
+          "cost_true": 0.06327370987527021,
+          "cost_true_by_user": [
+            0.03031548755503138,
+            0.03295822232023884
+          ],
+          "mean_task_aoi": 16.5,
+          "mean_csi_aoi": 162.0,
+          "delivery_rate": 0.5403225806451613,
+          "identities_pass": true,
+          "identities_fail": []
+        }
+      ],
+      "cv_median": 0.267725088571108,
+      "cv_min": 0.24206145913796356,
+      "cv_max": 0.29481191037676885,
+      "aoi_median": 17.5,
+      "cost_median": 0.08280854725682799,
+      "delivered_median": 64.5,
+      "probe_median": 2.5,
+      "elapsed_s": 10.18
+    },
+    "0.7": {
+      "rows": [
+        {
+          "episode": 100,
+          "cv": 0.27599252707274524,
+          "profile": [
+            22,
+            11,
+            11,
+            12,
+            16,
+            15,
+            18,
+            23
+          ],
+          "n_probe": 5,
+          "n_attempted": 123,
+          "n_delivered": 61,
+          "n_wasted": 62,
+          "n_forced_hold": 0,
+          "budget_used": 128,
+          "cost_true": 0.11102163083703073,
+          "cost_true_by_user": [
+            0.02619695095025365,
+            0.0848246798867771
+          ],
+          "mean_task_aoi": 4.5,
+          "mean_csi_aoi": 124.5,
+          "delivery_rate": 0.4959349593495935,
+          "identities_pass": true,
+          "identities_fail": []
+        },
+        {
+          "episode": 101,
+          "cv": 0.2922532165003487,
+          "profile": [
+            22,
+            11,
+            8,
+            15,
+            17,
+            13,
+            19,
+            21
+          ],
+          "n_probe": 3,
+          "n_attempted": 123,
+          "n_delivered": 60,
+          "n_wasted": 63,
+          "n_forced_hold": 0,
+          "budget_used": 126,
+          "cost_true": 0.1077593883997264,
+          "cost_true_by_user": [
+            0.06962852843184483,
+            0.03813085996788157
+          ],
+          "mean_task_aoi": 7.0,
+          "mean_csi_aoi": 30.0,
+          "delivery_rate": 0.4878048780487805,
+          "identities_pass": true,
+          "identities_fail": []
+        },
+        {
+          "episode": 102,
+          "cv": 0.2488737106973088,
+          "profile": [
+            16,
+            12,
+            10,
+            14,
+            18,
+            14,
+            22,
+            21
+          ],
+          "n_probe": 0,
+          "n_attempted": 127,
+          "n_delivered": 59,
+          "n_wasted": 68,
+          "n_forced_hold": 0,
+          "budget_used": 127,
+          "cost_true": 0.051729976480230214,
+          "cost_true_by_user": [
+            0.009717777089459333,
+            0.04201219939077089
+          ],
+          "mean_task_aoi": 11.0,
+          "mean_csi_aoi": -1.0,
+          "delivery_rate": 0.4645669291338583,
+          "identities_pass": true,
+          "identities_fail": []
+        },
+        {
+          "episode": 103,
+          "cv": 0.3423265984407288,
+          "profile": [
+            24,
+            10,
+            9,
+            10,
+            21,
+            15,
+            21,
+            18
+          ],
+          "n_probe": 10,
+          "n_attempted": 118,
+          "n_delivered": 59,
+          "n_wasted": 59,
+          "n_forced_hold": 0,
+          "budget_used": 128,
+          "cost_true": 0.05622736080278216,
+          "cost_true_by_user": [
+            0.028719236021062772,
+            0.02750812478171939
+          ],
+          "mean_task_aoi": 12.0,
+          "mean_csi_aoi": 15.5,
+          "delivery_rate": 0.5,
+          "identities_pass": true,
+          "identities_fail": []
+        }
+      ],
+      "cv_median": 0.28412287178654694,
+      "cv_min": 0.2488737106973088,
+      "cv_max": 0.3423265984407288,
+      "aoi_median": 9.0,
+      "cost_median": 0.08199337460125428,
+      "delivered_median": 59.5,
+      "probe_median": 4.0,
+      "elapsed_s": 31.77
+    }
+  },
+  "eps": [
+    100,
+    101,
+    102,
+    103
+  ],
+  "phi_sensitivity": {
+    "cv_medians": [
+      0.3340371705419456,
+      0.267725088571108,
+      0.28412287178654694
+    ],
+    "range": 0.0663120819708376,
+    "rel_range": 0.23339226987912431,
+    "sensitive": true,
+    "rule": "三个 p̂ 的 CV 中位相对极差 >0.20 ⇒ 对 p̂ 敏感 ⇒ 主结论须降级为含混淆"
+  }
+}

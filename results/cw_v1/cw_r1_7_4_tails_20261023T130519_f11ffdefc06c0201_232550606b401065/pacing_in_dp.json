@@ -1,0 +1,6 @@
+{
+  "pacing_read_in_dp_branch": false,
+  "evidence": "experiments/cw_v1/plan_ref.py::_terminal —— if self.tail == \"dp\": task_P = self._dp_value(...) else: _paced_sumP(...)；dp 支路不引用 self.pacing",
+  "consequence": "G8b（pacing=False）的阴性对照**不覆盖** dp 臂 ⇒ dp 臂的分辨力只能由 T-C2（dp_b_cap=8）提供",
+  "verified_by": "static-read"
+}

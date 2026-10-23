@@ -1,0 +1,383 @@
+{
+  "paced": {
+    "tail": "paced",
+    "dp_grid": null,
+    "run1": {
+      "G8a": {
+        "pass": false,
+        "detail": {
+          "paced": {
+            "cv": 0.583391467891342,
+            "profile": [
+              11,
+              6,
+              7,
+              11,
+              9,
+              19,
+              30,
+              28
+            ],
+            "aoi": 16.0,
+            "cost_true": 0.11067633547679674,
+            "sent": 110,
+            "probe": 11
+          },
+          "nopace": {
+            "cv": 0.9286036223814766,
+            "profile": [
+              30,
+              29,
+              32,
+              32,
+              5,
+              0,
+              0,
+              0
+            ],
+            "aoi": 128.5,
+            "cost_true": 0.1767897716156801,
+            "sent": 107,
+            "probe": 21
+          }
+        },
+        "name": "G8a 配速：B/T=0.5、ρ=0.85 的 send_profile 8 窗 CV < 0.30"
+      },
+      "G8a2": {
+        "pass": true,
+        "detail": {
+          "aoi_paced": 16.0,
+          "aoi_nopace": 128.5
+        },
+        "name": "G8a2 同一格 mean_task_aoi ≤ 20（预算空转/反复重试同一用户会让它爆）"
+      },
+      "G8b": {
+        "pass": true,
+        "detail": {
+          "cv_nopace": 0.9286036223814766,
+          "cv_paced": 0.583391467891342
+        },
+        "name": "G8b 阴性对照：同 planner 关掉配速 ⇒ CV > 0.30（否则 G8a 无分辨力）"
+      },
+      "G4": {
+        "pass": false,
+        "detail": {
+          "agreement": 0.646484375,
+          "n_compared": 512,
+          "median_rel_cost_diff": 0.3719255758128803,
+          "per_episode": [
+            {
+              "episode": 100,
+              "c16": 0.24604271834394176,
+              "c32": 0.1658671185100418,
+              "rel": 0.32586048623403246
+            },
+            {
+              "episode": 101,
+              "c16": 0.17286430703179453,
+              "c32": 0.24511997375049432,
+              "rel": 0.41799066539172813
+            }
+          ]
+        },
+        "name": "G4 M 加倍（16→32）动作一致率 ≥ 0.90 且成本相对差中位 ≤ 10%"
+      },
+      "_scalars": {
+        "cv_paced": 0.583391467891342,
+        "aoi_paced": 16.0,
+        "agreement": 0.646484375,
+        "median_rel": 0.3719255758128803,
+        "cv_nopace": 0.9286036223814766,
+        "pass_G8a": false,
+        "pass_G8a2": true,
+        "pass_G4": false
+      }
+    },
+    "run2": {
+      "G8a": {
+        "pass": false,
+        "detail": {
+          "paced": {
+            "cv": 0.583391467891342,
+            "profile": [
+              11,
+              6,
+              7,
+              11,
+              9,
+              19,
+              30,
+              28
+            ],
+            "aoi": 16.0,
+            "cost_true": 0.11067633547679674,
+            "sent": 110,
+            "probe": 11
+          },
+          "nopace": {
+            "cv": 0.9286036223814766,
+            "profile": [
+              30,
+              29,
+              32,
+              32,
+              5,
+              0,
+              0,
+              0
+            ],
+            "aoi": 128.5,
+            "cost_true": 0.1767897716156801,
+            "sent": 107,
+            "probe": 21
+          }
+        },
+        "name": "G8a 配速：B/T=0.5、ρ=0.85 的 send_profile 8 窗 CV < 0.30"
+      },
+      "G8a2": {
+        "pass": true,
+        "detail": {
+          "aoi_paced": 16.0,
+          "aoi_nopace": 128.5
+        },
+        "name": "G8a2 同一格 mean_task_aoi ≤ 20（预算空转/反复重试同一用户会让它爆）"
+      },
+      "G8b": {
+        "pass": true,
+        "detail": {
+          "cv_nopace": 0.9286036223814766,
+          "cv_paced": 0.583391467891342
+        },
+        "name": "G8b 阴性对照：同 planner 关掉配速 ⇒ CV > 0.30（否则 G8a 无分辨力）"
+      },
+      "G4": {
+        "pass": false,
+        "detail": {
+          "agreement": 0.646484375,
+          "n_compared": 512,
+          "median_rel_cost_diff": 0.3719255758128803,
+          "per_episode": [
+            {
+              "episode": 100,
+              "c16": 0.24604271834394176,
+              "c32": 0.1658671185100418,
+              "rel": 0.32586048623403246
+            },
+            {
+              "episode": 101,
+              "c16": 0.17286430703179453,
+              "c32": 0.24511997375049432,
+              "rel": 0.41799066539172813
+            }
+          ]
+        },
+        "name": "G4 M 加倍（16→32）动作一致率 ≥ 0.90 且成本相对差中位 ≤ 10%"
+      },
+      "_scalars": {
+        "cv_paced": 0.583391467891342,
+        "aoi_paced": 16.0,
+        "agreement": 0.646484375,
+        "median_rel": 0.3719255758128803,
+        "cv_nopace": 0.9286036223814766,
+        "pass_G8a": false,
+        "pass_G8a2": true,
+        "pass_G4": false
+      }
+    },
+    "dp_builds": 0
+  },
+  "dp_legacy": {
+    "tail": "dp",
+    "dp_grid": "legacy",
+    "run1": {
+      "G8a": {
+        "pass": true,
+        "detail": {
+          "paced": {
+            "cv": 0.21423920626253262,
+            "profile": [
+              24,
+              14,
+              16,
+              12,
+              14,
+              18,
+              15,
+              15
+            ],
+            "aoi": 9.5,
+            "cost_true": 0.0607704348388792,
+            "sent": 124,
+            "probe": 4
+          },
+          "nopace": {
+            "cv": 0.9416574483324602,
+            "profile": [
+              32,
+              30,
+              30,
+              32,
+              4,
+              0,
+              0,
+              0
+            ],
+            "aoi": 128.0,
+            "cost_true": 0.19527595975567763,
+            "sent": 105,
+            "probe": 23
+          }
+        },
+        "name": "G8a 配速：B/T=0.5、ρ=0.85 的 send_profile 8 窗 CV < 0.30"
+      },
+      "G8a2": {
+        "pass": true,
+        "detail": {
+          "aoi_paced": 9.5,
+          "aoi_nopace": 128.0
+        },
+        "name": "G8a2 同一格 mean_task_aoi ≤ 20（预算空转/反复重试同一用户会让它爆）"
+      },
+      "G8b": {
+        "pass": true,
+        "detail": {
+          "cv_nopace": 0.9416574483324602,
+          "cv_paced": 0.21423920626253262
+        },
+        "name": "G8b 阴性对照：同 planner 关掉配速 ⇒ CV > 0.30（否则 G8a 无分辨力）"
+      },
+      "G4": {
+        "pass": false,
+        "detail": {
+          "agreement": 0.650390625,
+          "n_compared": 512,
+          "median_rel_cost_diff": 0.6707310390188042,
+          "per_episode": [
+            {
+              "episode": 100,
+              "c16": 0.2499436824320827,
+              "c32": 0.09970410887881437,
+              "rel": 0.6010937027547916
+            },
+            {
+              "episode": 101,
+              "c16": 0.23851986978912704,
+              "c32": 0.41511243825757205,
+              "rel": 0.7403683752828168
+            }
+          ]
+        },
+        "name": "G4 M 加倍（16→32）动作一致率 ≥ 0.90 且成本相对差中位 ≤ 10%"
+      },
+      "_scalars": {
+        "cv_paced": 0.21423920626253262,
+        "aoi_paced": 9.5,
+        "agreement": 0.650390625,
+        "median_rel": 0.6707310390188042,
+        "cv_nopace": 0.9416574483324602,
+        "pass_G8a": true,
+        "pass_G8a2": true,
+        "pass_G4": false
+      }
+    },
+    "run2": null,
+    "dp_builds": 1
+  },
+  "dp_r173": {
+    "tail": "dp",
+    "dp_grid": "r173",
+    "run1": {
+      "G8a": {
+        "pass": true,
+        "detail": {
+          "paced": {
+            "cv": 0.2576941016011038,
+            "profile": [
+              26,
+              15,
+              16,
+              16,
+              13,
+              15,
+              16,
+              11
+            ],
+            "aoi": 20.5,
+            "cost_true": 0.13102784789876698,
+            "sent": 126,
+            "probe": 2
+          },
+          "nopace": {
+            "cv": 0.8677152110571763,
+            "profile": [
+              29,
+              28,
+              29,
+              32,
+              10,
+              0,
+              0,
+              0
+            ],
+            "aoi": 117.0,
+            "cost_true": 0.06223793107289161,
+            "sent": 119,
+            "probe": 9
+          }
+        },
+        "name": "G8a 配速：B/T=0.5、ρ=0.85 的 send_profile 8 窗 CV < 0.30"
+      },
+      "G8a2": {
+        "pass": false,
+        "detail": {
+          "aoi_paced": 20.5,
+          "aoi_nopace": 117.0
+        },
+        "name": "G8a2 同一格 mean_task_aoi ≤ 20（预算空转/反复重试同一用户会让它爆）"
+      },
+      "G8b": {
+        "pass": true,
+        "detail": {
+          "cv_nopace": 0.8677152110571763,
+          "cv_paced": 0.2576941016011038
+        },
+        "name": "G8b 阴性对照：同 planner 关掉配速 ⇒ CV > 0.30（否则 G8a 无分辨力）"
+      },
+      "G4": {
+        "pass": false,
+        "detail": {
+          "agreement": 0.634765625,
+          "n_compared": 512,
+          "median_rel_cost_diff": 0.2902749582143991,
+          "per_episode": [
+            {
+              "episode": 100,
+              "c16": 0.13227783129396925,
+              "c32": 0.08084686988912296,
+              "rel": 0.3888101347122034
+            },
+            {
+              "episode": 101,
+              "c16": 0.1269280148250739,
+              "c32": 0.15126516468135429,
+              "rel": 0.19173978171659484
+            }
+          ]
+        },
+        "name": "G4 M 加倍（16→32）动作一致率 ≥ 0.90 且成本相对差中位 ≤ 10%"
+      },
+      "_scalars": {
+        "cv_paced": 0.2576941016011038,
+        "aoi_paced": 20.5,
+        "agreement": 0.634765625,
+        "median_rel": 0.2902749582143991,
+        "cv_nopace": 0.8677152110571763,
+        "pass_G8a": true,
+        "pass_G8a2": false,
+        "pass_G4": false
+      }
+    },
+    "run2": null,
+    "dp_builds": 1
+  }
+}
