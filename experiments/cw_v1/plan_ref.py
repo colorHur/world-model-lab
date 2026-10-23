@@ -129,14 +129,26 @@ class _Draws:
 
     __slots__ = ("udeliv", "eps_meas", "eps_csi", "s_h", "w", "init_x", "init_h")
 
-    def __init__(self, rng: np.random.Generator, H: int, M: int, n: int) -> None:
-        self.udeliv = rng.random((H, M, n))
-        self.eps_meas = rng.standard_normal((H, M, n))
-        self.eps_csi = rng.standard_normal((H, M, n))
-        self.s_h = rng.standard_normal((H, M, n))
-        self.w = rng.standard_normal((H, M, n))
-        self.init_x = rng.standard_normal((M, n))
-        self.init_h = rng.standard_normal((M, n))
+    def __init__(self, rng: np.random.Generator, H: int, M: int, n: int,
+                 pool_M: int | None = None) -> None:
+        #: ★ R1.7.5：`pool_M` = 先把随机数按**更大的样本数**抽出来，再取前 `M` 条。
+        #:  `None` ⇒ `pool_M = M` ⇒ 抽取的形状与 `0426fcb` **逐位相同**（默认路径不变，
+        #:  由 `P0c` 闸钉住）。`pool_M > M` 时，`M` 与 `pool_M` 两档共享前 `M` 条实现
+        #:  ⇒ 两档的差只来自"新增的 `pool_M − M` 条路径"，这才是配对的 CRN 边际。
+        #:  没有这个开关，`M=16` 与 `M=32` 抽的是**不同长度**的数组，两批样本无包含关系
+        #:  （见 `docs/research/CW-R1.7.5-G4可达性-预注册-v0.1.md` §1、`P0a`）。
+        M_draw = int(M if pool_M is None else pool_M)
+        if M_draw < int(M):
+            raise ValueError(f"pool_M={M_draw} < M={int(M)}：切不出前 M 条")
+        # `.copy()`：切片是视图，复制一份保证这条支路拿到的内存与旧实现一样是独占的
+        # （值不变；`P0c` 闸逐位比对默认路径）。
+        self.udeliv = rng.random((H, M_draw, n))[:, :M, :].copy()
+        self.eps_meas = rng.standard_normal((H, M_draw, n))[:, :M, :].copy()
+        self.eps_csi = rng.standard_normal((H, M_draw, n))[:, :M, :].copy()
+        self.s_h = rng.standard_normal((H, M_draw, n))[:, :M, :].copy()
+        self.w = rng.standard_normal((H, M_draw, n))[:, :M, :].copy()
+        self.init_x = rng.standard_normal((M_draw, n))[:M, :].copy()
+        self.init_h = rng.standard_normal((M_draw, n))[:M, :].copy()
 
 
 class PlanRef:
@@ -150,7 +162,8 @@ class PlanRef:
                  dp_b_cap: int | None = None,
                  dp_axis_mode: str = "user_axis",
                  dp_grid: str | None = None,
-                 send_other_advance: str = "fixed") -> None:
+                 send_other_advance: str = "fixed",
+                 draws_pool_m: int | None = None) -> None:
         self.cfg = cfg
         self.H = int(h_plan)
         self.M = int(m_samples)
@@ -187,6 +200,12 @@ class PlanRef:
         self._dp = None            # 惰性：首个 `__call__` 用当次公开 telemetry 建一次
         self.n_dp_requests = 0
         self.base_seed = int(seed)
+        #: ★ R1.7.5：让 `M` 档位共享更大的抽取池（`pool = 32` ⇒ `M=16` 与 `M=32`
+        #:  共享前 16 条实现）。`None` = 旧行为（每档独立抽，与 `0426fcb` 逐位相同）。
+        #:  **只改采样结构，不改策略**；只在 `r1_7_5_reach.py` 的 `P3` 对照里打开。
+        self.draws_pool_m = (None if draws_pool_m is None else int(draws_pool_m))
+        if self.draws_pool_m is not None and self.draws_pool_m < self.M:
+            raise ValueError(f"draws_pool_m={self.draws_pool_m} < m_samples={self.M}")
         self.rho = float(rho if rho is not None else cfg.channel.rho_panel[0])
         self.name = (f"plan_ref_H{self.H}_M{self.M}"
                      f"{'' if self.use_probe else '_noprobe'}"
@@ -589,7 +608,8 @@ class PlanRef:
             return Action("HOLD")
 
         # ★ 一个时隙只抽一次随机数面板，5 个根动作共用（严格 CRN 配对）
-        d = _Draws(np.random.default_rng(seed), H, self.M, int(v.n_users))
+        d = _Draws(np.random.default_rng(seed), H, self.M, int(v.n_users),
+                   pool_M=self.draws_pool_m)
         vals: dict[Action, float] = {}
         for a in acts:
             st = self._init_state(v, d)
@@ -632,12 +652,14 @@ def make(cfg: CWConfig, *, arm: str = "probe", h_plan: int = 5, m_samples: int =
          pacing: bool = True, cont_m: bool = True,
          tail: str | None = None, dp_phat=None, dp_b_cap: int | None = None,
          dp_axis_mode: str = "user_axis", dp_grid: str | None = None,
-         send_other_advance: str = "fixed") -> PlanRef:
+         send_other_advance: str = "fixed",
+         draws_pool_m: int | None = None) -> PlanRef:
     """按臂名构造：`probe` / `noprobe` / `nohidden`（后者只给变异闸用）。"""
     kw = dict(h_plan=h_plan, m_samples=m_samples, seed=seed, rho=rho, pacing=pacing,
               cont_m=cont_m, tail=tail, dp_phat=dp_phat, dp_b_cap=dp_b_cap,
               dp_axis_mode=dp_axis_mode, dp_grid=dp_grid,
-              send_other_advance=send_other_advance)
+              send_other_advance=send_other_advance,
+              draws_pool_m=draws_pool_m)
     if arm == "probe":
         return PlanRef(cfg, use_probe=True, sample_hidden=True, **kw)
     if arm == "noprobe":

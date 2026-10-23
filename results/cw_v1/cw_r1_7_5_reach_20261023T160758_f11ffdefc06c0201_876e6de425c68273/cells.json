@@ -1,0 +1,434 @@
+{
+  "indep|100|2001|16": {
+    "cost_true": 0.13074571146253527,
+    "n_probe": 3,
+    "n_attempted": 116,
+    "n_delivered": 60,
+    "n_idle": 137,
+    "policy_trace_hash": "e7f9f3e3d6b80aa8",
+    "n_acts": 256
+  },
+  "indep|100|2001|32": {
+    "cost_true": 0.18333180472849905,
+    "n_probe": 4,
+    "n_attempted": 121,
+    "n_delivered": 75,
+    "n_idle": 131,
+    "policy_trace_hash": "ca86bd366efa33e0",
+    "n_acts": 256
+  },
+  "nested|100|2001|16": {
+    "cost_true": 0.17511326951379022,
+    "n_probe": 8,
+    "n_attempted": 118,
+    "n_delivered": 61,
+    "n_idle": 130,
+    "policy_trace_hash": "0092746077bd0f06",
+    "n_acts": 256
+  },
+  "indep|100|2002|16": {
+    "cost_true": 0.08411820429268507,
+    "n_probe": 3,
+    "n_attempted": 120,
+    "n_delivered": 67,
+    "n_idle": 133,
+    "policy_trace_hash": "62c21ff0bd6d6238",
+    "n_acts": 256
+  },
+  "indep|100|2002|32": {
+    "cost_true": 0.07025709944453253,
+    "n_probe": 5,
+    "n_attempted": 115,
+    "n_delivered": 63,
+    "n_idle": 136,
+    "policy_trace_hash": "c0077fd16b4d741e",
+    "n_acts": 256
+  },
+  "nested|100|2002|16": {
+    "cost_true": 0.08259876767328639,
+    "n_probe": 5,
+    "n_attempted": 118,
+    "n_delivered": 61,
+    "n_idle": 133,
+    "policy_trace_hash": "b668197c8878249e",
+    "n_acts": 256
+  },
+  "indep|100|2003|16": {
+    "cost_true": 0.06902025026203551,
+    "n_probe": 4,
+    "n_attempted": 117,
+    "n_delivered": 71,
+    "n_idle": 135,
+    "policy_trace_hash": "baec992643ab92d6",
+    "n_acts": 256
+  },
+  "indep|100|2003|32": {
+    "cost_true": 0.09267089192081421,
+    "n_probe": 9,
+    "n_attempted": 115,
+    "n_delivered": 65,
+    "n_idle": 132,
+    "policy_trace_hash": "15aed07245c567b6",
+    "n_acts": 256
+  },
+  "nested|100|2003|16": {
+    "cost_true": 0.06928401573674497,
+    "n_probe": 5,
+    "n_attempted": 115,
+    "n_delivered": 68,
+    "n_idle": 136,
+    "policy_trace_hash": "8096765209ee7007",
+    "n_acts": 256
+  },
+  "indep|100|2004|16": {
+    "cost_true": 0.0863977802730728,
+    "n_probe": 8,
+    "n_attempted": 117,
+    "n_delivered": 66,
+    "n_idle": 131,
+    "policy_trace_hash": "d9426a42cc1d8cc9",
+    "n_acts": 256
+  },
+  "indep|100|2004|32": {
+    "cost_true": 0.07776404931754974,
+    "n_probe": 2,
+    "n_attempted": 120,
+    "n_delivered": 68,
+    "n_idle": 134,
+    "policy_trace_hash": "0a9102f6fa126650",
+    "n_acts": 256
+  },
+  "nested|100|2004|16": {
+    "cost_true": 0.06954388599064519,
+    "n_probe": 1,
+    "n_attempted": 117,
+    "n_delivered": 55,
+    "n_idle": 138,
+    "policy_trace_hash": "9bdf1b82a9cf06d4",
+    "n_acts": 256
+  },
+  "indep|101|2001|16": {
+    "cost_true": 0.12422377630632288,
+    "n_probe": 9,
+    "n_attempted": 109,
+    "n_delivered": 71,
+    "n_idle": 138,
+    "policy_trace_hash": "cdaa05eeecf0afcb",
+    "n_acts": 256
+  },
+  "indep|101|2001|32": {
+    "cost_true": 0.22023599242307934,
+    "n_probe": 14,
+    "n_attempted": 106,
+    "n_delivered": 52,
+    "n_idle": 136,
+    "policy_trace_hash": "8c73569327771b4e",
+    "n_acts": 256
+  },
+  "nested|101|2001|16": {
+    "cost_true": 0.16550235944104083,
+    "n_probe": 10,
+    "n_attempted": 105,
+    "n_delivered": 57,
+    "n_idle": 141,
+    "policy_trace_hash": "4e08c702158ef01f",
+    "n_acts": 256
+  },
+  "indep|101|2002|16": {
+    "cost_true": 0.11839400287601759,
+    "n_probe": 17,
+    "n_attempted": 104,
+    "n_delivered": 55,
+    "n_idle": 135,
+    "policy_trace_hash": "68959f3798e10b9f",
+    "n_acts": 256
+  },
+  "indep|101|2002|32": {
+    "cost_true": 0.07304916691336748,
+    "n_probe": 14,
+    "n_attempted": 105,
+    "n_delivered": 59,
+    "n_idle": 137,
+    "policy_trace_hash": "1df28272ffebd073",
+    "n_acts": 256
+  },
+  "nested|101|2002|16": {
+    "cost_true": 0.09473700758383391,
+    "n_probe": 17,
+    "n_attempted": 102,
+    "n_delivered": 52,
+    "n_idle": 137,
+    "policy_trace_hash": "1ece8b43a85544e2",
+    "n_acts": 256
+  },
+  "indep|101|2003|16": {
+    "cost_true": 0.13260574715320128,
+    "n_probe": 7,
+    "n_attempted": 105,
+    "n_delivered": 68,
+    "n_idle": 144,
+    "policy_trace_hash": "9b0af5b0fd2fa90d",
+    "n_acts": 256
+  },
+  "indep|101|2003|32": {
+    "cost_true": 0.1418986965655797,
+    "n_probe": 17,
+    "n_attempted": 101,
+    "n_delivered": 50,
+    "n_idle": 138,
+    "policy_trace_hash": "e6db27a874478a23",
+    "n_acts": 256
+  },
+  "nested|101|2003|16": {
+    "cost_true": 0.1455369148709315,
+    "n_probe": 18,
+    "n_attempted": 99,
+    "n_delivered": 57,
+    "n_idle": 139,
+    "policy_trace_hash": "2c32b0bb92b6f4a9",
+    "n_acts": 256
+  },
+  "indep|101|2004|16": {
+    "cost_true": 0.1835585805702098,
+    "n_probe": 14,
+    "n_attempted": 102,
+    "n_delivered": 51,
+    "n_idle": 140,
+    "policy_trace_hash": "dae86e3a90cc0301",
+    "n_acts": 256
+  },
+  "indep|101|2004|32": {
+    "cost_true": 0.11607310176237065,
+    "n_probe": 23,
+    "n_attempted": 100,
+    "n_delivered": 55,
+    "n_idle": 133,
+    "policy_trace_hash": "a8a170b3e7485cf6",
+    "n_acts": 256
+  },
+  "nested|101|2004|16": {
+    "cost_true": 0.17512441473203222,
+    "n_probe": 14,
+    "n_attempted": 107,
+    "n_delivered": 60,
+    "n_idle": 135,
+    "policy_trace_hash": "5578f2cd1309ed6a",
+    "n_acts": 256
+  },
+  "indep|102|2001|16": {
+    "cost_true": 0.03802629476232837,
+    "n_probe": 10,
+    "n_attempted": 112,
+    "n_delivered": 79,
+    "n_idle": 134,
+    "policy_trace_hash": "0e3c7dd4490b2a03",
+    "n_acts": 256
+  },
+  "indep|102|2001|32": {
+    "cost_true": 0.07122031839927823,
+    "n_probe": 6,
+    "n_attempted": 115,
+    "n_delivered": 67,
+    "n_idle": 135,
+    "policy_trace_hash": "60f24750c3205a36",
+    "n_acts": 256
+  },
+  "nested|102|2001|16": {
+    "cost_true": 0.089582633973623,
+    "n_probe": 1,
+    "n_attempted": 123,
+    "n_delivered": 69,
+    "n_idle": 132,
+    "policy_trace_hash": "718bbbd6cfee05a8",
+    "n_acts": 256
+  },
+  "indep|102|2002|16": {
+    "cost_true": 0.0390318879092138,
+    "n_probe": 8,
+    "n_attempted": 116,
+    "n_delivered": 70,
+    "n_idle": 132,
+    "policy_trace_hash": "3c197eb6a696f2c9",
+    "n_acts": 256
+  },
+  "indep|102|2002|32": {
+    "cost_true": 0.06860619715583256,
+    "n_probe": 3,
+    "n_attempted": 115,
+    "n_delivered": 66,
+    "n_idle": 138,
+    "policy_trace_hash": "c73c412670283c4e",
+    "n_acts": 256
+  },
+  "nested|102|2002|16": {
+    "cost_true": 0.04566237378292191,
+    "n_probe": 13,
+    "n_attempted": 107,
+    "n_delivered": 73,
+    "n_idle": 136,
+    "policy_trace_hash": "57846ec785ecf52b",
+    "n_acts": 256
+  },
+  "indep|102|2003|16": {
+    "cost_true": 0.052078328690270695,
+    "n_probe": 10,
+    "n_attempted": 112,
+    "n_delivered": 73,
+    "n_idle": 134,
+    "policy_trace_hash": "22e4ab3febfe5e09",
+    "n_acts": 256
+  },
+  "indep|102|2003|32": {
+    "cost_true": 0.03229222661617025,
+    "n_probe": 4,
+    "n_attempted": 121,
+    "n_delivered": 58,
+    "n_idle": 131,
+    "policy_trace_hash": "3cb66b73d3e50158",
+    "n_acts": 256
+  },
+  "nested|102|2003|16": {
+    "cost_true": 0.03040154966346137,
+    "n_probe": 10,
+    "n_attempted": 111,
+    "n_delivered": 72,
+    "n_idle": 135,
+    "policy_trace_hash": "662ced5bbc37d399",
+    "n_acts": 256
+  },
+  "indep|102|2004|16": {
+    "cost_true": 0.03181734247880398,
+    "n_probe": 20,
+    "n_attempted": 100,
+    "n_delivered": 66,
+    "n_idle": 136,
+    "policy_trace_hash": "3ed249d81f1e22d6",
+    "n_acts": 256
+  },
+  "indep|102|2004|32": {
+    "cost_true": 0.03292020382429045,
+    "n_probe": 5,
+    "n_attempted": 117,
+    "n_delivered": 70,
+    "n_idle": 134,
+    "policy_trace_hash": "99d00b29a28a2864",
+    "n_acts": 256
+  },
+  "nested|102|2004|16": {
+    "cost_true": 0.042945534881104905,
+    "n_probe": 4,
+    "n_attempted": 114,
+    "n_delivered": 65,
+    "n_idle": 138,
+    "policy_trace_hash": "42f3cb9dec928277",
+    "n_acts": 256
+  },
+  "indep|103|2001|16": {
+    "cost_true": 0.08869961277551197,
+    "n_probe": 3,
+    "n_attempted": 118,
+    "n_delivered": 51,
+    "n_idle": 135,
+    "policy_trace_hash": "2c39429362755503",
+    "n_acts": 256
+  },
+  "indep|103|2001|32": {
+    "cost_true": 0.10110682071509296,
+    "n_probe": 2,
+    "n_attempted": 118,
+    "n_delivered": 53,
+    "n_idle": 136,
+    "policy_trace_hash": "d8e12efdda53388b",
+    "n_acts": 256
+  },
+  "nested|103|2001|16": {
+    "cost_true": 0.0907281715478043,
+    "n_probe": 3,
+    "n_attempted": 119,
+    "n_delivered": 49,
+    "n_idle": 134,
+    "policy_trace_hash": "57c6b1f262eb3317",
+    "n_acts": 256
+  },
+  "indep|103|2002|16": {
+    "cost_true": 0.11997768656132776,
+    "n_probe": 1,
+    "n_attempted": 122,
+    "n_delivered": 52,
+    "n_idle": 133,
+    "policy_trace_hash": "67f768e2eb857f56",
+    "n_acts": 256
+  },
+  "indep|103|2002|32": {
+    "cost_true": 0.10185492066636004,
+    "n_probe": 4,
+    "n_attempted": 115,
+    "n_delivered": 49,
+    "n_idle": 137,
+    "policy_trace_hash": "e178c3ec0302789e",
+    "n_acts": 256
+  },
+  "nested|103|2002|16": {
+    "cost_true": 0.06627896641059143,
+    "n_probe": 1,
+    "n_attempted": 121,
+    "n_delivered": 54,
+    "n_idle": 134,
+    "policy_trace_hash": "88447d104ed2177e",
+    "n_acts": 256
+  },
+  "indep|103|2003|16": {
+    "cost_true": 0.06429814117974375,
+    "n_probe": 0,
+    "n_attempted": 122,
+    "n_delivered": 53,
+    "n_idle": 134,
+    "policy_trace_hash": "d3c9a3f8091c91b5",
+    "n_acts": 256
+  },
+  "indep|103|2003|32": {
+    "cost_true": 0.1206061538672176,
+    "n_probe": 4,
+    "n_attempted": 119,
+    "n_delivered": 53,
+    "n_idle": 133,
+    "policy_trace_hash": "05fdd065bdbd1fa9",
+    "n_acts": 256
+  },
+  "nested|103|2003|16": {
+    "cost_true": 0.06913347962670235,
+    "n_probe": 3,
+    "n_attempted": 119,
+    "n_delivered": 55,
+    "n_idle": 134,
+    "policy_trace_hash": "758c79ca9b63400b",
+    "n_acts": 256
+  },
+  "indep|103|2004|16": {
+    "cost_true": 0.11667119791162546,
+    "n_probe": 2,
+    "n_attempted": 120,
+    "n_delivered": 48,
+    "n_idle": 134,
+    "policy_trace_hash": "4a0608e6a44a3f25",
+    "n_acts": 256
+  },
+  "indep|103|2004|32": {
+    "cost_true": 0.1112569317061506,
+    "n_probe": 4,
+    "n_attempted": 116,
+    "n_delivered": 52,
+    "n_idle": 136,
+    "policy_trace_hash": "870bb6ed8cd1f112",
+    "n_acts": 256
+  },
+  "nested|103|2004|16": {
+    "cost_true": 0.09841910037954357,
+    "n_probe": 18,
+    "n_attempted": 98,
+    "n_delivered": 54,
+    "n_idle": 140,
+    "policy_trace_hash": "adecb085957f172a",
+    "n_acts": 256
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "verdict": "G4-UNREACHABLE-AT-M16",
+  "reason": "嵌套下新增 16 条路径的 rel 中位 0.2170 > 10% ⇒ 线本身不可达",
+  "n_fail": 0,
+  "n_checks": 7,
+  "no_n1_n2": true,
+  "no_threshold_change": true,
+  "lines": {
+    "rel": 0.1,
+    "agree": 0.9
+  },
+  "rule": "判词按预注册 §3 映射；不改 0.90/10%；不读 N1/N2"
+}

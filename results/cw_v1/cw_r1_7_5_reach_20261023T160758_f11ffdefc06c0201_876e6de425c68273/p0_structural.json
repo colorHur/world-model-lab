@@ -1,0 +1,104 @@
+{
+  "P0a_not_nested": {
+    "pass": true,
+    "per_array": {
+      "udeliv": {
+        "equal": false,
+        "maxdiff": 0.9072514533870738
+      },
+      "eps_meas": {
+        "equal": false,
+        "maxdiff": 4.0985004096006845
+      },
+      "eps_csi": {
+        "equal": false,
+        "maxdiff": 3.3420685755312967
+      },
+      "s_h": {
+        "equal": false,
+        "maxdiff": 3.7209291697137292
+      },
+      "w": {
+        "equal": false,
+        "maxdiff": 3.745973129290574
+      },
+      "init_x": {
+        "equal": false,
+        "maxdiff": 3.7293367674906426
+      },
+      "init_h": {
+        "equal": false,
+        "maxdiff": 3.2332762662132146
+      }
+    },
+    "rule": "7 个数组必须全部不等 ⇒ `0426fcb` 的 M=16/M=32 是两批独立样本，不是嵌套"
+  },
+  "P0b_nested_available": {
+    "pass": true,
+    "per_array": {
+      "udeliv": {
+        "equal": true,
+        "maxdiff": 0.0
+      },
+      "eps_meas": {
+        "equal": true,
+        "maxdiff": 0.0
+      },
+      "eps_csi": {
+        "equal": true,
+        "maxdiff": 0.0
+      },
+      "s_h": {
+        "equal": true,
+        "maxdiff": 0.0
+      },
+      "w": {
+        "equal": true,
+        "maxdiff": 0.0
+      },
+      "init_x": {
+        "equal": true,
+        "maxdiff": 0.0
+      },
+      "init_h": {
+        "equal": true,
+        "maxdiff": 0.0
+      }
+    },
+    "rule": "`pool_M=32` 时 M=16 必须逐位等于 M=32 的前 16 条（否则『嵌套』不可判定 ⇒ NO-POWER）"
+  },
+  "P0b2_formula_identical": {
+    "pass": true,
+    "per_array": {
+      "udeliv": {
+        "equal": true,
+        "maxdiff": 0.0
+      },
+      "eps_meas": {
+        "equal": true,
+        "maxdiff": 0.0
+      },
+      "eps_csi": {
+        "equal": true,
+        "maxdiff": 0.0
+      },
+      "s_h": {
+        "equal": true,
+        "maxdiff": 0.0
+      },
+      "w": {
+        "equal": true,
+        "maxdiff": 0.0
+      },
+      "init_x": {
+        "equal": true,
+        "maxdiff": 0.0
+      },
+      "init_h": {
+        "equal": true,
+        "maxdiff": 0.0
+      }
+    },
+    "rule": "`pool_M=None` 必须与旧公式（0426fcb 的 7 条 rng 调用）逐位相同"
+  }
+}

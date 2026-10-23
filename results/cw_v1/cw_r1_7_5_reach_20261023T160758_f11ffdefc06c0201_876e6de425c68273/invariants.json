@@ -1,0 +1,15 @@
+{
+  "P0d_agree1_cost_equal": {
+    "pass": true,
+    "n_agree1": 0,
+    "n_violation": 0,
+    "violations": [],
+    "rule": "agree==1.0 的 episode 里 c16 必须逐位等于 c32（cost_true 是真实过程成本）"
+  },
+  "P0d2_same_trace_same_cost": {
+    "pass": true,
+    "n_same_trace": 0,
+    "violations": [],
+    "rule": "policy_trace_hash 相同 ⇒ cost_true 必须相同（否则 cost 里有规划器采样依赖 ⇒ 破坏 §1.2）"
+  }
+}
