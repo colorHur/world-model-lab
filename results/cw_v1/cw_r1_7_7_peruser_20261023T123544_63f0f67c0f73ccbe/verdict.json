@@ -1,0 +1,103 @@
+{
+ "verdict": "ONE-SIDED-AT-8",
+ "failed_gates": [],
+ "classifier": {
+  "verdict": "ONE-SIDED-AT-8",
+  "user0": {
+   "n_pos": 5,
+   "n_neg": 3,
+   "n_tie": 0,
+   "n_denom": 8,
+   "consistency": 0.625,
+   "dominant_sign": 1,
+   "n_eff": 8,
+   "sign_test_p": 0.7265625
+  },
+  "user1": {
+   "n_pos": 1,
+   "n_neg": 7,
+   "n_tie": 0,
+   "n_denom": 8,
+   "consistency": 0.875,
+   "dominant_sign": -1,
+   "n_eff": 8,
+   "sign_test_p": 0.0703125
+  },
+  "line_consistent": 0.875
+ },
+ "per_user": {
+  "u0": {
+   "n_pos": 5,
+   "n_neg": 3,
+   "n_tie": 0,
+   "n_denom": 8,
+   "consistency": 0.625,
+   "dominant_sign": 1,
+   "n_eff": 8,
+   "sign_test_p": 0.7265625,
+   "delta_median": 4.847422043897801e-05,
+   "delta_median_abs": 0.0006656746859219232,
+   "rel_effect_median_abs": 0.1408599185730301,
+   "paced_median": 0.010935899324026922,
+   "dp_median": 0.010973934325964817,
+   "R_u_median_of_ratios": 1.0057595822001122,
+   "R_u_ratio_of_medians": 1.0034779948873824,
+   "ratio_stable": true,
+   "deltas": [
+    -0.0011275713760176866,
+    3.9508845324749166e-05,
+    -0.0001218172261183998,
+    -0.0013467597748766371,
+    0.01032697110912889,
+    5.743959555320685e-05,
+    0.00020377799582615985,
+    0.010540133265821833
+   ],
+   "R_u_vs_floor": 0.5026719877449997
+  },
+  "u1": {
+   "n_pos": 1,
+   "n_neg": 7,
+   "n_tie": 0,
+   "n_denom": 8,
+   "consistency": 0.875,
+   "dominant_sign": -1,
+   "n_eff": 8,
+   "sign_test_p": 0.0703125,
+   "delta_median": -0.0015072967258024414,
+   "delta_median_abs": 0.0018065968529234542,
+   "rel_effect_median_abs": 0.5123583431651135,
+   "paced_median": 0.00663886384770849,
+   "dp_median": 0.00461615220783986,
+   "R_u_median_of_ratios": 0.6529371876825627,
+   "R_u_ratio_of_medians": 0.6953226205163401,
+   "ratio_stable": true,
+   "deltas": [
+    -0.003978244508109581,
+    0.008908572400140844,
+    -0.002901558288197854,
+    -0.0018725713384074825,
+    -0.0009700024717871156,
+    -0.0011200242442841882,
+    -0.001740622367439426,
+    -0.0012739710841654568
+   ],
+   "R_u_vs_floor": 1.3627627033390093
+  }
+ },
+ "floor": {
+  "u0": {
+   "paced16": 0.008561303963357598,
+   "dp16": 0.28022233585151934,
+   "taken_max": 0.28022233585151934,
+   "which": "dp16"
+  },
+  "u1": {
+   "paced16": 0.11123064764802826,
+   "dp16": 0.37597032991124946,
+   "taken_max": 0.37597032991124946,
+   "which": "dp16"
+  }
+ },
+ "elapsed_s": 0.039031
+}

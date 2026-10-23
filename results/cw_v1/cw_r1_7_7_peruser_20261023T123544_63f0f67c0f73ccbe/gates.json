@@ -1,0 +1,121 @@
+{
+ "G0_identity_cost_est_eq_sum_by_user": {
+  "pass": true,
+  "max_rel_err": 3.8573712870255017e-16,
+  "n_cells": 24,
+  "n_users": 2,
+  "tol": 1e-12,
+  "rule": "cost_est 必须是 cost_est_by_user 的同一分解（逐位）"
+ },
+ "G1_pairing_same_source": {
+  "pass": true,
+  "n_pairs": 8,
+  "mismatched": [],
+  "rule": "同 (ep,seed) 下 dp16 与 paced16 外生流 spawn_keys 必须逐字相同"
+ },
+ "G2_reproduce_B2": {
+  "pass": true,
+  "got": {
+   "rel_median": 0.052751322930061045,
+   "agree_median": 0.62890625
+  },
+  "ref": {
+   "rel_median": 0.052751322930061045,
+   "agree_median": 0.62890625
+  },
+  "abs_diff": {
+   "rel": 0.0,
+   "agree": 0.0
+  },
+  "tol": 1e-12,
+  "rule": "从 cells.json+acts.json 复算的 B2 必须与 R1.7.6 入库值逐位相同"
+ },
+ "G2b_reproduce_B3": {
+  "pass": true,
+  "got": {
+   "R": 6.580006739674501,
+   "sign_frac": 0.625,
+   "median_abs_effect": 0.299790269959085
+  },
+  "ref": {
+   "R": 6.580006739674501,
+   "sign_frac": 0.625,
+   "median_abs_effect": 0.299790269959085
+  },
+  "abs_diff": {
+   "R": 0.0,
+   "sign_frac": 0.0,
+   "median_abs_effect": 0.0
+  },
+  "n_pos": 3,
+  "n_neg": 5,
+  "tol": 1e-12,
+  "rule": "本轮要分解的『3 正 5 负』必须与 R1.7.6 §7.1-4 是同一个数"
+ },
+ "G3_classifier_discriminative": {
+  "pass": true,
+  "controls": {
+   "A_opposite": {
+    "expect": "AGGREGATE-CANCELS",
+    "got": "AGGREGATE-CANCELS",
+    "pass": true
+   },
+   "B_same": {
+    "expect": "SAME-DIRECTION",
+    "got": "SAME-DIRECTION",
+    "pass": true
+   },
+   "C_no_direction": {
+    "expect": "NO-DIRECTION-AT-8",
+    "got": "NO-DIRECTION-AT-8",
+    "pass": true
+   },
+   "D_one_sided_5of8": {
+    "expect": "ONE-SIDED-AT-8",
+    "got": "ONE-SIDED-AT-8",
+    "pass": true
+   },
+   "E1_tie_all_accounting": {
+    "expect": {
+     "n_tie": 8,
+     "n_pos": 0,
+     "n_neg": 0,
+     "consistency": 0.0
+    },
+    "got": {
+     "n_pos": 0,
+     "n_neg": 0,
+     "n_tie": 8,
+     "n_denom": 8,
+     "consistency": 0.0,
+     "dominant_sign": 0,
+     "n_eff": 0,
+     "sign_test_p": 1.0
+    },
+    "pass": true
+   },
+   "E2_tie_counts_in_denom": {
+    "expect": 0.125,
+    "got": 0.125,
+    "pass": true
+   }
+  },
+  "rule": "五个已知答案的合成输入必须各给出对应判词；任一不中 ⇒ 分类器无分辨力"
+ },
+ "G4_floor_self_zero": {
+  "pass": true,
+  "rule": "同值与自身的对称相对差必须恒为 0"
+ },
+ "G5_aggregate_sign_is_sum_not_vote": {
+  "pass": true,
+  "delta_sum": {
+   "n_pos": 3,
+   "n_neg": 5
+  },
+  "B3_effect": {
+   "n_pos": 3,
+   "n_neg": 5
+  },
+  "rule": "聚合 Δ 的符号分布必须等于 Σ_u Δ_u 的符号分布（不是两用户符号投票相加）"
+ }
+}
