@@ -64,6 +64,31 @@ COARSE = (0.08, 0.12, 0.18, 0.30, 0.50, 0.90, 1.50)
 #: `p̂` 的缓存粒度（只影响缓存命中，不参与任何判据）
 PHAT_QUANT = 0.02
 
+#: ★ R1.7.3 新增：**按实际可达 `P` 范围重新铺结点**。
+#:
+#: 为什么必须换（实测，见 `docs/CW-R1.7.3-网格与判据交付.md` §2）：
+#:   ① `default_knots()` 的粗段是几何式跳的（0.055 → 0.08 → 0.12 → 0.18 → 0.30 …），
+#:      而 `A=1` 时 `HOLD` 让 `P` **线性**增长（每步 `+σ_w²`）⇒ 256 步后到 **0.112**，
+#:      恰好落在 0.08/0.12 那段最稀疏的区间里；
+#:   ② `W4` 的超估在大 `τ` 上不随"加密细段"收敛（`fine128` 在 `τ=255` 反而 **1.073**），
+#:      因为误差源在**粗段**，不在细段。
+#: 新网格：`[0, 0.06]` 61 点（h=1e-3，覆盖刷新后工作区）+ `[0.065, 0.14]` 14 点（h≈5.8e-3，
+#: 覆盖 256 步线性增长段）+ `[0.15, 0.35]` 15 点（h≈1.4e-2，只覆盖 `prior_var=1.0` 的冷启动过渡）。
+#: **不改 plant、不改 `p̂`、不改 `q/r`、不改递推** —— 只改插值结点的位置与密度。
+def knots_r173() -> np.ndarray:
+    return np.unique(np.concatenate([
+        np.linspace(0.0, 0.06, 61),
+        np.linspace(0.065, 0.14, 14),
+        np.linspace(0.15, 0.35, 15),
+    ]))
+
+
+#: 网格名 → 构造函数。`legacy` 与旧证据逐位对应，**不许改**。
+#: （`GRIDS` 本体在 `default_knots()` 之后赋值 —— 那里才拿得到函数对象。）
+
+#: 模块级开关（与 `plan_ref.TAIL_DEFAULT` 同一手法）：默认 `legacy`，只有 R1.7.3 入口临时改。
+GRID_DEFAULT = "legacy"
+
 _CACHE_MAX = 3
 _CACHE: "dict[tuple, DPTail]" = {}
 _ORDER: "list[tuple]" = []
@@ -74,6 +99,10 @@ N_BUILDS = 0
 def default_knots() -> np.ndarray:
     lo, hi, n = FINE
     return np.concatenate([np.linspace(lo, hi, n), np.asarray(COARSE, dtype=float)])
+
+
+#: 网格名 → 构造函数（放在这里才拿得到函数对象；`default_knots` 必须逐位不变）
+GRIDS = {"legacy": default_knots, "r173": knots_r173}
 
 
 def _loc(knots: np.ndarray, p: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -94,9 +123,12 @@ class DPTail:
 
     def __init__(self, cfg: CWConfig, p_hat, *, b_cap: int | None = None,
                  tau_max: int | None = None, knots: np.ndarray | None = None,
-                 axis_mode: str = "user_axis") -> None:
+                 axis_mode: str = "user_axis", grid: str | None = None) -> None:
         if axis_mode not in ("user_axis", "legacy_swap"):
             raise ValueError(f"axis_mode={axis_mode!r} 非法（只允许 user_axis / legacy_swap）")
+        if grid is not None and grid not in GRIDS:
+            raise ValueError(f"grid={grid!r} 非法（只允许 {sorted(GRIDS)}）")
+        self.grid = "legacy" if grid is None else str(grid)
         self.axis_mode = axis_mode
         p = cfg.plant
         self.A = np.asarray(p.A, dtype=float)
@@ -106,7 +138,7 @@ class DPTail:
         self.T = int(cfg.protocol.horizon)
         self.tau_max = int(tau_max if tau_max is not None else self.T)
         self.b_cap = int(b_cap if b_cap is not None else self.T)
-        self.knots = default_knots() if knots is None else np.asarray(knots, dtype=float)
+        self.knots = (GRIDS[self.grid]() if knots is None else np.asarray(knots, dtype=float))
         ph = np.asarray(p_hat, dtype=float).reshape(-1)
         if ph.size != self.A.size:
             raise ValueError(f"p_hat 长度 {ph.size} != n_users {self.A.size}")
@@ -115,6 +147,7 @@ class DPTail:
         self._maps = self._build_maps()
         self._V: list[np.ndarray] | None = None
         self.n_clip = 0            # 插值出界计数（诊断；正常应恒 0）
+        self.n_b_clip = 0          # ★ R1.7.3：预算被**静默压平**的次数（`b > b_cap`），必须为 0
         self.n_lookup = 0
 
     # ------------------------------------------------------------ 网格映射
@@ -200,7 +233,12 @@ class DPTail:
         self.n_clip += int(out_of)
         Pc = np.clip(P, lo, hi)
         nb = Vt.shape[2]
-        b = np.clip(np.asarray(bud, dtype=float).reshape(-1).astype(int), 0, nb - 1)
+        b_raw = np.asarray(bud, dtype=float).reshape(-1)
+        # ★ 预算轴覆盖诊断：只有 `b > nb_max−1`（= 超过 `min(b_cap, tau_max)`）才是**缺陷**；
+        #   `b ≥ τ` 被压到 `τ` 是**饱和律**（预注册 §2 近似 3），属设计，不计。
+        #   ★ 第一版按 `b > nb−1`（本层 τ 的长度）计 ⇒ 把饱和记成缺陷（假 FAIL，#88 同族）。
+        self.n_b_clip += int(np.sum(b_raw > float(self.nb_max - 1)))
+        b = np.clip(b_raw.astype(int), 0, nb - 1)
         if b.size == 1 and M > 1:
             b = np.full(M, int(b[0]), dtype=int)
         i0, w0 = _loc(k, Pc[:, 0])
@@ -217,16 +255,32 @@ class DPTail:
         P = np.asarray([[p, p]], dtype=float)
         return float(self.value(P, [bud], tau)[0] - self.value(P, [bud - 1], tau)[0])
 
+    def mem_mib(self) -> float:
+        """表的实际占用（MiB）。R1.7.3 起每份证据都要报它 —— 网格是**内存换精度**的交易。"""
+        if self._V is None:
+            return 0.0
+        return sum(v.nbytes for v in self._V) / 2 ** 20
 
-def get_dp(cfg: CWConfig, p_hat, *, b_cap: int, axis_mode: str = "user_axis") -> DPTail:
-    """带 LRU 的构造：同一 `(plant, p̂ 量化, b_cap, axis_mode)` 只建一次。"""
+    def diag(self) -> dict:
+        return {"grid": self.grid, "n_knots": int(self.knots.size), "b_cap": int(self.b_cap),
+                "tau_max": int(self.tau_max), "axis_mode": self.axis_mode,
+                "p_hat": [float(x) for x in self.p_hat],
+                "mem_mib": round(self.mem_mib(), 1),
+                "n_lookup": int(self.n_lookup), "n_clip": int(self.n_clip),
+                "n_b_clip": int(self.n_b_clip)}
+
+
+def get_dp(cfg: CWConfig, p_hat, *, b_cap: int, axis_mode: str = "user_axis",
+           grid: str = "legacy") -> DPTail:
+    """带 LRU 的构造：同一 `(plant, p̂ 量化, b_cap, axis_mode, grid)` 只建一次。"""
     global N_BUILDS
     ph = np.asarray(p_hat, dtype=float).reshape(-1)
-    key = (_plant_key(cfg), tuple(np.round(ph / PHAT_QUANT).astype(int)), int(b_cap), str(axis_mode))
+    key = (_plant_key(cfg), tuple(np.round(ph / PHAT_QUANT).astype(int)), int(b_cap),
+           str(axis_mode), str(grid))
     hit = _CACHE.get(key)
     if hit is not None:
         return hit
-    obj = DPTail(cfg, ph, b_cap=b_cap, axis_mode=axis_mode).build()
+    obj = DPTail(cfg, ph, b_cap=b_cap, axis_mode=axis_mode, grid=grid).build()
     N_BUILDS += 1                    # ★ v1.7.2：真实构建计数（缓存命中不算），供耗时对账
     _CACHE[key] = obj
     _ORDER.append(key)
@@ -238,4 +292,5 @@ def get_dp(cfg: CWConfig, p_hat, *, b_cap: int, axis_mode: str = "user_axis") ->
 
 def cache_stats() -> dict:
     return {"size": len(_CACHE), "cap": _CACHE_MAX, "n_builds": N_BUILDS,
-            "keys": [{"p_hat_q": k[1], "b_cap": k[2], "axis_mode": k[3]} for k in _ORDER]}
+            "keys": [{"p_hat_q": k[1], "b_cap": k[2], "axis_mode": k[3], "grid": k[4]}
+                     for k in _ORDER]}

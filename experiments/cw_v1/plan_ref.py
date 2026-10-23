@@ -149,6 +149,7 @@ class PlanRef:
                  tail: str | None = None, dp_phat=None,
                  dp_b_cap: int | None = None,
                  dp_axis_mode: str = "user_axis",
+                 dp_grid: str | None = None,
                  send_other_advance: str = "fixed") -> None:
         self.cfg = cfg
         self.H = int(h_plan)
@@ -174,6 +175,9 @@ class PlanRef:
         self._dp_b_cap = (int(dp_b_cap) if dp_b_cap is not None
                           else int(cfg.protocol.horizon))
         self._dp_axis_mode = str(dp_axis_mode)
+        #: ★ R1.7.3：DP 的 `P` 网格。`None` ⇒ 取 `plan_dp.GRID_DEFAULT`（默认 `"legacy"`，
+        #:  与 `f719669`…`4e2b2c0` 的证据逐位对应）；`"r173"` 只在 R1.7.3 起的入口显式打开。
+        self._dp_grid = (None if dp_grid is None else str(dp_grid))
         #: ★ v1.7.2：`_expect_after` 的 SEND 分支是否也给**未被送用户**推进一槽。
         #:  `"fixed"`（默认）= `P2 = A²P+σ_w²` 再覆盖被送用户 —— 与 HOLD/PROBE 一致；
         #:  `"legacy"` = R1.5–R1.6.1 的旧行为（未送用户原地不动），**只作活体对照**。
@@ -359,10 +363,12 @@ class PlanRef:
     # ------------------------------------------------------------ DP 尾部（v1.7.2）
     def _dp_for(self, phat):
         """按给定 `p̂`（每用户一个标量）取 `DPTail`（`plan_dp` 内有 LRU）。"""
+        from . import plan_dp
         from .plan_dp import get_dp
         self.n_dp_requests += 1
+        grid = plan_dp.GRID_DEFAULT if self._dp_grid is None else self._dp_grid
         return get_dp(self.cfg, phat, b_cap=self._dp_b_cap,
-                      axis_mode=self._dp_axis_mode)
+                      axis_mode=self._dp_axis_mode, grid=grid)
 
     def _wire_dp(self, tel) -> None:
         """用**公开 telemetry** 在 episode 起点建一次 DP。
@@ -625,12 +631,13 @@ def make(cfg: CWConfig, *, arm: str = "probe", h_plan: int = 5, m_samples: int =
          seed: int = 20261022, rho: float | None = None,
          pacing: bool = True, cont_m: bool = True,
          tail: str | None = None, dp_phat=None, dp_b_cap: int | None = None,
-         dp_axis_mode: str = "user_axis",
+         dp_axis_mode: str = "user_axis", dp_grid: str | None = None,
          send_other_advance: str = "fixed") -> PlanRef:
     """按臂名构造：`probe` / `noprobe` / `nohidden`（后者只给变异闸用）。"""
     kw = dict(h_plan=h_plan, m_samples=m_samples, seed=seed, rho=rho, pacing=pacing,
               cont_m=cont_m, tail=tail, dp_phat=dp_phat, dp_b_cap=dp_b_cap,
-              dp_axis_mode=dp_axis_mode, send_other_advance=send_other_advance)
+              dp_axis_mode=dp_axis_mode, dp_grid=dp_grid,
+              send_other_advance=send_other_advance)
     if arm == "probe":
         return PlanRef(cfg, use_probe=True, sample_hidden=True, **kw)
     if arm == "noprobe":

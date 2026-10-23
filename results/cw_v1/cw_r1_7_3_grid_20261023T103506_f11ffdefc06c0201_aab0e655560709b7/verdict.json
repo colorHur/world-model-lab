@@ -1,0 +1,13 @@
+{
+  "verdict": "GRID-REJECTED",
+  "n_key_fail": 2,
+  "key_gates": [
+    "W4R",
+    "W5",
+    "W7",
+    "W8"
+  ],
+  "panel_run": false,
+  "panel_reason": "本轮先证尺度与平滑；面板留给下一轮",
+  "eligible_for_chain": false
+}
