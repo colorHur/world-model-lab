@@ -1,0 +1,46 @@
+{
+  "chain": [
+    {
+      "gate": "W0",
+      "desc": "接线一致性（不对称 p̂/P/bud）",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "W0b",
+      "desc": "预算管线 + 未送用户推进一槽",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "W0c",
+      "desc": "legacy 阴性对照（必须 FAIL）",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "W1",
+      "desc": "= G8d[dp]：预算维严格递减",
+      "state": "fail",
+      "observed": false
+    },
+    {
+      "gate": "W1b",
+      "desc": "W1 的活体阴性对照（必须 FAIL 才算有分辨力）",
+      "state": "not_reached",
+      "observed": true
+    },
+    {
+      "gate": "W4",
+      "desc": "可采纳性：b=1 边际收益 ≤ 闭式精确值",
+      "state": "not_reached",
+      "observed": false
+    }
+  ],
+  "stopped_at": "W1",
+  "verdict": "DP-WIRING-REJECTED",
+  "panel_run": false,
+  "panel_reason": "",
+  "eligible_for_N1N2": false,
+  "n_gate_fail": 1
+}

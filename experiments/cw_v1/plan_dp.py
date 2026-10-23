@@ -67,6 +67,8 @@ PHAT_QUANT = 0.02
 _CACHE_MAX = 3
 _CACHE: "dict[tuple, DPTail]" = {}
 _ORDER: "list[tuple]" = []
+#: ★ v1.7.2：真实构建次数（缓存命中不计）。只作耗时/命中的对账量，不参与任何判据。
+N_BUILDS = 0
 
 
 def default_knots() -> np.ndarray:
@@ -218,12 +220,14 @@ class DPTail:
 
 def get_dp(cfg: CWConfig, p_hat, *, b_cap: int, axis_mode: str = "user_axis") -> DPTail:
     """带 LRU 的构造：同一 `(plant, p̂ 量化, b_cap, axis_mode)` 只建一次。"""
+    global N_BUILDS
     ph = np.asarray(p_hat, dtype=float).reshape(-1)
     key = (_plant_key(cfg), tuple(np.round(ph / PHAT_QUANT).astype(int)), int(b_cap), str(axis_mode))
     hit = _CACHE.get(key)
     if hit is not None:
         return hit
     obj = DPTail(cfg, ph, b_cap=b_cap, axis_mode=axis_mode).build()
+    N_BUILDS += 1                    # ★ v1.7.2：真实构建计数（缓存命中不算），供耗时对账
     _CACHE[key] = obj
     _ORDER.append(key)
     while len(_ORDER) > _CACHE_MAX:
@@ -233,5 +237,5 @@ def get_dp(cfg: CWConfig, p_hat, *, b_cap: int, axis_mode: str = "user_axis") ->
 
 
 def cache_stats() -> dict:
-    return {"size": len(_CACHE), "cap": _CACHE_MAX,
+    return {"size": len(_CACHE), "cap": _CACHE_MAX, "n_builds": N_BUILDS,
             "keys": [{"p_hat_q": k[1], "b_cap": k[2], "axis_mode": k[3]} for k in _ORDER]}

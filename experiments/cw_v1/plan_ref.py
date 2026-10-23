@@ -80,6 +80,11 @@ _TERM_MAX_STEPS = 400
 #: 值相等判定容差（`_pick` 的并列处理用它）
 _TIE_EPS = 1e-12
 
+#: ★ v1.7.2：`tail` 的**模块级默认值**，恒为 `"paced"`（R1.6.1 的解析尾部）。
+#:  只有 `r1_7_2_dp_wire.py` 在闸/面板期间临时置 `"dp"`，并在 `finally` 恢复。
+#:  这样 `r1_5_plan` / `r1_6_plan` / `r1_6_1_plan` / `r1_7_1_audit` 的行为**零改动**。
+TAIL_DEFAULT = "paced"
+
 
 def _sigmoid(z: np.ndarray) -> np.ndarray:
     """数值稳定 sigmoid（与 `world.p_success_from_log_h` 同一形状）。"""
@@ -140,7 +145,11 @@ class PlanRef:
     def __init__(self, cfg: CWConfig, *, h_plan: int = 5, m_samples: int = 16,
                  seed: int = 20261022, use_probe: bool = True,
                  sample_hidden: bool = True, rho: float | None = None,
-                 pacing: bool = True, cont_m: bool = True) -> None:
+                 pacing: bool = True, cont_m: bool = True,
+                 tail: str | None = None, dp_phat=None,
+                 dp_b_cap: int | None = None,
+                 dp_axis_mode: str = "user_axis",
+                 send_other_advance: str = "fixed") -> None:
         self.cfg = cfg
         self.H = int(h_plan)
         self.M = int(m_samples)
@@ -152,11 +161,33 @@ class PlanRef:
         #: ★ v1.6.1：刷新间隔 `m` 是否取**实数**（`True` = 值函数对预算连续）。
         #:  `False` = 旧的 `round(steps·n/b)` 口径，**只作 `G8d2` 单变量阴性对照**，不进结果表。
         self.cont_m = bool(cont_m)
+        #: ★ v1.7.2：尾部用哪一套值函数。`"paced"` = R1.6.1 解析（默认，行为不变）；
+        #:  `"dp"` = `plan_dp.DPTail`（`(P_0,P_1,b)` 后向 DP）。
+        #:  `None` ⇒ 取模块级 `TAIL_DEFAULT`（只有 R1.7.2 入口临时改为 `"dp"`）。
+        self.tail = str(TAIL_DEFAULT if tail is None else tail)
+        if self.tail not in ("paced", "dp"):
+            raise ValueError(f"tail={self.tail!r} 非法（只允许 paced / dp）")
+        #: 诊断闸可以把 `p̂` 钉成指定值（`W0` 用它造**不对称**用户轴）；正常运行留 `None`。
+        self._dp_phat = None if dp_phat is None else np.asarray(dp_phat, dtype=float).reshape(-1)
+        #: DP 的预算轴上限。饱和律是 `b ≥ τ ⇒ V_τ(·,b)=V_τ(·,τ)`，
+        #: 所以必须 `b_cap ≥ horizon`，否则 `b∈(b_cap, τ)` 会被 `value()` **静默压平**。
+        self._dp_b_cap = (int(dp_b_cap) if dp_b_cap is not None
+                          else int(cfg.protocol.horizon))
+        self._dp_axis_mode = str(dp_axis_mode)
+        #: ★ v1.7.2：`_expect_after` 的 SEND 分支是否也给**未被送用户**推进一槽。
+        #:  `"fixed"`（默认）= `P2 = A²P+σ_w²` 再覆盖被送用户 —— 与 HOLD/PROBE 一致；
+        #:  `"legacy"` = R1.5–R1.6.1 的旧行为（未送用户原地不动），**只作活体对照**。
+        self.send_other_advance = str(send_other_advance)
+        if self.send_other_advance not in ("fixed", "legacy"):
+            raise ValueError(f"send_other_advance={self.send_other_advance!r} 非法")
+        self._dp = None            # 惰性：首个 `__call__` 用当次公开 telemetry 建一次
+        self.n_dp_requests = 0
         self.base_seed = int(seed)
         self.rho = float(rho if rho is not None else cfg.channel.rho_panel[0])
         self.name = (f"plan_ref_H{self.H}_M{self.M}"
                      f"{'' if self.use_probe else '_noprobe'}"
-                     f"{'' if self.pacing else '_nopace'}")
+                     f"{'' if self.pacing else '_nopace'}"
+                     f"{'_dp' if self.tail == 'dp' else ''}")
         # 诊断计数（每 episode 新建实例；runner 不 reset 它）
         self.n_probe = 0
         self.n_send = 0
@@ -325,6 +356,36 @@ class PlanRef:
         #   **不要**写"只在某条件下用配速"—— 那会让口径随预算档跳变，制造假分辨力。
         return np.where(bud_arr > 0.0, paced, sumP_free)
 
+    # ------------------------------------------------------------ DP 尾部（v1.7.2）
+    def _dp_for(self, phat):
+        """按给定 `p̂`（每用户一个标量）取 `DPTail`（`plan_dp` 内有 LRU）。"""
+        from .plan_dp import get_dp
+        self.n_dp_requests += 1
+        return get_dp(self.cfg, phat, b_cap=self._dp_b_cap,
+                      axis_mode=self._dp_axis_mode)
+
+    def _wire_dp(self, tel) -> None:
+        """用**公开 telemetry** 在 episode 起点建一次 DP。
+
+        ★ `p̂` 冻结在 episode 起点的公开信念（先验 `m_h=0, v_h=1` ⇒ `p̂=0.5`），
+          不是逐槽 `p̂`。理由与代价写在预注册卡 §2.3 / `W3`：
+          `_terminal` 每槽被调 10² 次，逐槽重建不可行（0.174 s × 10²/槽）。
+        """
+        if self._dp_phat is not None:
+            ph = self._dp_phat
+        else:
+            if tel is None:
+                raise ValueError("_wire_dp 需要 telemetry，或构造时显式给 dp_phat")
+            mh = np.asarray([[float(r["h_mean"]) for r in tel]], dtype=float)
+            vh = np.asarray([[float(r["h_var"]) for r in tel]], dtype=float)
+            ph = self._p_hat(mh, vh)[0]
+        self._dp = self._dp_for(ph)
+
+    def _dp_value(self, P: np.ndarray, bud, steps: int) -> np.ndarray:
+        """DP 尾部的 `q·Σ_{k=1..steps} Σ_i P_i`（`DPTail.V` **已含** `q`）。"""
+        b = np.zeros(P.shape[0]) if bud is None else np.asarray(bud, dtype=float).reshape(-1)
+        return self._dp.value(np.maximum(P, 0.0), b, int(steps))
+
     def _terminal(self, P: np.ndarray, xh: np.ndarray, steps: int, bud=None) -> np.ndarray:
         """H 步之后剩 `steps` 步、`bud` 帧预算的期望尾部代价（**估计**，不是最优值函数）。
 
@@ -337,8 +398,16 @@ class PlanRef:
         steps = int(min(max(steps, 0), _TERM_MAX_STEPS))
         if steps <= 0:
             return np.zeros(P.shape[0])
-        sumP = (self._paced_sumP(P, steps, bud) if bud is not None
-                else self._paced_sumP(P, steps, np.zeros(P.shape[0])))
+        if self.tail == "dp":
+            if self._dp is None:
+                # ★ 不许静默退回解析尾部：否则 `W0` 会"通过"而实际没接线。
+                raise RuntimeError(
+                    "tail='dp' 但 DP 未初始化 —— 必须由 `__call__` 用首个时隙的公开 telemetry 建")
+            task_P = self._dp_value(P, bud, steps)          # 已含 q
+        else:
+            sumP = (self._paced_sumP(P, steps, bud) if bud is not None
+                    else self._paced_sumP(P, steps, np.zeros(P.shape[0])))
+            task_P = self.q * np.sum(sumP, axis=1)
         al2 = (self.alpha ** 2)[None, :]
         one_minus_a = 1.0 - al2
         safe_a = np.abs(one_minus_a) > 1e-12
@@ -346,7 +415,8 @@ class PlanRef:
                          al2 * (1.0 - al2 ** steps) / np.where(safe_a, one_minus_a, 1.0),
                          float(steps))
         sumX2 = (xh ** 2) * geo_a
-        return (self.q * np.sum(sumP + sumX2, axis=1)
+        return (task_P
+                + self.q * np.sum(sumX2, axis=1)
                 + self.r * np.sum((self.K ** 2)[None, :] * sumX2, axis=1))
 
 
@@ -371,7 +441,15 @@ class PlanRef:
             P_del = a2[:, i] * ((1.0 - g) * st.P[:, i]) + self.sw[i] ** 2
             P_nodel = a2[:, i] * st.P[:, i] + self.sw[i] ** 2
             p = self._p_hat(st.mh, st.vh)[:, i]
-            P2 = st.P.copy()
+            if self.send_other_advance == "legacy":
+                # ★ 旧行为（R1.5–R1.6.1 全部面板都是这个口径）：只改被送用户，
+                #   **未被送用户的 `P` 原地不动**（没有 `A²P+σ_w²` 推进一槽）。
+                #   与 HOLD / PROBE 两支不一致 ⇒ SEND 的尾部成本被系统性低估
+                #   （实测差 ~1% 的尾部值，比"一帧价格"本身大一个量级）。
+                #   **只作活体对照**，不得进结果表。
+                P2 = st.P.copy()
+            else:
+                P2 = a2 * st.P + (self.sw ** 2)[None, :]
             P2[:, i] = p * P_del + (1.0 - p) * P_nodel
             return self._terminal(P2, self.alpha[None, :] * st.xh, steps_after,
                                   bud=bud_after)
@@ -493,6 +571,8 @@ class PlanRef:
 
     def __call__(self, v) -> Action:
         self._call_i += 1
+        if self.tail == "dp" and self._dp is None:
+            self._wire_dp(v.telemetry)
         steps_left = int(self.T - v.t)
         H = int(min(self.H, max(steps_left, 1)))
         self._steps_left = steps_left
@@ -543,10 +623,14 @@ class PlanRef:
 
 def make(cfg: CWConfig, *, arm: str = "probe", h_plan: int = 5, m_samples: int = 16,
          seed: int = 20261022, rho: float | None = None,
-         pacing: bool = True, cont_m: bool = True) -> PlanRef:
+         pacing: bool = True, cont_m: bool = True,
+         tail: str | None = None, dp_phat=None, dp_b_cap: int | None = None,
+         dp_axis_mode: str = "user_axis",
+         send_other_advance: str = "fixed") -> PlanRef:
     """按臂名构造：`probe` / `noprobe` / `nohidden`（后者只给变异闸用）。"""
     kw = dict(h_plan=h_plan, m_samples=m_samples, seed=seed, rho=rho, pacing=pacing,
-              cont_m=cont_m)
+              cont_m=cont_m, tail=tail, dp_phat=dp_phat, dp_b_cap=dp_b_cap,
+              dp_axis_mode=dp_axis_mode, send_other_advance=send_other_advance)
     if arm == "probe":
         return PlanRef(cfg, use_probe=True, sample_hidden=True, **kw)
     if arm == "noprobe":

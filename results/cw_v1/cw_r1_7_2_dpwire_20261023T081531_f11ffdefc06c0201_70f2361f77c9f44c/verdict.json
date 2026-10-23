@@ -1,0 +1,46 @@
+{
+  "chain": [
+    {
+      "gate": "W0",
+      "desc": "接线一致性（不对称 p̂/P/bud）",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "W0b",
+      "desc": "预算管线 + 未送用户推进一槽",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "W0c",
+      "desc": "legacy 阴性对照（必须 FAIL）",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "W1",
+      "desc": "= G8d[dp]：预算维严格递减",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "W1b",
+      "desc": "W1 的活体阴性对照（必须 FAIL 才算有分辨力）",
+      "state": "pass",
+      "observed": true
+    },
+    {
+      "gate": "W4",
+      "desc": "可采纳性：b=1 边际收益 ≤ 闭式精确值",
+      "state": "fail",
+      "observed": false
+    }
+  ],
+  "stopped_at": "W4",
+  "verdict": "DP-TAIL-INADMISSIBLE",
+  "panel_run": false,
+  "panel_reason": "链在 W4 停住：DP 尾部不满足可采纳性（比闭式精确值乐观 ≥8%），在其上跑收益表无法归因",
+  "eligible_for_N1N2": false,
+  "n_gate_fail": 1
+}
