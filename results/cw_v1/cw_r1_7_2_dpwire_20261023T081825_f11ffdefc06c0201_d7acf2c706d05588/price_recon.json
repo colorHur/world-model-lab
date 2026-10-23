@@ -1,0 +1,41 @@
+{
+  "bounded_plant": {
+    "working_point": {
+      "tau": 128,
+      "P": 0.01,
+      "b": 64,
+      "p_hat": [
+        0.5,
+        0.5
+      ]
+    },
+    "marginal_value_analytic": 0.008152670213837698,
+    "marginal_value_dp": 0.024286201323095558,
+    "ratio_analytic_over_dp": 0.33569145315800036,
+    "benefit_imm": 0.0009999999999999998,
+    "benefit_deliv_dp": 0.03856482944952466,
+    "marginal_value_dp_at_b1": 1.4805106139573976,
+    "marginal_value_dp_at_bTau": -0.0,
+    "price_dp_over_benefit_imm": 24.28620132309556
+  },
+  "r0_A_gt_1": {
+    "working_point": {
+      "tau": 128,
+      "P": 0.01,
+      "b": 64,
+      "p_hat": [
+        0.5,
+        0.5
+      ]
+    },
+    "marginal_value_analytic": 0.0017198460509756375,
+    "marginal_value_dp": 0.0003788984111723348,
+    "ratio_analytic_over_dp": 4.539069049285081,
+    "benefit_imm": 0.004950495049504951,
+    "benefit_deliv_dp": 0.060936185754972894,
+    "marginal_value_dp_at_b1": 35.307047732814794,
+    "marginal_value_dp_at_bTau": -0.0,
+    "price_dp_over_benefit_imm": 0.07653747905681162
+  },
+  "rule": "ratio = 解析边际价值 / DP 边际价值；≥2 ⇒ 解析高估 ≥2×（G8a 失败可归因算术）；0.5–2 ⇒ 同量级（推迟是结构性的）；<0.5 ⇒ 解析低估 ≥2×。★ DP 自身的可采纳性由 W4 单独判：W4 FAIL 时，ratio 只能当**两个都不可信**的对照读。"
+}

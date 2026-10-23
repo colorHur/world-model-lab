@@ -290,16 +290,30 @@ def phat_freeze_cost() -> dict:
 
 
 # ------------------------------------------------------------------ W4
-def _one_frame_ub(cfg: C.CWConfig, P0: float, phat: np.ndarray, tau: int) -> float:
-    """`b=1` 时"多一帧"的**闭式**期望收益（= 精确值，不是松上界）。
+def _pk(i: int, k: int, P0: float, A2: np.ndarray, sw2: np.ndarray) -> float:
+    """不刷新时第 `k` 步（0 起）的 `P_i`：`A^{2k}·P0 + σ_w²·(A^{2k}−1)/(A²−1)`。
 
-    只用一帧 ⇒ 至多一次送达，且只影响一个用户。在时刻 `k` 送达用户 `i` 后，
-    它与"不送"的 `P` 之差为 `g_i·P_i^hold(k)`，之后按 `A_i^{2j}` 衰减 ⇒
+    ★ `A=1` 时必须走极限式 `P0 + σ_w²·k` —— 直接除 `(A²−1)` 会得到 `nan`（本轮踩过）。
+    """
+    a2 = float(A2[i])
+    if abs(a2 - 1.0) < 1e-12:
+        return P0 + float(sw2[i]) * k
+    return (a2 ** k) * P0 + float(sw2[i]) * (a2 ** k - 1.0) / (a2 - 1.0)
 
-        saving(i,k) = q·p̂_i·g_i·P_i^hold(k)·Σ_{j=0..τ−1−k} A_i^{2j}
 
-    因为代价对 `P` 线性可加、且 `V(·,0)` 只有一条路径（`HOLD`），
-    `V(τ,0) − V(τ,1)` **恰好**等于 `max_{i,k} saving(i,k)`（网格插值误差除外）。
+def _one_frame_drop_exact(cfg: C.CWConfig, P0: float, phat: np.ndarray, tau: int) -> float:
+    """`b=1` 时"多一帧"的**精确**期望收益（闭式）。
+
+    只用一帧 ⇒ 至多一次送达、只影响一个用户。在时刻 `k` 送用户 `i`：
+    送达后的 `P` 比"不送"低 `A_i²·g_i·P_i(k)`（第 `k+1` 步），之后按 `A_i^{2m}` 衰减。
+
+        saving(i,k) = q·p̂_i·g_i·P_i(k)·Σ_{m=1..τ−1−k} A_i^{2m}
+
+    ★ **必须从第 `k+1` 步起、共 `τ−1−k` 项**（本步 `k` 的 `P` 不变）。
+      第一版写成 `Σ_{j=0..τ−1−k}`（多一项）⇒ 高估 `1/(τ−1−k)`，τ=16 时约 10%
+      —— 这正是本轮自查抓到的第二处差一步（见交付文档 §5 第 6 条）。
+    因为代价对 `P` 线性可加、`V(·,0)` 只有一条路径 ⇒ `V(τ,0) − V(τ,1)` **恰好**等于
+    `max_{i,k} saving(i,k)`（网格插值误差除外）。
     """
     p = cfg.plant
     q = float(p.q_cost)
@@ -308,15 +322,62 @@ def _one_frame_ub(cfg: C.CWConfig, P0: float, phat: np.ndarray, tau: int) -> flo
     sm2 = float(p.sigma_meas) ** 2
     best = 0.0
     for i in range(A2.size):
-        a2, s2 = float(A2[i]), float(sw2[i])
+        a2 = float(A2[i])
         for k in range(int(tau)):
-            Pk = (a2 ** k) * P0 + (s2 * (a2 ** k - 1.0) / (a2 - 1.0)
-                                   if abs(a2 - 1.0) > 1e-12 else s2 * k)
-            geo = ((a2 ** (tau - k) - 1.0) / (a2 - 1.0)
-                   if abs(a2 - 1.0) > 1e-12 else float(tau - k))
+            Pk = _pk(i, k, P0, A2, sw2)
             g = Pk / (Pk + sm2)
+            n = int(tau) - 1 - k                     # ★ 从第 k+1 步起，共 n 步
+            geo = float(n) if abs(a2 - 1.0) < 1e-12 else a2 * (a2 ** n - 1.0) / (a2 - 1.0)
             best = max(best, q * float(phat[i]) * g * Pk * geo)
     return float(best)
+
+
+def _brute_one_frame_drop(cfg: C.CWConfig, P0: float, phat: np.ndarray, tau: int) -> float:
+    """**逐步模拟**（不用任何几何和/闭式）枚举 `(i,k)` 求 `b=1` 的精确收益。
+
+    用来代验 `_one_frame_drop_exact`：两者都是"已知答案"，一个靠公式、一个靠累加，
+    只有在 1e-12 内一致时，`W4` 才配当证书（台账 R12）。
+    """
+    p = cfg.plant
+    q = float(p.q_cost)
+    A2 = np.asarray(p.A, dtype=float) ** 2
+    sw2 = np.asarray(p.sigma_w, dtype=float) ** 2
+    sm2 = float(p.sigma_meas) ** 2
+    n = int(A2.size)
+    best = 0.0
+    for i in range(n):
+        for k in range(int(tau)):
+            hold = [P0] * n
+            sent = [P0] * n
+            for _ in range(k):                       # 走到第 k 步
+                for j in range(n):
+                    hold[j] = A2[j] * hold[j] + sw2[j]
+                    sent[j] = A2[j] * sent[j] + sw2[j]
+            g = hold[i] / (hold[i] + sm2)
+            sent[i] = (1.0 - g) * hold[i]
+            sav = 0.0
+            for _ in range(int(tau) - 1 - k):        # 只数第 k+1 步之后
+                for j in range(n):
+                    hold[j] = A2[j] * hold[j] + sw2[j]
+                    sent[j] = A2[j] * sent[j] + sw2[j]
+                sav += q * float(phat[i]) * (hold[i] - sent[i])
+            best = max(best, sav)
+    return float(best)
+
+
+def w4b_closed_form_check(g: Gate) -> None:
+    """`W4` 的证书本身必须先被代验：闭式 vs 逐步模拟，≤1e-12。"""
+    cfg = _cfg()
+    phat = np.asarray([0.5, 0.5], dtype=float)
+    rows, worst = [], 0.0
+    for tau in (2, 3, 4, 6, 8):
+        cf = _one_frame_drop_exact(cfg, 0.01, phat, tau)
+        bf = _brute_one_frame_drop(cfg, 0.01, phat, tau)
+        rel = abs(cf - bf) / max(abs(bf), 1e-300)
+        worst = max(worst, rel)
+        rows.append({"tau": tau, "closed_form": cf, "brute": bf, "rel": rel})
+    g.check("W4b 证书自检：闭式 vs 逐步模拟 ≤1e-12（否则 W4 的判据本身不可信）",
+            worst <= 1e-12, {"max_rel": worst, "rows": rows})
 
 
 def w4_admissibility(g: Gate) -> None:
@@ -337,7 +398,7 @@ def w4_admissibility(g: Gate) -> None:
     for tau in (8, 16, 32, 64, 128, 255):
         v0 = float(dp.value(Pm, np.asarray([0]), tau)[0])
         v1 = float(dp.value(Pm, np.asarray([1]), tau)[0])
-        ub = _one_frame_ub(cfg, P0, phat, tau)
+        ub = _one_frame_drop_exact(cfg, P0, phat, tau)
         over = (v0 - v1) / ub if ub > 0 else float("inf")
         worst = max(worst, over)
         rows.append({"tau": tau, "V_b0": v0, "V_b1": v1, "drop": v0 - v1,
@@ -346,8 +407,42 @@ def w4_admissibility(g: Gate) -> None:
             "—— 超了就是插值过度乐观（把一帧定价太高）",
             worst <= 1.0,
             {"P0": P0, "p_hat": phat.tolist(), "max_overshoot": worst, "rows": rows,
-             "note": ("闭式值 = max_{i,k} q·p̂_i·g_i·P_i(k)·Σ_j A^{2j}；"
-                      "b=1 时它**等于**精确边际收益，所以 >1 必是实现/插值的乐观偏差")})
+             "note": ("闭式值 = max_{i,k} q·p̂_i·g_i·P_i(k)·Σ_{m=1..τ−1−k} A^{2m}；"
+                      "b=1 时它**等于**精确边际收益（W4b 已用逐步模拟代验 ≤1e-12），"
+                      "所以 >1 必是实现/插值的乐观偏差")})
+
+
+# ------------------------------------------------------------------ 网格加密扫描（诊断）
+def grid_refinement_scan() -> dict:
+    """`W4` 的超估量随**网格加密**怎么变 —— 下一轮修法的可行性先验。
+
+    只判"能不能靠加密压下去、要加到多密"，**不改**任何默认网格，
+    也**不**声称加密后的 DP 就可采纳（那是下一轮要按 `W1/W4` 重新判的）。
+    """
+    from .plan_dp import DPTail
+
+    cfg = _cfg()
+    phat = np.asarray([0.5, 0.5], dtype=float)
+    P0 = 0.01
+    coarse = np.asarray([0.08, 0.12, 0.18, 0.30, 0.50, 0.90, 1.50], dtype=float)
+    grids = {"default_15": None,
+             "fine32+coarse_38": np.concatenate([np.linspace(0.0, 0.06, 32), coarse]),
+             "fine64+coarse_70": np.concatenate([np.linspace(0.0, 0.06, 64), coarse]),
+             "fine128+coarse_134": np.concatenate([np.linspace(0.0, 0.06, 128), coarse])}
+    Pm = np.asarray([[P0, P0]], dtype=float)
+    out = {"P0": P0, "p_hat": phat.tolist(), "b_cap": 4, "rows": []}
+    for tag, knots in grids.items():
+        dp = DPTail(cfg, phat, b_cap=4, tau_max=64, knots=knots).build()
+        row = {"grid": tag, "n": int(dp.knots.size), "over": {}}
+        for tau in (8, 16, 32, 64):
+            v0 = float(dp.value(Pm, np.asarray([0]), tau)[0])
+            v1 = float(dp.value(Pm, np.asarray([1]), tau)[0])
+            ub = _one_frame_drop_exact(cfg, P0, phat, tau)
+            row["over"][str(tau)] = (v0 - v1) / ub
+        out["rows"].append(row)
+    out["rule"] = ("over = DP 的 b=1 边际收益 / 闭式精确值；≤1.00 才可采纳。"
+                   "★ 加密只改 DP 的插值分辨率，不改 plant、不改 p̂、不改 q/r。")
+    return out
 
 
 def run_wire_gates() -> Gate:
@@ -356,5 +451,6 @@ def run_wire_gates() -> Gate:
     w0b_budget_plumbing(g)
     w1_budget_monotone(g)
     w1b_live_control(g)
+    w4b_closed_form_check(g)
     w4_admissibility(g)
     return g

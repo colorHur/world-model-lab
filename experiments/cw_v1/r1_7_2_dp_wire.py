@@ -29,7 +29,8 @@ import numpy as np
 
 from . import config as C
 from . import plan_ref as Pmodule
-from .dp_wire_gates import phat_freeze_cost, price_recon, run_wire_gates
+from .dp_wire_gates import (grid_refinement_scan, phat_freeze_cost, price_recon,
+                            run_wire_gates)
 from .plan_dp import cache_stats
 from .r1_6_plan import RESULTS, _git, _src_hash
 
@@ -40,6 +41,7 @@ CHAIN = (
     ("W0c", "legacy 阴性对照（必须 FAIL）"),
     ("W1", "= G8d[dp]：预算维严格递减"),
     ("W1b", "W1 的活体阴性对照（必须 FAIL 才算有分辨力）"),
+    ("W4b", "证书自检：闭式 vs 逐步模拟 ≤1e-12"),
     ("W4", "可采纳性：b=1 边际收益 ≤ 闭式精确值"),
 )
 
@@ -93,6 +95,7 @@ def main(argv: list[str] | None = None) -> int:
         g = run_wire_gates()
         price = price_recon()
         w3 = phat_freeze_cost()
+        grid = grid_refinement_scan()
     finally:
         Pmodule.TAIL_DEFAULT = prev
 
@@ -107,6 +110,9 @@ def main(argv: list[str] | None = None) -> int:
     print(f"[CW-R1.7.2] 价格对账(bounded)：解析 {bp['marginal_value_analytic']:.6f} vs "
           f"DP {bp['marginal_value_dp']:.6f}，ratio={bp['ratio_analytic_over_dp']:.3f}")
     print(f"[CW-R1.7.2] W3 p̂ 冻结最大相对差 = {w3['max_abs_rel_vs_prior']:.3f}")
+    for r in grid["rows"]:
+        print(f"[CW-R1.7.2] 网格 {r['grid']:20s} n={r['n']:3d} " +
+              " ".join(f"tau{k}:{v:.3f}" for k, v in r["over"].items()))
     elapsed = round(time.perf_counter() - t0, 2)
 
     if not args.no_write:
@@ -130,6 +136,7 @@ def main(argv: list[str] | None = None) -> int:
         _dump("wire_gates.json", g.summary())
         _dump("price_recon.json", price)
         _dump("phat_freeze.json", w3)
+        _dump("grid_scan.json", grid)
         _dump("verdict.json", verdict)
         _dump("meta.json", {
             "run_id": run_id,

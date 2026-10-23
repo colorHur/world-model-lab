@@ -1,0 +1,96 @@
+{
+  "run_id": "cw_r1_7_2_dpwire_20261023T081814_f11ffdefc06c0201_f20f35985bc14d4b",
+  "kind": "WIRING-GATES-ONLY（本轮未跑面板）",
+  "protocol": "CW-POMDP-v1.1",
+  "tail": "dp",
+  "tail_default_after_run": "paced",
+  "send_other_advance": "fixed",
+  "dp_b_cap": 256,
+  "dp_axis_mode": "user_axis",
+  "phat_freeze": "episode_prior",
+  "event_pairing": "slot",
+  "config": {
+    "plant": {
+      "A": [
+        1.0,
+        1.0
+      ],
+      "B": 0.32,
+      "sigma_w": [
+        0.02,
+        0.03
+      ],
+      "prior_var": 1.0,
+      "sigma_meas": 0.2,
+      "q_cost": 1.0,
+      "r_cost": 0.02
+    },
+    "channel": {
+      "rho_panel": [
+        0.85,
+        0.98
+      ],
+      "kappa": 2.0,
+      "log_h_star": 0.0,
+      "sigma_csi": 0.05,
+      "h_log_init_std": 1.0,
+      "use_ack_for_csi": true
+    },
+    "protocol": {
+      "horizon": 256,
+      "c_probe": 1,
+      "c_data": 1,
+      "budget_ratios": [
+        0.5,
+        0.8
+      ],
+      "init_from_prior": true,
+      "event_pairing": "slot",
+      "allow_multislot": false
+    },
+    "root_seed": 20261021,
+    "protocol_name": "CW-POMDP-v1.1",
+    "budget_values": [
+      128,
+      204
+    ]
+  },
+  "dp_cache": {
+    "size": 3,
+    "cap": 3,
+    "n_builds": 9,
+    "keys": [
+      {
+        "p_hat_q": [
+          18,
+          18
+        ],
+        "b_cap": 256,
+        "axis_mode": "user_axis"
+      },
+      {
+        "p_hat_q": [
+          34,
+          34
+        ],
+        "b_cap": 256,
+        "axis_mode": "user_axis"
+      },
+      {
+        "p_hat_q": [
+          42,
+          42
+        ],
+        "b_cap": 256,
+        "axis_mode": "user_axis"
+      }
+    ]
+  },
+  "at_asia_shanghai": "2026-10-23T08:18:14.757873+08:00",
+  "elapsed_s": 1.39,
+  "git_head": "f65a05a79a23798b1b734656be773a814d4353a8",
+  "git_status_porcelain": "M experiments/cw_v1/dp_wire_gates.py\n M experiments/cw_v1/r1_7_2_dp_wire.py\n?? results/cw_v1/cw_r1_7_2_dpwire_20261023T081814_f11ffdefc06c0201_f20f35985bc14d4b/",
+  "src_hash": "f20f35985bc14d4b",
+  "note": "",
+  "disclaimer": "本轮只判定'DP 尾部能不能接进规划器'，**不出任何收益判词**；未跑 N1/N2；未重跑旧 P3；未训练任何模型。"
+}
