@@ -1,0 +1,85 @@
+{
+ "G0_switch_wired": {
+  "ack_off_prefix": {
+   "n_rows_checked": 4,
+   "max_abs_mh": 0.0,
+   "max_abs_vh_dev": 0.0,
+   "n_probe_total": 6
+  },
+  "ack_on_prefix": {
+   "n_rows_checked": 256,
+   "max_abs_mh": 8.204162198064056,
+   "max_abs_vh_dev": 0.8345468003879956,
+   "n_probe_total": 0
+  },
+  "rule_off_identity": "ack=off 且首个 PROBE 之前：max|m_h| == 0 且 max|v_h−1| ≤ 1e-12",
+  "rule_on_discriminates": "ack=on：max|m_h| > 0.01（否则开关没接线 ⇒ 本轮作废）",
+  "pass": true
+ },
+ "G1_deterministic": {
+  "keys": [
+   "n_attempted_by_user",
+   "n_delivered_by_user",
+   "n_probe",
+   "n_hold",
+   "cost_est_per_step",
+   "cost_true_per_step",
+   "policy_trace_hash"
+  ],
+  "a1": {
+   "n_attempted_by_user": [
+    115,
+    13
+   ],
+   "n_delivered_by_user": [
+    44,
+    7
+   ],
+   "n_probe": 0,
+   "n_hold": 128,
+   "cost_est_per_step": 0.011458794966305141,
+   "cost_true_per_step": 0.10843528189846283,
+   "policy_trace_hash": "c87f9c6dbde9a12c"
+  },
+  "a2": {
+   "n_attempted_by_user": [
+    115,
+    13
+   ],
+   "n_delivered_by_user": [
+    44,
+    7
+   ],
+   "n_probe": 0,
+   "n_hold": 128,
+   "cost_est_per_step": 0.011458794966305141,
+   "cost_true_per_step": 0.10843528189846283,
+   "policy_trace_hash": "c87f9c6dbde9a12c"
+  },
+  "pass": true
+ },
+ "G2_reproduce_R19b": {
+  "expect_attempted": [
+   115,
+   13
+  ],
+  "expect_delivered": [
+   44,
+   7
+  ],
+  "got_attempted": [
+   115,
+   13
+  ],
+  "got_delivered": [
+   44,
+   7
+  ],
+  "ref_file": "D:\\repos\\world-model-lab\\results\\cw_v1\\cw_r1_9b_trace_20261023T192329\\t6_trace.json",
+  "ref_attempted": [
+   115,
+   13
+  ],
+  "pass": true
+ }
+}

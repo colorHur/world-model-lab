@@ -1,0 +1,177 @@
+{
+ "kind": "CW-R1.10b-DIAGNOSTIC",
+ "tag": "main",
+ "note": "**诊断**：不是结果表，不是新基线；补丁只在内存里、已还原",
+ "head": "a23993a8f0a5fc32edf77df9999c9199666be9a8",
+ "dirty": "?? docs/research/CW-R1.10-锁死通道-预注册-v0.1.md\n?? experiments/cw_v1/r1_10_lockin.py\n?? experiments/cw_v1/r1_10b_nack_attr.py\n?? results/cw_v1/cw_r1_10_lockin_main_20261023T213734_2f5677d0abc2a170/",
+ "src_hash": "399a23f33a07566d",
+ "ep": 100,
+ "seed": 2001,
+ "rho": 0.98,
+ "ratio": 0.5,
+ "asis": {
+  "patched": false,
+  "n_attempted_by_user": [
+   115,
+   13
+  ],
+  "n_delivered_by_user": [
+   44,
+   7
+  ],
+  "n_ack": 51,
+  "n_nack": 77,
+  "n_probe": 0,
+  "aoi_tavg_by_user": [
+   6.231372549019608,
+   60.940239043824704
+  ],
+  "aoi_max_by_user": [
+   25,
+   163
+  ],
+  "cost_true_per_step": 0.10843528189846283,
+  "phat_diff_median": 0.9489148427865812,
+  "phat_tail_u1": [
+   0.9992649939489678,
+   1.6756325435562435e-07
+  ],
+  "mh_min": [
+   0.0,
+   -8.204162198064056
+  ],
+  "mh_max": [
+   4.707641537199684,
+   0.0
+  ],
+  "policy_trace_hash": "c87f9c6dbde9a12c",
+  "elapsed_s": 23.96
+ },
+ "fixed_attr": {
+  "patched": true,
+  "n_attempted_by_user": [
+   56,
+   70
+  ],
+  "n_delivered_by_user": [
+   31,
+   55
+  ],
+  "n_ack": 86,
+  "n_nack": 40,
+  "n_probe": 0,
+  "aoi_tavg_by_user": [
+   10.819607843137256,
+   17.43426294820717
+  ],
+  "aoi_max_by_user": [
+   39,
+   86
+  ],
+  "cost_true_per_step": 0.09336266753242058,
+  "phat_diff_median": -0.010318258803446612,
+  "phat_tail_u1": [
+   0.07505625491645457,
+   0.9998705467242393
+  ],
+  "mh_min": [
+   -1.8993450685369482,
+   -2.3149514002433462
+  ],
+  "mh_max": [
+   2.1489890056518948,
+   5.1869548778153725
+  ],
+  "policy_trace_hash": "f0664dd33ef7a39a",
+  "elapsed_s": 2.76
+ },
+ "counts_asis": {
+  "ack_by_user": {
+   "0": 44,
+   "1": 7
+  },
+  "nack_by_user": {
+   "1": 77
+  },
+  "n_ack": 51,
+  "n_nack": 77,
+  "nack_indices": [
+   1
+  ]
+ },
+ "counts_fixed": {
+  "ack_by_user": {
+   "0": 31,
+   "1": 55
+  },
+  "nack_by_user": {
+   "0": 25,
+   "1": 15
+  },
+  "n_ack": 86,
+  "n_nack": 40,
+  "nack_indices": [
+   0,
+   1
+  ]
+ },
+ "true_fail_by_user": [
+  71,
+  6
+ ],
+ "gates": {
+  "A1_totals": {
+   "counted_ack": 51,
+   "counted_nack": 77,
+   "res_ack": 51,
+   "res_nack": 77,
+   "pass": true,
+   "rule": "Σ计数 == 记账总数（聚合层恒等 ⇒ 缺陷在聚合层看不见，这正是它活到今天的原因）"
+  },
+  "A2_nack_user0": {
+   "counted_nack_u0": 0,
+   "true_fail_u0": 71,
+   "pass": true,
+   "verdict_if_pass": "MISATTRIBUTED：用户 0 的 71 次失败**一次都没记到用户 0**"
+  },
+  "A3_all_on_last_index": {
+   "nack_indices": [
+    1
+   ],
+   "n_users": 2,
+   "pass": true,
+   "rule": "全部 NACK 落在下标 n_users−1（泄漏的循环变量）"
+  },
+  "A4_patch_correct": {
+   "patched_nack_by_user": {
+    "0": 25,
+    "1": 15
+   },
+   "true_fail": [
+    71,
+    6
+   ],
+   "patched_ack_by_user": {
+    "0": 31,
+    "1": 55
+   },
+   "true_delivered": [
+    44,
+    7
+   ],
+   "pass": false,
+   "rule": "补丁版逐用户 ACK/NACK 计数 == 真实逐用户成败（证明补丁本身正确）"
+  },
+  "A5_source_facts": {
+   "for_loop_line": 428,
+   "nack_call_line": 467,
+   "ack_call_line": 462,
+   "first_i_assign_line": 387,
+   "loop_before_nack": true,
+   "rule": "`for i in range(n_users)` 在失败分支之前 ⇒ `i` 此时 = n_users−1（泄漏）；成功分支在 `i = act.user` 之后 ⇒ 成功归属正确",
+   "pass": true
+  }
+ },
+ "n_fail": 1,
+ "elapsed_s": 26.8
+}

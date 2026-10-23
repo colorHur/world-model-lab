@@ -1,0 +1,140 @@
+{
+ "verdicts": {
+  "ep100_on": {
+   "ep": 100,
+   "ack": true,
+   "n_seeds": 8,
+   "k_u0": 8,
+   "label": "ALL-U0",
+   "deltas": [
+    37,
+    31,
+    38,
+    34,
+    29,
+    37,
+    35,
+    35
+   ],
+   "sum_attempted": [
+    940,
+    78
+   ],
+   "sum_delivered": [
+    327,
+    51
+   ],
+   "n_probe_total": 6,
+   "aoi_tavg_median": [
+    6.902267156862745,
+    64.60889503211644
+   ],
+   "n_never_served_any": 0
+  },
+  "ep100_off": {
+   "ep": 100,
+   "ack": false,
+   "n_seeds": 8,
+   "k_u0": 0,
+   "label": "ALL-U1",
+   "deltas": [
+    -5,
+    -14,
+    -6,
+    -24,
+    -11,
+    -10,
+    -3,
+    -7
+   ],
+   "sum_attempted": [
+    550,
+    440
+   ],
+   "sum_delivered": [
+    202,
+    282
+   ],
+   "n_probe_total": 32,
+   "aoi_tavg_median": [
+    10.486328125,
+    7.091633466135458
+   ],
+   "n_never_served_any": 0
+  },
+  "ep101_on": {
+   "ep": 101,
+   "ack": true,
+   "n_seeds": 8,
+   "k_u0": 8,
+   "label": "ALL-U0",
+   "deltas": [
+    75,
+    78,
+    71,
+    88,
+    83,
+    75,
+    73,
+    86
+   ],
+   "sum_attempted": [
+    869,
+    136
+   ],
+   "sum_delivered": [
+    655,
+    26
+   ],
+   "n_probe_total": 3,
+   "aoi_tavg_median": [
+    3.6555606617647056,
+    47.04489795918367
+   ],
+   "n_never_served_any": 1
+  },
+  "ep101_off": {
+   "ep": 101,
+   "ack": false,
+   "n_seeds": 8,
+   "k_u0": 8,
+   "label": "ALL-U0",
+   "deltas": [
+    15,
+    12,
+    16,
+    16,
+    12,
+    12,
+    17,
+    10
+   ],
+   "sum_attempted": [
+    320,
+    672
+   ],
+   "sum_delivered": [
+    242,
+    132
+   ],
+   "n_probe_total": 32,
+   "aoi_tavg_median": [
+    7.808013640238704,
+    14.155102040816328
+   ],
+   "n_never_served_any": 0
+  }
+ },
+ "judges": {
+  "ep100": {
+   "systematic_or_coin": "SYSTEMATIC-GIVEN-EPISODE",
+   "ack_channel": "ANOMALY-CHECK-IMPL",
+   "note": "有效独立单元 = 2 个 episode；8 个 seed 只说明集内确定性，不构成 8 个独立样本"
+  },
+  "ep101": {
+   "systematic_or_coin": "SYSTEMATIC-GIVEN-EPISODE",
+   "ack_channel": "LOCK-ACK-INDEPENDENT",
+   "note": "有效独立单元 = 2 个 episode；8 个 seed 只说明集内确定性，不构成 8 个独立样本"
+  }
+ }
+}
