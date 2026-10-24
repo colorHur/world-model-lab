@@ -183,6 +183,99 @@ TRUTH_FIELDS: tuple[str, ...] = (
 )
 
 
+# ---------------------------------------------------------------- 网格后验（R1.12 exact 臂）
+class GridBelief:
+    """一维网格上的 `log h` 后验 —— **精确贝叶斯**信道信念（R1.12）。
+
+    为什么需要它
+    ------------
+    `_ack_bump` 把一次二值结果折算成"方差 `ACK_VAR=0.63` 的伪观测"，这是一阶近似
+    （代码注释自承）。精确做法要对 `log h` 的连续后验乘伯努利似然再归一化 —— 没有闭式，
+    只能数值做。R1.12 问的正是"这条伪更新的等效方差该是多少"以及"换成精确贝叶斯会不会
+    改变任务代价"。
+
+    为什么是**固定网格**而不是粒子/高斯和
+    --------------------------------------
+    ① 一维、定义域窄（稳态 `N(0,1)` 且更新带强收缩）⇒ `[-8,8]` / Δ=0.05（321 点）足够，
+       矩的离散误差 ~1e-13（闸 4m/4n 用解析与数值积分钉住）；
+    ② 传播是**固定**的高斯核卷积 ⇒ 转移矩阵建一次复用，每步只是
+       `(n_users, G) @ (G, G)`（≈2e5 flops，256 步 ~50 ms）；
+    ③ **确定性**（无采样噪声）⇒ 同种子逐位可复现，`ack_mode` 的模式隔离可逐位对账。
+
+    ★ 信息边界：网格只被"自己的动作 + 收到的 ACK/NACK + PROBE 读数"更新，
+      从不接触 `_log_h_true`。它比一阶近似**多**知道的只有"似然的形状"，不多个比特的真值。
+    """
+
+    N_GRID = 321
+    HALF = 8.0
+
+    def __init__(self, n_users: int, rho: float, kappa: float, log_h_star: float,
+                 init_mean: float = 0.0, init_std: float = 1.0) -> None:
+        x = np.linspace(-self.HALF, self.HALF, self.N_GRID)
+        self.x = x
+        self.dx = float(x[1] - x[0])
+        self.rho = float(rho)
+        #: 初始后验 = 公开先验（与 `world._m_h/_v_h` 的初值同一分布）
+        dens = np.exp(-0.5 * ((x - float(init_mean)) / float(init_std)) ** 2)
+        dens = dens / dens.sum()
+        self.p = np.tile(dens, (int(n_users), 1))
+        #: 伯努利似然的两支（在网格上一次算好）
+        sig = 1.0 / (1.0 + np.exp(-float(kappa) * (x - float(log_h_star))))
+        self.lik_ok = sig
+        self.lik_fail = 1.0 - sig
+        #: AR 传播核：`T[i,j] ∝ φ((x_j − ρ·x_i)/s)`，`[i,j]` = (源, 目标)，**按行归一**。
+        #: ★ 三处必须做对，否则网格会往里掺假信息（闸 4q 抓的是这个）：
+        #:   ① 归一化轴：要对**目标**求和（`axis=1`）。按源求和（`axis=0`）会把反向核当权重，
+        #:      实测把 5 步稳压从 1.0 推到 1.4478（每步 +8%）—— 看起来像"信道变差"，其实是数值错。
+        #:   ② 乘法方向：`p @ T`（`p_new[k]=Σ_j p[j]T[j,k]`）。写成 `p @ T.T` 因 `ρ≠1` 使 `T` 非对称，
+        #:      实测 50 步把方差推到 11.55（发了散）。
+        #:   ③ ★ **不要**做 `s_eff = sqrt(s²−dx²/12)` 的"Sheppard 修正"：实测本实现的离散二阶矩
+        #:      **恒等于 `s²`**（`corr=0` 时 200 步最大偏差 9.9e-14；修了反而稳态掉到 0.9947，−0.53%）。
+        #:      原因：节点质量按"密度×dx、再整列归一到 1"生成，`dx²/12` 项不出现。这条是踩过的坑，留着。
+        s = np.sqrt(max(1e-12, 1.0 - self.rho * self.rho))
+        diff = (x[None, :] - self.rho * x[:, None]) / s        # [源 i, 目标 j]
+        T = np.exp(-0.5 * diff * diff)
+        T = T / T.sum(axis=1, keepdims=True)
+        self.T = T
+        self.s_eff = float(s)
+
+    # ---------------- 更新
+    def _normalize(self, i: int) -> None:
+        z = float(self.p[i].sum())
+        if not np.isfinite(z) or z <= 0.0:
+            raise ValueError(f"用户 {i} 的后验质量非法（{z}）—— 数值下溢，网格需扩域或换尺度")
+        self.p[i] = self.p[i] / z
+
+    def observe_binary(self, i: int, success: bool) -> None:
+        """一次 ACK(True)/NACK(False) —— **精确**乘似然后归一。"""
+        self.p[i] = self.p[i] * (self.lik_ok if success else self.lik_fail)
+        self._normalize(i)
+
+    def observe_gauss(self, i: int, y: float, var: float) -> None:
+        """一次 PROBE 读数 `y = log h + N(0, var)` —— 高斯似然，同样精确。"""
+        self.p[i] = self.p[i] * np.exp(-0.5 * (self.x - float(y)) ** 2 / float(var))
+        self._normalize(i)
+
+    def propagate(self) -> None:
+        """一步 AR：后验与 `N(0, 1−ρ²)` 卷积（**不引入任何信息**，闸 4q 钉住这一点）。"""
+        # p_new[i,k] = Σ_j p[i,j]·T[j,k] ⇒ 右乘 T（T 因 ρ≠1 而**非对称**，写成 `@ T.T` 会扩散爆炸）
+        self.p = self.p @ self.T
+        for i in range(self.p.shape[0]):
+            self._normalize(i)
+
+    # ---------------- 矩（对外只暴露这两个量，与一阶近似同一消费面）
+    def moments(self) -> tuple[np.ndarray, np.ndarray]:
+        m = self.p @ self.x
+        d = self.x[None, :] - m[:, None]
+        v = np.sum(self.p * d * d, axis=1)
+        return m, v
+
+    def mass_outside(self, lo: float, hi: float) -> np.ndarray:
+        """落在 `[lo,hi]` 之外的质量（闸 4m 用它证明截断无害）。"""
+        inside = (self.x >= lo) & (self.x <= hi)
+        return self.p[:, ~inside].sum(axis=1)
+
+
 # ---------------------------------------------------------------- 世界
 class CWWorld:
     """真实系统 + 接收端 + 调度可视图，一次 `step` 走完一个时隙。
@@ -245,6 +338,21 @@ class CWWorld:
         self._m_h = np.zeros(n, dtype=float)
         self._v_h = np.full(n, float(cfg.channel.h_log_init_std) ** 2)
         self._csi_stamp = np.full(n, -1, dtype=int)
+        #: ★★ R1.12：信道信念的**信息模型**（`"approx"` = 一阶伪观测，默认；`"exact"` = 网格精确贝叶斯）
+        #:   `"approx"` 是历史全部证据的口径 ⇒ 默认值**不许**改，改了旧 16 格就不再逐位复现。
+        self.ack_mode = str(getattr(cfg.channel, "ack_mode", "approx"))
+        if self.ack_mode not in ("approx", "exact"):
+            raise ValueError(f"ack_mode={self.ack_mode!r} 未实现（只允许 'approx' / 'exact'）")
+        #: exact 模式的网格后验；`None` ⇒ 走 `_ack_bump` 的老路径（逐位不变）
+        self._grid: GridBelief | None = None
+        if self.ack_mode == "exact":
+            self._grid = GridBelief(
+                n_users=n, rho=self.rho,
+                kappa=float(cfg.channel.kappa), log_h_star=float(cfg.channel.log_h_star),
+                init_mean=0.0, init_std=float(cfg.channel.h_log_init_std))
+            _gm, _gv = self._grid.moments()
+            self._m_h = np.asarray(_gm, dtype=float).copy()
+            self._v_h = np.asarray(_gv, dtype=float).copy()
 
         # 记账
         self.t = 0
@@ -487,17 +595,29 @@ class CWWorld:
             self.budget_used += spend
             self.n_probe += 1
             obs_var = float(cfg.channel.sigma_csi) ** 2
-            g = self._v_h[i] / (self._v_h[i] + obs_var)
-            self._m_h[i] = self._m_h[i] + g * (csi_reading - self._m_h[i])
-            self._v_h[i] = (1.0 - g) * self._v_h[i]
+            if self._grid is not None:
+                # ★ R1.12：exact 模式下 PROBE 也必须进网格 ——
+                #   否则下一步 `_sync_h_from_grid` 会把解调器的读数**覆盖掉**，
+                #   于是两臂除了"ACK 的算法"还差"PROBE 有没有用"，变成双变量混淆。
+                self._grid.observe_gauss(i, csi_reading, obs_var)
+                self._sync_h_from_grid()
+            else:
+                g = self._v_h[i] / (self._v_h[i] + obs_var)
+                self._m_h[i] = self._m_h[i] + g * (csi_reading - self._m_h[i])
+                self._v_h[i] = (1.0 - g) * self._v_h[i]
             self._csi_stamp[i] = t
             # ★ 不触碰任务估计与时间戳（反例 3）
         elif act.kind == "HOLD":
             self.n_idle += 1   # ★ 不产生 ACK（反例 4）
 
         # 8) 信道信念随 AR 演化（所有用户；用真实 rho，不用面板首项）
-        self._m_h = self.rho * self._m_h
-        self._v_h = self.rho * self.rho * self._v_h + (1.0 - self.rho * self.rho)
+        if self._grid is not None:
+            # ★ R1.12：exact 模式用**网格卷积**做这次演化（闭式矩递推会与网格不一致）
+            self._grid.propagate()
+            self._sync_h_from_grid()
+        else:
+            self._m_h = self.rho * self._m_h
+            self._v_h = self.rho * self.rho * self._v_h + (1.0 - self.rho * self.rho)
 
         # 9) 物理与信道真的推进 n_substeps 次
         for _ in range(int(n_substeps)):
@@ -563,12 +683,45 @@ class CWWorld:
           把"成功/失败"折算成一条方差为 `ACK_VAR` 的伪观测。
           之所以先用近似：R0 只要求 ACK **进入**信念更新且方向正确（反例 4g），
           精确贝叶斯是 R1 的事，写在这里以免被误当成已实现。
+
+        ★★ R1.12：精确版已实现，但**不替换这里**，而是由 `ack_mode` 分派 ——
+          `"approx"`（默认）逐位走下面这段老代码，`"exact"` 走网格后验。
+          调用点（SEND/ACK 支与 SEND/NACK 支）一字未改，两臂只差信息模型。
         """
+        if self.ack_mode == "exact":
+            self._ack_bump_exact(i, direction)
+            return
         prior_var = float(self._v_h[i])
         y = float(self._m_h[i]) + direction    # 伪观测落在先验附近 ±direction
         g = prior_var / (prior_var + self.ACK_VAR)
         self._m_h[i] = self._m_h[i] + g * (y - self._m_h[i])
         self._v_h[i] = (1.0 - g) * prior_var
+
+    # ---------------- R1.12：精确贝叶斯支（网格后验）
+    def _ack_bump_exact(self, i: int, direction: float) -> None:
+        """精确贝叶斯：ACK(`direction>0`) / NACK(`direction<0`) 作为伯努利似然乘上去。
+
+        ★ 与一阶近似的三处结构性差别（预注册 §2）：
+          ① 位移幅度依赖 `(m, v)`，不是只依赖 `v`；
+          ② 后验方差收缩量 = Fisher 信息 `κ²p(1−p)` 决定的量，而不是常数 `ACK_VAR`；
+          ③ 后验可以非高斯（`_m_h/_v_h` 只是它的矩）⇒ "偏度"第一次进入决策链。
+        """
+        if self._grid is None:      # pragma: no cover - 构造函数已保证
+            raise RuntimeError("ack_mode='exact' 但网格后验未初始化")
+        self._grid.observe_binary(int(i), bool(float(direction) > 0.0))
+        self._sync_h_from_grid()
+
+    def _sync_h_from_grid(self) -> None:
+        """把网格后验的矩写回 `_m_h/_v_h` —— 这是 exact 模式对外**唯一**的暴露面。
+
+        ★ `_m_h/_v_h` 在 exact 模式下是**导出量**，不再是独立状态：
+          任何绕过网格去改它们的代码都会在下一次 sync 被覆盖（这正是我们要的）。
+        """
+        if self._grid is None:      # pragma: no cover
+            return
+        m, v = self._grid.moments()
+        self._m_h = np.asarray(m, dtype=float)
+        self._v_h = np.asarray(v, dtype=float)
 
     @property
     def aoi_history(self) -> list[tuple[int, ...]]:

@@ -1,0 +1,16 @@
+{
+ "command": "python -m experiments.cw_v1.r1_12_ackscale --tag main",
+ "python": "3.11.16",
+ "numpy": "2.4.6",
+ "timestamp_utc": "2026-10-24T02:06:04.790180+00:00",
+ "head": "8c96d6773499c02a76237c2927378d8b32c39153",
+ "src_hash": "92d6a8ccd0bc1a26",
+ "world_worktree_sha": "4c4f643b09fb4b3ca9ca2c156f78a7de4a86408e",
+ "world_blob_sha": "afe5d1c187e8202b32744ca649c50e1f9939999e",
+ "gate_elapsed_s": 0.67,
+ "total_elapsed_s": 71.8,
+ "peak_rss_mb": 2096.0,
+ "n_fail_gates": 0,
+ "n_checks_gates": 66,
+ "n_fail_cells": 0
+}

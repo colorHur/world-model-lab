@@ -1,0 +1,311 @@
+{
+ "protocol": "CW-POMDP-v1.1",
+ "stage": "CW-R1.12",
+ "kind": "INFO-MODEL-CALIBRATION",
+ "prereg": "docs/research/CW-R1.12-ACK尺度校准-预注册-v0.1.md",
+ "q1_verdict": "ACK-VAR-OVERCONFIDENT",
+ "q1_criterion": {
+  "r_eff_fisher(0,1)/ACK_VAR": 1.5873015873015872,
+  "all_m_ne_0_gt_1": true
+ },
+ "q1_extra_caliber": 2.739195367247111,
+ "q2_verdict": "PANEL-CANNOT-RESOLVE",
+ "q2": {
+  "ep100": {
+   "cost_true_median_approx": 0.1128414098622037,
+   "cost_true_median_exact": 0.14268833861446986,
+   "delta_median_of_medians": 0.02984692875226616,
+   "paired_delta_per_seed": [
+    0.03772236149143966,
+    -0.00045031252126861987,
+    0.021806926060556522,
+    0.03548424036945161
+   ],
+   "paired_rel_per_seed": [
+    0.4040411707210531,
+    -0.00264705789142661,
+    0.20404062707379336,
+    0.2986702682592375
+   ],
+   "paired_median_delta": 0.028645583215004065,
+   "paired_mean_delta": 0.023640803850044793,
+   "floor_used": 0.0333,
+   "floor_narrow": 0.01272,
+   "resolved_vs_floor": false,
+   "resolved_vs_narrow": true
+  },
+  "ep101": {
+   "cost_true_median_approx": 0.10447877829676114,
+   "cost_true_median_exact": 0.11282976634314369,
+   "delta_median_of_medians": 0.008350988046382554,
+   "paired_delta_per_seed": [
+    0.02733585240642253,
+    -0.03542997744550033,
+    0.01361749331753935,
+    0.011473497714087358
+   ],
+   "paired_rel_per_seed": [
+    0.2903968978570015,
+    -0.2800297419808476,
+    0.15034750335748673,
+    0.09992174973248123
+   ],
+   "paired_median_delta": 0.012545495515813354,
+   "paired_mean_delta": 0.004249216498137226,
+   "floor_used": 0.0333,
+   "floor_narrow": 0.01213,
+   "resolved_vs_floor": false,
+   "resolved_vs_narrow": true
+  },
+  "verdict": "PANEL-CANNOT-RESOLVE",
+  "signs_consistent": true
+ },
+ "per_user": {
+  "ep100": [
+   {
+    "user": 0,
+    "median_approx": 0.024526088462672714,
+    "median_exact": 0.02381073108703161,
+    "ratio_exact_over_approx": 0.970832798033415,
+    "attempted_approx": [
+     56,
+     45,
+     45,
+     35
+    ],
+    "attempted_exact": [
+     58,
+     56,
+     56,
+     57
+    ],
+    "nack_approx": [
+     25,
+     24,
+     24,
+     21
+    ],
+    "nack_exact": [
+     33,
+     35,
+     32,
+     28
+    ],
+    "phat_min_approx": [
+     0.03746506551595829,
+     0.012663493090491479,
+     0.014075620685531098,
+     0.016404267399978426
+    ],
+    "phat_min_exact": [
+     0.12912823223209166,
+     0.14310563371931967,
+     0.1360656902645849,
+     0.14083624992198882
+    ]
+   },
+   {
+    "user": 1,
+    "median_approx": 0.07559295124792734,
+    "median_exact": 0.11767626199017614,
+    "ratio_exact_over_approx": 1.5567094556769627,
+    "attempted_approx": [
+     70,
+     78,
+     78,
+     88
+    ],
+    "attempted_exact": [
+     64,
+     70,
+     67,
+     71
+    ],
+    "nack_approx": [
+     15,
+     18,
+     17,
+     20
+    ],
+    "nack_exact": [
+     26,
+     29,
+     26,
+     24
+    ],
+    "phat_min_approx": [
+     0.01753361075747228,
+     0.02575925605032322,
+     0.010334962370673818,
+     0.03707197033255276
+    ],
+    "phat_min_exact": [
+     0.14415571757345375,
+     0.12909997408813476,
+     0.15694013574394558,
+     0.14364379953487766
+    ]
+   }
+  ],
+  "ep101": [
+   {
+    "user": 0,
+    "median_approx": 0.05683957980405381,
+    "median_exact": 0.05989439368102513,
+    "ratio_exact_over_approx": 1.0537444838174796,
+    "attempted_approx": [
+     90,
+     96,
+     94,
+     85
+    ],
+    "attempted_exact": [
+     62,
+     66,
+     71,
+     63
+    ],
+    "nack_approx": [
+     22,
+     25,
+     17,
+     22
+    ],
+    "nack_exact": [
+     13,
+     17,
+     11,
+     14
+    ],
+    "phat_min_approx": [
+     0.5,
+     0.43602658676652684,
+     0.10029815916545842,
+     0.5
+    ],
+    "phat_min_exact": [
+     0.26844438579324714,
+     0.32620029380116033,
+     0.31180021919280043,
+     0.3152643434552306
+    ]
+   },
+   {
+    "user": 1,
+    "median_approx": 0.042629279640046314,
+    "median_exact": 0.04976044942024621,
+    "ratio_exact_over_approx": 1.1672833751922191,
+    "attempted_approx": [
+     35,
+     31,
+     30,
+     38
+    ],
+    "attempted_exact": [
+     63,
+     59,
+     55,
+     63
+    ],
+    "nack_approx": [
+     27,
+     23,
+     21,
+     26
+    ],
+    "nack_exact": [
+     49,
+     49,
+     41,
+     46
+    ],
+    "phat_min_approx": [
+     0.0014732216422152396,
+     0.0047432543625934255,
+     0.004036164070365636,
+     0.0013951141178938477
+    ],
+    "phat_min_exact": [
+     0.10100481309530762,
+     0.12366798490621868,
+     0.14144703293196068,
+     0.13594694128698703
+    ]
+   }
+  ]
+ },
+ "trade_any_user_worse": true,
+ "wiring": {
+  "ep100": [
+   {
+    "seed": 2001,
+    "hash_approx": "f0664dd33ef7a39a",
+    "hash_exact": "b757af6668895bb2",
+    "different": true
+   },
+   {
+    "seed": 2002,
+    "hash_approx": "d0bd4666347ae206",
+    "hash_exact": "05aee9eaa6303d98",
+    "different": true
+   },
+   {
+    "seed": 2003,
+    "hash_approx": "b8f1188ec6291ce4",
+    "hash_exact": "1c3a68c539879c36",
+    "different": true
+   },
+   {
+    "seed": 2004,
+    "hash_approx": "eca6008d7e5fd2c4",
+    "hash_exact": "bb214a7c12d24c82",
+    "different": true
+   }
+  ],
+  "ep101": [
+   {
+    "seed": 2001,
+    "hash_approx": "09d19e772555c40c",
+    "hash_exact": "3c92c9d9cd81db5c",
+    "different": true
+   },
+   {
+    "seed": 2002,
+    "hash_approx": "3bffd1ee5eb74f8b",
+    "hash_exact": "d7f9059ca1715c7a",
+    "different": true
+   },
+   {
+    "seed": 2003,
+    "hash_approx": "4334e14687ba0a73",
+    "hash_exact": "7f9cfd14c9d5c17f",
+    "different": true
+   },
+   {
+    "seed": 2004,
+    "hash_approx": "d9c50aa0fb589ea6",
+    "hash_exact": "6618125d2f1ff905",
+    "different": true
+   }
+  ],
+  "n_trace_diff": 8,
+  "n_total": 8,
+  "wired": true
+ },
+ "isolation_all_identical": true,
+ "n_cells": 16,
+ "floor": 0.0333,
+ "head": "8c96d6773499c02a76237c2927378d8b32c39153",
+ "world_py_worktree_sha": "4c4f643b09fb4b3ca9ca2c156f78a7de4a86408e",
+ "world_py_blob_sha": "afe5d1c187e8202b32744ca649c50e1f9939999e",
+ "src_hash": "92d6a8ccd0bc1a26",
+ "git_dirty_before_run": [
+  "M experiments/cw_v1/config.py",
+  " M experiments/cw_v1/gates.py",
+  " M experiments/cw_v1/world.py",
+  "?? docs/research/CW-R1.12-ACK尺度校准-预注册-v0.1.md",
+  "?? experiments/cw_v1/r1_12_ackscale.py"
+ ],
+ "wall_s_total": 71.8,
+ "note": "`approx` 臂与 R1.11 同参（`ack=True`）；`exact` 臂只把 ACK/NACK 的信息模型换成网格精确贝叶斯（PROBE 一并进网格，见 world.step）。两臂同种子消耗的随机数位置相同 ⇒ 同 seed 是**配对**，不是独立样本。"
+}

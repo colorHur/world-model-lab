@@ -17,8 +17,8 @@ from .policies import (AlwaysProbe, AlwaysSend, CsiSensitive, ILLEGAL_TruthGreed
 from .runner import _truth_series, check_identities, run_episode
 from .streams import STREAM_NAMES, cross_split_independence_probe, make_episode_rngs, \
     stream_uniqueness_report
-from .world import Action, BudgetExhausted, CWWorld, SchedulerView, action_cost, action_space, \
-    p_success_from_log_h, steady_state_success
+from .world import Action, BudgetExhausted, CWWorld, GridBelief, SchedulerView, action_cost, \
+    action_space, p_success_from_log_h, steady_state_success
 
 
 class Gate:
@@ -936,6 +936,152 @@ def sanity_stability(cfg: CWConfig, g: Gate) -> None:
             {"rho_panel": list(cfg.channel.rho_panel), "mean_succ": vals})
 
 
+# ============================================================ 4b 精确贝叶斯（R1.12）
+def counterexample_4b_ack_exact(cfg: CWConfig, g: Gate) -> None:
+    """R1.12：`ack_mode="exact"` 的网格后验 —— 4m / 4n / 4o / 4p / 4q。
+
+    ★ 这一组不是"新功能验收"，而是**先把数值实现钉死**：如果网格传播本身掺了信息
+      （方差自己长或自己缩），或网格与解析积分对不上，那么后面面板上的任何差
+      都不能归因到"精确 vs 近似"。
+    ★ 为什么 4m/4n/4q 三条一起要：它们分别封住**初值 / 单次更新 / 无观测传播**三种错误。
+      只做其中一条时，另两种错误可以互相抵消（用错的核 + 用错的初值仍可能凑出对的矩）。
+    """
+    kappa = float(cfg.channel.kappa)
+    star = float(cfg.channel.log_h_star)
+
+    # ---------------- 4m 初值：网格 ≡ 公开先验 N(0,1)（截断误差必须远小于一切待测效应）
+    gb = GridBelief(2, rho=0.98, kappa=kappa, log_h_star=star,
+                    init_mean=0.0, init_std=float(cfg.channel.h_log_init_std))
+    m0, v0 = gb.moments()
+    leak = gb.mass_outside(-6.0, 6.0)
+    g.check("4m 网格初值 ≡ 公开先验：mean=0（<1e-12）、var=1（<1e-9）、质量归一",
+            abs(float(m0[0])) < 1e-12 and abs(float(m0[1])) < 1e-12
+            and abs(float(v0[0]) - 1.0) < 1e-9 and abs(float(v0[1]) - 1.0) < 1e-9
+            and abs(float(gb.p.sum(axis=1).min()) - 1.0) < 1e-12,
+            {"mean": [float(x) for x in m0], "var": [float(x) for x in v0],
+             "mass_outside_6sd": [float(x) for x in leak],
+             "grid": {"n": gb.N_GRID, "half": gb.HALF, "dx": round(gb.dx, 6)}})
+
+    # ---------------- 4n 单次更新：网格 ≡ 高分辨数值积分（**同支撑**的独立实现）
+    # ★ 第一次跑 FAIL（worst 3.27e-8 > 1e-8）。读完 FAIL 才判"闸错还是物错"：
+    #   参考积分在 n=4001/8001/16001/32001 与 half=12/20 上**逐位相同** ⇒ 参考已收敛；
+    #   把参考限制到网格的支撑 [−8,8] 再比 ⇒ 误差降到 5.3e-9 ⇒ **那 3.3e-8 全是网格支撑截断**，
+    #   不是网格本身不准。⇒ 判据改为"与**同支撑**参考对账 <1e-8"，并**同时报**支撑截断量
+    #   （它是模型选择，不是数值误差；若哪天超过 1e-6 就该扩域，而不是调阈值）。
+    def _quad(prior_m: float, prior_v: float, success: bool, n: int = 32001,
+              half: float = 12.0, support: tuple[float, float] | None = None
+              ) -> tuple[float, float]:
+        xs = np.linspace(-half, half, n)
+        p = 1.0 / (1.0 + np.exp(-kappa * (xs - star)))
+        lik = np.log(np.clip(p if success else 1.0 - p, 1e-300, None))
+        w = np.exp(-0.5 * (xs - prior_m) ** 2 / prior_v + lik)
+        if support is not None:
+            lo, hi = support
+            w = np.where((xs >= lo) & (xs <= hi), w, 0.0)
+        w = w / w.sum()
+        mm = float((w * xs).sum())
+        return mm, float((w * (xs - mm) ** 2).sum())
+
+    cases = [(0.0, 1.0, True), (0.0, 1.0, False), (0.0, 0.25, True), (1.5, 1.0, True),
+             (1.5, 1.0, False), (-2.0, 1.0, False)]
+    rows, worst, worst_trunc = [], 0.0, 0.0
+    for pm, pv, ok in cases:
+        gx = GridBelief(1, rho=0.98, kappa=kappa, log_h_star=star,
+                        init_mean=pm, init_std=np.sqrt(pv))
+        gx.observe_binary(0, ok)
+        mgx, vgx = gx.moments()
+        mq, vq = _quad(pm, pv, ok, support=(-gx.HALF, gx.HALF))
+        mf, vf = _quad(pm, pv, ok)
+        dm, dv = float(mgx[0]) - mq, float(vgx[0]) - vq
+        worst = max(worst, abs(dm), abs(dv))
+        worst_trunc = max(worst_trunc, abs(mf - mq), abs(vf - vq))
+        # Laplace（一阶高斯）在同一先验处的值 —— **只记录**，用来量化"一阶近似自己错多少"
+        p_ = 1.0 / (1.0 + np.exp(-kappa * (pm - star)))
+        info = kappa * kappa * p_ * (1.0 - p_)
+        lap_m = pm + pv * kappa * ((1.0 - p_) if ok else -p_) / (1.0 + pv * info)
+        lap_v = pv / (1.0 + pv * info)
+        rows.append({"prior": [pm, pv], "ack": ok,
+                     "grid": [float(mgx[0]), float(vgx[0])], "quad_same_support": [mq, vq],
+                     "quad_full_support": [mf, vf],
+                     "err_vs_same_support": [dm, dv],
+                     "truncation_shift": [mf - mq, vf - vq],
+                     "laplace": [lap_m, lap_v],
+                     "laplace_err_vs_quad": [lap_m - mq, lap_v - vq]})
+    g.check("4n 单次 ACK/NACK 后网格后验 ≡ **同支撑** 32001 点数值积分（|Δm|,|Δv| < 1e-8）",
+            worst < 1e-8, {"worst_abs_err": worst,
+                           "worst_support_truncation_shift": worst_trunc, "cases": rows,
+                           "note": "`laplace_err_vs_quad` 是一阶高斯近似**自身**的误差（与网格无关），"
+                                   "在 m=0 处 Δm 差 0.106、Δv 差 0.133 ⇒ §2 的解析式只能当**方向**判据；"
+                                   "`truncation_shift` 是网格把 [−8,8] 之外当作不可能的代价（本批 ≤3.3e-8）"})
+
+    # ---------------- 4o 归属：exact 臂也必须被"非对称"破坏一次（R1.11 纪律迁移）
+    cfg_exact = CWConfig(plant=cfg.plant,
+                         channel=type(cfg.channel)(**{**cfg.channel.__dict__, "ack_mode": "exact"}),
+                         protocol=cfg.protocol, root_seed=cfg.root_seed)
+
+    def _after_exact(send_user: int, force_success: bool):
+        rngs4, sids4 = make_episode_rngs(cfg_exact.root_seed, "dev", 7)
+        w4 = CWWorld(cfg_exact, rngs4, sids4)
+        w4.budget_total = 50
+        w4._log_h_true[:] = 30.0 if force_success else -30.0
+        w4.step(Action("SEND", send_user))
+        return [float(x) for x in w4._m_h], [float(x) for x in w4._v_h]
+
+    me0, ve0 = _after_exact(0, False)
+    me1, ve1 = _after_exact(1, False)
+    # ★ 第一次跑 FAIL：判据写成 `me0[1] == 0.0`（精确零）。网格传播后的"未受影响用户"
+    #   均值是 `−1.07e-16`（`ρ×(浮点零)` 的结果），**不可能**是精确 0 —— 这是判据错，不是实现错。
+    #   改成 1e-15（仍比任何有效效应小 14 个数量级），并在 TEXT 里写明"网格的零是浮点零"。
+    g.check("4o exact 臂归属：SEND(0) 失败只压 u0 的均值、u1 保持 0（<1e-15，网格浮动零）；"
+            "镜像同理且两者对称",
+            me0[0] < -1e-9 and abs(me0[1]) < 1e-15 and me1[1] < -1e-9 and abs(me1[0]) < 1e-15
+            and abs(me1[1] - me0[0]) < 1e-12,
+            {"exact_fail_send0_m": me0, "exact_fail_send1_m": me1,
+             "exact_fail_send0_v": ve0, "exact_fail_send1_v": ve1,
+             "note": "u1 的均值 −1.07e-16 与方差 0.9999999999999212 都是"
+                     "'只做了 AR 传播'的浮点残差 ⇒ 该用户确实没收到任何 ACK 信息"})
+
+    # ---------------- 4p 模式隔离：`ack_mode="approx"` 必须逐位走老公式
+    rngs5, sids5 = make_episode_rngs(cfg.root_seed, "dev", 7)
+    w5 = CWWorld(cfg, rngs5, sids5)
+    w5.budget_total = 50
+    w5._log_h_true[:] = 30.0            # 强制成功：这样两条路径的输入完全相同
+    mv, vv, dirs = 0.0, float(w5._v_h[0]), []
+    for _ in range(5):
+        w5.step(Action("SEND", 0))
+        gg = vv / (vv + float(CWWorld.ACK_VAR))
+        mv = mv + gg * ((mv + 1.0) - mv)
+        vv = (1.0 - gg) * vv
+        # step 末尾还有一次信念滚动（见 4j-1 的教训：漏了它必然假 FAIL）
+        mv = w5.rho * mv
+        vv = w5.rho * w5.rho * vv + (1.0 - w5.rho * w5.rho)
+        dirs.append((float(w5._m_h[0]), float(w5._v_h[0])))
+    g.check("4p 模式隔离：ack_mode='approx' 时 5 次 ACK 后的 (m,v) ≡ 老公式逐位（`_grid is None`）",
+            w5._grid is None
+            and abs(dirs[-1][0] - mv) < 1e-15 and abs(dirs[-1][1] - vv) < 1e-15,
+            {"trajectory": dirs, "closed_form_last": [mv, vv], "ACK_VAR": float(CWWorld.ACK_VAR)})
+
+    # ---------------- 4q 无观测传播 ≡ 闭式矩递推（200 步，两档 rho）
+    rows_q = []
+    ok_q = True
+    for rho in (0.98, 0.85):
+        gq = GridBelief(1, rho=rho, kappa=kappa, log_h_star=star)
+        mq0, vq0 = gq.moments()
+        m_ref, v_ref = float(mq0[0]), float(vq0[0])
+        worst_m = worst_v = 0.0
+        for _ in range(200):
+            gq.propagate()
+            m_ref *= rho
+            v_ref = rho * rho * v_ref + (1.0 - rho * rho)
+            m_cur, v_cur = gq.moments()
+            worst_m = max(worst_m, abs(float(m_cur[0]) - m_ref))
+            worst_v = max(worst_v, abs(float(v_cur[0]) - v_ref))
+        ok_q = ok_q and worst_m < 1e-12 and worst_v < 1e-12
+        rows_q.append({"rho": rho, "worst_dm": worst_m, "worst_dv": worst_v,
+                       "v_final": float(gq.moments()[1][0]), "v_closed": v_ref})
+    g.check("4q 网格 AR 传播 ≡ 闭式 `m'=ρm`、`v'=ρ²v+(1−ρ²)`（200 步，<1e-12）", ok_q, rows_q)
+
+
 # ============================================================ 汇总
 def run_all(cfg: CWConfig | None = None) -> dict:
     cfg = cfg or default_config()
@@ -944,6 +1090,7 @@ def run_all(cfg: CWConfig | None = None) -> dict:
     counterexample_2(cfg, g)
     counterexample_3(cfg, g)
     counterexample_4(cfg, g)
+    counterexample_4b_ack_exact(cfg, g)
     counterexample_5(cfg, g)
     counterexample_6(cfg, g)
     counterexample_7(cfg, g)

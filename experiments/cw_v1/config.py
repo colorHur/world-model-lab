@@ -115,6 +115,17 @@ class ChannelConfig:
     #: 置 False 只用于单独对照"没有 ACK 通道"的世界，**不得**进主表。
     use_ack_for_csi: bool = True
 
+    #: ★★ R1.12（2026-10-24）：ACK/NACK 更新信道信念的**信息模型**。
+    #:
+    #:   `"approx"`（默认，历史全部证据的口径）：把一次二值结果折算成一条
+    #:     方差 `ACK_VAR=0.63` 的伪观测（`world._ack_bump`）—— 一阶近似，代码自承不精确。
+    #:   `"exact"`：对 `log h` 的一维网格后验乘伯努利似然（`world.GridBelief`）。
+    #:
+    #:   ★ 为什么默认仍是 `"approx"`：R1.7.6/R1.8/R1.11 的 16 格逐位身份都建立在这条路径上，
+    #:     改默认值 = 旧证据全部失效。精确版是**另一条臂**，只在新证据目录里出现。
+    #:   ★ 两臂的差别**仅限信息模型**：动作空间、预算、外生事件、规划器、目标函数都不变。
+    ack_mode: str = "approx"
+
 
 @dataclass(frozen=True)
 class ProtocolConfig:
@@ -249,6 +260,10 @@ class CWConfig:
         for i, sw in enumerate(p.sigma_w):
             if float(sw) <= 0.0:
                 bad.append(f"sigma_w[{i}]={sw} 必须为正（估计协方差地板依赖它）")
+
+        # ⑦ ACK 信息模型必须是已实现的两个之一（R1.12）。写错的名字会静默退回近似口径。
+        if ch.ack_mode not in ("approx", "exact"):
+            bad.append(f"ack_mode={ch.ack_mode!r} 未实现（只允许 'approx' / 'exact'）")
         return bad
 
     def fingerprint(self) -> str:

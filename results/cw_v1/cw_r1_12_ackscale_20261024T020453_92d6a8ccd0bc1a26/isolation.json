@@ -1,0 +1,28 @@
+{
+ "source": "results\\cw_v1\\cw_r1_11_rebaseline_20261023T235001_3ef5b3de20cd3be4\\cells.json",
+ "cells": [
+  {
+   "ep": 100,
+   "seed": 2001,
+   "cost_true_new": 0.09336266753242058,
+   "cost_true_old": 0.09336266753242058,
+   "cost_true_identical": true,
+   "aoi_tavg_identical": true,
+   "attempted_identical": true,
+   "trace_hash_identical": true,
+   "phat_diff_median_identical": true
+  },
+  {
+   "ep": 101,
+   "seed": 2003,
+   "cost_true_new": 0.09057345824466763,
+   "cost_true_old": 0.09057345824466763,
+   "cost_true_identical": true,
+   "aoi_tavg_identical": true,
+   "attempted_identical": true,
+   "trace_hash_identical": true,
+   "phat_diff_median_identical": true
+  }
+ ],
+ "all_identical": true
+}
