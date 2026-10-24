@@ -1,0 +1,434 @@
+{
+ "protocol": "CW-POMDP-v1.1",
+ "stage": "CW-R1.15",
+ "kind": "DELIVERY-GAP-ATTRIBUTION",
+ "prereg": "docs/research/CW-R1.15-送达缺口归因-预注册-v0.1.md",
+ "verdict": "EP-DEPENDENT",
+ "verdict_primary_10bins": "EP-DEPENDENT",
+ "verdict_5bins": "EP-DEPENDENT",
+ "resolution_sensitive": false,
+ "contradicts_distribution": false,
+ "frame_says_exact_lower_p": true,
+ "M1_identity": {
+  "all_identical": true,
+  "detail": "16/16"
+ },
+ "CTRL": {
+  "cases": {
+   "C1": {
+    "expect": "GAP-TOO-SMALL",
+    "hand": "两臂计数矩阵逐格相同 ⇒ 三项恒 0",
+    "got": "GAP-TOO-SMALL",
+    "dr": 0.0,
+    "shares": {
+     "user": NaN,
+     "frame": NaN,
+     "within": NaN
+    },
+    "residual": 0.0,
+    "E": {
+     "user": 0.0,
+     "frame": 0.0,
+     "within": 0.0
+    },
+    "shares_ok": true,
+    "dr_ok": true,
+    "additivity_ok": true,
+    "pass": true
+   },
+   "C2": {
+    "expect": "H-B-USER-ALLOCATION",
+    "hand": "每用户单箱 ⇒ E_frame 恒 0；分配差全部进 E_user",
+    "got": "H-B-USER-ALLOCATION",
+    "dr": 0.12000000000000005,
+    "shares": {
+     "user": 0.9999999999999996,
+     "frame": 0.0,
+     "within": 0.0
+    },
+    "residual": 5.551115123125783e-17,
+    "E": {
+     "user": 0.12,
+     "frame": 0.0,
+     "within": 0.0
+    },
+    "shares_ok": true,
+    "dr_ok": true,
+    "additivity_ok": true,
+    "pass": true
+   },
+   "C3": {
+    "expect": "H-A-FRAME-SELECTION",
+    "hand": "m_i≡0 ⇒ E_user 恒 0；箱间重分配全部进 E_frame",
+    "got": "H-A-FRAME-SELECTION",
+    "dr": -0.12,
+    "shares": {
+     "user": -0.0,
+     "frame": 1.0,
+     "within": -0.0
+    },
+    "residual": 0.0,
+    "E": {
+     "user": 0.0,
+     "frame": -0.12,
+     "within": 0.0
+    },
+    "shares_ok": true,
+    "dr_ok": true,
+    "additivity_ok": true,
+    "pass": true
+   },
+   "C4": {
+    "expect": "BOTH-MECHANISMS",
+    "hand": "C2 的一半 + C3 的一半（按 5 次粒度落在同一基座上）",
+    "got": "BOTH-MECHANISMS",
+    "dr": 0.09999999999999998,
+    "shares": {
+     "user": 0.5000000000000001,
+     "frame": 0.5000000000000001,
+     "within": 0.0
+    },
+    "residual": 2.7755575615628914e-17,
+    "E": {
+     "user": 0.049999999999999996,
+     "frame": 0.05,
+     "within": 0.0
+    },
+    "shares_ok": true,
+    "dr_ok": true,
+    "additivity_ok": true,
+    "pass": true
+   },
+   "C5": {
+    "expect": "H-A-FRAME-SELECTION",
+    "hand": "Δr 翻号 (−0.12 → +0.12)，份额不变 ⇒ 判据必须仍指 H-a 且 E_frame 变正",
+    "got": "H-A-FRAME-SELECTION",
+    "dr": 0.12,
+    "shares": {
+     "user": 0.0,
+     "frame": 1.0,
+     "within": 0.0
+    },
+    "residual": 0.0,
+    "E": {
+     "user": 0.0,
+     "frame": 0.12,
+     "within": 0.0
+    },
+    "shares_ok": true,
+    "dr_ok": true,
+    "additivity_ok": true,
+    "pass": true
+   },
+   "C6": {
+    "expect": "DELIVERY-GAP-UNEXPLAINED",
+    "hand": "m_ib≡0 ⇒ E_user=E_frame=0；Δr 全落 E_within（份额 1.0）",
+    "got": "DELIVERY-GAP-UNEXPLAINED",
+    "dr": -0.07999999999999996,
+    "shares": {
+     "user": -0.0,
+     "frame": -0.0,
+     "within": 1.0000000000000004
+    },
+    "residual": 4.163336342344337e-17,
+    "E": {
+     "user": 0.0,
+     "frame": 0.0,
+     "within": -0.08
+    },
+    "shares_ok": true,
+    "dr_ok": true,
+    "additivity_ok": true,
+    "pass": true
+   }
+  },
+  "all_pass": true,
+  "c5_sign_flips": true,
+  "c5_detail": {
+   "E_frame_C3": -0.12,
+   "E_frame_C5": 0.12
+  }
+ },
+ "DEC": {
+  "10bins": {
+   "ep100": {
+    "status": "OK",
+    "dr": -0.13562073642233963,
+    "E_user": -0.026455296417510325,
+    "E_frame": -0.10725042522131893,
+    "E_within": -0.0019150147835104018,
+    "shares": {
+     "user": 0.19506822566665089,
+     "frame": 0.7908114057670941,
+     "within": 0.014120368566255315
+    },
+    "additivity_residual": 2.7755575615628914e-17,
+    "n_empty_cells": 0,
+    "n_attempt_e": 499.0,
+    "n_attempt_a": 495.0,
+    "rate_e": 0.533066132264529,
+    "rate_a": 0.6686868686868687
+   },
+   "ep101": {
+    "status": "OK",
+    "dr": -0.11135418246852269,
+    "E_user": -0.10231603532289951,
+    "E_frame": -0.003292213376931496,
+    "E_within": -0.005745933768691714,
+    "shares": {
+     "user": 0.918834237338341,
+     "frame": 0.02956524222035513,
+     "within": 0.05160052044130412
+    },
+    "additivity_residual": 4.163336342344337e-17,
+    "n_empty_cells": 5,
+    "n_attempt_e": 502.0,
+    "n_attempt_a": 499.0,
+    "rate_e": 0.5219123505976095,
+    "rate_a": 0.6332665330661322
+   },
+   "_verdict": {
+    "verdict": "EP-DEPENDENT",
+    "per_ep_mechanism": [
+     "H-A-FRAME-SELECTION",
+     "H-B-USER-ALLOCATION"
+    ]
+   }
+  },
+  "5bins": {
+   "ep100": {
+    "status": "OK",
+    "dr": -0.13562073642233963,
+    "E_user": -0.026455296417510325,
+    "E_frame": -0.10544954053145378,
+    "E_within": -0.003715899473375514,
+    "shares": {
+     "user": 0.19506822566665089,
+     "frame": 0.7775325758670928,
+     "within": 0.027399198466256273
+    },
+    "additivity_residual": 0.0,
+    "n_empty_cells": 0,
+    "n_attempt_e": 499.0,
+    "n_attempt_a": 495.0,
+    "rate_e": 0.533066132264529,
+    "rate_a": 0.6686868686868687
+   },
+   "ep101": {
+    "status": "OK",
+    "dr": -0.11135418246852269,
+    "E_user": -0.10231603532289951,
+    "E_frame": 0.003232937836425157,
+    "E_within": -0.012271084982048359,
+    "shares": {
+     "user": 0.918834237338341,
+     "frame": -0.029032926871328208,
+     "within": 0.11019868953298739
+    },
+    "additivity_residual": 2.7755575615628914e-17,
+    "n_empty_cells": 2,
+    "n_attempt_e": 502.0,
+    "n_attempt_a": 499.0,
+    "rate_e": 0.5219123505976095,
+    "rate_a": 0.6332665330661322
+   },
+   "_verdict": {
+    "verdict": "EP-DEPENDENT",
+    "per_ep_mechanism": [
+     "H-A-FRAME-SELECTION",
+     "H-B-USER-ALLOCATION"
+    ]
+   }
+  }
+ },
+ "DEC_CLS": {
+  "10bins": {
+   "ep100": {
+    "status": "OK",
+    "dr": -0.13562073642233963,
+    "shares": {
+     "user": 0.19506822566665089,
+     "frame": 0.7908114057670941,
+     "within": 0.014120368566255315
+    },
+    "mechanism": "H-A-FRAME-SELECTION",
+    "partial": false,
+    "ok_user": false,
+    "ok_frame": true,
+    "joint": false
+   },
+   "ep101": {
+    "status": "OK",
+    "dr": -0.11135418246852269,
+    "shares": {
+     "user": 0.918834237338341,
+     "frame": 0.02956524222035513,
+     "within": 0.05160052044130412
+    },
+    "mechanism": "H-B-USER-ALLOCATION",
+    "partial": false,
+    "ok_user": true,
+    "ok_frame": false,
+    "joint": false
+   }
+  },
+  "5bins": {
+   "ep100": {
+    "status": "OK",
+    "dr": -0.13562073642233963,
+    "shares": {
+     "user": 0.19506822566665089,
+     "frame": 0.7775325758670928,
+     "within": 0.027399198466256273
+    },
+    "mechanism": "H-A-FRAME-SELECTION",
+    "partial": false,
+    "ok_user": false,
+    "ok_frame": true,
+    "joint": false
+   },
+   "ep101": {
+    "status": "OK",
+    "dr": -0.11135418246852269,
+    "shares": {
+     "user": 0.918834237338341,
+     "frame": -0.029032926871328208,
+     "within": 0.11019868953298739
+    },
+    "mechanism": "H-B-USER-ALLOCATION",
+    "partial": false,
+    "ok_user": true,
+    "ok_frame": false,
+    "joint": false
+   }
+  }
+ },
+ "distribution": {
+  "ep100": {
+   "approx": {
+    "p_mean": 0.6998044632025694,
+    "p_mean_by_user": [
+     0.53471695674322,
+     0.7945568474950797
+    ],
+    "n_attempt": 495
+   },
+   "exact": {
+    "p_mean": 0.573324087238319,
+    "p_mean_by_user": [
+     0.46984382981276773,
+     0.6593760529609713
+    ],
+    "n_attempt": 499
+   }
+  },
+  "ep101": {
+   "approx": {
+    "p_mean": 0.5968747999925812,
+    "p_mean_by_user": [
+     0.7120406332749367,
+     0.28183299626987157
+    ],
+    "n_attempt": 499
+   },
+   "exact": {
+    "p_mean": 0.510109587949893,
+    "p_mean_by_user": [
+     0.7578181165268553,
+     0.23983397871333317
+    ],
+    "n_attempt": 502
+   }
+  }
+ },
+ "per_cell_dr": [
+  {
+   "ep": 100,
+   "seed": 2001,
+   "rate_exact": 0.5163934426229508,
+   "rate_approx": 0.6825396825396826,
+   "dr": -0.16614623991673172,
+   "delivered_exact": 63,
+   "delivered_approx": 86
+  },
+  {
+   "ep": 100,
+   "seed": 2002,
+   "rate_exact": 0.49206349206349204,
+   "rate_approx": 0.6585365853658537,
+   "dr": -0.16647309330236165,
+   "delivered_exact": 62,
+   "delivered_approx": 81
+  },
+  {
+   "ep": 100,
+   "seed": 2003,
+   "rate_exact": 0.5284552845528455,
+   "rate_approx": 0.6666666666666666,
+   "dr": -0.1382113821138211,
+   "delivered_exact": 65,
+   "delivered_approx": 82
+  },
+  {
+   "ep": 100,
+   "seed": 2004,
+   "rate_exact": 0.59375,
+   "rate_approx": 0.6666666666666666,
+   "dr": -0.07291666666666663,
+   "delivered_exact": 76,
+   "delivered_approx": 82
+  },
+  {
+   "ep": 101,
+   "seed": 2001,
+   "rate_exact": 0.504,
+   "rate_approx": 0.608,
+   "dr": -0.10399999999999998,
+   "delivered_exact": 63,
+   "delivered_approx": 76
+  },
+  {
+   "ep": 101,
+   "seed": 2002,
+   "rate_exact": 0.472,
+   "rate_approx": 0.6220472440944882,
+   "dr": -0.15004724409448822,
+   "delivered_exact": 59,
+   "delivered_approx": 79
+  },
+  {
+   "ep": 101,
+   "seed": 2003,
+   "rate_exact": 0.5873015873015873,
+   "rate_approx": 0.6935483870967742,
+   "dr": -0.10624679979518692,
+   "delivered_exact": 74,
+   "delivered_approx": 86
+  },
+  {
+   "ep": 101,
+   "seed": 2004,
+   "rate_exact": 0.5238095238095238,
+   "rate_approx": 0.6097560975609756,
+   "dr": -0.08594657375145176,
+   "delivered_exact": 66,
+   "delivered_approx": 75
+  }
+ ],
+ "gates": {
+  "n_checks": 75,
+  "n_fail": 0
+ },
+ "n_cells": 16,
+ "head": "59252ad6c517492442e3fb6e486aaa4e1406a601",
+ "src_hash": "864022b336ecf7b9",
+ "runner_py_worktree_sha": "c1610af43909f66ee9a3425b8db861241e431274",
+ "runner_py_blob_sha": "3d921b7bd96da3b748195487974e5c38cc4730f6",
+ "git_dirty_before_run": [
+  "M experiments/cw_v1/gates.py",
+  " M experiments/cw_v1/runner.py",
+  "?? docs/research/CW-R1.15-送达缺口归因-预注册-v0.1.md",
+  "?? experiments/cw_v1/r1_15_delivery_gap.py"
+ ],
+ "note": "两臂只差 ACK/NACK 的信息模型；同 seed 是配对不是独立样本；有效独立单元 = 2 个 episode。`slot` 配对下同一 (t,i) 的 `p_true` 与丢包硬币与策略无关 ⇒ 送达率差只能来自「在哪些 (t,i) 上发了」。"
+}

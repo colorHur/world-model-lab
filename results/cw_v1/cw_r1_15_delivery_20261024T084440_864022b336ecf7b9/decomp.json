@@ -1,0 +1,292 @@
+{
+ "DEC": {
+  "10bins": {
+   "ep100": {
+    "status": "OK",
+    "dr": -0.13562073642233963,
+    "E_user": -0.026455296417510325,
+    "E_frame": -0.10725042522131893,
+    "E_within": -0.0019150147835104018,
+    "shares": {
+     "user": 0.19506822566665089,
+     "frame": 0.7908114057670941,
+     "within": 0.014120368566255315
+    },
+    "additivity_residual": 2.7755575615628914e-17,
+    "n_empty_cells": 0,
+    "n_attempt_e": 499.0,
+    "n_attempt_a": 495.0,
+    "rate_e": 0.533066132264529,
+    "rate_a": 0.6686868686868687
+   },
+   "ep101": {
+    "status": "OK",
+    "dr": -0.11135418246852269,
+    "E_user": -0.10231603532289951,
+    "E_frame": -0.003292213376931496,
+    "E_within": -0.005745933768691714,
+    "shares": {
+     "user": 0.918834237338341,
+     "frame": 0.02956524222035513,
+     "within": 0.05160052044130412
+    },
+    "additivity_residual": 4.163336342344337e-17,
+    "n_empty_cells": 5,
+    "n_attempt_e": 502.0,
+    "n_attempt_a": 499.0,
+    "rate_e": 0.5219123505976095,
+    "rate_a": 0.6332665330661322
+   },
+   "_verdict": {
+    "verdict": "EP-DEPENDENT",
+    "per_ep_mechanism": [
+     "H-A-FRAME-SELECTION",
+     "H-B-USER-ALLOCATION"
+    ]
+   }
+  },
+  "5bins": {
+   "ep100": {
+    "status": "OK",
+    "dr": -0.13562073642233963,
+    "E_user": -0.026455296417510325,
+    "E_frame": -0.10544954053145378,
+    "E_within": -0.003715899473375514,
+    "shares": {
+     "user": 0.19506822566665089,
+     "frame": 0.7775325758670928,
+     "within": 0.027399198466256273
+    },
+    "additivity_residual": 0.0,
+    "n_empty_cells": 0,
+    "n_attempt_e": 499.0,
+    "n_attempt_a": 495.0,
+    "rate_e": 0.533066132264529,
+    "rate_a": 0.6686868686868687
+   },
+   "ep101": {
+    "status": "OK",
+    "dr": -0.11135418246852269,
+    "E_user": -0.10231603532289951,
+    "E_frame": 0.003232937836425157,
+    "E_within": -0.012271084982048359,
+    "shares": {
+     "user": 0.918834237338341,
+     "frame": -0.029032926871328208,
+     "within": 0.11019868953298739
+    },
+    "additivity_residual": 2.7755575615628914e-17,
+    "n_empty_cells": 2,
+    "n_attempt_e": 502.0,
+    "n_attempt_a": 499.0,
+    "rate_e": 0.5219123505976095,
+    "rate_a": 0.6332665330661322
+   },
+   "_verdict": {
+    "verdict": "EP-DEPENDENT",
+    "per_ep_mechanism": [
+     "H-A-FRAME-SELECTION",
+     "H-B-USER-ALLOCATION"
+    ]
+   }
+  }
+ },
+ "DEC_CLS": {
+  "10bins": {
+   "ep100": {
+    "status": "OK",
+    "dr": -0.13562073642233963,
+    "shares": {
+     "user": 0.19506822566665089,
+     "frame": 0.7908114057670941,
+     "within": 0.014120368566255315
+    },
+    "mechanism": "H-A-FRAME-SELECTION",
+    "partial": false,
+    "ok_user": false,
+    "ok_frame": true,
+    "joint": false
+   },
+   "ep101": {
+    "status": "OK",
+    "dr": -0.11135418246852269,
+    "shares": {
+     "user": 0.918834237338341,
+     "frame": 0.02956524222035513,
+     "within": 0.05160052044130412
+    },
+    "mechanism": "H-B-USER-ALLOCATION",
+    "partial": false,
+    "ok_user": true,
+    "ok_frame": false,
+    "joint": false
+   }
+  },
+  "5bins": {
+   "ep100": {
+    "status": "OK",
+    "dr": -0.13562073642233963,
+    "shares": {
+     "user": 0.19506822566665089,
+     "frame": 0.7775325758670928,
+     "within": 0.027399198466256273
+    },
+    "mechanism": "H-A-FRAME-SELECTION",
+    "partial": false,
+    "ok_user": false,
+    "ok_frame": true,
+    "joint": false
+   },
+   "ep101": {
+    "status": "OK",
+    "dr": -0.11135418246852269,
+    "shares": {
+     "user": 0.918834237338341,
+     "frame": -0.029032926871328208,
+     "within": 0.11019868953298739
+    },
+    "mechanism": "H-B-USER-ALLOCATION",
+    "partial": false,
+    "ok_user": true,
+    "ok_frame": false,
+    "joint": false
+   }
+  }
+ },
+ "CTRL": {
+  "cases": {
+   "C1": {
+    "expect": "GAP-TOO-SMALL",
+    "hand": "两臂计数矩阵逐格相同 ⇒ 三项恒 0",
+    "got": "GAP-TOO-SMALL",
+    "dr": 0.0,
+    "shares": {
+     "user": NaN,
+     "frame": NaN,
+     "within": NaN
+    },
+    "residual": 0.0,
+    "E": {
+     "user": 0.0,
+     "frame": 0.0,
+     "within": 0.0
+    },
+    "shares_ok": true,
+    "dr_ok": true,
+    "additivity_ok": true,
+    "pass": true
+   },
+   "C2": {
+    "expect": "H-B-USER-ALLOCATION",
+    "hand": "每用户单箱 ⇒ E_frame 恒 0；分配差全部进 E_user",
+    "got": "H-B-USER-ALLOCATION",
+    "dr": 0.12000000000000005,
+    "shares": {
+     "user": 0.9999999999999996,
+     "frame": 0.0,
+     "within": 0.0
+    },
+    "residual": 5.551115123125783e-17,
+    "E": {
+     "user": 0.12,
+     "frame": 0.0,
+     "within": 0.0
+    },
+    "shares_ok": true,
+    "dr_ok": true,
+    "additivity_ok": true,
+    "pass": true
+   },
+   "C3": {
+    "expect": "H-A-FRAME-SELECTION",
+    "hand": "m_i≡0 ⇒ E_user 恒 0；箱间重分配全部进 E_frame",
+    "got": "H-A-FRAME-SELECTION",
+    "dr": -0.12,
+    "shares": {
+     "user": -0.0,
+     "frame": 1.0,
+     "within": -0.0
+    },
+    "residual": 0.0,
+    "E": {
+     "user": 0.0,
+     "frame": -0.12,
+     "within": 0.0
+    },
+    "shares_ok": true,
+    "dr_ok": true,
+    "additivity_ok": true,
+    "pass": true
+   },
+   "C4": {
+    "expect": "BOTH-MECHANISMS",
+    "hand": "C2 的一半 + C3 的一半（按 5 次粒度落在同一基座上）",
+    "got": "BOTH-MECHANISMS",
+    "dr": 0.09999999999999998,
+    "shares": {
+     "user": 0.5000000000000001,
+     "frame": 0.5000000000000001,
+     "within": 0.0
+    },
+    "residual": 2.7755575615628914e-17,
+    "E": {
+     "user": 0.049999999999999996,
+     "frame": 0.05,
+     "within": 0.0
+    },
+    "shares_ok": true,
+    "dr_ok": true,
+    "additivity_ok": true,
+    "pass": true
+   },
+   "C5": {
+    "expect": "H-A-FRAME-SELECTION",
+    "hand": "Δr 翻号 (−0.12 → +0.12)，份额不变 ⇒ 判据必须仍指 H-a 且 E_frame 变正",
+    "got": "H-A-FRAME-SELECTION",
+    "dr": 0.12,
+    "shares": {
+     "user": 0.0,
+     "frame": 1.0,
+     "within": 0.0
+    },
+    "residual": 0.0,
+    "E": {
+     "user": 0.0,
+     "frame": 0.12,
+     "within": 0.0
+    },
+    "shares_ok": true,
+    "dr_ok": true,
+    "additivity_ok": true,
+    "pass": true
+   },
+   "C6": {
+    "expect": "DELIVERY-GAP-UNEXPLAINED",
+    "hand": "m_ib≡0 ⇒ E_user=E_frame=0；Δr 全落 E_within（份额 1.0）",
+    "got": "DELIVERY-GAP-UNEXPLAINED",
+    "dr": -0.07999999999999996,
+    "shares": {
+     "user": -0.0,
+     "frame": -0.0,
+     "within": 1.0000000000000004
+    },
+    "residual": 4.163336342344337e-17,
+    "E": {
+     "user": 0.0,
+     "frame": 0.0,
+     "within": -0.08
+    },
+    "shares_ok": true,
+    "dr_ok": true,
+    "additivity_ok": true,
+    "pass": true
+   }
+  },
+  "all_pass": true,
+  "c5_sign_flips": true,
+  "c5_detail": {
+   "E_frame_C3": -0.12,
+   "E_frame_C5": 0.12
+  }
+ }
+}

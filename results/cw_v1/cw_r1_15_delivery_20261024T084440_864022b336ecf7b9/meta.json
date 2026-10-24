@@ -1,0 +1,16 @@
+{
+ "command": "python -m experiments.cw_v1.r1_15_delivery_gap --tag main",
+ "python": "3.11.16",
+ "numpy": "2.4.6",
+ "timestamp_utc": "2026-10-24T08:45:46.708836+00:00",
+ "head": "59252ad6c517492442e3fb6e486aaa4e1406a601",
+ "src_hash": "864022b336ecf7b9",
+ "runner_worktree_sha": "c1610af43909f66ee9a3425b8db861241e431274",
+ "runner_blob_sha": "3d921b7bd96da3b748195487974e5c38cc4730f6",
+ "gate_elapsed_s": 0.8,
+ "ctrl_elapsed_s": 0.0,
+ "total_elapsed_s": 66.5,
+ "peak_rss_mb": 2095.4,
+ "n_fail_gates": 0,
+ "n_checks_gates": 75
+}

@@ -34,6 +34,14 @@ from .streams import make_episode_rngs
 from .world import Action, CWWorld, BudgetExhausted, action_space
 
 
+#: ★★ R1.15：`p_true` 的分箱边（11 边 / 10 箱，左闭右开，`p=1` 并入末箱）。
+#: 选 10 箱的理由：它同时是 5 箱的**嵌套粗化**（偶/奇箱合并）⇒ 一份记录出两种分辨率，
+#: 不必重跑；而 10 箱下每个 `(用户, 箱)` 在开发面板仍有 ~25 次尝试（可算参考率）。
+P_TRUE_BIN_EDGES: tuple[float, ...] = tuple(round(0.1 * k, 10) for k in range(11))
+#: H-a 的描述量分位（**不是判据**，见预注册 §3.4）
+P_TRUE_QUANTILES: tuple[float, ...] = (0.1, 0.25, 0.5, 0.75, 0.9)
+
+
 @dataclass
 class EpisodeResult:
     split: str
@@ -102,6 +110,61 @@ class EpisodeResult:
     #: 逐槽、逐用户的真实 `log h`（时点 = 槽开始，与 `telemetry` 的 `h_mean/h_var` 同刻）。
     #: 只用于离线算 `R_var = mean((H−m)²)/mean(v)`；**不进任何决策路径**。
     log_h_hist: list = field(default_factory=list)
+    # ---- ★ R1.15 送达缺口归因（**纯记录聚合**，不存逐槽大表）----
+    #: 每次 SEND 的 `p_true` 均值（无 SEND ⇒ −1.0）。**评估侧真值**，不进 `SchedulerView`。
+    attempt_p_true_mean: float = -1.0
+    #: 同上 5 个分位（`P_TRUE_QUANTILES`；无 SEND ⇒ 空表）
+    attempt_p_true_q: list = field(default_factory=list)
+    attempt_p_true_mean_by_user: list = field(default_factory=list)
+    attempt_p_true_q_by_user: list = field(default_factory=list)
+    #: 分箱边（进证据 ⇒ 「5 箱是 10 箱的嵌套粗化」这句话可被机器复核）
+    p_true_bin_edges: list = field(default_factory=list)
+    #: `n_users × n_bins` 的尝试数 / 送达数（分解的最小充分统计量）
+    n_attempt_in_bin_by_user: list = field(default_factory=list)
+    n_delivered_in_bin_by_user: list = field(default_factory=list)
+
+
+def p_true_aggregates(recs, n_users: int) -> dict:
+    """★ R1.15：由 `SlotRecord` 的 `p_true` / `data_delivered` **事后聚合**出归因所需的统计量。
+
+    ★ 纯记录：只在 episode 跑完之后读 `records`，不消耗随机数、不碰任何记账量、
+      不进 `SchedulerView`（`p_true` 不在 `PUBLIC_HISTORY_FIELDS` 里）。
+    ★ 为什么只存"计数矩阵"而不存逐槽表：分解只需要 `(用户, 箱)` 的尝试/送达计数
+      （见预注册 §3.2），逐槽表只会放大体积与泄漏面。
+    """
+    edges = np.asarray(P_TRUE_BIN_EDGES, dtype=float)
+    n_bins = int(edges.size - 1)
+    n_int = np.zeros((n_users, n_bins), dtype=int)
+    n_del = np.zeros((n_users, n_bins), dtype=int)
+    p_by_user: list[list[float]] = [[] for _ in range(n_users)]
+    for r in recs:
+        if r.action != "SEND" or r.user is None or r.p_true is None:
+            continue
+        u = int(r.user)
+        p = float(r.p_true)
+        # 左闭右开；`p==1.0`（sigmoid 饱和）落到最后一箱
+        b = int(np.clip(np.searchsorted(edges, p, side="right") - 1, 0, n_bins - 1))
+        n_int[u, b] += 1
+        n_del[u, b] += int(bool(r.data_delivered))
+        p_by_user[u].append(p)
+
+    def _q(xs: list[float]) -> list[float]:
+        if not xs:
+            return []
+        return [float(v) for v in np.quantile(np.asarray(xs, dtype=float),
+                                              P_TRUE_QUANTILES)]
+
+    allp = [p for row in p_by_user for p in row]
+    return {
+        "attempt_p_true_mean": float(np.mean(allp)) if allp else -1.0,
+        "attempt_p_true_q": _q(allp),
+        "attempt_p_true_mean_by_user": [float(np.mean(row)) if row else -1.0
+                                        for row in p_by_user],
+        "attempt_p_true_q_by_user": [_q(row) for row in p_by_user],
+        "p_true_bin_edges": [float(e) for e in edges],
+        "n_attempt_in_bin_by_user": [[int(v) for v in row] for row in n_int],
+        "n_delivered_in_bin_by_user": [[int(v) for v in row] for row in n_del],
+    }
 
 
 def _trace_hash(recs) -> str:
@@ -257,6 +320,7 @@ def run_episode(
         n_ack_by_user=[int(x) for x in w.n_ack_by_user],
         n_nack_by_user=[int(x) for x in w.n_nack_by_user],
         log_h_hist=[[float(y) for y in row] for row in w.log_h_history],
+        **p_true_aggregates(recs, w.n_users),
     )
     return res
 

@@ -1330,6 +1330,158 @@ def counterexample_4b3_exact_mainline(cfg: CWConfig, g: Gate) -> None:
 
 
 
+# ============================================================ R1.15 送达缺口归因
+def counterexample_4b4_delivery_attr(cfg: CWConfig, g: Gate) -> None:
+    """R1.15：归因用**纯记录聚合量**的两条不变式 —— 4y（对齐）/ 4z（纯净）。
+
+    预注册：`docs/research/CW-R1.15-送达缺口归因-预注册-v0.1.md` §2/§5。
+
+    ★ 这两条只钉"记录得对不对、纯不纯"，**不许**把"哪个机制成立"写成闸
+      （那是入口脚本的 `M` 判据，带否定条件）。
+    """
+    from types import SimpleNamespace
+
+    from . import runner as Rmod
+
+    # ---------------- 4y 聚合量**对齐**：边界（左闭右开 + p=1 并入末箱）+ 真实轨迹对账
+    edges = list(Rmod.P_TRUE_BIN_EDGES)
+    # (a) 直接喂合成记录：答案手算（p = 0 / 0.0999 / 0.1 / 0.4999 / 0.5 / 0.9999 / 1.0）
+    ps = [0.0, 0.0999, 0.1, 0.4999, 0.5, 0.9999, 1.0]
+    ds = [0, 0, 1, 0, 1, 1, 1]
+    fake = [SimpleNamespace(action="SEND", user=0, p_true=p, data_delivered=d)
+            for p, d in zip(ps, ds)]
+    agg = Rmod.p_true_aggregates(fake, 2)
+    cnt0 = agg["n_attempt_in_bin_by_user"][0]
+    # 左闭右开：0 → 箱0；0.0999 → 箱0；0.1 → 箱1；0.4999 → 箱4；0.5 → 箱5；
+    # 0.9999 → 箱9；1.0（饱和）→ 箱9
+    exp_cnt0 = [2, 1, 0, 0, 1, 1, 0, 0, 0, 2]
+    exp_mean0 = sum(ps) / len(ps)
+    bin_ok = (cnt0 == exp_cnt0
+              and agg["n_attempt_in_bin_by_user"][1] == [0] * 10
+              and agg["n_delivered_in_bin_by_user"][0][1] == 1
+              and agg["n_delivered_in_bin_by_user"][0][9] == 2
+              and agg["n_attempt_in_bin_by_user"][0].__len__() == len(edges) - 1)
+    mean_ok = abs(agg["attempt_p_true_mean_by_user"][0] - exp_mean0) < 1e-15
+    q_ok = (agg["attempt_p_true_q"] == sorted(agg["attempt_p_true_q"])
+            and len(agg["attempt_p_true_q"]) == len(Rmod.P_TRUE_QUANTILES))
+    # (b) 真实轨迹对账：逐用户计数必须等于独立代码路径数出来的 SEND 次数
+    from .world import Action as _A
+
+    rngs, sids = make_episode_rngs(cfg.root_seed, "dev", 9)
+    w = CWWorld(cfg, rngs, sids)
+    w.budget_total = 40
+    script = [_A("SEND", 0), _A("SEND", 1), _A("HOLD"), _A("PROBE", 0),
+              _A("SEND", 1), _A("SEND", 0), _A("HOLD")]
+    for a in script:
+        w._log_h_true[:] = [0.0, 1.0] if a.kind != "PROBE" else [0.0, 1.0]
+        w.step(a)
+    agg2 = Rmod.p_true_aggregates(w.records, 2)
+    n_by_user = [sum(agg2["n_attempt_in_bin_by_user"][i]) for i in (0, 1)]
+    d_by_user = [sum(agg2["n_delivered_in_bin_by_user"][i]) for i in (0, 1)]
+    ref_n = [sum(1 for r in w.records if r.action == "SEND" and r.user == i)
+             for i in (0, 1)]
+    ref_d = [sum(1 for r in w.records if r.action == "SEND" and r.user == i
+                 and r.data_delivered) for i in (0, 1)]
+    ref_mean = [float(np.mean([r.p_true for r in w.records
+                               if r.action == "SEND" and r.user == i])) for i in (0, 1)]
+    # p_true 只用固定 logh 值 ⇒ 两用户的 p 必须是 0.5 与 sigmoid(2)=0.8807970779778823
+    p_expect = [0.5, float(1.0 / (1.0 + np.exp(-2.0)))]
+    trail_ok = (n_by_user == ref_n and d_by_user == ref_d
+                and all(abs(a - b) < 1e-15 for a, b in
+                        zip(agg2["attempt_p_true_mean_by_user"], ref_mean))
+                and all(abs(a - b) < 1e-12 for a, b in
+                        zip(agg2["attempt_p_true_mean_by_user"], p_expect)))
+    g.check("4y `p_true` 聚合量对齐：① 合成记录下 10 箱计数逐箱 = 手算（**左闭右开**、"
+            "`p=0`→箱0、`p=0.1`→箱1、`p=1` 饱和→箱9）、均值/分位单调；"
+            "② 真实 7 槽轨迹下逐用户尝试/送达计数 = **独立代码路径**（直接扫 `records`）重数结果，"
+            "且固定 `logh∈{0,1}` 下逐用户 `p_true` 均值 = 0.5 / sigmoid(2)（1e-12）",
+            bool(bin_ok and mean_ok and q_ok and trail_ok),
+            {"bins_user0": cnt0, "expected_bins_user0": exp_cnt0,
+             "mean_user0": agg["attempt_p_true_mean_by_user"][0],
+             "expected_mean_user0": exp_mean0,
+             "n_attempt_by_user": n_by_user, "ref_n_by_user": ref_n,
+             "n_deliv_by_user": d_by_user, "ref_d_by_user": ref_d,
+             "p_mean_by_user": agg2["attempt_p_true_mean_by_user"],
+             "p_expected": p_expect,
+             "n_bins": len(edges) - 1,
+             "note": "箱号写错（如用左开右闭）会让 `p=0.1` 落箱0、`p=0.5` 落箱4 ⇒ 前两格必 FAIL"})
+
+    # ---------------- 4z 记录**不越权** + 轨迹**纯净**
+    #   ★ 首版只写了"聚合关/开 → 前 8 项逐位相同"，变异测试（把聚合改成 `recs.clear()`）
+    #     抓不到 —— 因为聚合是在构造 `EpisodeResult` 的**实参求值**阶段调用的，那时
+    #     其余字段已算完。⇒ 这条单独存在时是**空过**（#100）。
+    #     改成两段：①信息边界（新记录不得进 `PUBLIC_HISTORY_FIELDS`，带**活体负控**）；
+    #     ②轨迹纯净（防"未来把聚合挪进循环并消耗随机数"）。
+    from . import world as Wmod
+
+    whitelist = tuple(Wmod.PUBLIC_HISTORY_FIELDS)
+    members = tuple(Wmod.VIEW_MEMBERS)
+    leak_keys = {"p_true", "attempt_p_true_mean", "n_attempt_in_bin_by_user",
+                 "n_delivered_in_bin_by_user", "cost_true", "w_realized"}
+    rngs3, sids3 = make_episode_rngs(cfg.root_seed, "dev", 12)
+    w3 = CWWorld(cfg, rngs3, sids3)
+    w3.budget_total = 20
+    w3.step(Action("SEND", 0))
+    keys_now = set(w3.view().history[0].keys())
+    boundary_ok = (keys_now == set(whitelist)) and not (keys_now & leak_keys)
+    # ★ 活体负控：把 `p_true` 塞进白名单后**重建**一次记录 ⇒ 同一谓词必须失去 boundary_ok
+    orig_wl = Wmod.PUBLIC_HISTORY_FIELDS
+    try:
+        Wmod.PUBLIC_HISTORY_FIELDS = orig_wl + ("p_true",)
+        rngs4, sids4 = make_episode_rngs(cfg.root_seed, "dev", 12)
+        w4 = CWWorld(cfg, rngs4, sids4)
+        w4.budget_total = 20
+        w4.step(Action("SEND", 0))
+        neg_keys = set(w4.view().history[0].keys())
+        neg_boundary = (neg_keys == set(Wmod.PUBLIC_HISTORY_FIELDS)) and not (neg_keys & leak_keys)
+    finally:
+        Wmod.PUBLIC_HISTORY_FIELDS = orig_wl
+
+    def _once(off: bool) -> tuple:
+        orig = Rmod.p_true_aggregates
+        try:
+            if off:
+                Rmod.p_true_aggregates = lambda recs, n_users: {}   # type: ignore[assignment]
+            pol = _scripted_policy()
+            res = run_episode(cfg, pol, split="dev", episode=11, budget_total=6, rho=0.98)
+            return (res.cost_est_per_step, res.cost_true_per_step, res.policy_trace_hash,
+                    tuple(res.n_attempted_by_user), tuple(res.n_delivered_by_user),
+                    res.n_probe, res.n_ack, res.n_nack,
+                    tuple(res.attempt_p_true_mean_by_user))
+        finally:
+            Rmod.p_true_aggregates = orig
+
+    on, offv = _once(False), _once(True)
+    g.check("4z ①**信息边界**：`SlotRecord`/视图历史的键集合恰为 `PUBLIC_HISTORY_FIELDS`，"
+            "新增的 `p_true` 聚合量一个都没进白名单（`VIEW_MEMBERS` 未增）；"
+            "★活体负控：把 `p_true` 塞进白名单后重跑同一谓词必须**变 FAIL**；"
+            "②**轨迹纯净**：把聚合换成空实现后，同种子 episode 的 `cost_est`/`cost_true`/轨迹哈希/"
+            "逐用户尝试与送达/`n_probe`/ACK-NACK **逐位相同**",
+            bool(boundary_ok and neg_boundary is False and (on[:-1] == offv[:-1])
+                 and offv[-1] == () and len(members) == 7),
+            {"history_keys": sorted(keys_now), "whitelist": list(whitelist),
+             "negative_control_leaked": sorted(neg_keys & leak_keys),
+             "negative_control_boundary_ok": bool(neg_boundary),
+             "with_agg": list(on[:-1]), "without_agg": list(offv[:-1]),
+             "agg_fields_with": list(on[-1]), "agg_fields_without": list(offv[-1]),
+             "view_members": list(members),
+             "note": "负控证明这条闸有分辨力；11 项『逐位相同』只防『聚合被挪进循环』"})
+
+
+def _scripted_policy():
+    """给 4z 用的确定性策略：不看视图，只按 t 轮转（避免把策略差异混进来）。"""
+    from .world import Action as _A
+
+    seq = [_A("SEND", 0), _A("SEND", 1), _A("HOLD"), _A("PROBE", 1),
+           _A("SEND", 1), _A("SEND", 0)]
+
+    def _pol(v):                                    # noqa: ANN001
+        return seq[int(v.t) % len(seq)]
+
+    _pol.name = "scripted_rot"
+    return _pol
+
+
 # ============================================================ 汇总
 def run_all(cfg: CWConfig | None = None) -> dict:
     cfg = cfg or default_config()
@@ -1341,6 +1493,7 @@ def run_all(cfg: CWConfig | None = None) -> dict:
     counterexample_4b_ack_exact(cfg, g)
     counterexample_4b2_ack_var(cfg, g)
     counterexample_4b3_exact_mainline(cfg, g)
+    counterexample_4b4_delivery_attr(cfg, g)
     counterexample_5(cfg, g)
     counterexample_6(cfg, g)
     counterexample_7(cfg, g)

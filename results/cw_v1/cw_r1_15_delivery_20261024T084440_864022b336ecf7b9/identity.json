@@ -1,0 +1,184 @@
+{
+ "source": "results\\cw_v1\\cw_r1_14_exactbase_20261024T063157_c835f84ff417e9d2\\cells.json",
+ "n_cells": 16,
+ "n_identical": 16,
+ "all_identical": true,
+ "cells": [
+  {
+   "cost_true_per_step": true,
+   "aoi_tavg_by_user": true,
+   "n_attempted_by_user": true,
+   "phat_min_by_user": true,
+   "policy_trace_hash": true,
+   "ep": 100,
+   "seed": 2001,
+   "arm": "approx",
+   "all_identical": true
+  },
+  {
+   "cost_true_per_step": true,
+   "aoi_tavg_by_user": true,
+   "n_attempted_by_user": true,
+   "phat_min_by_user": true,
+   "policy_trace_hash": true,
+   "ep": 100,
+   "seed": 2002,
+   "arm": "approx",
+   "all_identical": true
+  },
+  {
+   "cost_true_per_step": true,
+   "aoi_tavg_by_user": true,
+   "n_attempted_by_user": true,
+   "phat_min_by_user": true,
+   "policy_trace_hash": true,
+   "ep": 100,
+   "seed": 2003,
+   "arm": "approx",
+   "all_identical": true
+  },
+  {
+   "cost_true_per_step": true,
+   "aoi_tavg_by_user": true,
+   "n_attempted_by_user": true,
+   "phat_min_by_user": true,
+   "policy_trace_hash": true,
+   "ep": 100,
+   "seed": 2004,
+   "arm": "approx",
+   "all_identical": true
+  },
+  {
+   "cost_true_per_step": true,
+   "aoi_tavg_by_user": true,
+   "n_attempted_by_user": true,
+   "phat_min_by_user": true,
+   "policy_trace_hash": true,
+   "ep": 101,
+   "seed": 2001,
+   "arm": "approx",
+   "all_identical": true
+  },
+  {
+   "cost_true_per_step": true,
+   "aoi_tavg_by_user": true,
+   "n_attempted_by_user": true,
+   "phat_min_by_user": true,
+   "policy_trace_hash": true,
+   "ep": 101,
+   "seed": 2002,
+   "arm": "approx",
+   "all_identical": true
+  },
+  {
+   "cost_true_per_step": true,
+   "aoi_tavg_by_user": true,
+   "n_attempted_by_user": true,
+   "phat_min_by_user": true,
+   "policy_trace_hash": true,
+   "ep": 101,
+   "seed": 2003,
+   "arm": "approx",
+   "all_identical": true
+  },
+  {
+   "cost_true_per_step": true,
+   "aoi_tavg_by_user": true,
+   "n_attempted_by_user": true,
+   "phat_min_by_user": true,
+   "policy_trace_hash": true,
+   "ep": 101,
+   "seed": 2004,
+   "arm": "approx",
+   "all_identical": true
+  },
+  {
+   "cost_true_per_step": true,
+   "aoi_tavg_by_user": true,
+   "n_attempted_by_user": true,
+   "phat_min_by_user": true,
+   "policy_trace_hash": true,
+   "ep": 100,
+   "seed": 2001,
+   "arm": "exact",
+   "all_identical": true
+  },
+  {
+   "cost_true_per_step": true,
+   "aoi_tavg_by_user": true,
+   "n_attempted_by_user": true,
+   "phat_min_by_user": true,
+   "policy_trace_hash": true,
+   "ep": 100,
+   "seed": 2002,
+   "arm": "exact",
+   "all_identical": true
+  },
+  {
+   "cost_true_per_step": true,
+   "aoi_tavg_by_user": true,
+   "n_attempted_by_user": true,
+   "phat_min_by_user": true,
+   "policy_trace_hash": true,
+   "ep": 100,
+   "seed": 2003,
+   "arm": "exact",
+   "all_identical": true
+  },
+  {
+   "cost_true_per_step": true,
+   "aoi_tavg_by_user": true,
+   "n_attempted_by_user": true,
+   "phat_min_by_user": true,
+   "policy_trace_hash": true,
+   "ep": 100,
+   "seed": 2004,
+   "arm": "exact",
+   "all_identical": true
+  },
+  {
+   "cost_true_per_step": true,
+   "aoi_tavg_by_user": true,
+   "n_attempted_by_user": true,
+   "phat_min_by_user": true,
+   "policy_trace_hash": true,
+   "ep": 101,
+   "seed": 2001,
+   "arm": "exact",
+   "all_identical": true
+  },
+  {
+   "cost_true_per_step": true,
+   "aoi_tavg_by_user": true,
+   "n_attempted_by_user": true,
+   "phat_min_by_user": true,
+   "policy_trace_hash": true,
+   "ep": 101,
+   "seed": 2002,
+   "arm": "exact",
+   "all_identical": true
+  },
+  {
+   "cost_true_per_step": true,
+   "aoi_tavg_by_user": true,
+   "n_attempted_by_user": true,
+   "phat_min_by_user": true,
+   "policy_trace_hash": true,
+   "ep": 101,
+   "seed": 2003,
+   "arm": "exact",
+   "all_identical": true
+  },
+  {
+   "cost_true_per_step": true,
+   "aoi_tavg_by_user": true,
+   "n_attempted_by_user": true,
+   "phat_min_by_user": true,
+   "policy_trace_hash": true,
+   "ep": 101,
+   "seed": 2004,
+   "arm": "exact",
+   "all_identical": true
+  }
+ ]
+}

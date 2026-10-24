@@ -1,0 +1,31 @@
+{
+  "n_mutations": 3,
+  "n_missed": 0,
+  "rows": [
+    {
+      "mutation": "M1 _draw_meas 退回按次数取值",
+      "target": "pairing_gates.Q2",
+      "caught": true,
+      "evidence": {
+        "n_diff_z": 79,
+        "n_both_delivered": 79
+      }
+    },
+    {
+      "mutation": "M2 _nominal_map_var 删掉 +σ_w²",
+      "target": "pred_gates.P3b",
+      "caught": true,
+      "evidence": {
+        "max_dP": 0.007999999999999952
+      }
+    },
+    {
+      "mutation": "M3 _nominal_map 多加一次 B·u",
+      "target": "pred_gates.P1",
+      "caught": true,
+      "evidence": {
+        "max_abs_diff": 0.17190606828936794
+      }
+    }
+  ]
+}
