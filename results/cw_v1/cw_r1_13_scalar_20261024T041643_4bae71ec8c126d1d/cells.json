@@ -1,0 +1,1794 @@
+[
+ {
+  "ep": 100,
+  "seed": 2001,
+  "arm": "0.63",
+  "ack_mode": "approx",
+  "ack_var": 0.63,
+  "n_attempted_by_user": [
+   56,
+   70
+  ],
+  "n_delivered_by_user": [
+   31,
+   55
+  ],
+  "n_ack_by_user": [
+   31,
+   55
+  ],
+  "n_nack_by_user": [
+   25,
+   15
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 0,
+  "n_hold": 130,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   10.819607843137256,
+   17.43426294820717
+  ],
+  "cost_est_per_step": 0.01183472703949712,
+  "cost_true_per_step": 0.09336266753242058,
+  "cost_true_by_user": [
+   0.02420685578394654,
+   0.06915581174847403
+  ],
+  "phat_min_by_user": [
+   0.03746506551595829,
+   0.01753361075747228
+  ],
+  "phat_last_by_user": [
+   0.07505625491645457,
+   0.9998705467242393
+  ],
+  "phat_diff_median": -0.010318258803446612,
+  "m_p05": -1.9554048584095483,
+  "m_p95": 3.731887389419184,
+  "m_min": -2.3149514002433462,
+  "m_max": 5.1869548778153725,
+  "policy_trace_hash": "f0664dd33ef7a39a",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 23.84,
+  "wall_s": 23.84
+ },
+ {
+  "ep": 100,
+  "seed": 2002,
+  "arm": "0.63",
+  "ack_mode": "approx",
+  "ack_var": 0.63,
+  "n_attempted_by_user": [
+   45,
+   78
+  ],
+  "n_delivered_by_user": [
+   21,
+   60
+  ],
+  "n_ack_by_user": [
+   21,
+   60
+  ],
+  "n_nack_by_user": [
+   24,
+   18
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 1,
+  "n_hold": 132,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   17.40625,
+   8.149193548387096
+  ],
+  "cost_est_per_step": 0.024100788271230543,
+  "cost_true_per_step": 0.17011812349367533,
+  "cost_true_by_user": [
+   0.01856003683223924,
+   0.15155808666143605
+  ],
+  "phat_min_by_user": [
+   0.012663493090491479,
+   0.02575925605032322
+  ],
+  "phat_last_by_user": [
+   0.03465421507600873,
+   0.9998531239727362
+  ],
+  "phat_diff_median": -0.14695642648759383,
+  "m_p05": -2.0082429990827633,
+  "m_p95": 4.6856789101766845,
+  "m_min": -2.476924782020287,
+  "m_max": 5.461199219700313,
+  "policy_trace_hash": "d0bd4666347ae206",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.75,
+  "wall_s": 2.75
+ },
+ {
+  "ep": 100,
+  "seed": 2003,
+  "arm": "0.63",
+  "ack_mode": "approx",
+  "ack_var": 0.63,
+  "n_attempted_by_user": [
+   45,
+   78
+  ],
+  "n_delivered_by_user": [
+   21,
+   61
+  ],
+  "n_ack_by_user": [
+   21,
+   61
+  ],
+  "n_nack_by_user": [
+   24,
+   17
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 2,
+  "n_hold": 131,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   20.37109375,
+   16.406374501992033
+  ],
+  "cost_est_per_step": 0.013101530120562331,
+  "cost_true_per_step": 0.10687541188877951,
+  "cost_true_by_user": [
+   0.024845321141398886,
+   0.08203009074738064
+  ],
+  "phat_min_by_user": [
+   0.014075620685531098,
+   0.010334962370673818
+  ],
+  "phat_last_by_user": [
+   0.03714619671257111,
+   0.9999821899130379
+  ],
+  "phat_diff_median": 0.006284317658466383,
+  "m_p05": -2.089260861842885,
+  "m_p95": 4.393478615375336,
+  "m_min": -2.5756409365162916,
+  "m_max": 5.65729351705748,
+  "policy_trace_hash": "b8f1188ec6291ce4",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.75,
+  "wall_s": 2.75
+ },
+ {
+  "ep": 100,
+  "seed": 2004,
+  "arm": "0.63",
+  "ack_mode": "approx",
+  "ack_var": 0.63,
+  "n_attempted_by_user": [
+   35,
+   88
+  ],
+  "n_delivered_by_user": [
+   14,
+   68
+  ],
+  "n_ack_by_user": [
+   14,
+   68
+  ],
+  "n_nack_by_user": [
+   21,
+   20
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 2,
+  "n_hold": 131,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   35.043137254901964,
+   7.581673306772909
+  ],
+  "cost_est_per_step": 0.012630711345615428,
+  "cost_true_per_step": 0.11880740783562788,
+  "cost_true_by_user": [
+   0.05087597501983231,
+   0.06793143281579557
+  ],
+  "phat_min_by_user": [
+   0.016404267399978426,
+   0.03707197033255276
+  ],
+  "phat_last_by_user": [
+   0.0979131072754522,
+   0.9999537823104351
+  ],
+  "phat_diff_median": -0.40285619857322197,
+  "m_p05": -1.9559674276039754,
+  "m_p95": 4.250703776024077,
+  "m_min": -2.348312222839314,
+  "m_max": 5.501364645336544,
+  "policy_trace_hash": "eca6008d7e5fd2c4",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.74,
+  "wall_s": 2.74
+ },
+ {
+  "ep": 101,
+  "seed": 2001,
+  "arm": "0.63",
+  "ack_mode": "approx",
+  "ack_var": 0.63,
+  "n_attempted_by_user": [
+   90,
+   35
+  ],
+  "n_delivered_by_user": [
+   68,
+   8
+  ],
+  "n_ack_by_user": [
+   68,
+   8
+  ],
+  "n_nack_by_user": [
+   22,
+   27
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 2,
+  "n_hold": 129,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   3.8705882352941177,
+   17.93233082706767
+  ],
+  "cost_est_per_step": 0.028644631493955765,
+  "cost_true_per_step": 0.09413272871765788,
+  "cost_true_by_user": [
+   0.06578721250614158,
+   0.02834551621151631
+  ],
+  "phat_min_by_user": [
+   0.5,
+   0.0014732216422152396
+  ],
+  "phat_last_by_user": [
+   0.9534460469439727,
+   0.24234525397242979
+  ],
+  "phat_diff_median": 0.897638017286627,
+  "m_p05": -3.2586480537818177,
+  "m_p95": 3.1174156622351172,
+  "m_min": -3.559411786308086,
+  "m_max": 4.4251809652868985,
+  "policy_trace_hash": "09d19e772555c40c",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.81,
+  "wall_s": 2.81
+ },
+ {
+  "ep": 101,
+  "seed": 2002,
+  "arm": "0.63",
+  "ack_mode": "approx",
+  "ack_var": 0.63,
+  "n_attempted_by_user": [
+   96,
+   31
+  ],
+  "n_delivered_by_user": [
+   71,
+   8
+  ],
+  "n_ack_by_user": [
+   71,
+   8
+  ],
+  "n_nack_by_user": [
+   25,
+   23
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 1,
+  "n_hold": 128,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   4.73828125,
+   28.804081632653062
+  ],
+  "cost_est_per_step": 0.018567419484152053,
+  "cost_true_per_step": 0.1265221943743516,
+  "cost_true_by_user": [
+   0.04672275574037765,
+   0.07979943863397394
+  ],
+  "phat_min_by_user": [
+   0.43602658676652684,
+   0.0047432543625934255
+  ],
+  "phat_last_by_user": [
+   0.9566782559143311,
+   0.2052393423095204
+  ],
+  "phat_diff_median": 0.849490310580721,
+  "m_p05": -2.464127615392089,
+  "m_p95": 3.233121297315958,
+  "m_min": -2.923820135841813,
+  "m_max": 4.437109137224745,
+  "policy_trace_hash": "3bffd1ee5eb74f8b",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.79,
+  "wall_s": 2.79
+ },
+ {
+  "ep": 101,
+  "seed": 2003,
+  "arm": "0.63",
+  "ack_mode": "approx",
+  "ack_var": 0.63,
+  "n_attempted_by_user": [
+   94,
+   30
+  ],
+  "n_delivered_by_user": [
+   77,
+   9
+  ],
+  "n_ack_by_user": [
+   77,
+   9
+  ],
+  "n_nack_by_user": [
+   17,
+   21
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 4,
+  "n_hold": 128,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   4.56640625,
+   36.714285714285715
+  ],
+  "cost_est_per_step": 0.018403318130583563,
+  "cost_true_per_step": 0.09057345824466763,
+  "cost_true_by_user": [
+   0.04789194710196604,
+   0.0426815111427016
+  ],
+  "phat_min_by_user": [
+   0.10029815916545842,
+   0.004036164070365636
+  ],
+  "phat_last_by_user": [
+   0.8776245733573103,
+   0.19615733901807353
+  ],
+  "phat_diff_median": 0.8595081132305633,
+  "m_p05": -2.498475539832575,
+  "m_p95": 4.19510747293222,
+  "m_min": -3.063623242646584,
+  "m_max": 4.642554850897532,
+  "policy_trace_hash": "4334e14687ba0a73",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.7,
+  "wall_s": 2.7
+ },
+ {
+  "ep": 101,
+  "seed": 2004,
+  "arm": "0.63",
+  "ack_mode": "approx",
+  "ack_var": 0.63,
+  "n_attempted_by_user": [
+   85,
+   38
+  ],
+  "n_delivered_by_user": [
+   63,
+   12
+  ],
+  "n_ack_by_user": [
+   63,
+   12
+  ],
+  "n_nack_by_user": [
+   22,
+   26
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 3,
+  "n_hold": 130,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   4.305882352941176,
+   39.32244897959184
+  ],
+  "cost_est_per_step": 0.028433452478961473,
+  "cost_true_per_step": 0.11482482787586441,
+  "cost_true_by_user": [
+   0.07224777973847339,
+   0.04257704813739102
+  ],
+  "phat_min_by_user": [
+   0.5,
+   0.0013951141178938477
+  ],
+  "phat_last_by_user": [
+   0.8839776334878036,
+   0.29241788038753475
+  ],
+  "phat_diff_median": 0.8132309823818898,
+  "m_p05": -2.7251565479113466,
+  "m_p95": 3.1059070875647468,
+  "m_min": -3.537585818079665,
+  "m_max": 4.131166124730849,
+  "policy_trace_hash": "d9c50aa0fb589ea6",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.82,
+  "wall_s": 2.82
+ },
+ {
+  "ep": 100,
+  "seed": 2001,
+  "arm": "1.000",
+  "ack_mode": "approx",
+  "ack_var": 1.0,
+  "n_attempted_by_user": [
+   52,
+   73
+  ],
+  "n_delivered_by_user": [
+   23,
+   56
+  ],
+  "n_ack_by_user": [
+   23,
+   56
+  ],
+  "n_nack_by_user": [
+   29,
+   17
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 1,
+  "n_hold": 130,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   22.79607843137255,
+   17.334661354581673
+  ],
+  "cost_est_per_step": 0.012150206208290415,
+  "cost_true_per_step": 0.10429135775485796,
+  "cost_true_by_user": [
+   0.031171045508940946,
+   0.073120312245917
+  ],
+  "phat_min_by_user": [
+   0.020226792301222908,
+   0.027462626398333766
+  ],
+  "phat_last_by_user": [
+   0.04023604063105793,
+   0.9985524576316742
+  ],
+  "phat_diff_median": -0.07128641490956339,
+  "m_p05": -1.9521899036531665,
+  "m_p95": 2.9701465826851834,
+  "m_min": -2.2516305450962455,
+  "m_max": 3.9126789902363908,
+  "policy_trace_hash": "917a802ccaaae3d8",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.73,
+  "wall_s": 2.73
+ },
+ {
+  "ep": 100,
+  "seed": 2002,
+  "arm": "1.000",
+  "ack_mode": "approx",
+  "ack_var": 1.0,
+  "n_attempted_by_user": [
+   48,
+   73
+  ],
+  "n_delivered_by_user": [
+   20,
+   53
+  ],
+  "n_ack_by_user": [
+   20,
+   53
+  ],
+  "n_nack_by_user": [
+   28,
+   20
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 2,
+  "n_hold": 133,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   16.34765625,
+   10.169354838709678
+  ],
+  "cost_est_per_step": 0.023827731126697484,
+  "cost_true_per_step": 0.1245797803068326,
+  "cost_true_by_user": [
+   0.02125720071176968,
+   0.10332257959506294
+  ],
+  "phat_min_by_user": [
+   0.023393244357809435,
+   0.04116258339463086
+  ],
+  "phat_last_by_user": [
+   0.048649297375331586,
+   0.9975178145085506
+  ],
+  "phat_diff_median": -0.09602661208065669,
+  "m_p05": -1.8260451130372268,
+  "m_p95": 3.3045771209642107,
+  "m_min": -2.1768958780987604,
+  "m_max": 3.8942259874151057,
+  "policy_trace_hash": "13a09d3f4ed83d1c",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.73,
+  "wall_s": 2.73
+ },
+ {
+  "ep": 100,
+  "seed": 2003,
+  "arm": "1.000",
+  "ack_mode": "approx",
+  "ack_var": 1.0,
+  "n_attempted_by_user": [
+   55,
+   69
+  ],
+  "n_delivered_by_user": [
+   24,
+   48
+  ],
+  "n_ack_by_user": [
+   24,
+   48
+  ],
+  "n_nack_by_user": [
+   31,
+   21
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 3,
+  "n_hold": 129,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   15.921875,
+   16.274900398406373
+  ],
+  "cost_est_per_step": 0.013049979971538646,
+  "cost_true_per_step": 0.12055112276621671,
+  "cost_true_by_user": [
+   0.03365800222442358,
+   0.08689312054179313
+  ],
+  "phat_min_by_user": [
+   0.020102014627285884,
+   0.023019594242567866
+  ],
+  "phat_last_by_user": [
+   0.03239977063211137,
+   0.9962880331541943
+  ],
+  "phat_diff_median": 0.043251142111598466,
+  "m_p05": -1.8438444151119346,
+  "m_p95": 2.116177019505191,
+  "m_min": -2.246970935809174,
+  "m_max": 3.1131602022292246,
+  "policy_trace_hash": "5e65489176d7a674",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.72,
+  "wall_s": 2.72
+ },
+ {
+  "ep": 100,
+  "seed": 2004,
+  "arm": "1.000",
+  "ack_mode": "approx",
+  "ack_var": 1.0,
+  "n_attempted_by_user": [
+   52,
+   74
+  ],
+  "n_delivered_by_user": [
+   24,
+   60
+  ],
+  "n_ack_by_user": [
+   24,
+   60
+  ],
+  "n_nack_by_user": [
+   28,
+   14
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 0,
+  "n_hold": 130,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   15.803921568627452,
+   8.888446215139442
+  ],
+  "cost_est_per_step": 0.011905504072476826,
+  "cost_true_per_step": 0.10551613911178105,
+  "cost_true_by_user": [
+   0.035225790506944424,
+   0.07029034860483663
+  ],
+  "phat_min_by_user": [
+   0.04207987551239903,
+   0.04463769896894412
+  ],
+  "phat_last_by_user": [
+   0.11107219516204235,
+   0.9995216935805084
+  ],
+  "phat_diff_median": -0.2639430421508574,
+  "m_p05": -1.5702142483775905,
+  "m_p95": 3.4792981783034014,
+  "m_min": -1.8936443358529969,
+  "m_max": 4.297521465108052,
+  "policy_trace_hash": "d5c2717e1257ae2c",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.77,
+  "wall_s": 2.77
+ },
+ {
+  "ep": 101,
+  "seed": 2001,
+  "arm": "1.000",
+  "ack_mode": "approx",
+  "ack_var": 1.0,
+  "n_attempted_by_user": [
+   82,
+   41
+  ],
+  "n_delivered_by_user": [
+   61,
+   14
+  ],
+  "n_ack_by_user": [
+   61,
+   14
+  ],
+  "n_nack_by_user": [
+   21,
+   27
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 2,
+  "n_hold": 131,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   4.5019607843137255,
+   34.72244897959184
+  ],
+  "cost_est_per_step": 0.02986737565490057,
+  "cost_true_per_step": 0.12760379053290355,
+  "cost_true_by_user": [
+   0.06768362094892386,
+   0.05992016958397971
+  ],
+  "phat_min_by_user": [
+   0.4615793078848984,
+   0.0034196382504143277
+  ],
+  "phat_last_by_user": [
+   0.861187913428802,
+   0.14122152431659235
+  ],
+  "phat_diff_median": 0.8086243755726593,
+  "m_p05": -2.5437512910065663,
+  "m_p95": 1.8304035496088547,
+  "m_min": -3.129963745523798,
+  "m_max": 3.021408972346097,
+  "policy_trace_hash": "1aee520ed35ff625",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.82,
+  "wall_s": 2.82
+ },
+ {
+  "ep": 101,
+  "seed": 2002,
+  "arm": "1.000",
+  "ack_mode": "approx",
+  "ack_var": 1.0,
+  "n_attempted_by_user": [
+   90,
+   36
+  ],
+  "n_delivered_by_user": [
+   65,
+   7
+  ],
+  "n_ack_by_user": [
+   65,
+   7
+  ],
+  "n_nack_by_user": [
+   25,
+   29
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 2,
+  "n_hold": 128,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   4.80078125,
+   44.23265306122449
+  ],
+  "cost_est_per_step": 0.0188371629362591,
+  "cost_true_per_step": 0.13172883043882358,
+  "cost_true_by_user": [
+   0.04732857533976556,
+   0.08440025509905803
+  ],
+  "phat_min_by_user": [
+   0.48449581148644694,
+   0.005459442076373832
+  ],
+  "phat_last_by_user": [
+   0.698382925175383,
+   0.11540124281383922
+  ],
+  "phat_diff_median": 0.8070606161868782,
+  "m_p05": -2.5732320870064402,
+  "m_p95": 2.1347580552826684,
+  "m_min": -2.9465447536132006,
+  "m_max": 2.933848513416085,
+  "policy_trace_hash": "0f8a51d2c3e0404a",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.78,
+  "wall_s": 2.78
+ },
+ {
+  "ep": 101,
+  "seed": 2003,
+  "arm": "1.000",
+  "ack_mode": "approx",
+  "ack_var": 1.0,
+  "n_attempted_by_user": [
+   76,
+   50
+  ],
+  "n_delivered_by_user": [
+   60,
+   19
+  ],
+  "n_ack_by_user": [
+   60,
+   19
+  ],
+  "n_nack_by_user": [
+   16,
+   31
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 2,
+  "n_hold": 128,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   4.67578125,
+   30.922448979591838
+  ],
+  "cost_est_per_step": 0.01854816277753871,
+  "cost_true_per_step": 0.09604197129957082,
+  "cost_true_by_user": [
+   0.0505676373326243,
+   0.045474333966946515
+  ],
+  "phat_min_by_user": [
+   0.48783079121134787,
+   0.005397899269975273
+  ],
+  "phat_last_by_user": [
+   0.948494966970699,
+   0.34342316309188325
+  ],
+  "phat_diff_median": 0.6909372066798236,
+  "m_p05": -2.51223370368441,
+  "m_p95": 2.383920150049069,
+  "m_min": -2.925617471969825,
+  "m_max": 3.4977966952743698,
+  "policy_trace_hash": "5626ba347e145bcd",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.83,
+  "wall_s": 2.83
+ },
+ {
+  "ep": 101,
+  "seed": 2004,
+  "arm": "1.000",
+  "ack_mode": "approx",
+  "ack_var": 1.0,
+  "n_attempted_by_user": [
+   95,
+   33
+  ],
+  "n_delivered_by_user": [
+   79,
+   5
+  ],
+  "n_ack_by_user": [
+   79,
+   5
+  ],
+  "n_nack_by_user": [
+   16,
+   28
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 0,
+  "n_hold": 128,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   3.0431372549019606,
+   60.57551020408163
+  ],
+  "cost_est_per_step": 0.029895123816123415,
+  "cost_true_per_step": 0.16412102804514794,
+  "cost_true_by_user": [
+   0.06758643179144724,
+   0.0965345962537007
+  ],
+  "phat_min_by_user": [
+   0.5,
+   0.002557318387202436
+  ],
+  "phat_last_by_user": [
+   0.9687212811635024,
+   0.08588305368002433
+  ],
+  "phat_diff_median": 0.8971806765906145,
+  "m_p05": -3.039105460915625,
+  "m_p95": 3.433903360199064,
+  "m_min": -3.342979707962806,
+  "m_max": 3.7903804113355695,
+  "policy_trace_hash": "af0c730e20318796",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.7,
+  "wall_s": 2.7
+ },
+ {
+  "ep": 100,
+  "seed": 2001,
+  "arm": "1.726",
+  "ack_mode": "approx",
+  "ack_var": 1.726,
+  "n_attempted_by_user": [
+   58,
+   67
+  ],
+  "n_delivered_by_user": [
+   27,
+   50
+  ],
+  "n_ack_by_user": [
+   27,
+   50
+  ],
+  "n_nack_by_user": [
+   31,
+   17
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 1,
+  "n_hold": 130,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   11.592156862745098,
+   11.376
+  ],
+  "cost_est_per_step": 0.016680523889704296,
+  "cost_true_per_step": 0.10739424122227825,
+  "cost_true_by_user": [
+   0.02311527157043604,
+   0.0842789696518422
+  ],
+  "phat_min_by_user": [
+   0.07424689065614012,
+   0.04555731310597188
+  ],
+  "phat_last_by_user": [
+   0.1113794113513025,
+   0.9947474989974621
+  ],
+  "phat_diff_median": -0.06426329759111465,
+  "m_p05": -1.5290743880612232,
+  "m_p95": 2.335125269622358,
+  "m_min": -1.9043636114036193,
+  "m_max": 3.255339506283454,
+  "policy_trace_hash": "53ac693012021832",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.73,
+  "wall_s": 2.73
+ },
+ {
+  "ep": 100,
+  "seed": 2002,
+  "arm": "1.726",
+  "ack_mode": "approx",
+  "ack_var": 1.726,
+  "n_attempted_by_user": [
+   52,
+   71
+  ],
+  "n_delivered_by_user": [
+   21,
+   53
+  ],
+  "n_ack_by_user": [
+   21,
+   53
+  ],
+  "n_nack_by_user": [
+   31,
+   18
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 2,
+  "n_hold": 131,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   24.1875,
+   7.096774193548387
+  ],
+  "cost_est_per_step": 0.02412172341764881,
+  "cost_true_per_step": 0.11246265578805364,
+  "cost_true_by_user": [
+   0.014868408773224429,
+   0.09759424701482922
+  ],
+  "phat_min_by_user": [
+   0.032666941738040925,
+   0.0715148733469372
+  ],
+  "phat_last_by_user": [
+   0.07078645606403049,
+   0.9945820944968472
+  ],
+  "phat_diff_median": -0.1540019759461757,
+  "m_p05": -1.712705672792426,
+  "m_p95": 2.65087868450566,
+  "m_min": -2.036982035330701,
+  "m_max": 3.429291669848584,
+  "policy_trace_hash": "896aa82f44423f0f",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.73,
+  "wall_s": 2.73
+ },
+ {
+  "ep": 100,
+  "seed": 2003,
+  "arm": "1.726",
+  "ack_mode": "approx",
+  "ack_var": 1.726,
+  "n_attempted_by_user": [
+   61,
+   63
+  ],
+  "n_delivered_by_user": [
+   30,
+   45
+  ],
+  "n_ack_by_user": [
+   30,
+   45
+  ],
+  "n_nack_by_user": [
+   31,
+   18
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 3,
+  "n_hold": 129,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   12.74609375,
+   13.50199203187251
+  ],
+  "cost_est_per_step": 0.012867239351903372,
+  "cost_true_per_step": 0.0847345796163314,
+  "cost_true_by_user": [
+   0.015014672247186132,
+   0.06971990736914528
+  ],
+  "phat_min_by_user": [
+   0.0665956623816611,
+   0.047524504288174375
+  ],
+  "phat_last_by_user": [
+   0.08945635854222218,
+   0.9931788422375416
+  ],
+  "phat_diff_median": 0.08869877614598481,
+  "m_p05": -1.5601648342743912,
+  "m_p95": 2.3179157667206107,
+  "m_min": -1.836497074926815,
+  "m_max": 2.8710776306646264,
+  "policy_trace_hash": "ce1b7fd648dd75b8",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.74,
+  "wall_s": 2.74
+ },
+ {
+  "ep": 100,
+  "seed": 2004,
+  "arm": "1.726",
+  "ack_mode": "approx",
+  "ack_var": 1.726,
+  "n_attempted_by_user": [
+   60,
+   65
+  ],
+  "n_delivered_by_user": [
+   31,
+   47
+  ],
+  "n_ack_by_user": [
+   31,
+   47
+  ],
+  "n_nack_by_user": [
+   29,
+   18
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 2,
+  "n_hold": 129,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   13.8,
+   12.270916334661354
+  ],
+  "cost_est_per_step": 0.011502937181742865,
+  "cost_true_per_step": 0.1040040189782742,
+  "cost_true_by_user": [
+   0.0274031200542794,
+   0.0766008989239948
+  ],
+  "phat_min_by_user": [
+   0.06933996713089999,
+   0.07286513520334177
+  ],
+  "phat_last_by_user": [
+   0.19184067158481244,
+   0.9960527235493457
+  ],
+  "phat_diff_median": -0.012737707348669733,
+  "m_p05": -1.4132787387289145,
+  "m_p95": 2.323639259974472,
+  "m_min": -1.6608115315443153,
+  "m_max": 3.2194404282208837,
+  "policy_trace_hash": "d0025d15d409d5b6",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.74,
+  "wall_s": 2.74
+ },
+ {
+  "ep": 101,
+  "seed": 2001,
+  "arm": "1.726",
+  "ack_mode": "approx",
+  "ack_var": 1.726,
+  "n_attempted_by_user": [
+   68,
+   49
+  ],
+  "n_delivered_by_user": [
+   53,
+   13
+  ],
+  "n_ack_by_user": [
+   53,
+   13
+  ],
+  "n_nack_by_user": [
+   15,
+   36
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 8,
+  "n_hold": 131,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   4.466666666666667,
+   15.577405857740585
+  ],
+  "cost_est_per_step": 0.029475116845630263,
+  "cost_true_per_step": 0.13491544294150243,
+  "cost_true_by_user": [
+   0.06950558402582918,
+   0.06540985891567325
+  ],
+  "phat_min_by_user": [
+   0.5,
+   0.03943551962980677
+  ],
+  "phat_last_by_user": [
+   0.6968324817144163,
+   0.2557948953803244
+  ],
+  "phat_diff_median": 0.6787096089675098,
+  "m_p05": -1.5835342263589625,
+  "m_p95": 1.3635954002848278,
+  "m_min": -1.9746130946525908,
+  "m_max": 1.5526725200797897,
+  "policy_trace_hash": "ce6e064bb4764d30",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.81,
+  "wall_s": 2.81
+ },
+ {
+  "ep": 101,
+  "seed": 2002,
+  "arm": "1.726",
+  "ack_mode": "approx",
+  "ack_var": 1.726,
+  "n_attempted_by_user": [
+   85,
+   39
+  ],
+  "n_delivered_by_user": [
+   60,
+   11
+  ],
+  "n_ack_by_user": [
+   60,
+   11
+  ],
+  "n_nack_by_user": [
+   25,
+   28
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 3,
+  "n_hold": 129,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   4.0078125,
+   28.857142857142858
+  ],
+  "cost_est_per_step": 0.01890500520296964,
+  "cost_true_per_step": 0.1366421503170442,
+  "cost_true_by_user": [
+   0.048290742557806875,
+   0.08835140775923732
+  ],
+  "phat_min_by_user": [
+   0.43996619278067434,
+   0.02075165747099404
+  ],
+  "phat_last_by_user": [
+   0.7001728720675883,
+   0.3753340796591718
+  ],
+  "phat_diff_median": 0.5842240164980368,
+  "m_p05": -1.90141732084176,
+  "m_p95": 1.192276993078406,
+  "m_min": -2.3062831024096915,
+  "m_max": 1.954003389229825,
+  "policy_trace_hash": "30e01783a287a8b1",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.73,
+  "wall_s": 2.73
+ },
+ {
+  "ep": 101,
+  "seed": 2003,
+  "arm": "1.726",
+  "ack_mode": "approx",
+  "ack_var": 1.726,
+  "n_attempted_by_user": [
+   91,
+   36
+  ],
+  "n_delivered_by_user": [
+   67,
+   9
+  ],
+  "n_ack_by_user": [
+   67,
+   9
+  ],
+  "n_nack_by_user": [
+   24,
+   27
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 1,
+  "n_hold": 128,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   3.99609375,
+   34.64081632653061
+  ],
+  "cost_est_per_step": 0.01836291360352937,
+  "cost_true_per_step": 0.09311269718150228,
+  "cost_true_by_user": [
+   0.04920003826163902,
+   0.04391265891986326
+  ],
+  "phat_min_by_user": [
+   0.5,
+   0.020278714060829938
+  ],
+  "phat_last_by_user": [
+   0.523882904949907,
+   0.3413111916928426
+  ],
+  "phat_diff_median": 0.735373382839758,
+  "m_p05": -2.0250892176721176,
+  "m_p95": 1.9384723837383682,
+  "m_min": -2.352418841556077,
+  "m_max": 2.337439489834512,
+  "policy_trace_hash": "1c8d59015282727e",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.69,
+  "wall_s": 2.69
+ },
+ {
+  "ep": 101,
+  "seed": 2004,
+  "arm": "1.726",
+  "ack_mode": "approx",
+  "ack_var": 1.726,
+  "n_attempted_by_user": [
+   91,
+   36
+  ],
+  "n_delivered_by_user": [
+   68,
+   5
+  ],
+  "n_ack_by_user": [
+   68,
+   5
+  ],
+  "n_nack_by_user": [
+   23,
+   31
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 1,
+  "n_hold": 128,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   3.7294117647058824,
+   38.203252032520325
+  ],
+  "cost_est_per_step": 0.029687109735834084,
+  "cost_true_per_step": 0.17161859195710624,
+  "cost_true_by_user": [
+   0.07037723590223473,
+   0.10124135605487153
+  ],
+  "phat_min_by_user": [
+   0.4717712583089687,
+   0.01787745820739825
+  ],
+  "phat_last_by_user": [
+   0.8191549581885043,
+   0.05629108760888467
+  ],
+  "phat_diff_median": 0.7145742633640056,
+  "m_p05": -1.8991098322250597,
+  "m_p95": 1.8836802921283882,
+  "m_min": -2.3585165337112923,
+  "m_max": 2.337143231439182,
+  "policy_trace_hash": "6bc87bad17e0f121",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.71,
+  "wall_s": 2.71
+ },
+ {
+  "ep": 100,
+  "seed": 2001,
+  "arm": "exact",
+  "ack_mode": "exact",
+  "ack_var": null,
+  "n_attempted_by_user": [
+   58,
+   64
+  ],
+  "n_delivered_by_user": [
+   25,
+   38
+  ],
+  "n_ack_by_user": [
+   25,
+   38
+  ],
+  "n_nack_by_user": [
+   33,
+   26
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 5,
+  "n_hold": 129,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   15.635294117647058,
+   7.854838709677419
+  ],
+  "cost_est_per_step": 0.02212012300955711,
+  "cost_true_per_step": 0.13108502902386024,
+  "cost_true_by_user": [
+   0.030566743696168967,
+   0.10051828532769126
+  ],
+  "phat_min_by_user": [
+   0.12912823223209166,
+   0.14415571757345375
+  ],
+  "phat_last_by_user": [
+   0.25096767214216453,
+   0.7840937106437083
+  ],
+  "phat_diff_median": -0.09763136512794404,
+  "m_p05": -1.0392039376898339,
+  "m_p95": 0.9929776323252093,
+  "m_min": -1.2511738136068256,
+  "m_max": 1.2998226575711764,
+  "policy_trace_hash": "b757af6668895bb2",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.78,
+  "wall_s": 2.78
+ },
+ {
+  "ep": 100,
+  "seed": 2002,
+  "arm": "exact",
+  "ack_mode": "exact",
+  "ack_var": null,
+  "n_attempted_by_user": [
+   56,
+   70
+  ],
+  "n_delivered_by_user": [
+   21,
+   41
+  ],
+  "n_ack_by_user": [
+   21,
+   41
+  ],
+  "n_nack_by_user": [
+   35,
+   29
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 2,
+  "n_hold": 128,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   15.49609375,
+   8.471774193548388
+  ],
+  "cost_est_per_step": 0.024101621496608393,
+  "cost_true_per_step": 0.1696678109724067,
+  "cost_true_by_user": [
+   0.01816889094572148,
+   0.15149892002668525
+  ],
+  "phat_min_by_user": [
+   0.14310563371931967,
+   0.12909997408813476
+  ],
+  "phat_last_by_user": [
+   0.43314639000901217,
+   0.8664110618987653
+  ],
+  "phat_diff_median": -0.09601452142388842,
+  "m_p05": -1.0226014214676937,
+  "m_p95": 1.171065211167024,
+  "m_min": -1.2458621125549887,
+  "m_max": 1.4445185346893483,
+  "policy_trace_hash": "05aee9eaa6303d98",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.79,
+  "wall_s": 2.79
+ },
+ {
+  "ep": 100,
+  "seed": 2003,
+  "arm": "exact",
+  "ack_mode": "exact",
+  "ack_var": null,
+  "n_attempted_by_user": [
+   56,
+   67
+  ],
+  "n_delivered_by_user": [
+   24,
+   41
+  ],
+  "n_ack_by_user": [
+   24,
+   41
+  ],
+  "n_nack_by_user": [
+   32,
+   26
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 3,
+  "n_hold": 130,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   21.38671875,
+   9.848605577689243
+  ],
+  "cost_est_per_step": 0.01324155008736042,
+  "cost_true_per_step": 0.12868233794933603,
+  "cost_true_by_user": [
+   0.0226319356506833,
+   0.10605040229865273
+  ],
+  "phat_min_by_user": [
+   0.1360656902645849,
+   0.15694013574394558
+  ],
+  "phat_last_by_user": [
+   0.2500802728825247,
+   0.8568386183790823
+  ],
+  "phat_diff_median": -0.03644093498937323,
+  "m_p05": -1.0232578902030443,
+  "m_p95": 1.2539258299089067,
+  "m_min": -1.230292733566479,
+  "m_max": 1.3678925318567523,
+  "policy_trace_hash": "1c3a68c539879c36",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.79,
+  "wall_s": 2.79
+ },
+ {
+  "ep": 100,
+  "seed": 2004,
+  "arm": "exact",
+  "ack_mode": "exact",
+  "ack_var": null,
+  "n_attempted_by_user": [
+   57,
+   71
+  ],
+  "n_delivered_by_user": [
+   29,
+   47
+  ],
+  "n_ack_by_user": [
+   29,
+   47
+  ],
+  "n_nack_by_user": [
+   28,
+   24
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 0,
+  "n_hold": 128,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   14.31764705882353,
+   5.75
+  ],
+  "cost_est_per_step": 0.009446313190758478,
+  "cost_true_per_step": 0.15429164820507948,
+  "cost_true_by_user": [
+   0.024989526523379917,
+   0.12930212168169955
+  ],
+  "phat_min_by_user": [
+   0.14083624992198882,
+   0.14364379953487766
+  ],
+  "phat_last_by_user": [
+   0.6070194603972404,
+   0.8853676031874901
+  ],
+  "phat_diff_median": -0.16775354204445167,
+  "m_p05": -0.9288518335136534,
+  "m_p95": 1.314369628332616,
+  "m_min": -1.1875067067669898,
+  "m_max": 1.5402580592136887,
+  "policy_trace_hash": "bb214a7c12d24c82",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.78,
+  "wall_s": 2.78
+ },
+ {
+  "ep": 101,
+  "seed": 2001,
+  "arm": "exact",
+  "ack_mode": "exact",
+  "ack_var": null,
+  "n_attempted_by_user": [
+   62,
+   63
+  ],
+  "n_delivered_by_user": [
+   49,
+   14
+  ],
+  "n_ack_by_user": [
+   49,
+   14
+  ],
+  "n_nack_by_user": [
+   13,
+   49
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 2,
+  "n_hold": 129,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   5.658823529411765,
+   17.65289256198347
+  ],
+  "cost_est_per_step": 0.029053057670376786,
+  "cost_true_per_step": 0.1214685811240804,
+  "cost_true_by_user": [
+   0.06952036987689401,
+   0.05194821124718641
+  ],
+  "phat_min_by_user": [
+   0.26844438579324714,
+   0.10100481309530762
+  ],
+  "phat_last_by_user": [
+   0.8050072650490729,
+   0.28111473878792986
+  ],
+  "phat_diff_median": 0.413595395695842,
+  "m_p05": -1.1213468724219202,
+  "m_p95": 1.1054147488569188,
+  "m_min": -1.416670988780477,
+  "m_max": 1.2565666707921266,
+  "policy_trace_hash": "3c92c9d9cd81db5c",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.78,
+  "wall_s": 2.78
+ },
+ {
+  "ep": 101,
+  "seed": 2002,
+  "arm": "exact",
+  "ack_mode": "exact",
+  "ack_var": null,
+  "n_attempted_by_user": [
+   66,
+   59
+  ],
+  "n_delivered_by_user": [
+   49,
+   10
+  ],
+  "n_ack_by_user": [
+   49,
+   10
+  ],
+  "n_nack_by_user": [
+   17,
+   49
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 3,
+  "n_hold": 128,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   5.62109375,
+   17.33469387755102
+  ],
+  "cost_est_per_step": 0.017955288663718177,
+  "cost_true_per_step": 0.09109221692885128,
+  "cost_true_by_user": [
+   0.0479420150890604,
+   0.04315020183979087
+  ],
+  "phat_min_by_user": [
+   0.32620029380116033,
+   0.12366798490621868
+  ],
+  "phat_last_by_user": [
+   0.8794098325161712,
+   0.18122859732303975
+  ],
+  "phat_diff_median": 0.412910647743451,
+  "m_p05": -1.0729237718455906,
+  "m_p95": 1.0959675544424277,
+  "m_min": -1.2717730640509308,
+  "m_max": 1.2586762506425038,
+  "policy_trace_hash": "d7f9059ca1715c7a",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.76,
+  "wall_s": 2.76
+ },
+ {
+  "ep": 101,
+  "seed": 2003,
+  "arm": "exact",
+  "ack_mode": "exact",
+  "ack_var": null,
+  "n_attempted_by_user": [
+   71,
+   55
+  ],
+  "n_delivered_by_user": [
+   60,
+   14
+  ],
+  "n_ack_by_user": [
+   60,
+   14
+  ],
+  "n_nack_by_user": [
+   11,
+   41
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 2,
+  "n_hold": 128,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   5.0859375,
+   17.542857142857144
+  ],
+  "cost_est_per_step": 0.018622197959384582,
+  "cost_true_per_step": 0.10419095156220698,
+  "cost_true_by_user": [
+   0.05026841748515625,
+   0.053922534077050735
+  ],
+  "phat_min_by_user": [
+   0.31180021919280043,
+   0.14144703293196068
+  ],
+  "phat_last_by_user": [
+   0.5155559958883222,
+   0.3864481475309768
+  ],
+  "phat_diff_median": 0.4464112939309785,
+  "m_p05": -1.0206618921235526,
+  "m_p95": 1.3072248919126688,
+  "m_min": -1.2089499416093576,
+  "m_max": 1.4802437309498468,
+  "policy_trace_hash": "7f9cfd14c9d5c17f",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.72,
+  "wall_s": 2.72
+ },
+ {
+  "ep": 101,
+  "seed": 2004,
+  "arm": "exact",
+  "ack_mode": "exact",
+  "ack_var": null,
+  "n_attempted_by_user": [
+   63,
+   63
+  ],
+  "n_delivered_by_user": [
+   49,
+   17
+  ],
+  "n_ack_by_user": [
+   49,
+   17
+  ],
+  "n_nack_by_user": [
+   14,
+   46
+  ],
+  "attribution_identity_ok": true,
+  "n_probe": 2,
+  "n_hold": 128,
+  "n_forced_hold": 0,
+  "n_never_served": 0,
+  "aoi_tavg_by_user": [
+   7.0,
+   20.32520325203252
+  ],
+  "cost_est_per_step": 0.02946556312784043,
+  "cost_true_per_step": 0.12629832558995177,
+  "cost_true_by_user": [
+   0.07872563799664577,
+   0.047572687593306004
+  ],
+  "phat_min_by_user": [
+   0.3152643434552306,
+   0.13594694128698703
+  ],
+  "phat_last_by_user": [
+   0.9029654374863757,
+   0.3777640128807264
+  ],
+  "phat_diff_median": 0.3287238239040161,
+  "m_p05": -1.0451859811360438,
+  "m_p95": 1.2784278962615585,
+  "m_min": -1.1688058754739399,
+  "m_max": 1.4439105960342593,
+  "policy_trace_hash": "6618125d2f1ff905",
+  "identities_pass": true,
+  "identities_fail": [],
+  "elapsed_s": 2.73,
+  "wall_s": 2.73
+ }
+]

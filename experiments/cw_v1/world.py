@@ -345,6 +345,12 @@ class CWWorld:
             raise ValueError(f"ack_mode={self.ack_mode!r} 未实现（只允许 'approx' / 'exact'）")
         #: exact 模式的网格后验；`None` ⇒ 走 `_ack_bump` 的老路径（逐位不变）
         self._grid: GridBelief | None = None
+        #: ★★ R1.13：一阶近似的伪观测方差 —— 从配置读，默认 = 类常量 `ACK_VAR`（0.63）。
+        #:   ★ 为什么保留类常量：`gates 4j-1/4p` 用 `CWWorld.ACK_VAR` 做解析对账，
+        #:     删掉常量就等于删掉那两条闸的参照物；`4r` 钉死"默认值 == 常量"。
+        self.ack_var = float(getattr(cfg.channel, "ack_var", type(self).ACK_VAR))
+        if not (self.ack_var > 0.0):
+            raise ValueError(f"ack_var={self.ack_var} 必须为正")
         if self.ack_mode == "exact":
             self._grid = GridBelief(
                 n_users=n, rho=self.rho,
@@ -673,6 +679,8 @@ class CWWorld:
                             + np.sqrt(max(1e-12, 1.0 - self.rho * self.rho)) * s)
 
     #: ACK 更新的"等效量测方差"（大 ⇒ 每次 ACK 只把信念挪一点）
+    #: ★ R1.13 起这只是**默认值**：真正的取值来自 `cfg.channel.ack_var`（`self.ack_var`），
+    #:   两条必须相等，由闸 `4r` 钉死；保留常量是为了给 `4j-1/4p` 提供解析参照物。
     ACK_VAR = 0.63   # ≈ π²/3·0.2，对应 1 次二值结果只看清 ±1.5 个 log 单位
 
     def _ack_bump(self, i: int, direction: float) -> None:
@@ -687,13 +695,17 @@ class CWWorld:
         ★★ R1.12：精确版已实现，但**不替换这里**，而是由 `ack_mode` 分派 ——
           `"approx"`（默认）逐位走下面这段老代码，`"exact"` 走网格后验。
           调用点（SEND/ACK 支与 SEND/NACK 支）一字未改，两臂只差信息模型。
+
+        ★★ R1.13：伪观测方差改从 `self.ack_var`（配置项）读，**默认 = `ACK_VAR`（0.63）**
+          ⇒ 默认路径逐位不变（由 `4p` 与 G1 身份闸双封）。方向量级 `±1.0/−1.5` 仍是字面常量，
+          本轮不允许动（`4t` 钉住）。
         """
         if self.ack_mode == "exact":
             self._ack_bump_exact(i, direction)
             return
         prior_var = float(self._v_h[i])
         y = float(self._m_h[i]) + direction    # 伪观测落在先验附近 ±direction
-        g = prior_var / (prior_var + self.ACK_VAR)
+        g = prior_var / (prior_var + self.ack_var)
         self._m_h[i] = self._m_h[i] + g * (y - self._m_h[i])
         self._v_h[i] = (1.0 - g) * prior_var
 

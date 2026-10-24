@@ -1,0 +1,18 @@
+{
+ "legacy": {
+  "4r": true,
+  "4s": false,
+  "4t": true
+ },
+ "legacy_4s_failed": true,
+ "legacy_4r_passed": true,
+ "restored": {
+  "4r": true,
+  "4s": true,
+  "4t": true
+ },
+ "restored_all_pass": true,
+ "restore_identical": true,
+ "has_discriminating_power": true,
+ "note": "`4r` 在旧实现下也 PASS —— 它只看配置默认值与 validate，不看接线；**只有 `4s` 能抓「配置没接线」**（这正是 R12 的落地形式）。"
+}

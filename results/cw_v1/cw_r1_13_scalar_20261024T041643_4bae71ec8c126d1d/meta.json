@@ -1,0 +1,16 @@
+{
+ "command": "python -m experiments.cw_v1.r1_13_scalar --tag main",
+ "python": "3.11.16",
+ "numpy": "2.4.6",
+ "timestamp_utc": "2026-10-24T04:18:33.205436+00:00",
+ "head": "c12e270b5db8fb73113e3e0b6224e145fd7bed8e",
+ "src_hash": "4bae71ec8c126d1d",
+ "world_worktree_sha": "bca1614588a6d1c0739a7bebb79728bae356a04d",
+ "world_blob_sha": "4c4f643b09fb4b3ca9ca2c156f78a7de4a86408e",
+ "gate_elapsed_s": 0.66,
+ "total_elapsed_s": 110.1,
+ "peak_rss_mb": 2095.9,
+ "n_fail_gates": 0,
+ "n_checks_gates": 69,
+ "n_fail_cells": 0
+}

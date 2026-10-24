@@ -1082,6 +1082,76 @@ def counterexample_4b_ack_exact(cfg: CWConfig, g: Gate) -> None:
     g.check("4q 网格 AR 传播 ≡ 闭式 `m'=ρm`、`v'=ρ²v+(1−ρ²)`（200 步，<1e-12）", ok_q, rows_q)
 
 
+# ============================================================ R1.13：`ack_var` 接线
+def counterexample_4b2_ack_var(cfg: CWConfig, g: Gate) -> None:
+    """R1.13：`ack_var` 这个标量配置项**真的接线了吗**？（4r / 4s / 4t）
+
+    ★ 动机（R12）：见参数先问"它接线了吗"。`4j-1`/`4p` 都是用 `CWWorld.ACK_VAR` 做解析对账，
+      一旦 `_ack_bump` 改读配置，那两条就**不再覆盖**"配置值是否被用上"这一维：
+      配置项写得再漂亮，实现里仍读类常量，两条闸照样全 PASS。
+    """
+    from .config import ChannelConfig
+
+    # ---------------- 4r 默认值锁定：配置默认必须 == 类常量（否则 4j-1/4p 失去意义）
+    d_cfg = float(ChannelConfig().ack_var)
+    d_cls = float(CWWorld.ACK_VAR)
+    bad_cfg = []
+    for bad_v in (0.0, -1.0, float("nan"), float("inf")):
+        c_bad = CWConfig(plant=cfg.plant,
+                         channel=type(cfg.channel)(**{**cfg.channel.__dict__, "ack_var": bad_v}),
+                         protocol=cfg.protocol, root_seed=cfg.root_seed)
+        # validate 的返回是"错项列表"，非空即拒绝
+        if not any("ack_var" in str(x) for x in c_bad.v11_validate()):
+            bad_cfg.append(bad_v)
+    g.check("4r `ChannelConfig().ack_var` == `CWWorld.ACK_VAR`（默认同值，否则 4j-1/4p 参照物失效）"
+            "且 ack_var ≤0 / NaN / inf 一律被 validate 拒绝",
+            d_cfg == d_cls and not bad_cfg,
+            {"config_default": d_cfg, "class_constant": d_cls,
+             "unvalidated_bad_values": bad_cfg,
+             "why_it_matters": "配置默认漂走 ⇒ 4j-1/4p 仍在算 0.63 的解析式，"
+                               "而被测物已经用别的值 ⇒ 两条闸静默失去分辨力"})
+
+    # ---------------- 4s ★判别：非默认 ack_var 必须真的进公式
+    def _bare_with(ack_var: float, user: int = 0, direction: float = -1.5):
+        c = CWConfig(plant=cfg.plant,
+                     channel=type(cfg.channel)(**{**cfg.channel.__dict__, "ack_var": float(ack_var)}),
+                     protocol=cfg.protocol, root_seed=cfg.root_seed)
+        rngs6, sids6 = make_episode_rngs(c.root_seed, "dev", 8)
+        w6 = CWWorld(c, rngs6, sids6)
+        w6._ack_bump(user, direction)
+        return float(w6._m_h[user]), float(w6._v_h[user]), float(w6.ack_var)
+
+    av_new = 1.726
+    m_new, v_new, seen = _bare_with(av_new)
+    g_new = 1.0 / (1.0 + av_new)
+    g_old = 1.0 / (1.0 + float(CWWorld.ACK_VAR))
+    exp_m, exp_v = -g_new * 1.5, 1.0 - g_new
+    m_old, v_old, _ = _bare_with(float(CWWorld.ACK_VAR))
+    gap = max(abs(m_new - m_old), abs(v_new - v_old))
+    g.check("4s ★判别：`ack_var=1.726` 的裸 `_ack_bump` ≡ `g=1/(1+1.726)` 解析式，"
+            "且与默认 0.63 的结果差 >1e-3（接线是死的时候本条必 FAIL）",
+            abs(seen - av_new) < 1e-15
+            and abs(m_new - exp_m) < 1e-12 and abs(v_new - exp_v) < 1e-12
+            and gap > 1e-3,
+            {"ack_var_seen_by_world": seen,
+             "bare_m_new": m_new, "bare_v_new": v_new,
+             "analytic_m_new": exp_m, "analytic_v_new": exp_v,
+             "bare_m_default": m_old, "bare_v_default": v_old,
+             "max_abs_gap_vs_default": gap, "g_new": g_new, "g_old": g_old})
+
+    # ---------------- 4t 只准动方差：方向不对称必须仍严格是 1.0 / −1.5
+    m_ack, v_ack, _ = _bare_with(av_new, 0, +1.0)
+    m_nack, v_nack, _ = _bare_with(av_new, 0, -1.5)
+    ratio = abs(m_nack) / abs(m_ack) if m_ack else float("inf")
+    g.check("4t 非默认 ack_var 下 ACK/NACK 的方向不对称仍严格为 1.0 / −1.5（比值 1.5，≤1e-12）",
+            abs(ratio - 1.5) < 1e-12 and m_ack > 0.0 and m_nack < 0.0
+            and abs(v_ack - v_nack) < 1e-15,
+            {"m_ack": m_ack, "m_nack": m_nack, "abs_ratio": ratio,
+             "v_ack": v_ack, "v_nack": v_nack,
+             "note": "同一 (m,v) 下 ACK 与 NACK 的**方差**收缩必须相同（只差方向）"})
+
+
+
 # ============================================================ 汇总
 def run_all(cfg: CWConfig | None = None) -> dict:
     cfg = cfg or default_config()
@@ -1091,6 +1161,7 @@ def run_all(cfg: CWConfig | None = None) -> dict:
     counterexample_3(cfg, g)
     counterexample_4(cfg, g)
     counterexample_4b_ack_exact(cfg, g)
+    counterexample_4b2_ack_var(cfg, g)
     counterexample_5(cfg, g)
     counterexample_6(cfg, g)
     counterexample_7(cfg, g)

@@ -1,0 +1,289 @@
+{
+ "protocol": "CW-POMDP-v1.1",
+ "stage": "CW-R1.13",
+ "kind": "SCALAR-VS-SHAPE",
+ "prereg": "docs/research/CW-R1.13-标量vs形状-预注册-v0.1.md",
+ "verdict": "SHAPE-NEEDED",
+ "verdict_detail": {
+  "verdict": "SHAPE-NEEDED",
+  "detail": {
+   "cap_ratio": {
+    "1.000": 0.9476879377616682,
+    "1.726": 0.8457618015739041
+   },
+   "P1_pass": {
+    "1.000": 0,
+    "1.726": 0
+   }
+  }
+ },
+ "q1_sup_over_min_exo_pm3": 101.35781806122793,
+ "q1_sup_over_min_endo": 2394.020093951005,
+ "q1_m_star": {
+  "0.63": null,
+  "1": 0.0,
+  "1.726": -0.7728034419537348
+ },
+ "q1_sign_flip_interval_nack": null,
+ "q1_max_abs_shift_err_0.63": 1.0965137957694688,
+ "identity": {
+  "0.63_vs_R112_approx": {
+   "n_identical": 8,
+   "n_cells": 8,
+   "all_identical": true
+  },
+  "exact_vs_R112_exact": {
+   "n_identical": 8,
+   "n_cells": 8,
+   "all_identical": true
+  }
+ },
+ "wiring": {
+  "n_diff_1.000": 8,
+  "n_diff_1.726": 8,
+  "n_total": 8,
+  "wired": true,
+  "has_discriminating_power": true
+ },
+ "q2": {
+  "1.000": {
+   "arm": "1.000",
+   "P1": {
+    "n_pairs": 16,
+    "n_pass_rel20": 0,
+    "pass_all": false,
+    "rel_median": 0.8230124787670569,
+    "rel_max": 0.9811888493923238,
+    "rels": [
+     0.8434,
+     0.8095,
+     0.8365,
+     0.6812,
+     0.8523,
+     0.8533,
+     0.7012,
+     0.6892,
+     0.7195,
+     0.9661,
+     0.4853,
+     0.9559,
+     0.5646,
+     0.9618,
+     0.586,
+     0.9812
+    ]
+   },
+   "P3": {
+    "n_pass_abs005": 0,
+    "abs_median": 0.11896046609567754,
+    "abs_max": 0.19313492209165128,
+    "abs": [
+     0.1089,
+     0.1167,
+     0.1197,
+     0.0879,
+     0.116,
+     0.1339,
+     0.0988,
+     0.099,
+     0.1931,
+     0.0976,
+     0.1583,
+     0.1182,
+     0.176,
+     0.136,
+     0.1847,
+     0.1334
+    ]
+   },
+   "P2": {
+    "pmin": {
+     "n_pairs": 16,
+     "numerator_median": 0.11896046609567754,
+     "denominator_median": 0.12552704466899592,
+     "denominator_floor": 0.001,
+     "no_effect": false,
+     "capture_ratio": 0.9476879377616682
+    },
+    "cost_true": {
+     "n_pairs": 8,
+     "numerator_median": 0.03230818686209923,
+     "denominator_median": 0.024571389233489525,
+     "denominator_floor": 0.0333,
+     "no_effect": true,
+     "capture_ratio": null
+    },
+    "aoi_tavg_by_user": {
+     "n_pairs": 16,
+     "numerator_median": 4.71085324754902,
+     "denominator_median": 2.302136948529412,
+     "denominator_floor": 0.001,
+     "no_effect": false,
+     "capture_ratio": 2.0462958342066826
+    },
+    "n_attempted_by_user": {
+     "n_pairs": 16,
+     "numerator_median": 7.0,
+     "denominator_median": 22.0,
+     "denominator_floor": 0.001,
+     "no_effect": false,
+     "capture_ratio": 0.3181818181818182
+    }
+   },
+   "P4": {
+    "ep100": {
+     "paired_delta_per_seed": [
+      -0.026793671269002284,
+      -0.04508803066557411,
+      -0.008131215183119322,
+      -0.04877550909329843
+     ],
+     "median_delta": -0.0359408509672882,
+     "exact_median": 0.1128414098622037,
+     "resolved_vs_floor": true
+    },
+    "ep101": {
+     "paired_delta_per_seed": [
+      0.006135209408823145,
+      0.0406366135099723,
+      -0.008148980262636163,
+      0.03782270245519617
+     ],
+     "median_delta": 0.02197895593200966,
+     "exact_median": 0.10447877829676114,
+     "resolved_vs_floor": false
+    },
+    "floor": 0.0333,
+    "both_eps_below_floor": false
+   }
+  },
+  "1.726": {
+   "arm": "1.726",
+   "P1": {
+    "n_pairs": 16,
+    "n_pass_rel20": 0,
+    "pass_all": false,
+    "rel_median": 0.6065794176392851,
+    "rel_max": 0.8684967970727746,
+    "rels": [
+     0.425,
+     0.684,
+     0.7717,
+     0.4461,
+     0.5106,
+     0.6972,
+     0.5077,
+     0.4927,
+     0.8626,
+     0.6096,
+     0.3488,
+     0.8322,
+     0.6036,
+     0.8566,
+     0.4964,
+     0.8685
+    ]
+   },
+   "P3": {
+    "n_pass_abs005": 0,
+    "abs_median": 0.10616597944549792,
+    "abs_max": 0.23155561420675286,
+    "abs": [
+     0.0549,
+     0.0986,
+     0.1104,
+     0.0576,
+     0.0695,
+     0.1094,
+     0.0715,
+     0.0708,
+     0.2316,
+     0.0616,
+     0.1138,
+     0.1029,
+     0.1882,
+     0.1212,
+     0.1565,
+     0.1181
+    ]
+   },
+   "P2": {
+    "pmin": {
+     "n_pairs": 16,
+     "numerator_median": 0.10616597944549792,
+     "denominator_median": 0.12552704466899592,
+     "denominator_floor": 0.001,
+     "no_effect": false,
+     "capture_ratio": 0.8457618015739041
+    },
+    "cost_true": {
+     "n_pairs": 8,
+     "numerator_median": 0.04463401235007955,
+     "denominator_median": 0.024571389233489525,
+     "denominator_floor": 0.0333,
+     "no_effect": true,
+     "capture_ratio": null
+    },
+    "aoi_tavg_by_user": {
+     "n_pairs": 16,
+     "numerator_median": 3.5872738722529234,
+     "denominator_median": 2.302136948529412,
+     "denominator_floor": 0.001,
+     "no_effect": false,
+     "capture_ratio": 1.5582365221775567
+    },
+    "n_attempted_by_user": {
+     "n_pairs": 16,
+     "numerator_median": 6.0,
+     "denominator_median": 22.0,
+     "denominator_floor": 0.001,
+     "no_effect": false,
+     "capture_ratio": 0.2727272727272727
+    }
+   },
+   "P4": {
+    "ep100": {
+     "paired_delta_per_seed": [
+      -0.023690787801581986,
+      -0.05720515518435307,
+      -0.04394775833300463,
+      -0.05028762922680528
+     ],
+     "median_delta": -0.047117693779904955,
+     "exact_median": 0.1128414098622037,
+     "resolved_vs_floor": true
+    },
+    "ep101": {
+     "paired_delta_per_seed": [
+      0.013446861817422023,
+      0.04554993338819291,
+      -0.0110782543807047,
+      0.04532026636715447
+     ],
+     "median_delta": 0.029383564092288247,
+     "exact_median": 0.10447877829676114,
+     "resolved_vs_floor": false
+    },
+    "floor": 0.0333,
+    "both_eps_below_floor": false
+   }
+  }
+ },
+ "n_cells": 32,
+ "floor": 0.0333,
+ "rel_tol": 0.2,
+ "abs_tol": 0.05,
+ "cap_tol": 0.2,
+ "head": "c12e270b5db8fb73113e3e0b6224e145fd7bed8e",
+ "world_py_worktree_sha": "bca1614588a6d1c0739a7bebb79728bae356a04d",
+ "world_py_blob_sha": "4c4f643b09fb4b3ca9ca2c156f78a7de4a86408e",
+ "src_hash": "4bae71ec8c126d1d",
+ "git_dirty_before_run": [
+  "M experiments/cw_v1/config.py",
+  " M experiments/cw_v1/gates.py",
+  " M experiments/cw_v1/world.py",
+  "?? docs/research/CW-R1.13-标量vs形状-预注册-v0.1.md",
+  "?? experiments/cw_v1/r1_13_scalar.py"
+ ],
+ "note": "四臂只差 ACK/NACK 的**方差标量**（exact 臂换成网格精确贝叶斯）；同 seed 是配对，不是独立样本；有效独立单元 = 2 个 episode。"
+}

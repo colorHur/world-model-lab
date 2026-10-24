@@ -1,0 +1,61 @@
+{
+  "run_id": "cw_r1_4_contract_20261024T122024_13d3397b08b136ce_4bae71ec8c126d1d",
+  "kind": "CONTRACT-GATE-NOT-METHOD-RESULT",
+  "protocol": "CW-POMDP-v1.1",
+  "event_pairing_default": "slot",
+  "config": {
+    "plant": {
+      "A": [
+        1.0,
+        1.0
+      ],
+      "B": 0.32,
+      "sigma_w": [
+        0.02,
+        0.03
+      ],
+      "prior_var": 1.0,
+      "sigma_meas": 0.2,
+      "q_cost": 1.0,
+      "r_cost": 0.02
+    },
+    "channel": {
+      "rho_panel": [
+        0.85,
+        0.98
+      ],
+      "kappa": 2.0,
+      "log_h_star": 0.0,
+      "sigma_csi": 0.05,
+      "h_log_init_std": 1.0,
+      "use_ack_for_csi": true,
+      "ack_mode": "approx",
+      "ack_var": 0.63
+    },
+    "protocol": {
+      "horizon": 256,
+      "c_probe": 1,
+      "c_data": 1,
+      "budget_ratios": [
+        0.5,
+        0.8
+      ],
+      "init_from_prior": true,
+      "event_pairing": "slot",
+      "allow_multislot": false
+    },
+    "root_seed": 20261021,
+    "protocol_name": "CW-POMDP-v1.1",
+    "budget_values": [
+      128,
+      204
+    ]
+  },
+  "note": "",
+  "at_asia_shanghai": "2026-10-24T12:20:24.756271+08:00",
+  "elapsed_s": 1.78,
+  "git_head": "c12e270b5db8fb73113e3e0b6224e145fd7bed8e",
+  "git_status_porcelain": "M README.md\n M experiments/cw_v1/config.py\n M experiments/cw_v1/gates.py\n M experiments/cw_v1/world.py\n?? docs/CW-R1.13-标量vs形状-交付.md\n?? docs/research/CW-R1.13-标量vs形状-预注册-v0.1.md\n?? experiments/cw_v1/r1_13_scalar.py\n?? results/cw_v1/cw_r1_13_scalar_20261024T041643_4bae71ec8c126d1d/\n?? results/cw_v1/cw_r1_4_contract_20261024T122024_13d3397b08b136ce_4bae71ec8c126d1d/",
+  "src_hash": "4bae71ec8c126d1d",
+  "disclaimer": "本 run 是协议/实现验收，不是方法结果。★ 2026-10-22 18:20 之前的所有 v1.1 证据（含 R1-3 v1.1 重跑与 corrections/）都是 event_pairing='attempt' 口径；本次起默认 'slot'。两种口径的数字**不得混表**，重放旧数字须显式 event_pairing='attempt'。"
+}

@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass, field, asdict
 from typing import Any
 
@@ -125,6 +126,14 @@ class ChannelConfig:
     #:     改默认值 = 旧证据全部失效。精确版是**另一条臂**，只在新证据目录里出现。
     #:   ★ 两臂的差别**仅限信息模型**：动作空间、预算、外生事件、规划器、目标函数都不变。
     ack_mode: str = "approx"
+
+    #: ★★ R1.13（2026-10-24）：一阶近似里那条伪观测的**等效量测方差**（唯一标量自由度）。
+    #:
+    #:   只有 `ack_mode="approx"` 读它；`exact` 模式走网格，本字段无作用（但保留以便并列配置）。
+    #:   ★ 默认 **必须** 等于 `world.CWWorld.ACK_VAR`（=0.63）：R1.7.6→R1.12 的全部 16 格
+    #:     逐位身份都建立在这条路径上，默认值一改旧证据全部失效（闸 `4r` 钉死这条等式）。
+    #:   ★ 本轮只允许调这个标量，**不许**顺手动 `±1.0/−1.5` 的方向量级（那是另一件事，闸 `4t` 钉住）。
+    ack_var: float = 0.63
 
 
 @dataclass(frozen=True)
@@ -264,6 +273,10 @@ class CWConfig:
         # ⑦ ACK 信息模型必须是已实现的两个之一（R1.12）。写错的名字会静默退回近似口径。
         if ch.ack_mode not in ("approx", "exact"):
             bad.append(f"ack_mode={ch.ack_mode!r} 未实现（只允许 'approx' / 'exact'）")
+        # ⑧ R1.13：伪观测方差必须为正有限值。写成 0/负数时 `g=v/(v+ack_var)` 会退化成
+        #   "完全相信单次二值结果"（g=1）或**负增益**（g>1 ⇒ 信念反向），是静默的灾难。
+        if not (float(ch.ack_var) > 0.0) or not math.isfinite(float(ch.ack_var)):
+            bad.append(f"ack_var={ch.ack_var} 必须是正的有限值（伪观测方差）")
         return bad
 
     def fingerprint(self) -> str:

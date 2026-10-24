@@ -1,0 +1,180 @@
+{
+ "0.63_vs_R112_approx": {
+  "source": "results\\cw_v1\\cw_r1_12_ackscale_20261024T020453_92d6a8ccd0bc1a26\\cells.json",
+  "arm": "0.63",
+  "n_cells": 8,
+  "n_identical": 8,
+  "all_identical": true,
+  "cells": [
+   {
+    "ep": 100,
+    "seed": 2001,
+    "cost_true_identical": true,
+    "aoi_tavg_identical": true,
+    "attempted_identical": true,
+    "phat_min_identical": true,
+    "trace_hash_identical": true,
+    "all_identical": true
+   },
+   {
+    "ep": 100,
+    "seed": 2002,
+    "cost_true_identical": true,
+    "aoi_tavg_identical": true,
+    "attempted_identical": true,
+    "phat_min_identical": true,
+    "trace_hash_identical": true,
+    "all_identical": true
+   },
+   {
+    "ep": 100,
+    "seed": 2003,
+    "cost_true_identical": true,
+    "aoi_tavg_identical": true,
+    "attempted_identical": true,
+    "phat_min_identical": true,
+    "trace_hash_identical": true,
+    "all_identical": true
+   },
+   {
+    "ep": 100,
+    "seed": 2004,
+    "cost_true_identical": true,
+    "aoi_tavg_identical": true,
+    "attempted_identical": true,
+    "phat_min_identical": true,
+    "trace_hash_identical": true,
+    "all_identical": true
+   },
+   {
+    "ep": 101,
+    "seed": 2001,
+    "cost_true_identical": true,
+    "aoi_tavg_identical": true,
+    "attempted_identical": true,
+    "phat_min_identical": true,
+    "trace_hash_identical": true,
+    "all_identical": true
+   },
+   {
+    "ep": 101,
+    "seed": 2002,
+    "cost_true_identical": true,
+    "aoi_tavg_identical": true,
+    "attempted_identical": true,
+    "phat_min_identical": true,
+    "trace_hash_identical": true,
+    "all_identical": true
+   },
+   {
+    "ep": 101,
+    "seed": 2003,
+    "cost_true_identical": true,
+    "aoi_tavg_identical": true,
+    "attempted_identical": true,
+    "phat_min_identical": true,
+    "trace_hash_identical": true,
+    "all_identical": true
+   },
+   {
+    "ep": 101,
+    "seed": 2004,
+    "cost_true_identical": true,
+    "aoi_tavg_identical": true,
+    "attempted_identical": true,
+    "phat_min_identical": true,
+    "trace_hash_identical": true,
+    "all_identical": true
+   }
+  ]
+ },
+ "exact_vs_R112_exact": {
+  "source": "results\\cw_v1\\cw_r1_12_ackscale_20261024T020453_92d6a8ccd0bc1a26\\cells.json",
+  "arm": "exact",
+  "n_cells": 8,
+  "n_identical": 8,
+  "all_identical": true,
+  "cells": [
+   {
+    "ep": 100,
+    "seed": 2001,
+    "cost_true_identical": true,
+    "aoi_tavg_identical": true,
+    "attempted_identical": true,
+    "phat_min_identical": true,
+    "trace_hash_identical": true,
+    "all_identical": true
+   },
+   {
+    "ep": 100,
+    "seed": 2002,
+    "cost_true_identical": true,
+    "aoi_tavg_identical": true,
+    "attempted_identical": true,
+    "phat_min_identical": true,
+    "trace_hash_identical": true,
+    "all_identical": true
+   },
+   {
+    "ep": 100,
+    "seed": 2003,
+    "cost_true_identical": true,
+    "aoi_tavg_identical": true,
+    "attempted_identical": true,
+    "phat_min_identical": true,
+    "trace_hash_identical": true,
+    "all_identical": true
+   },
+   {
+    "ep": 100,
+    "seed": 2004,
+    "cost_true_identical": true,
+    "aoi_tavg_identical": true,
+    "attempted_identical": true,
+    "phat_min_identical": true,
+    "trace_hash_identical": true,
+    "all_identical": true
+   },
+   {
+    "ep": 101,
+    "seed": 2001,
+    "cost_true_identical": true,
+    "aoi_tavg_identical": true,
+    "attempted_identical": true,
+    "phat_min_identical": true,
+    "trace_hash_identical": true,
+    "all_identical": true
+   },
+   {
+    "ep": 101,
+    "seed": 2002,
+    "cost_true_identical": true,
+    "aoi_tavg_identical": true,
+    "attempted_identical": true,
+    "phat_min_identical": true,
+    "trace_hash_identical": true,
+    "all_identical": true
+   },
+   {
+    "ep": 101,
+    "seed": 2003,
+    "cost_true_identical": true,
+    "aoi_tavg_identical": true,
+    "attempted_identical": true,
+    "phat_min_identical": true,
+    "trace_hash_identical": true,
+    "all_identical": true
+   },
+   {
+    "ep": 101,
+    "seed": 2004,
+    "cost_true_identical": true,
+    "aoi_tavg_identical": true,
+    "attempted_identical": true,
+    "phat_min_identical": true,
+    "trace_hash_identical": true,
+    "all_identical": true
+   }
+  ]
+ }
+}
