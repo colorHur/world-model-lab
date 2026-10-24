@@ -1584,6 +1584,111 @@ def counterexample_4b5_scale_invariance(cfg: CWConfig, g: Gate) -> None:
                      f"share 版 A/C 相差 {d_bad2:.2f} 且 dr=0 处为 NaN"})
 
 
+def counterexample_4b6_mech_table(cfg: CWConfig, g: Gate) -> None:
+    """R1.18：2 用户**闭式**、`kf` 的 2× 上界、以及"机制发生但无差分伤害"的语义（4ae–4ai）。
+
+    预注册：`docs/research/CW-R1.18-机制表重写-预注册-v0.1.md` §5/§5.2/§7。
+    ★ 只用合成矩阵，**不读** `results/`（闸必须能在干净树上跑）。
+    """
+    from .mech import (ep_mech_label, kf_bound, mech_quantities,
+                       two_user_closed_form)
+
+    # ---- 4ae 2 用户闭式：纯平衡交换 ⇒ ku = ρ_0 − ρ_1（手算 +0.8）
+    ni_a = np.array([[100], [100]], dtype=float)
+    nd_a = np.array([[90], [10]], dtype=float)          # ρ = .9/.1, ρ_a = .5
+    m = np.array([[40], [-40]], dtype=float)
+    ni_e = ni_a + m
+    cf = two_user_closed_form(ni_e, nd_a.copy(), ni_a, nd_a)
+    q = mech_quantities(ni_e, nd_a.copy(), ni_a, nd_a)
+    g.check("4ae **2 用户闭式**：`m=(+40,−40)`、`ρ=(.9,.1)` ⇒ `G=0`、`D=80`、"
+            "`ku = D(ρ_0−ρ_1)/max(|G|,|D|) = +0.8`，与 `E_user/Mu` 路径**逐位一致**"
+            "（残差 <1e-12）；且 `ρ_a` 为端点中点 ⇒ `|ku| = |ρ_0−ρ_1|`",
+            bool(cf["status"] == "OK" and cf["abs_residual"] < 1e-12
+                 and abs(cf["ku_closed_form"] - 0.8) < 1e-12
+                 and abs(q["ku"] - 0.8) < 1e-12
+                 and cf["rho_a_is_midpoint"] and abs(cf["ku_swap"] - 0.8) < 1e-12),
+            {"ku_closed_form": cf["ku_closed_form"], "ku_from_mech": cf["ku_from_mech"],
+             "ku_net": cf["ku_net"], "ku_swap": cf["ku_swap"],
+             "G": cf["G"], "D": cf["D"], "residual": cf["abs_residual"]})
+
+    # ---- 4af `n_users=3` ⇒ 闭式显式 NOT-APPLICABLE（不静默算），且"硬套 2 用户公式"必错
+    ni3_a = np.array([[100], [100], [100]], dtype=float)
+    nd3_a = np.array([[90], [50], [10]], dtype=float)
+    m3 = np.array([[40], [-20], [-20]], dtype=float)
+    ni3_e = ni3_a + m3
+    cf3 = two_user_closed_form(ni3_e, nd3_a.copy(), ni3_a, nd3_a)
+    q3 = mech_quantities(ni3_e, nd3_a.copy(), ni3_a, nd3_a)
+    # 硬套（只取前两用户算 G/D 与 ρ）：若代码不设守卫，就会静默给出这个错数
+    rho3 = np.array([0.9, 0.5, 0.1])
+    r_a3 = 0.5
+    G2 = float(m3[0, 0] + m3[1, 0])
+    D2 = float(m3[0, 0] - m3[1, 0])
+    den2 = max(abs(G2), abs(D2))
+    ku_forced = (G2 * float(rho3[0] + rho3[1] - 2 * r_a3)
+                 + D2 * float(rho3[0] - rho3[1])) / den2
+    g.check("4af **适用域守卫**：`n_users=3` 时闭式返回 `NOT-APPLICABLE`（**不是** PASS、不静默算）；"
+            "同时给出「若硬套 2 用户公式」的错数，证明该守卫**有分辨力**"
+            "（错数与真值差 ≫ 1e-6）",
+            bool(cf3["status"] == "NOT-APPLICABLE"
+                 and abs(ku_forced - q3["ku"]) > 1e-6),
+            {"status": cf3["status"], "ku_true": q3["ku"], "ku_if_forced_2user": ku_forced,
+             "diff": abs(ku_forced - q3["ku"])})
+
+    # ---- 4ag 机制发生但无差分伤害：净增无差分 + 对称率 ⇒ ku = 0 而 Mu > 0
+    m_sym = np.array([[40], [40]], dtype=float)
+    ni_ag = ni_a + m_sym
+    q_ag = mech_quantities(ni_ag, nd_a.copy(), ni_a, nd_a)   # nd_e = nd_a
+    lb = ep_mech_label(q_ag["ku"], q_ag["kf"])
+    g.check("4ag **『机制发生』≠『有差分伤害』**：`m=(+40,+40)`（只增总量、不改差分）、`ρ=(.9,.1)` ⇒ "
+            "`Mu > 0`（用户级重分配确实发生）但 `ku = 0`（`d_0+d_1=0`）⇒ `u_state=NEU`；"
+            "份额口径此时给 0（`E_user=0`）—— 与 `ku` 同值属**巧合**，不能当分辨力证据",
+            bool(q_ag["Mu"] > 0 and abs(q_ag["ku"]) < 1e-12
+                 and lb["u_state"] == "NEU"
+                 and abs(q_ag["shares"]["user"]) < 1e-12),
+            {"Mu": q_ag["Mu"], "ku": q_ag["ku"], "u_state": lb["u_state"],
+             "share_user": q_ag["shares"]["user"], "dr": q_ag["dr"]})
+
+    # ---- 4ah `kf` 上界必须是 **2×**（构造使 `|kf| = 0.8 > max|dev| = 0.4`）
+    ni_a2 = np.array([[100, 100], [100, 100]], dtype=float)
+    nd_a2 = np.array([[90, 10], [50, 50]], dtype=float)     # 用户 0 两箱 ρ_ib = .9/.1，ρ_0 = .5
+    ni_e2 = ni_a2 + np.array([[-40, 40], [0, 0]], dtype=float)
+    kb = kf_bound(ni_e2, nd_a2.copy(), ni_a2, nd_a2)
+    g.check("4ah **`kf` 上界的 2 倍常数是必要的**：用户 0 的尝试在两箱间对搬 `(−40,+40)` ⇒ "
+            "`kf = −0.8`，而 `max|ρ_ib−ρ_i| = 0.4` ⇒ **naive 上界（≤max）被实测违反**，"
+            "`≤2·max` 成立且取到等号（★ 预注册 §5.2 更正的就是这条；与 R1.17 自伤 #4 同族）",
+            bool(kb["status"] == "OK" and abs(kb["max_abs_frame_dev"] - 0.4) < 1e-12
+                 and abs(abs(kb["kf"]) - 0.8) < 1e-12
+                 and abs(kb["kf"]) > kb["max_abs_frame_dev"] + 1e-9
+                 and kb["bound_ok"] and abs(kb["bound_2x"] - 0.8) < 1e-12),
+            {"kf": kb["kf"], "max_abs_frame_dev": kb["max_abs_frame_dev"],
+             "bound_2x": kb["bound_2x"], "naive_bound_violated": bool(
+                 abs(kb["kf"]) > kb["max_abs_frame_dev"])})
+
+    # ---- 4ai 活体负控：把 `ku` 的分母换回 `Δr`（R1.16 的 share 形态）⇒ 纯交换点先 NaN、再翻号放大
+    #   ★ 预注册 §9 更正：① 必须用**带符号** `E/Δr`（R1.16 的 share 就是带符号的）；
+    #     ② 不能拿 4ag 的净增点当第二点 —— 那里 `E_user=0` 使 share 与 ku 同为 0，恒等式抓不到病。
+    def _bad_signed(k):
+        d = k["dr"]
+        return k["E_user"] / d if d != 0 else float("nan")
+
+    bad0 = _bad_signed(q)                       # 纯交换：Δr = 0 ⇒ NaN
+    nd_shift = np.asarray(nd_a, dtype=float).copy()
+    nd_shift[1, 0] -= 1                          # 只减 1 个送达：分子（E_user）不动，分母变
+    q_sh = mech_quantities(ni_e, nd_shift, ni_a, nd_a)
+    bad1 = _bad_signed(q_sh)
+    flip = bool(np.isfinite(bad1) and np.sign(bad1) != np.sign(q["ku"]))
+    g.check("4ai **活体负控**：把 `ku` 的分母换回**带符号** `Δr`（R1.16 的 share 形态）后，"
+            "① 纯交换点 `Δr=0` ⇒ **NaN**（旧形态在该点**不可定义**）；"
+            "② 只减 1 个送达 ⇒ `share` 从 NaN 变成 **−32**，与 `ku=+0.8` **符号相反**、量级 **40×**，"
+            "而 `ku` 逐位不变（`d_ku=0`）⇒ 证明新量的分母真的与送达解耦",
+            bool(not np.isfinite(bad0) and flip and abs(bad1) > 10 * abs(q["ku"])
+                 and abs(q_sh["ku"] - q["ku"]) < 1e-12
+                 and ep_mech_label(bad0, q["kf"])["u_state"] == "NA"),
+            {"bad_at_dr0": str(bad0), "bad_at_dr_minus1": float(bad1),
+             "ku_unchanged": float(q_sh["ku"]), "d_ku": float(abs(q_sh["ku"] - q["ku"])),
+             "note": "`NA` ≠ `NEU`：机制不可定义 ≠ 零效应"})
+
+
 def _scripted_policy():
     """给 4z 用的确定性策略：不看视图，只按 t 轮转（避免把策略差异混进来）。"""
     from .world import Action as _A
@@ -1611,6 +1716,7 @@ def run_all(cfg: CWConfig | None = None) -> dict:
     counterexample_4b3_exact_mainline(cfg, g)
     counterexample_4b4_delivery_attr(cfg, g)
     counterexample_4b5_scale_invariance(cfg, g)
+    counterexample_4b6_mech_table(cfg, g)
     counterexample_5(cfg, g)
     counterexample_6(cfg, g)
     counterexample_7(cfg, g)

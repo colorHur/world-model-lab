@@ -1,0 +1,40 @@
+{
+ "command": "python -m experiments.cw_v1.r1_18_mechtable --tag main",
+ "timestamp_local": "2026-10-24T23:25:08.726824+08:00",
+ "python": "3.11.16",
+ "numpy": "2.4.6",
+ "head": "a9e683c682314f22e6a888361a2cc690814ea6a9",
+ "src_hash": "715fb1f53b4b7ed5",
+ "worktree_sha_r1_18": "36be28c0ce0d8cb9a21d222925730a75e41994be",
+ "blob_sha_r1_18": null,
+ "blob_sha_note": "运行时该文件尚未提交 ⇒ blob_sha 记 None（不记参数串）；提交后真实 blob 见 _POST_COMMIT.json",
+ "git_dirty_before_run": [
+  "M experiments/cw_v1/gates.py",
+  " M experiments/cw_v1/mech.py",
+  "?? docs/research/CW-R1.18-机制表重写-预注册-v0.1.md",
+  "?? experiments/cw_v1/r1_18_mechtable.py",
+  "?? results/cw_v1/cw_r1_18_mechtable_20261024T152422_6a02ce97efdc8478_SUPERSEDED/"
+ ],
+ "input_cells": "D:\\repos\\world-model-lab\\results\\cw_v1\\cw_r1_16_n10_20261024T105416_fc9f25e16d2c6307\\cells.json",
+ "input_decomp": "D:\\repos\\world-model-lab\\results\\cw_v1\\cw_r1_16_n10_20261024T105416_fc9f25e16d2c6307\\decomp.json",
+ "n_cells_in": 80,
+ "n_run_episode": 0,
+ "old_label_match_10_10": {
+  "ep100": true,
+  "ep101": true,
+  "ep102": true,
+  "ep103": true,
+  "ep104": true,
+  "ep105": true,
+  "ep106": true,
+  "ep107": true,
+  "ep108": true,
+  "ep109": true
+ },
+ "ctrl_elapsed_s": 0.0,
+ "gate_elapsed_s": 0.8,
+ "total_elapsed_s": 0.92,
+ "peak_rss_mb": 45.7,
+ "n_checks_gates": 84,
+ "n_fail_gates": 0
+}

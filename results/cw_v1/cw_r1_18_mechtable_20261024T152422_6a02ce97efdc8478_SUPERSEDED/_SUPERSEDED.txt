@@ -1,0 +1,2 @@
+SUPERSEDED by cw_r1_18_mechtable run at 2026-10-24 23:3x (+08:00).
+Reason: Q2 conflict rule in prereg §6 did not stratify by sign(dr); ep104 (only dr>0 ep) produced a spurious CONFLICT_A. The pre-registered count is kept unchanged in the new run; the new run additionally reports n_conflict_genuine, ep104_offset and ku_net/ku_swap description. No object (plan_ref/plan_dp/world/runner/config) was changed; run_episode=0 in both runs.

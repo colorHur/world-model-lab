@@ -120,6 +120,154 @@ def dir_verdict(kus, kappa_min: float = KAPPA_MIN, label: str = "user") -> dict:
             "p_binom_null50": p50, "p_binom_null33": p33}
 
 
+def _rates(ni_e, nd_e, ni_a, nd_a):
+    """`ρ_i`/`ρ_ib`/`ρ_a` 的**唯一定义**（与 `mech_quantities` 逐字一致）。"""
+    ni_e = np.asarray(ni_e, dtype=float)
+    nd_e = np.asarray(nd_e, dtype=float)
+    ni_a = np.asarray(ni_a, dtype=float)
+    nd_a = np.asarray(nd_a, dtype=float)
+    n_a = ni_a.sum()
+    if n_a <= 0:
+        return None
+    r_a = nd_a.sum() / n_a
+    row_a = ni_a.sum(axis=1)
+    rho_i = np.where(row_a > 0, nd_a.sum(axis=1) / np.maximum(row_a, 1), r_a)
+    rho_ib = np.where(ni_a > 0, nd_a / np.maximum(ni_a, 1.0), rho_i[:, None])
+    return {"r_a": float(r_a), "rho_i": rho_i, "rho_ib": rho_ib}
+
+
+def two_user_closed_form(ni_e, nd_e, ni_a, nd_a) -> dict:
+    """R1.18 §5 的**2 用户闭式**（`n_users != 2` 时显式 `NOT-APPLICABLE`，不静默算）。
+
+    推导（预注册 §5，纸上完成）：
+        `m_0=(G+D)/2`、`m_1=(G−D)/2` ⇒ `|m_0|+|m_1| = max(|G|,|D|)`；
+        `m_0 d_0 + m_1 d_1 = (G/2)(ρ_0+ρ_1−2ρ_a) + (D/2)(ρ_0−ρ_1)`
+     ⇒ `ku = [G(ρ_0+ρ_1−2ρ_a) + D(ρ_0−ρ_1)] / max(|G|,|D|) = ku_net + ku_swap`。
+
+    ★ 这是**代数恒等式**，不是经验规律（预注册 §8-1）。
+    ★ 与 `mech_quantities` 的差别只在**算式路径**（用 `m`/`ρ` 直接算 vs `E_user/Mu`），
+      所以它能抓"实现里分母/权重写错"，但抓不到"两者共用的 `ρ` 定义错了"。
+    """
+    ni_e = np.asarray(ni_e, dtype=float)
+    nd_e = np.asarray(nd_e, dtype=float)
+    ni_a = np.asarray(ni_a, dtype=float)
+    nd_a = np.asarray(nd_a, dtype=float)
+    n_users = ni_e.shape[0]
+    if n_users != 2:
+        return {"status": "NOT-APPLICABLE", "n_users": int(n_users)}
+    rt = _rates(ni_e, nd_e, ni_a, nd_a)
+    if rt is None:
+        return {"status": "NO-ATTEMPT"}
+    rho = rt["rho_i"]
+    r_a = rt["r_a"]
+    m = ni_e.sum(axis=1) - ni_a.sum(axis=1)
+    G = float(m[0] + m[1])
+    D = float(m[0] - m[1])
+    den = max(abs(G), abs(D))
+    if den <= 0:
+        return {"status": "NO-REALLOCATION", "G": G, "D": D}
+    ku_net = G * float(rho[0] + rho[1] - 2 * r_a) / den
+    ku_swap = D * float(rho[0] - rho[1]) / den
+    q = mech_quantities(ni_e, nd_e, ni_a, nd_a)
+    gap = float(abs(rho[0] - rho[1]))
+    bound2 = 2.0 * gap
+    return {"status": "OK", "G": G, "D": D, "denom": den,
+            "rho_0": float(rho[0]), "rho_1": float(rho[1]), "rho_a": r_a,
+            "ku_net": float(ku_net), "ku_swap": float(ku_swap),
+            "ku_closed_form": float(ku_net + ku_swap),
+            "ku_from_mech": float(q["ku"]),
+            "abs_residual": float(abs(ku_net + ku_swap - q["ku"])),
+            "gap_abs": gap, "bound_2gap": bound2,
+            "ratio_abs_ku_over_2gap": (abs(q["ku"]) / bound2) if bound2 > 0 else float("nan"),
+            "bound_2gap_ok": bool(abs(q["ku"]) <= bound2 + 1e-12),
+            "rho_a_is_midpoint": bool(abs(float(rho[0] + rho[1] - 2 * r_a)) < 1e-12)}
+
+
+def kf_bound(ni_e, nd_e, ni_a, nd_a) -> dict:
+    """`kf` 的加权平均上界：`kf = Σ w_ib(ρ_ib−ρ_i)`、`Σ|w| = 2` ⇒ `|kf| ≤ 2·max|ρ_ib−ρ_i|`。
+
+    ★ 预注册 §5.2 更正：首版写 `≤ max` 漏了权重和的 2 倍（与 R1.17 自伤 #4 同族）。
+    """
+    ni_e = np.asarray(ni_e, dtype=float)
+    nd_e = np.asarray(nd_e, dtype=float)
+    ni_a = np.asarray(ni_a, dtype=float)
+    nd_a = np.asarray(nd_a, dtype=float)
+    rt = _rates(ni_e, nd_e, ni_a, nd_a)
+    if rt is None:
+        return {"status": "NO-ATTEMPT"}
+    dev = np.abs(rt["rho_ib"] - rt["rho_i"][:, None])
+    maxdev = float(dev.max()) if dev.size else float("nan")
+    q = mech_quantities(ni_e, nd_e, ni_a, nd_a)
+    b2 = 2.0 * maxdev
+    return {"status": "OK", "max_abs_frame_dev": maxdev, "bound_2x": b2,
+            "kf": float(q["kf"]),
+            "bound_ok": bool(np.isfinite(q["kf"]) and abs(q["kf"]) <= b2 + 1e-12),
+            "slack": float(b2 - abs(q["kf"])) if np.isfinite(q["kf"]) else float("nan")}
+
+
+# ---- R1.18 §3/§4：逐 ep 标签与总判词（判据唯一实现）
+def mech_state(k, kappa: float = KAPPA_MIN) -> str:
+    """`NEG`/`POS`/`NEU`/`NA`。`NaN` ⇒ `NA`（**不是** `NEU`：机制未发生 ≠ 零效应）。"""
+    if k is None or not np.isfinite(k):
+        return "NA"
+    if k <= -kappa:
+        return "NEG"
+    if k >= kappa:
+        return "POS"
+    return "NEU"
+
+
+def ep_mech_label(ku, kf, kappa: float = KAPPA_MIN) -> dict:
+    """预注册 §3：逐 ep 的 `(u_state, f_state)` + 四分类。"""
+    us, fs = mech_state(ku, kappa), mech_state(kf, kappa)
+    hu, hf = us == "NEG", fs == "NEG"
+    if hu and hf:
+        cls = "BOTH-HARMFUL"
+    elif hu:
+        cls = "USER-ONLY-HARMFUL"
+    elif hf:
+        cls = "FRAME-ONLY-HARMFUL"
+    else:
+        cls = "NEITHER-HARMFUL"
+    return {"u_state": us, "f_state": fs, "harm_class": cls,
+            "ku": None if ku is None else float(ku), "kf": None if kf is None else float(kf)}
+
+
+def aggregate_mech_verdict(kus, kfs, kappa: float = KAPPA_MIN,
+                           sign_min: int = SIGN_MIN) -> dict:
+    """预注册 §4 的映射表（写死在跑之前）。"""
+    def _state(vals):
+        fin = [float(v) for v in vals if v is not None and np.isfinite(v)]
+        n_neg = sum(1 for v in fin if v <= -kappa)
+        n_pos = sum(1 for v in fin if v >= kappa)
+        if n_neg >= sign_min:
+            return "NEG", n_neg, n_pos
+        if n_pos >= sign_min:
+            return "POS", n_neg, n_pos
+        return "UNRESOLVED", n_neg, n_pos
+
+    U, un, up = _state(kus)
+    F, fn, fp = _state(kfs)
+    if U == "NEG" and F == "NEG":
+        v = "MECH-BOTH-SYSTEMATIC-NEGATIVE"
+    elif U == "NEG" and F == "UNRESOLVED":
+        v = "MECH-USER-SYSTEMATIC-FRAME-UNRESOLVED"
+    elif U == "POS" and F == "POS":
+        v = "MECH-BOTH-SYSTEMATIC-POSITIVE"
+    elif U == "POS" and F == "UNRESOLVED":
+        v = "MECH-USER-SYSTEMATIC-POSITIVE-FRAME-UNRESOLVED"
+    elif U == "UNRESOLVED":
+        v = "MECH-UNRESOLVED"
+    else:
+        v = "MECH-SIGN-CONTRADICTORY"
+    return {"verdict": v, "U": U, "F": F,
+            "u_n_neg": int(un), "u_n_pos": int(up),
+            "f_n_neg": int(fn), "f_n_pos": int(fp),
+            "kappa": float(kappa), "sign_min": int(sign_min),
+            "note": ("答'哪个通道在有害方向上系统性激活'，**不**答'谁解释缺口'；"
+                     "与份额口径的 MIXED 并列，不互相替代。")}
+
+
 def combine_dir(vu: dict, vf: dict) -> str:
     """两机制合并：两向都确认 ⇒ `BOTH`。"""
     cu = vu["verdict"].startswith("DIRECTION-CONFIRMED")

@@ -1,0 +1,223 @@
+{
+ "Q1_aggregate": {
+  "verdict": "MECH-USER-SYSTEMATIC-FRAME-UNRESOLVED",
+  "U": "NEG",
+  "F": "UNRESOLVED",
+  "u_n_neg": 10,
+  "u_n_pos": 0,
+  "f_n_neg": 6,
+  "f_n_pos": 4,
+  "kappa": 0.01,
+  "sign_min": 9,
+  "note": "答'哪个通道在有害方向上系统性激活'，**不**答'谁解释缺口'；与份额口径的 MIXED 并列，不互相替代。"
+ },
+ "Q1_discriminating_power": {
+  "min_abs_ku": 0.08293389979222233,
+  "min_abs_kf": 0.014309013984585377,
+  "min_abs_ku_over_kappa": 8.293389979222233,
+  "min_abs_kf_over_kappa": 1.4309013984585377,
+  "n_u_neu": 0,
+  "n_f_neu": 0,
+  "harm_class_counts": {
+   "BOTH-HARMFUL": 6,
+   "USER-ONLY-HARMFUL": 4
+  },
+  "activity_dim_discriminating": false,
+  "note": "若 `n_u_neu = n_f_neu = 0`（即 `|k|` 全部 ≫ κ），则「激活与否」这一维**无区分力** ⇒ 新判据在逐 ep 上退化为**符号计数**，与 R1.17 的 `Q_dir` 等价（预注册 §4 已写死此自我否证条件）。"
+ },
+ "Q2_old_vs_new": {
+  "rows": [
+   {
+    "ep": 100,
+    "old": "H-A-FRAME-SELECTION",
+    "old_share_user": 0.19506822566665089,
+    "old_share_frame": 0.7908114057670941,
+    "new_u": "NEG",
+    "new_f": "NEG",
+    "new_harm_class": "BOTH-HARMFUL",
+    "ku": -0.3000271116440375,
+    "kf": -0.5461016549534504,
+    "dr": -0.13562073642233963,
+    "conflict": [],
+    "re_description": "旧说帧份额主导；新说用户通道也有害（两者答不同问题，不是冲突）"
+   },
+   {
+    "ep": 101,
+    "old": "H-B-USER-ALLOCATION",
+    "old_share_user": 0.918834237338341,
+    "old_share_frame": 0.02956524222035513,
+    "new_u": "NEG",
+    "new_f": "NEG",
+    "new_harm_class": "BOTH-HARMFUL",
+    "ku": -0.49150860987651246,
+    "kf": -0.014309013984585377,
+    "dr": -0.11135418246852269,
+    "conflict": []
+   },
+   {
+    "ep": 102,
+    "old": "H-A-FRAME-SELECTION",
+    "old_share_user": 0.3650647121052068,
+    "old_share_frame": 1.9170801484885058,
+    "new_u": "NEG",
+    "new_f": "NEG",
+    "new_harm_class": "BOTH-HARMFUL",
+    "ku": -0.1600175602978217,
+    "kf": -0.4494666157929256,
+    "dr": -0.020203428726239703,
+    "conflict": [],
+    "re_description": "旧说帧份额主导；新说用户通道也有害（两者答不同问题，不是冲突）"
+   },
+   {
+    "ep": 103,
+    "old": "GAP-TOO-SMALL",
+    "old_share_user": 1.01343704598366,
+    "old_share_frame": 0.9311095029030947,
+    "new_u": "NEG",
+    "new_f": "NEG",
+    "new_harm_class": "BOTH-HARMFUL",
+    "ku": -0.08293389979222233,
+    "kf": -0.07167014818934546,
+    "dr": -0.007836953050143758,
+    "conflict": []
+   },
+   {
+    "ep": 104,
+    "old": "H-A-FRAME-SELECTION",
+    "old_share_user": -0.6546518402212198,
+    "old_share_frame": 0.7310196032641929,
+    "new_u": "NEG",
+    "new_f": "POS",
+    "new_harm_class": "USER-ONLY-HARMFUL",
+    "ku": -0.1651661437559065,
+    "kf": 0.13451160437369827,
+    "dr": 0.02462044997256263,
+    "conflict": [
+     "CONFLICT_A"
+    ],
+    "re_description": "旧说帧份额主导；新说用户通道也有害（两者答不同问题，不是冲突）"
+   },
+   {
+    "ep": 105,
+    "old": "BOTH-MECHANISMS",
+    "old_share_user": 1.3960051673517329,
+    "old_share_frame": 0.7472895184069701,
+    "new_u": "NEG",
+    "new_f": "NEG",
+    "new_harm_class": "BOTH-HARMFUL",
+    "ku": -0.40282709126253763,
+    "kf": -0.21146876444580576,
+    "dr": -0.057997104058231885,
+    "conflict": []
+   },
+   {
+    "ep": 106,
+    "old": "GAP-TOO-SMALL",
+    "old_share_user": 4.0514276503638245,
+    "old_share_frame": -3.3897740588236585,
+    "new_u": "NEG",
+    "new_f": "POS",
+    "new_harm_class": "USER-ONLY-HARMFUL",
+    "ku": -0.3044459440753045,
+    "kf": 0.14053834710600077,
+    "dr": -0.004867714904434606,
+    "conflict": []
+   },
+   {
+    "ep": 107,
+    "old": "H-B-USER-ALLOCATION",
+    "old_share_user": 0.6594232036253094,
+    "old_share_frame": 0.19339442330119008,
+    "new_u": "NEG",
+    "new_f": "NEG",
+    "new_harm_class": "BOTH-HARMFUL",
+    "ku": -0.5403887926007871,
+    "kf": -0.15084643611910442,
+    "dr": -0.12769127999588925,
+    "conflict": []
+   },
+   {
+    "ep": 108,
+    "old": "H-B-USER-ALLOCATION",
+    "old_share_user": 2.7585615297625097,
+    "old_share_frame": -1.3589364814090878,
+    "new_u": "NEG",
+    "new_f": "POS",
+    "new_harm_class": "USER-ONLY-HARMFUL",
+    "ku": -0.4181366518862848,
+    "kf": 0.20368308073988292,
+    "dr": -0.02677571685896507,
+    "conflict": []
+   },
+   {
+    "ep": 109,
+    "old": "H-B-USER-ALLOCATION",
+    "old_share_user": 1.6163921752520491,
+    "old_share_frame": -0.2993931124959203,
+    "new_u": "NEG",
+    "new_f": "POS",
+    "new_harm_class": "USER-ONLY-HARMFUL",
+    "ku": -0.46516564407108835,
+    "kf": 0.07015837361927947,
+    "dr": -0.032872686805280826,
+    "conflict": []
+   }
+  ],
+  "n_conflict": 1,
+  "conflict_eps": [
+   104
+  ],
+  "n_re_description": 3,
+  "re_description_eps": [
+   100,
+   102,
+   104
+  ],
+  "stop_rule_hit": false,
+  "explanation": "冲突集中在 `|Δr|` 小的 ep（份额爆过的那些）时，性质是「份额口径不可读」，不是「两个判断互相否定」。"
+ },
+ "Q3_closed_form": {
+  "F1_max_abs_residual": 1.1102230246251565e-16,
+  "F1_pass": true,
+  "F2_max_abs_residual": 1.1102230246251565e-16,
+  "F2_pass": true,
+  "F3_bound_2gap_all_ok": true,
+  "F3_ratio_abs_ku_over_2gap": {
+   "median": 0.5086857526370473,
+   "min": 0.48771235018238657,
+   "max": 0.6042877906976742
+  },
+  "F4_bound_2max_all_ok": true,
+  "F4_slack_min": 0.8142149762468754,
+  "F4_has_strict_slack": true,
+  "tautology_warning": "F1–F4 全是定义的**代数推论**（预注册 §8-1）⇒ 不是经验发现，只能当实现核对与单位解释。"
+ },
+ "sens_kappa": {
+  "kappa=0.005": {
+   "verdict": "MECH-USER-SYSTEMATIC-FRAME-UNRESOLVED",
+   "U": "NEG",
+   "F": "UNRESOLVED",
+   "u_n_neg": 10,
+   "f_n_neg": 6
+  },
+  "kappa=0.01": {
+   "verdict": "MECH-USER-SYSTEMATIC-FRAME-UNRESOLVED",
+   "U": "NEG",
+   "F": "UNRESOLVED",
+   "u_n_neg": 10,
+   "f_n_neg": 6
+  },
+  "kappa=0.02": {
+   "verdict": "MECH-USER-SYSTEMATIC-FRAME-UNRESOLVED",
+   "U": "NEG",
+   "F": "UNRESOLVED",
+   "u_n_neg": 10,
+   "f_n_neg": 5
+  }
+ },
+ "sens_flip": false,
+ "kappa_min": 0.01,
+ "sign_min": 9,
+ "n_run_episode": 0,
+ "replacement_note": "`MIXED-MECHANISM-AT-N10` **保留原值不改写**，它是**份额口径**的描述；本轮给出的是**方向口径**的替代判词，两者并列、不互相替代。"
+}

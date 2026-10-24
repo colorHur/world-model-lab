@@ -1,0 +1,76 @@
+{
+ "S1": {
+  "ku": 0.8,
+  "expect": 0.8,
+  "ku_net": 0.0,
+  "ku_swap": 0.8,
+  "residual": 1.1102230246251565e-16,
+  "state": "POS",
+  "gap_abs": 0.8,
+  "pass": true
+ },
+ "S2": {
+  "ku": -0.8,
+  "expect": -0.8,
+  "ku_net": 0.0,
+  "ku_swap": -0.8,
+  "residual": 1.1102230246251565e-16,
+  "state": "NEG",
+  "gap_abs": 0.8,
+  "pass": true
+ },
+ "S3": {
+  "ku": 0.0,
+  "Mu": 0.14285714285714285,
+  "ku_net": 0.0,
+  "ku_swap": 0.0,
+  "state": "NEU",
+  "share_user": "-0.0",
+  "dr": -0.14285714285714285,
+  "pass": true
+ },
+ "S4": {
+  "status": "NOT-APPLICABLE",
+  "ku_true": 0.6,
+  "ku_if_forced": 0.5333333333333333,
+  "diff": 0.06666666666666665,
+  "pass": true
+ },
+ "S5": {
+  "Mu": 0.0,
+  "ku": "nan",
+  "state": "NA",
+  "closed_form_status": "NO-REALLOCATION",
+  "pass": true
+ },
+ "S6": {
+  "bad_at_dr0": "nan",
+  "bad_at_dr_minus1": -31.99999999999997,
+  "ku_base": 0.7999999999999999,
+  "dr_base": 0.0,
+  "dr_shift": -0.0050000000000000044,
+  "d_ku": 0.0,
+  "sign_flip": true,
+  "blowup_gt10x": true,
+  "state_of_bad": "NA",
+  "pass": true
+ },
+ "S7": {
+  "k=0.009": {
+   "u_state": "NEU",
+   "f_state": "NEU",
+   "harm_class": "NEITHER-HARMFUL",
+   "ku": 0.009,
+   "kf": 0.009
+  },
+  "k=-0.011": {
+   "u_state": "NEG",
+   "f_state": "NEG",
+   "harm_class": "BOTH-HARMFUL",
+   "ku": -0.011,
+   "kf": -0.011
+  },
+  "pass": true
+ },
+ "all_pass": true
+}
