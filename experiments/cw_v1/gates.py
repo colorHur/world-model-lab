@@ -1151,6 +1151,184 @@ def counterexample_4b2_ack_var(cfg: CWConfig, g: Gate) -> None:
              "note": "同一 (m,v) 下 ACK 与 NACK 的**方差**收缩必须相同（只差方向）"})
 
 
+def counterexample_4b3_exact_mainline(cfg: CWConfig, g: Gate) -> None:
+    """R1.14：`ack_mode="exact"` 升为**研究基线** —— 4u / 4v / 4w / 4x。
+
+    预注册：`docs/research/CW-R1.14-精确基线-预注册-v0.1.md` §4.4/§4.5。
+
+    ★ 这四条全是**不变式**，不许把"exact 更可信"这种科学结论写成闸
+      （那种结论属于 `M2` 判据，且带否定条件，由入口脚本判）。
+    """
+    from . import config as Cmod
+
+    # ---------------- 4u 主线 profile **真的接线了吗**（不是名字对了就行）
+    ch_default = type(cfg.channel)()
+    main = Cmod.mainline_config()
+    other_ch_same = all(
+        getattr(main.channel, f) == getattr(cfg.channel, f)
+        for f in main.channel.__dict__ if f != "ack_mode")
+    plant_ok = (main.plant == Cmod.BOUNDED_PLANT)
+    rngs_u, sids_u = make_episode_rngs(cfg.root_seed, "dev", 3)
+
+    def _wired(c: CWConfig) -> tuple[bool, bool]:
+        rr, ss = make_episode_rngs(c.root_seed, "dev", 3)   # 每次新建，避免子流被上一次吃掉
+        w = CWWorld(c, rr, ss)
+        return (str(c.channel.ack_mode) == str(Cmod.MAINLINE_ACK_MODE),
+                w._grid is not None)
+
+    label_ok, grid_ok = _wired(main)
+    # ★ 活体负控：把常量临时改成 "approx" ⇒ 同一个谓词必须**失去** grid_ok
+    orig_mode = Cmod.MAINLINE_ACK_MODE
+    neg = {}
+    try:
+        Cmod.MAINLINE_ACK_MODE = "approx"
+        neg_label, neg_grid = _wired(Cmod.mainline_config())
+        neg = {"label_ok": neg_label, "grid_ok": neg_grid}
+    finally:
+        Cmod.MAINLINE_ACK_MODE = orig_mode
+    restored_label, restored_grid = _wired(Cmod.mainline_config())
+    g.check("4u 主线 profile 接线：`mainline_config().ack_mode==MAINLINE_ACK_MODE=='exact'`、"
+            "plant==BOUNDED_PLANT、默认值仍 'approx'（未漂）、其余 channel 字段逐字段相同、"
+            "真建出网格后验；★活体负控：常量改成 'approx' 时 `grid_ok` 必须 False",
+            label_ok and grid_ok and other_ch_same and plant_ok
+            and ch_default.ack_mode == "approx"
+            and (neg["label_ok"] is True and neg["grid_ok"] is False)
+            and (restored_label and restored_grid),
+            {"MAINLINE_ACK_MODE": str(Cmod.MAINLINE_ACK_MODE),
+             "mainline_ack_mode": str(main.channel.ack_mode),
+             "default_ack_mode": str(ch_default.ack_mode),
+             "other_channel_fields_identical": bool(other_ch_same),
+             "plant_is_bounded": bool(plant_ok),
+             "grid_built": bool(grid_ok),
+             "negative_control": neg,
+             "restored": {"label_ok": restored_label, "grid_ok": restored_grid},
+             "note": "`grid_ok=False` 是**唯一**能抓「常量改了但 world 没接网格」的观察点 —— "
+                     "只查名字（`label_ok`）在负控里也 True"})
+
+    # ---------------- 4v exact 模式：`_m_h/_v_h` ≡ 网格矩（逐位），且 `ack_var` 成为死参数
+    cfg_exact = Cmod.mainline_config(plant=cfg.plant, protocol=cfg.protocol,
+                                     root_seed=cfg.root_seed)
+
+    def _run_ops(c: CWConfig) -> tuple[list[dict], tuple]:
+        rngs5, sids5 = make_episode_rngs(c.root_seed, "dev", 5)
+        w5 = CWWorld(c, rngs5, sids5)
+        w5.budget_total = 50
+        snap = []
+        # ★ 首次跑 `ValueError: 后验质量非法（0.0）` —— 读完判"闸错还是物错"：
+        #   本闸为了**确定性**成败把 `_log_h_true` 强推成 ±30（4o 的写法），
+        #   ⇒ 随后 PROBE 的读数 30.0 落在网格 [-8,8] 之外，高斯似然全域下溢。
+        #   ⇒ 是**测试构造**的问题（把 h 推到物理工作域外），不是 4v 要测的东西。
+        #   ★ 但它暴露了一个**真实行为差异**：exact 模式对支撑外读数是**硬报错**，
+        #     approx 是**软退化**。本轮不改（改 = 换基线），只记进交付文档的限制节。
+        ops = [("SEND", 0, 30.0), ("SEND", 1, -30.0), ("PROBE", 0, "reset"), ("HOLD", None, None)]
+        for kind, usr, force in ops:
+            if force == "reset":
+                w5._log_h_true[:] = 0.0     # 回到工作域，让 PROBE 读到 ~N(0, 0.05²)
+            elif force is not None:
+                w5._log_h_true[usr] = force
+            w5.step(Action(kind, usr))
+            if w5._grid is None:        # approx 模式没有网格 ⇒ 这一支只取轨迹哈希
+                snap.append({"op": f"{kind}{'' if usr is None else usr}",
+                             "grid": None})
+                continue
+            gm, gv = w5._grid.moments()
+            snap.append({"op": f"{kind}{'' if usr is None else usr}",
+                         "m_sync_equal": [float(a) == float(b)
+                                          for a, b in zip(w5._m_h, gm)],
+                         "v_sync_equal": [float(a) == float(b)
+                                          for a, b in zip(w5._v_h, gv)]})
+        # ★★ 首次跑 FAIL：`bel_a == bel_a_alt`（approx 下换 ack_var 轨迹没变）——
+        #   读完判"闸错还是物错"：**动作序列是我手写的常量表**，恒与参数无关
+        #   ⇒ 用动作哈希判"参数有没有被消费"是**恒真判据**（#46 族：对象选错）。
+        #   改判**信念终值**：参数被消费 ⇒ (m,v) 变；不被消费 ⇒ (m,v) 逐位不变。
+        return snap, (tuple(float(x) for x in w5._m_h), tuple(float(x) for x in w5._v_h))
+
+    snap_e, bel_e = _run_ops(cfg_exact)
+    sync_ok = all(all(s["m_sync_equal"]) and all(s["v_sync_equal"]) for s in snap_e)
+    # `ack_var` 在 exact 模式下**不该被消费** ⇒ 换值不得改**信念终值**（这才叫"对象不存在"）
+    alt = type(cfg_exact.channel)(**{**cfg_exact.channel.__dict__, "ack_var": 1.726})
+    cfg_exact_alt = CWConfig(plant=cfg_exact.plant, channel=alt,
+                            protocol=cfg_exact.protocol, root_seed=cfg_exact.root_seed)
+    _, bel_e_alt = _run_ops(cfg_exact_alt)
+    dead_param = (bel_e == bel_e_alt)
+    # 反向：approx 模式下同一换值**必须**改信念终值（否则上面的"死参数"是假的）
+    cfg_apx = cfg
+    alt_a = type(cfg_apx.channel)(**{**cfg_apx.channel.__dict__, "ack_mode": "approx",
+                                    "ack_var": 1.726})
+    cfg_apx_alt = CWConfig(plant=cfg_apx.plant, channel=alt_a,
+                           protocol=cfg_apx.protocol, root_seed=cfg_apx.root_seed)
+    _, bel_a = _run_ops(cfg_apx)
+    _, bel_a_alt = _run_ops(cfg_apx_alt)
+    # approx 下 4j-1/4p 必须仍 PASS（否则"SKIP"就变成了掩盖）
+    g_apx = Gate()
+    counterexample_4(cfg_apx, g_apx)
+    counterexample_4b_ack_exact(cfg_apx, g_apx)
+    apx_rows = {r["name"][:4]: bool(r["pass"]) for r in g_apx.rows}
+    j41_ok = all(v for k, v in apx_rows.items() if k.startswith("4j-1"))
+    p4_ok = bool(apx_rows.get("4p 模", False))
+    skipped = ["4j-1 `_ack_bump` ≡ 一阶解析式", "4p approx 模式隔离（5 次 ACK ≡ 老公式）"]
+    g.check("4v exact 模式下 `_m_h/_v_h` 与 `GridBelief.moments()` **逐位**相等"
+            "（4 种操作后各一次）；`ack_var` 在 exact 下是**死参数**（换 1.726 后信念终值逐位不变），"
+            "而 approx 下换值**必须**改信念终值 ⇒ `4j-1`/`4p` 的对象在 exact 下**不存在**，"
+            "显式记 SKIP-NOT-APPLICABLE（清单非空 + approx 下两条仍 PASS）",
+            sync_ok and dead_param and (bel_a != bel_a_alt) and j41_ok and p4_ok
+            and len(skipped) == 2,
+            {"sync_snapshots": snap_e,
+             "exact_belief_vs_alt_ackvar": [list(bel_e), list(bel_e_alt)],
+             "approx_belief_vs_alt_ackvar": [list(bel_a), list(bel_a_alt)],
+             "approx_4j1_pass": bool(j41_ok), "approx_4p_pass": bool(p4_ok),
+             "SKIP_NOT_APPLICABLE_under_exact": skipped,
+             "note": "SKIP 的依据是**行为**（换 ack_var 不改信念终值），不是注释；"
+                     "所以它不是静默 PASS，而是『对象不存在』的可证伪记录"})
+
+    # ---------------- 4w 纯记录**对齐**：`log_h_history[t]` == 第 t 槽开始时真的读到的那份真值
+    rngs6, sids6 = make_episode_rngs(cfg.root_seed, "dev", 6)
+    w6 = CWWorld(cfg, rngs6, sids6)
+    w6.budget_total = 50
+    w6.truth_override = {"h": np.array([5.0, -5.0])}
+    w6.step(Action("HOLD"))
+    rec0 = list(w6.log_h_history[0])
+    w6.truth_override = None
+    before1 = [float(x) for x in w6._log_h_true]
+    w6.step(Action("HOLD"))
+    rec1 = list(w6.log_h_history[1])
+    after1 = [float(x) for x in w6._log_h_true]
+    len_ok = (len(w6.log_h_history) == len(w6.records) == 2)
+    g.check("4w 纯记录对齐：第 0 槽记的是 override 注入值 (5,−5)；第 1 槽记的是**槽开始**的"
+            "`_log_h_true`（而非推进后的值，两点必须不相等）；长度 == `len(records)`",
+            rec0 == [5.0, -5.0] and rec1 == before1 and rec1 != after1 and len_ok,
+            {"slot0_recorded": rec0, "slot1_recorded": rec1,
+             "slot1_truth_at_start": before1, "slot1_truth_after_advance": after1,
+             "lengths": [len(w6.log_h_history), len(w6.records)],
+             "note": "把 append 挪到槽末 ⇒ `rec1` 等于 `after1` ⇒ FAIL（#52/#59 的 off-by-one 族）"})
+
+    # ---------------- 4x 纯记录**纯净**：关掉记录后 SlotRecord 逐字段不变
+    class _Null(list):
+        def append(self, _x) -> None:      # noqa: ANN001
+            return None
+
+    def _scripted(rec_on: bool) -> list[tuple]:
+        rngs7, sids7 = make_episode_rngs(cfg.root_seed, "dev", 7)
+        w7 = CWWorld(cfg, rngs7, sids7)
+        w7.budget_total = 60
+        if not rec_on:
+            w7._log_h_hist = _Null()       # type: ignore[assignment]
+        acts = [Action("PROBE", 0), Action("SEND", 0), Action("SEND", 1),
+                Action("HOLD"), Action("PROBE", 1), Action("SEND", 1)]
+        for a in acts:
+            w7.step(a)
+        return [(r.t, r.action, r.user, r.data_delivered, r.cost_est, r.cost_true,
+                 r.budget_left) for r in w7.records]
+    on, off = _scripted(True), _scripted(False)
+    g.check("4x 纯记录纯净：关掉 `_log_h_hist` 后 6 步的 SlotRecord 七元组逐位相同"
+            "（纯记录不得改轨迹/记账）",
+            on == off,
+            {"n_slots": len(on), "identical": bool(on == off),
+             "first_diff": (next((i for i, (a, b) in enumerate(zip(on, off)) if a != b), None)
+                            if on != off else None)})
+
+
+
 
 # ============================================================ 汇总
 def run_all(cfg: CWConfig | None = None) -> dict:
@@ -1162,6 +1340,7 @@ def run_all(cfg: CWConfig | None = None) -> dict:
     counterexample_4(cfg, g)
     counterexample_4b_ack_exact(cfg, g)
     counterexample_4b2_ack_var(cfg, g)
+    counterexample_4b3_exact_mainline(cfg, g)
     counterexample_5(cfg, g)
     counterexample_6(cfg, g)
     counterexample_7(cfg, g)

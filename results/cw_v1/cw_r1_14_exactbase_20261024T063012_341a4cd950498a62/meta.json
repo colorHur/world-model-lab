@@ -1,0 +1,16 @@
+{
+ "command": "python -m experiments.cw_v1.r1_14_exactbase --tag main",
+ "python": "3.11.16",
+ "numpy": "2.4.6",
+ "timestamp_utc": "2026-10-24T06:31:18.086889+00:00",
+ "head": "1efb3c9e2a42dff901c4942e68e75094ac63194e",
+ "src_hash": "341a4cd950498a62",
+ "world_worktree_sha": "f950de12e00b7ec46b38cbbbcd445321face552b",
+ "world_blob_sha": "bca1614588a6d1c0739a7bebb79728bae356a04d",
+ "gate_elapsed_s": 0.75,
+ "total_elapsed_s": 66.1,
+ "peak_rss_mb": 2095.8,
+ "n_fail_gates": 0,
+ "n_checks_gates": 73,
+ "n_fail_cells": 0
+}

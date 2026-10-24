@@ -385,6 +385,12 @@ class CWWorld:
         #:   与 `view().telemetry[i]["task_aoi"]` 逐位同式（`-1` = 该用户从未送达）。
         #:   **纯记录**：不参与决策、不消耗随机数、不改任何记账量。
         self._aoi_hist: list[tuple[int, ...]] = []
+        #: ★★ R1.14：逐槽的**真实** `log h`（`(log_h_0, ..., log_h_{n-1})`），时点 = 槽开始、
+        #:   即与本槽 `view().telemetry[i]["h_mean"/"h_var"]` **同一时刻**。
+        #:   存在的唯一理由：标定量 `R_var = mean((H−m)²)/mean(v)` 需要真值，而真值不许进视图。
+        #:   **纯记录**：不参与决策、不消耗随机数、不改任何记账量（闸 `4x` 钉住）。
+        #:   ★ 记录位置在 `truth_override` **之后** —— 记的是"本槽真的被读到的那份真值"（闸 `4w`）。
+        self._log_h_hist: list[tuple[float, ...]] = []
         #: ★ v1.1：与 `records` 同长，但只含白名单字段 —— 视图只引用这一份，
         #:   这样"视图里能读到什么"由**追加处**决定，不依赖读的人自觉过滤。
         self._public_records: list[dict] = []
@@ -492,6 +498,9 @@ class CWWorld:
                 self._x_true = np.asarray(self.truth_override["x"], dtype=float).copy()
             if "h" in self.truth_override:
                 self._log_h_true = np.asarray(self.truth_override["h"], dtype=float).copy()
+
+        # ★★ R1.14：纯记录本槽开始时刻的真 `log h`（在 override 之后 ⇒ 记的是"真的被读到的那份"）。
+        self._log_h_hist.append(tuple(float(x) for x in self._log_h_true))
 
         if spend > 0 and self.budget_used + spend > self.budget_total:
             raise BudgetExhausted(
@@ -744,6 +753,16 @@ class CWWorld:
           与这个属性无关（它挂在 `CWWorld` 上，策略拿不到 `CWWorld`）。
         """
         return self._aoi_hist
+
+    @property
+    def log_h_history(self) -> list[tuple[float, ...]]:
+        """★ R1.14 新增（**纯记录**）：逐槽、逐用户的真实 `log h`，时点 = 槽开始。
+
+        与 `view().telemetry[i]["h_mean"]/["h_var"]` 同一时刻 ⇒ 可直接算
+        `z = (H − m)/sqrt(v)`。★ 这是**评估侧**量：不进 `SchedulerView._pub`，
+        策略拿不到 `CWWorld`，所以拿不到它。
+        """
+        return self._log_h_hist
 
     def view(self) -> "SchedulerView":
         """构造**公开信息快照**。不含 self，也不含任何真值字段。

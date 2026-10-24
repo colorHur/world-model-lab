@@ -98,6 +98,10 @@ class EpisodeResult:
     #:     两者对账（闸 4l）只封"计数归属"，实参正确性由闸 4j/4k 的行为观察钉死。
     n_ack_by_user: list = field(default_factory=list)
     n_nack_by_user: list = field(default_factory=list)
+    # ---- ★ R1.14 标定诊断（**纯记录**）----
+    #: 逐槽、逐用户的真实 `log h`（时点 = 槽开始，与 `telemetry` 的 `h_mean/h_var` 同刻）。
+    #: 只用于离线算 `R_var = mean((H−m)²)/mean(v)`；**不进任何决策路径**。
+    log_h_hist: list = field(default_factory=list)
 
 
 def _trace_hash(recs) -> str:
@@ -252,6 +256,7 @@ def run_episode(
         n_never_served=n_never,
         n_ack_by_user=[int(x) for x in w.n_ack_by_user],
         n_nack_by_user=[int(x) for x in w.n_nack_by_user],
+        log_h_hist=[[float(y) for y in row] for row in w.log_h_history],
     )
     return res
 

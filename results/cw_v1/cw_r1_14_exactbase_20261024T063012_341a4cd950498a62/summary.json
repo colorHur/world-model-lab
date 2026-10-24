@@ -1,0 +1,150 @@
+{
+ "protocol": "CW-POMDP-v1.1",
+ "stage": "CW-R1.14",
+ "kind": "EXACT-AS-MAINLINE",
+ "prereg": "docs/research/CW-R1.14-精确基线-预注册-v0.1.md",
+ "decision": "A",
+ "mainline": {
+  "MAINLINE_ACK_MODE": "exact",
+  "default_channel_ack_mode": "approx",
+  "plant": "BOUNDED_PLANT"
+ },
+ "M1_identity": {
+  "all_identical": false,
+  "detail": {
+   "approx": "0/8",
+   "exact": "8/8"
+  }
+ },
+ "M2_verdict": "EXACT-CALIBRATED-BETTER",
+ "M2_per_arm": {
+  "approx": {
+   "n_cells": 8,
+   "R_var_median": 5.939176398459441,
+   "R_var_cells": [
+    5.502853110739401,
+    6.255185179981047,
+    7.933897888193506,
+    5.057835386765414,
+    7.362013205364968,
+    5.24404314733087,
+    8.668580021180386,
+    5.6231676169378355
+   ],
+   "mean_z2_median": 8.250036155489768,
+   "p_abs_z_gt2_median": 0.3994140625,
+   "p_abs_z_gt3_median": 0.2041015625,
+   "pooled_R_var": 6.450735701979591,
+   "by_ep_median_R_var": {
+    "ep100": 5.879019145360224,
+    "ep101": 6.492590411151402
+   },
+   "by_user_R_var_median": {
+    "u0": 4.907877147158645,
+    "u1": 7.213530742238857
+   }
+  },
+  "exact": {
+   "n_cells": 8,
+   "R_var_median": 0.9129823592001503,
+   "R_var_cells": [
+    0.9291045855488301,
+    1.084192978666151,
+    1.1949741276418262,
+    0.9229735200062641,
+    0.8227575614265215,
+    0.6909585096025435,
+    0.9029911983940363,
+    0.7610609948735504
+   ],
+   "mean_z2_median": 0.9209988148201457,
+   "p_abs_z_gt2_median": 0.0302734375,
+   "p_abs_z_gt3_median": 0.0,
+   "pooled_R_var": 0.9145881594822015,
+   "by_ep_median_R_var": {
+    "ep100": 1.0066487821074905,
+    "ep101": 0.7919092781500359
+   },
+   "by_user_R_var_median": {
+    "u0": 0.8619281993174612,
+    "u1": 0.819760555440576
+   }
+  }
+ },
+ "M3_split_table": {
+  "approx": {
+   "att_by_user": [
+    546,
+    448
+   ],
+   "del_by_user": [
+    366,
+    281
+   ],
+   "probe_total": 15,
+   "never_served_total": 0,
+   "cost_true_median": 0.11085011988232196,
+   "cost_est_median": 0.018485368807367807,
+   "phat_min_median": [
+    0.06888161234070836,
+    0.007539108366633622
+   ],
+   "R_var_cells": [
+    5.502853110739401,
+    6.255185179981047,
+    7.933897888193506,
+    5.057835386765414,
+    7.362013205364968,
+    5.24404314733087,
+    8.668580021180386,
+    5.6231676169378355
+   ]
+  },
+  "exact": {
+   "att_by_user": [
+    489,
+    512
+   ],
+   "del_by_user": [
+    306,
+    222
+   ],
+   "probe_total": 19,
+   "never_served_total": 0,
+   "cost_true_median": 0.12749033176964392,
+   "cost_est_median": 0.020371160484470845,
+   "phat_min_median": [
+    0.2057750097562834,
+    0.13869698710947387
+   ],
+   "R_var_cells": [
+    0.9291045855488301,
+    1.084192978666151,
+    1.1949741276418262,
+    0.9229735200062641,
+    0.8227575614265215,
+    0.6909585096025435,
+    0.9029911983940363,
+    0.7610609948735504
+   ]
+  }
+ },
+ "gates": {
+  "n_checks": 73,
+  "n_fail": 0
+ },
+ "n_cells": 16,
+ "head": "1efb3c9e2a42dff901c4942e68e75094ac63194e",
+ "src_hash": "341a4cd950498a62",
+ "world_py_worktree_sha": "f950de12e00b7ec46b38cbbbcd445321face552b",
+ "world_py_blob_sha": "bca1614588a6d1c0739a7bebb79728bae356a04d",
+ "git_dirty_before_run": [
+  "M experiments/cw_v1/config.py",
+  " M experiments/cw_v1/gates.py",
+  " M experiments/cw_v1/runner.py",
+  " M experiments/cw_v1/world.py",
+  "?? docs/research/CW-R1.14-精确基线-预注册-v0.1.md",
+  "?? experiments/cw_v1/r1_14_exactbase.py"
+ ],
+ "note": "两臂只差 ACK/NACK 的**信息模型**（approx = 伪观测一阶近似；exact = 网格精确贝叶斯）；同 seed 是配对不是独立样本；有效独立单元 = 2 个 episode。`cost_true` 只报不比（R1.13 已证分母 < floor）。"
+}

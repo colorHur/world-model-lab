@@ -1,0 +1,110 @@
+{
+  "n_checks": 7,
+  "n_fail": 0,
+  "all_pass": true,
+  "rows": [
+    {
+      "name": "Q1 默认 event_pairing = 'slot'（新证据自动拿到构造性配对）",
+      "pass": true,
+      "detail": {
+        "default": "slot"
+      }
+    },
+    {
+      "name": "Q2 slot 口径：同 (t,i) 上送达、p_true、量测噪声 z 逐位相同",
+      "pass": true,
+      "detail": {
+        "pairing": "slot",
+        "n_overlap": 128,
+        "n_both_delivered": 79,
+        "n_same_delivered": 128,
+        "n_same_p_true": 128,
+        "n_same_z": 79,
+        "max_abs_dz": 4.440892098500626e-16,
+        "n_diff_delivered": 0,
+        "n_diff_z": 0,
+        "n_send_a": 256,
+        "n_send_b": 128,
+        "example_z": [
+          2.2274024276575166,
+          -1.1058915272862853,
+          0.02641082368362531
+        ]
+      }
+    },
+    {
+      "name": "Q3 样本量守卫：比对点 ≥ 64、其中双方都送达 ≥ 32（否则 Q2 会因重叠为空而恒真）",
+      "pass": true,
+      "detail": {
+        "n_overlap": 128,
+        "n_both_delivered": 79
+      }
+    },
+    {
+      "name": "Q4 阴性对照：attempt 口径下同一比对必须出现不一致（证明 Q2 有分辨力）",
+      "pass": true,
+      "detail": {
+        "n_diff_delivered": 41,
+        "n_diff_z": 58,
+        "n_overlap": 128
+      }
+    },
+    {
+      "name": "Q5 配对不改变送达率边际（|Δ| ≤ 4σ，σ 由二项式给出）",
+      "pass": true,
+      "detail": {
+        "rate_slot": 0.4993489583333333,
+        "rate_attempt": 0.5020833333333333,
+        "gap": 0.002734375000000011,
+        "sigma": 0.0057054374550997745,
+        "n_sends": 7680
+      }
+    },
+    {
+      "name": "Q6 确定性：同种子同 episode 两次构造的预生成矩阵与轨迹逐位相同；首槽 plant 噪声与策略无关",
+      "pass": true,
+      "detail": {
+        "deterministic": true,
+        "first_slot_noise_same": true
+      }
+    },
+    {
+      "name": "Q7 attempt 口径逐位复现改动前参考值（4 例，含 trace hash）",
+      "pass": true,
+      "detail": [
+        {
+          "case": "periodic4",
+          "equal": true,
+          "cost_true": 0.08496858681656241,
+          "hash": "0e1d41317ea143a4",
+          "n_att": 64,
+          "n_del": 37
+        },
+        {
+          "case": "periodic1",
+          "equal": true,
+          "cost_true": 0.10219414940141835,
+          "hash": "8bad3d8d332f21b2",
+          "n_att": 128,
+          "n_del": 54
+        },
+        {
+          "case": "paced_age8",
+          "equal": true,
+          "cost_true": 0.08569615019380192,
+          "hash": "ae8e2a477f64b649",
+          "n_att": 121,
+          "n_del": 50
+        },
+        {
+          "case": "always_probe",
+          "equal": true,
+          "cost_true": 3.076084417124051,
+          "hash": "bdc1e6fd848a0a1b",
+          "n_att": 0,
+          "n_del": 0
+        }
+      ]
+    }
+  ]
+}

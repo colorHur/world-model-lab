@@ -296,3 +296,39 @@ def default_config(**overrides) -> CWConfig:
     for k, v in overrides.items():
         kwargs[k] = v
     return CWConfig(**kwargs)
+
+
+# ============================================================ ★★ R1.14 研究基线
+#: 研究基线（新证据，`results/cw_v1/cw_r1_14_*` 起）的 ACK 信息模型。
+#:
+#: 为什么是 `"exact"`（预注册 `docs/research/CW-R1.14-精确基线-预注册-v0.1.md` §2）：
+#:   ① 精确贝叶斯**没有自由参数**；`"approx"` 有 `ACK_VAR=0.63` 与方向量级 `±1.0/−1.5`
+#:      三个手调常数，其中方向比 1.5 在它**自己的标定点** `m=0` 就错 52%（真值 1.000）；
+#:   ② `"approx"` 有"跑飞"通道：`p→1` 时精确 Fisher 信息 `I→0`，精确后验几乎不动，
+#:      而 `"approx"` 仍按 `g·(+1)` 继续推均值、继续缩方差 ⇒ 越自信越推。R1.12 观测到的
+#:      `p̂` 下限 1e-3 量级（以及 R1.10 的 `p̂→1.7e-7` 自锁）是这条通道的产物；
+#:   ③ R1.13 已证明标量层面**治不好**（0/16 过、解析层面 `I ≤ 1.000` 不可达）。
+#:
+#: ★★ 为什么**不**把 `ChannelConfig.ack_mode` 的默认值直接改掉：
+#:   `4j-1`/`4p` 用 `CWWorld.ACK_VAR` 做一阶近似的**解析对账**；R1.7.6→R1.13 的 32 格
+#:   逐位身份也建立在那条路径上。默认值翻掉 = 旧证据全部失效 + 两条闸的参照物消失。
+#:   ⇒ 默认值保持 `"approx"`，性质同 `protocol.init_from_prior=False`：
+#:     **只用于重放旧证据的开关，不得进新表**。基线靠这个常量显式表达，不靠默认值。
+MAINLINE_ACK_MODE = "exact"
+
+
+def mainline_config(plant: PlantConfig | None = None, **overrides) -> CWConfig:
+    """**研究基线配置**（R1.14 起）：`BOUNDED` plant + `ack_mode=MAINLINE_ACK_MODE`。
+
+    ★ `plant` 默认取 `bounded_plant()`（`A=1` 有界档），**不是** dataclass 默认的
+      `R0_DEFAULT`（`A=(1.01,1.03)` 开环不稳定）—— CW 线 R1 之后的全部面板（R1.7.6→R1.13）
+      都在 `BOUNDED` 上跑，基线必须跟着面板走，否则"基线"与"面板"不是同一个世界。
+    除 `channel.ack_mode` 外与同 plant 的默认配置逐字段相同（闸 `4u` 钉住）。
+    新证据目录一律由它构造配置；`default_config()` 保留给历史身份重放。
+    """
+    base = default_config(plant=(bounded_plant() if plant is None else plant), **overrides)
+    ch = type(base.channel)(**{**base.channel.__dict__, "ack_mode": MAINLINE_ACK_MODE})
+    return CWConfig(plant=base.plant, channel=ch, protocol=base.protocol,
+                    root_seed=base.root_seed)
+
+
