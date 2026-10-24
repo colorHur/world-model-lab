@@ -1,0 +1,11 @@
+{
+ "note": "提交后用**修好的** _git（查退出码）取真实 blob_sha，纠正 meta.json 里运行时的 None。",
+ "commit": "2a87e25adca762b0c197ff697c038ff216baf11d",
+ "blob_sha_r1_17": "7e3b04b90f0d592166dfa6cd3953bf8c3126ad49",
+ "blob_sha_mech": "fda07ce9bb9b1cb3e423b579267a5b998512299a",
+ "src_hash_at_commit": "b72e2757f836ab00",
+ "src_hash_at_run": "b72e2757f836ab00",
+ "src_hash_consistent": true,
+ "why_none_at_run": "运行时 r1_17_scaleinv.py 尚未提交（且当时 _git 已改为查退出码）⇒ 显式记 None",
+ "git_status_porcelain": []
+}
