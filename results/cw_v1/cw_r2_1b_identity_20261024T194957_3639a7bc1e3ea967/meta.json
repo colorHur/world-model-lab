@@ -1,0 +1,17 @@
+{
+ "command": "python -m experiments.cw_v1.r2_1b_identity --tag main",
+ "timestamp_local": "2026-10-25T03:49:57.025033+08:00",
+ "python": "3.11.16",
+ "head": "55254a05f09ecaa5b58b9bb4b2b2c653ce2d0bc5",
+ "src_hash": "3639a7bc1e3ea967",
+ "git_dirty_before_run": [
+  "?? docs/research/CW-R2.1-双基线分辨力-预注册-v0.1.md",
+  "?? experiments/cw_v1/model_policy.py",
+  "?? experiments/cw_v1/r2_1_sep.py",
+  "?? experiments/cw_v1/r2_1b_identity.py",
+  "?? results/cw_v1/cw_r2_1_sep_20261024T194506_eb670d5036b88758/",
+  "?? results/cw_v1/cw_r2_1_sep_20261024T194859_3c71623d6afe07e4/"
+ ],
+ "total_elapsed_s": 0.06,
+ "n_run_episode": 0
+}

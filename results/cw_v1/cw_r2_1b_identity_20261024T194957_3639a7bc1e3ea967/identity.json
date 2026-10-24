@@ -1,0 +1,523 @@
+{
+ "kind": "CROSS-ROUND-IDENTITY-NOT-A-NEW-RESULT",
+ "protocol": "CW-POMDP-v1.1",
+ "r2_dir": "cw_r2_1_sep_20261024T194859_3c71623d6afe07e4",
+ "r1_16_dir": "cw_r1_16_n10_20261024T105416_fc9f25e16d2c6307",
+ "fields": [
+  "cost_true_per_step",
+  "policy_trace_hash",
+  "n_attempted_by_user",
+  "n_delivered_by_user",
+  "n_probe"
+ ],
+ "tolerance": "0（逐位，不设容差）",
+ "n_checked": 10,
+ "n_identical": 10,
+ "verdict": "CROSS-ROUND-IDENTICAL",
+ "scope": "仅 P1（`bounded_plant()`）与 R1.16 的 `exact` 臂同格同种子；P2 无参照 ⇒ SKIP-NO-REFERENCE（不许用 P1 的结果外推 P2）",
+ "rows": [
+  {
+   "plant": "P1",
+   "ep": 100,
+   "status": "IDENTICAL",
+   "fields": {
+    "cost_true_per_step": {
+     "r1_16": 0.13108502902386024,
+     "r2_1": 0.13108502902386024,
+     "same": true
+    },
+    "policy_trace_hash": {
+     "r1_16": "b757af6668895bb2",
+     "r2_1": "b757af6668895bb2",
+     "same": true
+    },
+    "n_attempted_by_user": {
+     "r1_16": [
+      58,
+      64
+     ],
+     "r2_1": [
+      58,
+      64
+     ],
+     "same": true
+    },
+    "n_delivered_by_user": {
+     "r1_16": [
+      25,
+      38
+     ],
+     "r2_1": [
+      25,
+      38
+     ],
+     "same": true
+    },
+    "n_probe": {
+     "r1_16": 5,
+     "r2_1": 5,
+     "same": true
+    }
+   }
+  },
+  {
+   "plant": "P1",
+   "ep": 101,
+   "status": "IDENTICAL",
+   "fields": {
+    "cost_true_per_step": {
+     "r1_16": 0.1214685811240804,
+     "r2_1": 0.1214685811240804,
+     "same": true
+    },
+    "policy_trace_hash": {
+     "r1_16": "3c92c9d9cd81db5c",
+     "r2_1": "3c92c9d9cd81db5c",
+     "same": true
+    },
+    "n_attempted_by_user": {
+     "r1_16": [
+      62,
+      63
+     ],
+     "r2_1": [
+      62,
+      63
+     ],
+     "same": true
+    },
+    "n_delivered_by_user": {
+     "r1_16": [
+      49,
+      14
+     ],
+     "r2_1": [
+      49,
+      14
+     ],
+     "same": true
+    },
+    "n_probe": {
+     "r1_16": 2,
+     "r2_1": 2,
+     "same": true
+    }
+   }
+  },
+  {
+   "plant": "P1",
+   "ep": 102,
+   "status": "IDENTICAL",
+   "fields": {
+    "cost_true_per_step": {
+     "r1_16": 0.030364944699275233,
+     "r2_1": 0.030364944699275233,
+     "same": true
+    },
+    "policy_trace_hash": {
+     "r1_16": "e95f1db9f778cfb5",
+     "r2_1": "e95f1db9f778cfb5",
+     "same": true
+    },
+    "n_attempted_by_user": {
+     "r1_16": [
+      59,
+      65
+     ],
+     "r2_1": [
+      59,
+      65
+     ],
+     "same": true
+    },
+    "n_delivered_by_user": {
+     "r1_16": [
+      37,
+      54
+     ],
+     "r2_1": [
+      37,
+      54
+     ],
+     "same": true
+    },
+    "n_probe": {
+     "r1_16": 2,
+     "r2_1": 2,
+     "same": true
+    }
+   }
+  },
+  {
+   "plant": "P1",
+   "ep": 103,
+   "status": "IDENTICAL",
+   "fields": {
+    "cost_true_per_step": {
+     "r1_16": 0.05087173952426407,
+     "r2_1": 0.05087173952426407,
+     "same": true
+    },
+    "policy_trace_hash": {
+     "r1_16": "457852e7ba14cb05",
+     "r2_1": "457852e7ba14cb05",
+     "same": true
+    },
+    "n_attempted_by_user": {
+     "r1_16": [
+      55,
+      69
+     ],
+     "r2_1": [
+      55,
+      69
+     ],
+     "same": true
+    },
+    "n_delivered_by_user": {
+     "r1_16": [
+      33,
+      47
+     ],
+     "r2_1": [
+      33,
+      47
+     ],
+     "same": true
+    },
+    "n_probe": {
+     "r1_16": 3,
+     "r2_1": 3,
+     "same": true
+    }
+   }
+  },
+  {
+   "plant": "P1",
+   "ep": 104,
+   "status": "IDENTICAL",
+   "fields": {
+    "cost_true_per_step": {
+     "r1_16": 0.19218027275775607,
+     "r2_1": 0.19218027275775607,
+     "same": true
+    },
+    "policy_trace_hash": {
+     "r1_16": "6b9c4af13c1053f7",
+     "r2_1": "6b9c4af13c1053f7",
+     "same": true
+    },
+    "n_attempted_by_user": {
+     "r1_16": [
+      54,
+      67
+     ],
+     "r2_1": [
+      54,
+      67
+     ],
+     "same": true
+    },
+    "n_delivered_by_user": {
+     "r1_16": [
+      22,
+      24
+     ],
+     "r2_1": [
+      22,
+      24
+     ],
+     "same": true
+    },
+    "n_probe": {
+     "r1_16": 7,
+     "r2_1": 7,
+     "same": true
+    }
+   }
+  },
+  {
+   "plant": "P1",
+   "ep": 105,
+   "status": "IDENTICAL",
+   "fields": {
+    "cost_true_per_step": {
+     "r1_16": 0.3294757174271161,
+     "r2_1": 0.3294757174271161,
+     "same": true
+    },
+    "policy_trace_hash": {
+     "r1_16": "4d17a14da2f92437",
+     "r2_1": "4d17a14da2f92437",
+     "same": true
+    },
+    "n_attempted_by_user": {
+     "r1_16": [
+      56,
+      70
+     ],
+     "r2_1": [
+      56,
+      70
+     ],
+     "same": true
+    },
+    "n_delivered_by_user": {
+     "r1_16": [
+      17,
+      63
+     ],
+     "r2_1": [
+      17,
+      63
+     ],
+     "same": true
+    },
+    "n_probe": {
+     "r1_16": 2,
+     "r2_1": 2,
+     "same": true
+    }
+   }
+  },
+  {
+   "plant": "P1",
+   "ep": 106,
+   "status": "IDENTICAL",
+   "fields": {
+    "cost_true_per_step": {
+     "r1_16": 0.031943754699570684,
+     "r2_1": 0.031943754699570684,
+     "same": true
+    },
+    "policy_trace_hash": {
+     "r1_16": "9bba0622bc6b9574",
+     "r2_1": "9bba0622bc6b9574",
+     "same": true
+    },
+    "n_attempted_by_user": {
+     "r1_16": [
+      57,
+      66
+     ],
+     "r2_1": [
+      57,
+      66
+     ],
+     "same": true
+    },
+    "n_delivered_by_user": {
+     "r1_16": [
+      24,
+      33
+     ],
+     "r2_1": [
+      24,
+      33
+     ],
+     "same": true
+    },
+    "n_probe": {
+     "r1_16": 5,
+     "r2_1": 5,
+     "same": true
+    }
+   }
+  },
+  {
+   "plant": "P1",
+   "ep": 107,
+   "status": "IDENTICAL",
+   "fields": {
+    "cost_true_per_step": {
+     "r1_16": 0.05138252571151315,
+     "r2_1": 0.05138252571151315,
+     "same": true
+    },
+    "policy_trace_hash": {
+     "r1_16": "51cf6637f59d611b",
+     "r2_1": "51cf6637f59d611b",
+     "same": true
+    },
+    "n_attempted_by_user": {
+     "r1_16": [
+      43,
+      84
+     ],
+     "r2_1": [
+      43,
+      84
+     ],
+     "same": true
+    },
+    "n_delivered_by_user": {
+     "r1_16": [
+      11,
+      69
+     ],
+     "r2_1": [
+      11,
+      69
+     ],
+     "same": true
+    },
+    "n_probe": {
+     "r1_16": 1,
+     "r2_1": 1,
+     "same": true
+    }
+   }
+  },
+  {
+   "plant": "P1",
+   "ep": 108,
+   "status": "IDENTICAL",
+   "fields": {
+    "cost_true_per_step": {
+     "r1_16": 0.34232473383024337,
+     "r2_1": 0.34232473383024337,
+     "same": true
+    },
+    "policy_trace_hash": {
+     "r1_16": "8dacc515c7765a8c",
+     "r2_1": "8dacc515c7765a8c",
+     "same": true
+    },
+    "n_attempted_by_user": {
+     "r1_16": [
+      72,
+      55
+     ],
+     "r2_1": [
+      72,
+      55
+     ],
+     "same": true
+    },
+    "n_delivered_by_user": {
+     "r1_16": [
+      55,
+      17
+     ],
+     "r2_1": [
+      55,
+      17
+     ],
+     "same": true
+    },
+    "n_probe": {
+     "r1_16": 1,
+     "r2_1": 1,
+     "same": true
+    }
+   }
+  },
+  {
+   "plant": "P1",
+   "ep": 109,
+   "status": "IDENTICAL",
+   "fields": {
+    "cost_true_per_step": {
+     "r1_16": 0.11556846732673356,
+     "r2_1": 0.11556846732673356,
+     "same": true
+    },
+    "policy_trace_hash": {
+     "r1_16": "d8afcb41e1c6ab0c",
+     "r2_1": "d8afcb41e1c6ab0c",
+     "same": true
+    },
+    "n_attempted_by_user": {
+     "r1_16": [
+      64,
+      60
+     ],
+     "r2_1": [
+      64,
+      60
+     ],
+     "same": true
+    },
+    "n_delivered_by_user": {
+     "r1_16": [
+      42,
+      6
+     ],
+     "r2_1": [
+      42,
+      6
+     ],
+     "same": true
+    },
+    "n_probe": {
+     "r1_16": 4,
+     "r2_1": 4,
+     "same": true
+    }
+   }
+  },
+  {
+   "plant": "P2",
+   "ep": 100,
+   "status": "SKIP-NO-REFERENCE",
+   "why": "P2（`sigma_meas=0.05`）在本仓首次出现，无同配置历史证据"
+  },
+  {
+   "plant": "P2",
+   "ep": 101,
+   "status": "SKIP-NO-REFERENCE",
+   "why": "P2（`sigma_meas=0.05`）在本仓首次出现，无同配置历史证据"
+  },
+  {
+   "plant": "P2",
+   "ep": 102,
+   "status": "SKIP-NO-REFERENCE",
+   "why": "P2（`sigma_meas=0.05`）在本仓首次出现，无同配置历史证据"
+  },
+  {
+   "plant": "P2",
+   "ep": 103,
+   "status": "SKIP-NO-REFERENCE",
+   "why": "P2（`sigma_meas=0.05`）在本仓首次出现，无同配置历史证据"
+  },
+  {
+   "plant": "P2",
+   "ep": 104,
+   "status": "SKIP-NO-REFERENCE",
+   "why": "P2（`sigma_meas=0.05`）在本仓首次出现，无同配置历史证据"
+  },
+  {
+   "plant": "P2",
+   "ep": 105,
+   "status": "SKIP-NO-REFERENCE",
+   "why": "P2（`sigma_meas=0.05`）在本仓首次出现，无同配置历史证据"
+  },
+  {
+   "plant": "P2",
+   "ep": 106,
+   "status": "SKIP-NO-REFERENCE",
+   "why": "P2（`sigma_meas=0.05`）在本仓首次出现，无同配置历史证据"
+  },
+  {
+   "plant": "P2",
+   "ep": 107,
+   "status": "SKIP-NO-REFERENCE",
+   "why": "P2（`sigma_meas=0.05`）在本仓首次出现，无同配置历史证据"
+  },
+  {
+   "plant": "P2",
+   "ep": 108,
+   "status": "SKIP-NO-REFERENCE",
+   "why": "P2（`sigma_meas=0.05`）在本仓首次出现，无同配置历史证据"
+  },
+  {
+   "plant": "P2",
+   "ep": 109,
+   "status": "SKIP-NO-REFERENCE",
+   "why": "P2（`sigma_meas=0.05`）在本仓首次出现，无同配置历史证据"
+  }
+ ],
+ "head": "55254a05f09ecaa5b58b9bb4b2b2c653ce2d0bc5",
+ "src_hash": "3639a7bc1e3ea967",
+ "n_run_episode": 0
+}

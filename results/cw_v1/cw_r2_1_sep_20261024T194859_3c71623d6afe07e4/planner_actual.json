@@ -1,0 +1,60 @@
+{
+ "kind": "PLANNER-EFFECTIVE-PARAMS（补记；零 episode；由现算生成）",
+ "why": "`model_api.PLANNER_PINNED` 只钉 **签名默认值** 与 **模块默认**（`_tail_module_default` /`_dp_grid_module_default`），**不覆盖入口显式传入的值**；R2.1 实际传 `tail='dp'`、`dp_grid='r173'`，而模块默认是 `paced`/`legacy` ⇒ R2.0 指纹 `d3904923ce2c8d82` 的`_dp_grid_module_default='legacy'` 与**实际运行**不一致。本文件补记实际生效值，指纹本身不动（改动会使 R2.0 证据失效 ⇒ 另立 spec-v2 再改）。",
+ "signature_defaults": {
+  "cfg": "<empty>",
+  "h_plan": "5",
+  "m_samples": "16",
+  "seed": "20261022",
+  "use_probe": "True",
+  "sample_hidden": "True",
+  "rho": "None",
+  "pacing": "True",
+  "cont_m": "True",
+  "tail": "None",
+  "dp_phat": "None",
+  "dp_b_cap": "None",
+  "dp_axis_mode": "user_axis",
+  "dp_grid": "None",
+  "send_other_advance": "fixed",
+  "draws_pool_m": "None"
+ },
+ "module_defaults": {
+  "TAIL_DEFAULT": "paced",
+  "GRID_DEFAULT": "legacy"
+ },
+ "explicitly_passed": {
+  "h_plan": 5,
+  "m_samples": 16,
+  "rho": 0.98,
+  "pacing": true,
+  "seed": {
+   "panel": 2001,
+   "null": 3102
+  },
+  "tail": "dp",
+  "dp_grid": "r173"
+ },
+ "effective_in_this_round": {
+  "cfg": null,
+  "h_plan": 5,
+  "m_samples": 16,
+  "seed": {
+   "panel": 2001,
+   "null": 3102
+  },
+  "use_probe": true,
+  "sample_hidden": true,
+  "rho": 0.98,
+  "pacing": true,
+  "cont_m": true,
+  "tail": "dp",
+  "dp_phat": null,
+  "dp_b_cap": null,
+  "dp_axis_mode": "user_axis",
+  "dp_grid": "r173",
+  "send_other_advance": "fixed",
+  "draws_pool_m": null
+ },
+ "n_run_episode": 0
+}

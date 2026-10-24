@@ -1,0 +1,86 @@
+{
+ "C1": {
+  "pass": true,
+  "detail": {
+   "keys_equal": true
+  }
+ },
+ "C2": {
+  "pass": true,
+  "detail": {
+   "ok": true,
+   "bad": []
+  }
+ },
+ "C3": {
+  "pass": true,
+  "detail": {
+   "bad": [
+    "telemetry[0].P_hat",
+    "telemetry[0].x_hat",
+    "telemetry[1].P_hat",
+    "telemetry[1].x_hat"
+   ],
+   "expect": [
+    "telemetry[0].P_hat",
+    "telemetry[0].x_hat",
+    "telemetry[1].P_hat",
+    "telemetry[1].x_hat"
+   ]
+  }
+ },
+ "C4": {
+  "pass": true,
+  "detail": {
+   "x_hat_unchanged": true,
+   "P_hat_unchanged": true
+  }
+ },
+ "C5": {
+  "pass": true,
+  "detail": {
+   "bad": [
+    "budget_left"
+   ],
+   "why": "闸必须能 FAIL：用原值重绑定 + 预算改 1 ⇒ 必须报 budget_left"
+  }
+ },
+ "C6": {
+  "pass": true,
+  "detail": {
+   "belief": [
+    [
+     0.7,
+     -0.3
+    ],
+    [
+     0.2,
+     0.9
+    ]
+   ],
+   "prior": [
+    [
+     0.0,
+     0.0
+    ],
+    [
+     1.0,
+     1.0
+    ]
+   ]
+  }
+ },
+ "C7": {
+  "pass": true,
+  "detail": "PermissionError"
+ },
+ "C8": {
+  "pass": true,
+  "detail": {
+   "same": 0.0,
+   "fwd": 2.0,
+   "rev": 2.0
+  }
+ },
+ "all_pass": true
+}

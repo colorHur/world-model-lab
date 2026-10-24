@@ -1,0 +1,27 @@
+{
+ "command": "python -m experiments.cw_v1.r2_1_sep --tag main",
+ "timestamp_local": "2026-10-25T03:48:59.503079+08:00",
+ "python": "3.11.16",
+ "numpy": "2.4.6",
+ "head": "55254a05f09ecaa5b58b9bb4b2b2c653ce2d0bc5",
+ "src_hash": "3c71623d6afe07e4",
+ "worktree_sha_r2_1": "2fffd587f2cc064a5bf74d9304bb6fdc30f6d240",
+ "blob_sha_r2_1": null,
+ "blob_sha_note": null,
+ "git_dirty_before_run": [
+  "?? docs/research/CW-R2.1-双基线分辨力-预注册-v0.1.md",
+  "?? experiments/cw_v1/model_policy.py",
+  "?? experiments/cw_v1/r2_1_sep.py",
+  "?? results/cw_v1/cw_r2_1_sep_20261024T194506_eb670d5036b88758/"
+ ],
+ "protocol": "CW-POMDP-v1.1",
+ "event_pairing": "slot",
+ "n_cells": 40,
+ "n_null": 20,
+ "panel_elapsed_s": 168.3,
+ "total_elapsed_s": 197.5,
+ "peak_rss_mb": 4147.4,
+ "n_checks_gates": 11,
+ "n_fail_gates": 0,
+ "training": "none"
+}

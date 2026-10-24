@@ -1,0 +1,82 @@
+{
+ "protocol": "CW-POMDP-v1.1",
+ "stage": "CW-R2.1",
+ "kind": "NON-TRAINED-BASELINE-SEPARABILITY",
+ "prereg": "docs/research/CW-R2.1-双基线分辨力-预注册-v0.1.md",
+ "hypothesis": "H-R2-0",
+ "panels": {
+  "plants": [
+   "P1",
+   "P2"
+  ],
+  "models": [
+   "belief_readout",
+   "prior_only"
+  ],
+  "eps": [
+   100,
+   101,
+   102,
+   103,
+   104,
+   105,
+   106,
+   107,
+   108,
+   109
+  ],
+  "seed_panel": 2001,
+  "seed_null": 3102,
+  "n_cells": 0,
+  "n_null": 0
+ },
+ "verdicts": {
+  "ALL": "BLOCKED-BY-GATE"
+ },
+ "blocks": {
+  "ALL": {
+   "verdict": "BLOCKED-BY-GATE"
+  }
+ },
+ "r_i_summary": null,
+ "trades": null,
+ "action_diff_median": null,
+ "note_sign": null,
+ "rows": [],
+ "objective": {
+  "primary": "cost_true_per_step_median",
+  "primary_definition": "逐 episode 的 `q·Σ_i mean_t(x_i²) + r·Σ_i mean_t(u_i²)`，再取 episode 中位数",
+  "secondary": [
+   "per_user_r_i",
+   "mean_task_aoi_per_user_timeavg",
+   "n_delivered",
+   "n_attempted",
+   "n_probe",
+   "cost_true_by_user"
+  ],
+  "forbidden": [
+   "ku",
+   "kf",
+   "share",
+   "share_user",
+   "share_frame"
+  ],
+  "statistical_unit": "完整 episode（同初值的 seed 不是独立单元，R1.7.8 D5b）",
+  "weights": "由公开 `q_cost/r_cost` 固定，不按最终收益调权"
+ },
+ "spec_fingerprint_P1": "985ce6371af8cfdd",
+ "sigma_meas": {
+  "P1": 0.2,
+  "P2": 0.05
+ },
+ "budget": {
+  "total_s": 29.0,
+  "panel_s": 0.0,
+  "per_cell_s_observed": []
+ },
+ "head": "55254a05f09ecaa5b58b9bb4b2b2c653ce2d0bc5",
+ "src_hash": "eb670d5036b88758",
+ "n_checks_gates": 11,
+ "n_fail_gates": 1,
+ "training": "none（本轮零训练）"
+}
