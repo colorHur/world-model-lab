@@ -1,0 +1,32 @@
+{
+ "head": "1c35139157800e7fcbc64cd9966188b0a0db7da5",
+ "commit_subject": "CW-R2.2: 判据先修（阈值按 n 缩放 / 主判逐对 / 地板分层）⇒ SIGN-ONLY-NO-MAGNITUDE",
+ "timestamp_local": "2026-10-25T06:00:59.042753+08:00",
+ "files": {
+  "experiments/cw_v1/mech2.py": {
+   "blob_sha": "9978f82eb8f4a2cb4bac362c78f5eba562ec319f",
+   "worktree_sha": "9978f82eb8f4a2cb4bac362c78f5eba562ec319f"
+  },
+  "experiments/cw_v1/r2_2_criteria.py": {
+   "blob_sha": "a78c71dcc5d455f7a6dfea8cb678365032f975d0",
+   "worktree_sha": "a78c71dcc5d455f7a6dfea8cb678365032f975d0"
+  },
+  "experiments/cw_v1/r2_2b_sens.py": {
+   "blob_sha": "c83fc5326d4db15f7644f8a43f64f5470d5d48c3",
+   "worktree_sha": "c83fc5326d4db15f7644f8a43f64f5470d5d48c3"
+  },
+  "docs/CW-R2.2-判据修复交付.md": {
+   "blob_sha": "fa793f1d9d6adf9161b3e8e966945e498ec1027d",
+   "worktree_sha": "fa793f1d9d6adf9161b3e8e966945e498ec1027d"
+  },
+  "docs/research/CW-R2.2-判据形态缩放-预注册-v0.1.md": {
+   "blob_sha": "ba407dbba930b667c1e6dfdb762be2a748137ad6",
+   "worktree_sha": "ba407dbba930b667c1e6dfdb762be2a748137ad6"
+  },
+  "README.md": {
+   "blob_sha": "2972ae6e673fb791842de4e52902e3ce680d990e",
+   "worktree_sha": "2972ae6e673fb791842de4e52902e3ce680d990e"
+  }
+ },
+ "note": "blob_sha 取自 HEAD 树（已提交）；worktree_sha 为工作树内容哈希；core.autocrlf=input ⇒ 两者可不等，双记"
+}
