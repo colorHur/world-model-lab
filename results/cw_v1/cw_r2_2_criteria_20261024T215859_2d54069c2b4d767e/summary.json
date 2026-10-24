@@ -1,0 +1,354 @@
+{
+ "protocol": "CW-POMDP-v1.1",
+ "stage": "CW-R2.2",
+ "kind": "CRITERIA-FIX-ZERO-NEW-EPISODE",
+ "prereg": "docs/research/CW-R2.2-判据形态缩放-预注册-v0.1.md",
+ "inputs": {
+  "cells": {
+   "path": "results\\cw_v1\\cw_r2_1_sep_20261024T194859_3c71623d6afe07e4\\cells.json",
+   "sha256": "40833b71aa6f2043915fb51205ea1aa0e7b7a681c269cf06be30609d0b191eef",
+   "n": 40
+  },
+  "null": {
+   "path": "results\\cw_v1\\cw_r2_1_sep_20261024T194859_3c71623d6afe07e4\\null.json",
+   "sha256": "93d5f8211318108338ce7cfba0936f1499a11b6e0b81414e1ed3ee899b84efa9",
+   "n": 20
+  },
+  "summary": {
+   "path": "results\\cw_v1\\cw_r2_1_sep_20261024T194859_3c71623d6afe07e4\\summary.json",
+   "sha256": "c7fb55cfbe70461a0d5658a92cebde85c1163324a7736137c3c9b28705777d6d"
+  }
+ },
+ "plants": [
+  "P1",
+  "P2"
+ ],
+ "eps": [
+  100,
+  101,
+  102,
+  103,
+  104,
+  105,
+  106,
+  107,
+  108,
+  109
+ ],
+ "n_units": 20,
+ "n_new_episodes": 0,
+ "verdicts_v2": {
+  "ALL": "SIGN-ONLY-NO-MAGNITUDE",
+  "P1": "CANNOT-SEPARATE",
+  "P2": "SIGN-ONLY-NO-MAGNITUDE"
+ },
+ "verdicts_legacy": {
+  "ALL": "SEPARATES-MAGNITUDE-ONLY",
+  "P1": "CANNOT-SEPARATE-BY-SIGN",
+  "P2": "CANNOT-SEPARATE-BY-SIGN"
+ },
+ "verdict_changed": {
+  "ALL": true,
+  "P1": true,
+  "P2": true
+ },
+ "n_changed": 3,
+ "blocks_v2": {
+  "ALL": {
+   "verdict": "SIGN-ONLY-NO-MAGNITUDE",
+   "n_pos": 17,
+   "n_neg": 3,
+   "n_zero_delta": 0,
+   "n_beat": 14,
+   "binom_p_sign": 0.0012884140014648438,
+   "binom_p_neg": 0.9997987747192383,
+   "binom_p_beat": 0.057659149169921875,
+   "h_sign": true,
+   "h_neg_reversed": false,
+   "h_beat": false,
+   "alpha": 0.05,
+   "n_units": 20,
+   "median_abs_delta": 0.04563087743827283,
+   "median_floor_pair": 0.02215760874931358,
+   "delta_median": 0.04563087743827283,
+   "n_zero_floor": 0,
+   "nonfinite_cells": [],
+   "ratio_desc": 2.0593773432201448,
+   "note": "Δ = cost(prior_only) − cost(belief_readout)；Δ>0 ⇒ 弱基线更贵 ⇒ 强基线更好"
+  },
+  "P1": {
+   "verdict": "CANNOT-SEPARATE",
+   "n_pos": 8,
+   "n_neg": 2,
+   "n_zero_delta": 0,
+   "n_beat": 8,
+   "binom_p_sign": 0.0546875,
+   "binom_p_neg": 0.9892578125,
+   "binom_p_beat": 0.0546875,
+   "h_sign": false,
+   "h_neg_reversed": false,
+   "h_beat": false,
+   "alpha": 0.05,
+   "n_units": 10,
+   "median_abs_delta": 0.07067629706211606,
+   "median_floor_pair": 0.02215760874931358,
+   "delta_median": 0.07067629706211606,
+   "n_zero_floor": 0,
+   "nonfinite_cells": [],
+   "ratio_desc": 3.1897077821768804,
+   "note": "Δ = cost(prior_only) − cost(belief_readout)；Δ>0 ⇒ 弱基线更贵 ⇒ 强基线更好"
+  },
+  "P2": {
+   "verdict": "SIGN-ONLY-NO-MAGNITUDE",
+   "n_pos": 9,
+   "n_neg": 1,
+   "n_zero_delta": 0,
+   "n_beat": 6,
+   "binom_p_sign": 0.0107421875,
+   "binom_p_neg": 0.9990234375,
+   "binom_p_beat": 0.376953125,
+   "h_sign": true,
+   "h_neg_reversed": false,
+   "h_beat": false,
+   "alpha": 0.05,
+   "n_units": 10,
+   "median_abs_delta": 0.040086324746157274,
+   "median_floor_pair": 0.02445862844931726,
+   "delta_median": 0.040086324746157274,
+   "n_zero_floor": 0,
+   "nonfinite_cells": [],
+   "ratio_desc": 1.6389440981624728,
+   "note": "Δ = cost(prior_only) − cost(belief_readout)；Δ>0 ⇒ 弱基线更贵 ⇒ 强基线更好"
+  }
+ },
+ "blocks_legacy": {
+  "ALL": {
+   "verdict": "SEPARATES-MAGNITUDE-ONLY",
+   "median_abs_delta": 0.04563087743827283,
+   "floor_R2": 0.02215760874931358,
+   "ratio": 2.0593773432201448,
+   "n_pos": 17,
+   "n_units": 20,
+   "binom_p": 0.0012884140014648438
+  },
+  "P1": {
+   "verdict": "CANNOT-SEPARATE-BY-SIGN",
+   "median_abs_delta": 0.07067629706211606,
+   "floor_R2": 0.02215760874931358,
+   "ratio": 3.1897077821768804,
+   "n_pos": 8,
+   "n_units": 10,
+   "binom_p": 0.0546875
+  },
+  "P2": {
+   "verdict": "CANNOT-SEPARATE-BY-SIGN",
+   "median_abs_delta": 0.040086324746157274,
+   "floor_R2": 0.02445862844931726,
+   "ratio": 1.6389440981624728,
+   "n_pos": 9,
+   "n_units": 10,
+   "binom_p": 0.0107421875
+  }
+ },
+ "strata": {
+  "cut_median_floor": 0.02215760874931358,
+  "LOW": {
+   "verdict": "PANEL-SEPARATES",
+   "n_pos": 9,
+   "n_neg": 1,
+   "n_zero_delta": 0,
+   "n_beat": 9,
+   "binom_p_sign": 0.0107421875,
+   "binom_p_neg": 0.9990234375,
+   "binom_p_beat": 0.0107421875,
+   "h_sign": true,
+   "h_neg_reversed": false,
+   "h_beat": true,
+   "alpha": 0.05,
+   "n_units": 10,
+   "median_abs_delta": 0.04186878818693386,
+   "median_floor_pair": 0.006767796074301266,
+   "delta_median": 0.040086324746157274,
+   "n_zero_floor": 0,
+   "nonfinite_cells": [],
+   "ratio_desc": 6.186473074435323,
+   "note": "Δ = cost(prior_only) − cost(belief_readout)；Δ>0 ⇒ 弱基线更贵 ⇒ 强基线更好"
+  },
+  "HIGH": {
+   "verdict": "NO-CLAIM-HIGH-FLOOR",
+   "why": "预注册 §3：高地板层不出效应判词（地板乘性，跨格不可比）",
+   "n_units": 10,
+   "descriptive_v2": {
+    "verdict": "CANNOT-SEPARATE",
+    "n_pos": 8,
+    "n_neg": 2,
+    "n_zero_delta": 0,
+    "n_beat": 5,
+    "binom_p_sign": 0.0546875,
+    "binom_p_neg": 0.9892578125,
+    "binom_p_beat": 0.623046875,
+    "h_sign": false,
+    "h_neg_reversed": false,
+    "h_beat": false,
+    "alpha": 0.05,
+    "n_units": 10,
+    "median_abs_delta": 0.06032890951687831,
+    "median_floor_pair": 0.07961244711444695,
+    "delta_median": 0.06032890951687831,
+    "n_zero_floor": 0,
+    "nonfinite_cells": [],
+    "ratio_desc": 0.7577823783026343,
+    "note": "Δ = cost(prior_only) − cost(belief_readout)；Δ>0 ⇒ 弱基线更贵 ⇒ 强基线更好"
+   },
+   "n_pos": 8,
+   "n_beat": 5,
+   "median_floor_pair": 0.07961244711444695,
+   "median_abs_delta": 0.06032890951687831
+  },
+  "n_low": 10,
+  "n_high": 10,
+  "low_keys": [
+   "P1/ep102",
+   "P1/ep103",
+   "P1/ep105",
+   "P1/ep106",
+   "P1/ep109",
+   "P2/ep101",
+   "P2/ep102",
+   "P2/ep103",
+   "P2/ep106",
+   "P2/ep107"
+  ],
+  "high_keys": [
+   "P1/ep100",
+   "P1/ep101",
+   "P1/ep104",
+   "P1/ep107",
+   "P1/ep108",
+   "P2/ep100",
+   "P2/ep104",
+   "P2/ep105",
+   "P2/ep108",
+   "P2/ep109"
+  ]
+ },
+ "coupling": {
+  "spearman_floor_cost": 0.7819548872180451,
+  "floor_min": 9.881691081162561e-05,
+  "floor_max": 0.18819732410346604,
+  "floor_span_ratio": 1904.5052365806705,
+  "n": 20
+ },
+ "r_i_summary": {
+  "n": 40,
+  "median": 1.4201754050763622,
+  "min": 0.6386484045421661,
+  "max": 7.567955163657191,
+  "n_gt1": 28
+ },
+ "r_i_by_cell": {
+  "P1/ep100": [
+   0.7805408282288989,
+   5.903661175979434
+  ],
+  "P1/ep101": [
+   0.9435239179228398,
+   2.6922632077116257
+  ],
+  "P1/ep102": [
+   3.6592533402456753,
+   2.9418526502520654
+  ],
+  "P1/ep103": [
+   1.0119548428178073,
+   0.9803826253090869
+  ],
+  "P1/ep104": [
+   0.9833337188753737,
+   1.0936617456242104
+  ],
+  "P1/ep105": [
+   1.5833664697004175,
+   1.2774032151305328
+  ],
+  "P1/ep106": [
+   2.6934884573502833,
+   0.7604159785309959
+  ],
+  "P1/ep107": [
+   3.794380914945594,
+   2.281911810869354
+  ],
+  "P1/ep108": [
+   1.015069042544907,
+   1.8823902735503062
+  ],
+  "P1/ep109": [
+   0.7433211265009189,
+   0.6386484045421661
+  ],
+  "P2/ep100": [
+   0.6894584839544277,
+   0.9695809135950857
+  ],
+  "P2/ep101": [
+   1.0021289120660344,
+   2.3817444898458366
+  ],
+  "P2/ep102": [
+   7.567955163657191,
+   4.143311832252623
+  ],
+  "P2/ep103": [
+   1.3903690363777834,
+   0.8660129379672115
+  ],
+  "P2/ep104": [
+   0.9971236279479629,
+   1.7424454840734285
+  ],
+  "P2/ep105": [
+   0.9981288344343489,
+   1.2461604144660363
+  ],
+  "P2/ep106": [
+   3.8413143133120973,
+   1.8385626069307404
+  ],
+  "P2/ep107": [
+   1.9192652047559775,
+   4.153417324452203
+  ],
+  "P2/ep108": [
+   1.0909652276300665,
+   3.7367785080081175
+  ],
+  "P2/ep109": [
+   1.4499817737749412,
+   1.7373163066052093
+  ]
+ },
+ "alpha": 0.05,
+ "head": "c26dc7b6631bc260360b04b0efdf6c9a52bb5b95",
+ "src_hash": "2d54069c2b4d767e",
+ "n_checks_ctrl": 9,
+ "n_fail_ctrl": 0,
+ "n_checks_regression": 84,
+ "n_fail_regression": 0,
+ "training": "none（本轮零训练、零新 episode）",
+ "codes": {
+  "V_SEP": "PANEL-SEPARATES",
+  "V_SEP_REV": "PANEL-SEPARATES-REVERSED",
+  "V_SIGN_ONLY": "SIGN-ONLY-NO-MAGNITUDE",
+  "V_SIGN_ONLY_REV": "SIGN-ONLY-REVERSED",
+  "V_MAG_ONLY": "MAGNITUDE-ONLY-NO-SIGN",
+  "V_CANNOT": "CANNOT-SEPARATE",
+  "V_UNDEF": "UNDEFINED",
+  "V_INCOMPLETE": "INCOMPLETE-PANEL",
+  "V_NO_CLAIM": "NO-CLAIM-HIGH-FLOOR"
+ },
+ "budget": {
+  "total_s": 1.3,
+  "peak_rss_mb": 48.7
+ }
+}

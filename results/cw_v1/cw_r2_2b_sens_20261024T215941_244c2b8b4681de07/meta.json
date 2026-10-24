@@ -1,0 +1,19 @@
+{
+ "command": "python -m experiments.cw_v1.r2_2b_sens",
+ "head": "c26dc7b6631bc260360b04b0efdf6c9a52bb5b95",
+ "src_hash": "244c2b8b4681de07",
+ "worktree_sha_r2_2b": "c83fc5326d4db15f7644f8a43f64f5470d5d48c3",
+ "timestamp_local": "2026-10-25T05:59:41.046649+08:00",
+ "python": "3.11.16",
+ "numpy": "2.4.6",
+ "git_dirty_before_run": [
+  "?? docs/research/CW-R2.2-判据形态缩放-预注册-v0.1.md",
+  "?? experiments/cw_v1/mech2.py",
+  "?? experiments/cw_v1/r2_2_criteria.py",
+  "?? experiments/cw_v1/r2_2b_sens.py",
+  "?? results/cw_v1/cw_r2_2_criteria_20261024T215859_2d54069c2b4d767e/"
+ ],
+ "zero_episode": true,
+ "protocol": "CW-POMDP-v1.1",
+ "total_elapsed_s": 0.2
+}

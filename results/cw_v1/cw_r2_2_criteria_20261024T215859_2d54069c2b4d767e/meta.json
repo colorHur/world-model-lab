@@ -1,0 +1,26 @@
+{
+ "command": "python -m experiments.cw_v1.r2_2_criteria --tag main",
+ "timestamp_local": "2026-10-25T05:58:59.175756+08:00",
+ "python": "3.11.16",
+ "numpy": "2.4.6",
+ "head": "c26dc7b6631bc260360b04b0efdf6c9a52bb5b95",
+ "src_hash": "2d54069c2b4d767e",
+ "worktree_sha_r2_2": "a78c71dcc5d455f7a6dfea8cb678365032f975d0",
+ "blob_sha_r2_2": null,
+ "blob_sha_note": null,
+ "git_dirty_before_run": [
+  "?? docs/research/CW-R2.2-判据形态缩放-预注册-v0.1.md",
+  "?? experiments/cw_v1/mech2.py",
+  "?? experiments/cw_v1/r2_2_criteria.py"
+ ],
+ "protocol": "CW-POMDP-v1.1",
+ "event_pairing": "slot",
+ "n_new_episodes": 0,
+ "total_elapsed_s": 1.3,
+ "peak_rss_mb": 48.7,
+ "n_checks_ctrl": 9,
+ "n_fail_ctrl": 0,
+ "n_checks_regression": 84,
+ "n_fail_regression": 0,
+ "training": "none"
+}

@@ -1,0 +1,144 @@
+{
+ "checks": [
+  {
+   "id": "C1",
+   "ok": true,
+   "detail": {
+    "got": "PANEL-SEPARATES",
+    "n_pos": 10,
+    "n_beat": 10,
+    "why": "全正 + 全压过地板时判不出 SEPARATES ⇒ 判据无阳性"
+   }
+  },
+  {
+   "id": "C2",
+   "ok": true,
+   "detail": {
+    "got": "PANEL-SEPARATES-REVERSED",
+    "why": "★ 两条都要：①不得判 SEPARATES（否则方向语义被抹掉）；②也不得折进 CANNOT/幅度档（那会把'强基线更差'说轻）"
+   }
+  },
+  {
+   "id": "C3",
+   "ok": true,
+   "detail": {
+    "got": "MAGNITUDE-ONLY-NO-SIGN",
+    "n_pos": 5,
+    "n_beat": 9,
+    "why": "这条数据的方向是掷硬币，只有幅度过地板 ⇒ 若判 SEPARATES，就是把'幅度大'当'方向对'"
+   }
+  },
+  {
+   "id": "C4",
+   "ok": true,
+   "detail": {
+    "build_units": "IncompletePanel: 缺格 1 个：['P1/ep105']",
+    "verdict_on_short": "INCOMPLETE-PANEL",
+    "why": "9/10 却出判词 ⇒ 分母被删（R1.8 同族）"
+   }
+  },
+  {
+   "id": "C5",
+   "ok": true,
+   "detail": {
+    "got": "UNDEFINED",
+    "named": [
+     "SYN/ep903"
+    ],
+    "why": "NaN 被当中位数算 ⇒ 判词无意义却看起来正常"
+   }
+  },
+  {
+   "id": "C6",
+   "ok": true,
+   "detail": {
+    "got": "SIGN-ONLY-NO-MAGNITUDE",
+    "n_zero_floor": 1,
+    "n_beat": 4,
+    "ratio_desc": 0.3333333333333333,
+    "why": "地板恰为 0 的格在整数送达下不罕见；除零会造 inf/NaN 或悄悄跳过"
+   }
+  },
+  {
+   "id": "C7",
+   "ok": true,
+   "detail": {
+    "p_8of10": 0.0546875,
+    "p_12of15": 0.017578125,
+    "v_8of10": "CANNOT-SEPARATE",
+    "v_12of15": "PANEL-SEPARATES",
+    "why": "同一比例 0.80 在 n=10 不过、n=15 过 ⇒ 证明阈值是按 n 缩放的；若两者同判，说明还残留计数阈值（旧 `18/15` 在 n=10 上算术不可达）"
+   }
+  },
+  {
+   "id": "C8",
+   "ok": true,
+   "detail": {
+    "legacy": "SEPARATES-MAGNITUDE-ONLY",
+    "v2": "PANEL-SEPARATES",
+    "why": "两套判词在同一构造上给出同一结果 ⇒ '新判据'只是旧判据换名"
+   }
+  },
+  {
+   "id": "C9",
+   "ok": true,
+   "detail": {
+    "ALL": {
+     "verdict": [
+      "SEPARATES-MAGNITUDE-ONLY",
+      "SEPARATES-MAGNITUDE-ONLY"
+     ],
+     "median_abs_delta_absdiff": 0.0,
+     "floor_absdiff": 0.0,
+     "n_pos": [
+      17,
+      17
+     ],
+     "n_units": [
+      20,
+      20
+     ],
+     "ok": true
+    },
+    "P1": {
+     "verdict": [
+      "CANNOT-SEPARATE-BY-SIGN",
+      "CANNOT-SEPARATE-BY-SIGN"
+     ],
+     "median_abs_delta_absdiff": 0.0,
+     "floor_absdiff": 0.0,
+     "n_pos": [
+      8,
+      8
+     ],
+     "n_units": [
+      10,
+      10
+     ],
+     "ok": true
+    },
+    "P2": {
+     "verdict": [
+      "CANNOT-SEPARATE-BY-SIGN",
+      "CANNOT-SEPARATE-BY-SIGN"
+     ],
+     "median_abs_delta_absdiff": 0.0,
+     "floor_absdiff": 0.0,
+     "n_pos": [
+      9,
+      9
+     ],
+     "n_units": [
+      10,
+      10
+     ],
+     "ok": true
+    },
+    "why": "★ 唯一的真实性闸：我算的 Δ/floor 必须就是 R2.1 那 40+20 格，不是另一批数（否则新旧对照无意义）"
+   }
+  }
+ ],
+ "n_checks": 9,
+ "n_fail": 0,
+ "all_pass": true
+}
