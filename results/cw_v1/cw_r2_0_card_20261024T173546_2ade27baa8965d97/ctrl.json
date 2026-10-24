@@ -1,0 +1,40 @@
+{
+ "C1": {
+  "pass": true,
+  "detail": "真实视图通过"
+ },
+ "C2": {
+  "pass": true,
+  "detail": {
+   "fp": "d3904923ce2c8d82",
+   "mut_fp": "1e3f7af72fe1030b"
+  }
+ },
+ "C3": {
+  "pass": true,
+  "detail": "PermissionError"
+ },
+ "C4": {
+  "pass": true,
+  "detail": {
+   "clean_hits": 0,
+   "dirty_hits": [
+    {
+     "name": "cost_true_by_user",
+     "line": 2,
+     "via": "str-const"
+    }
+   ]
+  }
+ },
+ "C5": {
+  "pass": true,
+  "detail": {
+   "clean": [],
+   "injected": [
+    "primary=ku"
+   ]
+  }
+ },
+ "all_pass": true
+}

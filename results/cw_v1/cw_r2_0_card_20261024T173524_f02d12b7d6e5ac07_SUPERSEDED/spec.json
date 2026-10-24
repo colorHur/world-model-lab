@@ -1,0 +1,412 @@
+{
+ "budget_total": 256,
+ "channel": {
+  "ack_mode": "exact",
+  "ack_var": 0.63,
+  "h_log_init_std": 1.0,
+  "kappa": 2.0,
+  "log_h_star": 0.0,
+  "rho_panel": [
+   0.85,
+   0.98
+  ],
+  "sigma_csi": 0.05,
+  "use_ack_for_csi": true
+ },
+ "episodes": [
+  900,
+  901,
+  902,
+  903,
+  904,
+  905,
+  906,
+  907,
+  908,
+  909
+ ],
+ "metric": {
+  "forbidden": [
+   "ku",
+   "kf",
+   "share",
+   "share_user",
+   "share_frame"
+  ],
+  "primary": "cost_true_per_step_median",
+  "secondary": [
+   "per_user_r_i",
+   "mean_task_aoi_per_user_timeavg",
+   "n_delivered",
+   "n_attempted",
+   "n_probe",
+   "cost_true_by_user"
+  ]
+ },
+ "models": [
+  "belief_readout",
+  "prior_only"
+ ],
+ "planner": {
+  "_dp_grid_module_default": "legacy",
+  "_tail_module_default": "paced",
+  "cont_m": true,
+  "dp_axis_mode": "user_axis",
+  "h_plan": 5,
+  "m_samples": 16,
+  "pacing": true,
+  "send_other_advance": "fixed",
+  "tail": null,
+  "use_probe": true
+ },
+ "plant": {
+  "A": [
+   1.0,
+   1.0
+  ],
+  "B": 0.32,
+  "n_users": 2,
+  "prior_var": 1.0,
+  "q_cost": 1.0,
+  "r_cost": 0.02,
+  "sigma_meas": 0.2,
+  "sigma_w": [
+   0.02,
+   0.03
+  ]
+ },
+ "protocol": {
+  "allow_multislot": false,
+  "budget_ratios": [
+   0.5,
+   0.8
+  ],
+  "c_data": 1,
+  "c_probe": 1,
+  "event_pairing": "slot",
+  "horizon": 256,
+  "init_from_prior": true
+ },
+ "protocol_version": "CW-POMDP-v1.1",
+ "seeds": [
+  2001,
+  2002,
+  2003,
+  2004
+ ],
+ "split": "dev",
+ "fingerprint": "d3904923ce2c8d82",
+ "budget": {
+  "n_cells": 40,
+  "s_lo": 124.9,
+  "s_hi": 179.5,
+  "spread": 1.437
+ },
+ "null_pair": {
+  "formula": "null_pair(k) = |cost_true(model, plan_seed=s_k) − cost_true(model, plan_seed=s'_k)|",
+  "aggregate": "floor_R2 = median_k null_pair(k)",
+  "why": "'配速残差 ≥ 效应 ⇒ INCONCLUSIVE' 不能再引用 R1.5 的四格比值 ——那是**策略差**不是配速残差。改为本轮可自算的零控。",
+  "judgement": "|模型效应| < floor_R2 ⇒ INCONCLUSIVE（**不是**'无效应'）"
+ },
+ "hypothesis": {
+  "id": "H-R2-1",
+  "statement": "同规划器、同预算、同信息集下，参数 < 1e4、CPU 训练 < 30 min 的小学习模型，其 `cost_true_per_step` 中位数与精确名义模型（`belief_readout`）之差 < 5%，且逐用户 `r_i` 全部落在 [0.95, 1.05]。",
+  "falsified_if": "配对差中位 ≥ `floor_R2`（零控，见 `NULL_PAIR_SPEC`）且 二项符号检验 `p < 0.05`（要求 ≥9/10 同号）",
+  "inconclusive_if": "|Δ| < `floor_R2` ⇒ 面板信噪比不足；**不许**写'够用'或'不够用'",
+  "forbidden_inference": "学习模型输了 **不得** 推出'世界模型无用'（R1.14：协议+plant 限定范围）",
+  "needs": [
+   "training（未授权/未开始）",
+   "R2.1 面板（未跑）"
+  ]
+ },
+ "asset_inventory": {
+  "reusable": [
+   {
+    "item": "plan_ref.PlanRef（PROBE/SEND/HOLD + 预算 + 续接）",
+    "ok": true
+   },
+   {
+    "item": "plan_dp.DPTail（`(P0,P1,b)` 后向 DP 尾部）",
+    "ok": true
+   },
+   {
+    "item": "world.SchedulerView（公开快照 + 白名单历史）",
+    "ok": true
+   },
+   {
+    "item": "world.PUBLIC_HISTORY_FIELDS（12 字段白名单）",
+    "ok": true
+   },
+   {
+    "item": "mech.KAPPA_MIN（机制量常量，仅历史引用）",
+    "ok": true
+   },
+   {
+    "item": "runner.run_episode（`predictor='nominal'` 唯一取值）",
+    "ok": true
+   },
+   {
+    "item": "streams.make_episode_rngs（6 条子流，CRN 基础）",
+    "ok": true
+   }
+  ],
+  "not_reusable": [
+   {
+    "item": "P3 的 `ChannelAdapter`",
+    "ok": false,
+    "why": "v4 交接已判不兼容（时序与信息权限不一致）"
+   },
+   {
+    "item": "`predictor='exact'` 分支",
+    "ok": true,
+    "why": "2026-10-22 已撤回（把控制量与噪声各算两遍）"
+   },
+   {
+    "item": "`oracle_known.ORACLE-KNOWN` 当上界",
+    "ok": true,
+    "why": "R1.1 撤回上界名称；只作真值辅助贪心诊断"
+   }
+  ]
+ },
+ "info_permission": {
+  "view.t": {
+   "visibility": "all",
+   "why": "当前时隙下标（公开）"
+  },
+  "view.n_users": {
+   "visibility": "all",
+   "why": "用户数（协议常量）"
+  },
+  "view.budget_left": {
+   "visibility": "all",
+   "why": "剩余帧预算（由已花动作推出）"
+  },
+  "view.budget_total": {
+   "visibility": "all",
+   "why": "总预算（协议常量）"
+  },
+  "view.prior": {
+   "visibility": "all",
+   "why": "公开先验（与真初态采样分布一致，v1.1 起）"
+  },
+  "view.telemetry": {
+   "visibility": "all",
+   "why": "逐用户可部署状态（全部由观测+动作+ACK 推出）"
+  },
+  "view.history": {
+   "visibility": "all",
+   "why": "已发生的公开记账（白名单字段）"
+  },
+  "prior.x_mean": {
+   "visibility": "all",
+   "why": "初态先验均值（公开，且与真初态同分布）"
+  },
+  "prior.x_var": {
+   "visibility": "all",
+   "why": "初态先验方差（公开）"
+  },
+  "prior.h_log_mean": {
+   "visibility": "all",
+   "why": "初信道先验均值（公开）"
+  },
+  "prior.h_log_var": {
+   "visibility": "all",
+   "why": "初信道先验方差（公开）"
+  },
+  "telemetry.i": {
+   "visibility": "all",
+   "why": "用户下标"
+  },
+  "telemetry.x_hat": {
+   "visibility": "all",
+   "why": "接收端后验均值（部署量）"
+  },
+  "telemetry.P_hat": {
+   "visibility": "all",
+   "why": "接收端后验方差（部署量）"
+  },
+  "telemetry.stamp": {
+   "visibility": "all",
+   "why": "最近一次送达时隙（-1 = 从未送达）"
+  },
+  "telemetry.task_aoi": {
+   "visibility": "all",
+   "why": "任务侧信息年龄 `t-stamp`（-1 同上）"
+  },
+  "telemetry.h_mean": {
+   "visibility": "all",
+   "why": "信道信念均值（部署量）"
+  },
+  "telemetry.h_var": {
+   "visibility": "all",
+   "why": "信道信念方差（部署量）"
+  },
+  "telemetry.csi_stamp": {
+   "visibility": "all",
+   "why": "最近一次 CSI 读数时隙（-1 = 从未测）"
+  },
+  "telemetry.csi_aoi": {
+   "visibility": "all",
+   "why": "CSI 年龄"
+  },
+  "history.t": {
+   "visibility": "all",
+   "why": "记录所属时隙"
+  },
+  "history.action": {
+   "visibility": "all",
+   "why": "已执行动作（自己的动作）"
+  },
+  "history.user": {
+   "visibility": "all",
+   "why": "动作目标用户"
+  },
+  "history.resource_spent": {
+   "visibility": "all",
+   "why": "本槽花费（含探测）"
+  },
+  "history.probe_done": {
+   "visibility": "all",
+   "why": "本槽是否探测"
+  },
+  "history.data_attempted": {
+   "visibility": "all",
+   "why": "本槽是否尝试发数据"
+  },
+  "history.data_delivered": {
+   "visibility": "all",
+   "why": "本槽是否送达"
+  },
+  "history.ack": {
+   "visibility": "all",
+   "why": "是否收到 ACK（公开反馈）"
+  },
+  "history.csi_reading": {
+   "visibility": "all",
+   "why": "**自己花钱测的** CSI 读数（部署量）"
+  },
+  "history.y_t": {
+   "visibility": "all",
+   "why": "送达帧的任务观测；**只在送达时非 None**（未送达时它是真值+噪声，公开即绕过信道）"
+  },
+  "history.cost_est": {
+   "visibility": "all",
+   "why": "信念侧成本（由 `x̂` 算，公开）"
+  },
+  "history.cost_est_by_user": {
+   "visibility": "all",
+   "why": "逐用户信念侧成本（由 `x̂` 算，公开）"
+  },
+  "history.budget_left": {
+   "visibility": "all",
+   "why": "该槽末的剩余预算"
+  },
+  "_log_h_true": {
+   "visibility": "never",
+   "why": "真信道（内部名）"
+  },
+  "w_realized": {
+   "visibility": "never",
+   "why": "实现的**过程噪声**（真值侧）"
+  },
+  "truth_override": {
+   "visibility": "never",
+   "why": "反例用的真值替换句柄"
+  },
+  "cost_true_by_user": {
+   "visibility": "never",
+   "why": "**逐用户**真实成本（R17 的 `r_i` 由它算，只进证据不进视图）"
+  },
+  "true_norm": {
+   "visibility": "never",
+   "why": "真状态范数（`oracle_known` 用过的那条越界通道）"
+  },
+  "_w_last": {
+   "visibility": "never",
+   "why": "上一槽实现的过程噪声"
+  },
+  "_z_csi": {
+   "visibility": "never",
+   "why": "**预生成**的 CSI 噪声（同上）"
+  },
+  "x_true": {
+   "visibility": "never",
+   "why": "真状态"
+  },
+  "p_true": {
+   "visibility": "never",
+   "why": "真送达概率（真信道）"
+  },
+  "cost_true": {
+   "visibility": "never",
+   "why": "真实任务成本（真状态算）"
+  },
+  "_z_meas": {
+   "visibility": "never",
+   "why": "**预生成**的测量噪声（形状含全时隙 ⇒ 公开即送未来）"
+  },
+  "_x_true": {
+   "visibility": "never",
+   "why": "真状态（内部名）"
+  },
+  "_u_packet": {
+   "visibility": "never",
+   "why": "**预生成**的丢包均匀数（同上）"
+  },
+  "log_h_true": {
+   "visibility": "never",
+   "why": "真信道"
+  }
+ },
+ "objective": {
+  "primary": "cost_true_per_step_median",
+  "primary_definition": "逐 episode 的 `q·Σ_i mean_t(x_i²) + r·Σ_i mean_t(u_i²)`，再取 episode 中位数",
+  "secondary": [
+   "per_user_r_i",
+   "mean_task_aoi_per_user_timeavg",
+   "n_delivered",
+   "n_attempted",
+   "n_probe",
+   "cost_true_by_user"
+  ],
+  "forbidden": [
+   "ku",
+   "kf",
+   "share",
+   "share_user",
+   "share_frame"
+  ],
+  "statistical_unit": "完整 episode（同初值的 seed 不是独立单元，R1.7.8 D5b）",
+  "weights": "由公开 `q_cost/r_cost` 固定，不按最终收益调权"
+ },
+ "residual_anchor": {
+  "evidence": {
+   "cv_paced": "0.583391467891342",
+   "cv_nopace": "0.9286036223814766",
+   "cost_paced": "0.11067633547679674",
+   "cost_nopace": "0.1767897716156801",
+   "aoi_paced": "16.0",
+   "aoi_nopace": "128.5",
+   "tails_paced_cost_median": "0.07871360448861517"
+  },
+  "mismatch": {},
+  "found_in_card": {
+   "cv_paced": true,
+   "cv_nopace": true,
+   "cost_paced": true,
+   "cost_nopace": true,
+   "aoi_paced": true,
+   "aoi_nopace": true,
+   "tails_paced_cost_median": true
+  },
+  "three_arm_cost_median": {
+   "paced": 0.07871360448861517,
+   "dp_legacy": 0.07638889056773905,
+   "dp_r173": 0.0762433859018477
+  },
+  "note": "另两臂 `cost_median` 本轮现读并原样记录，卡里未引用（预注册 §0.3）"
+ },
+ "n_run_episode": 0,
+ "n_world_steps": 0,
+ "n_world_constructed": 1
+}

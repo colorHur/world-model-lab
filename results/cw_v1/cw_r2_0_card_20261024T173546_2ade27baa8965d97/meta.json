@@ -1,0 +1,31 @@
+{
+ "command": "python -m experiments.cw_v1.r2_0_card --tag main",
+ "timestamp_local": "2026-10-25T01:35:47.136168+08:00",
+ "python": "3.11.16",
+ "numpy": "2.4.6",
+ "kind": "R2-PROJECT-CARD-NOT-METHOD-RESULT",
+ "head": "43c19ec0c7a294b5a14f3eefcfc6d669af1842dd",
+ "src_hash": "2ade27baa8965d97",
+ "worktree_sha_r2_0": "311ecd2896e00b52d6734fe27984eff523dd756f",
+ "blob_sha_r2_0": null,
+ "blob_sha_note": "运行前文件未提交 ⇒ None（不记参数串）；提交后真实 blob 见 _POST_COMMIT.json",
+ "git_dirty_before_run": [
+  "?? docs/research/CW-R2.0-R2立项与接口卡-预注册-v0.1.md",
+  "?? experiments/cw_v1/model_api.py",
+  "?? experiments/cw_v1/r2_0_card.py",
+  "?? experiments/cw_v1/r2_models.py",
+  "?? results/cw_v1/cw_r2_0_card_20261024T173524_f02d12b7d6e5ac07/"
+ ],
+ "protocol": "CW-POMDP-v1.1",
+ "spec_fingerprint": "d3904923ce2c8d82",
+ "n_run_episode": 0,
+ "n_world_steps": 0,
+ "n_world_constructed": 1,
+ "ctrl_elapsed_s": 0.0,
+ "gate_elapsed_s": 0.81,
+ "total_elapsed_s": 1.17,
+ "peak_rss_mb": 47.3,
+ "n_checks_gates": 14,
+ "n_fail_gates": 0,
+ "inventory_bad": []
+}

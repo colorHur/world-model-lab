@@ -1,0 +1,241 @@
+{
+ "checks": [
+  {
+   "id": "A1",
+   "ok": true,
+   "detail": {
+    "real": "accepted",
+    "dict": "rejected",
+    "namespace": "rejected",
+    "subclass_impostor": "rejected"
+   }
+  },
+  {
+   "id": "A1b",
+   "ok": true,
+   "detail": {
+    "permissive_accepts": [
+     "subclass_impostor"
+    ],
+    "dict_rejected_by_attr_guard": true,
+    "why": "属性守卫放宽后必须放替身进来，才证明 A1 的收紧有分辨力；`dict` 无属性 ⇒ 任何属性守卫都拒，不参与判定"
+   }
+  },
+  {
+   "id": "A2",
+   "ok": true,
+   "detail": {
+    "good": "ok",
+    "negatives": {
+     "len_mismatch": "ValueError",
+     "nan": "ValueError",
+     "P_zero": "ValueError",
+     "P_negative": "ValueError",
+     "two_dim": "ValueError",
+     "non_numeric": "ValueError"
+    }
+   }
+  },
+  {
+   "id": "A3",
+   "ok": true,
+   "detail": {
+    "file": "r2_models.py",
+    "names": [],
+    "attrs": [],
+    "imports": [],
+    "skipped_classes": [
+     "TruthDiagnostic"
+    ]
+   }
+  },
+  {
+   "id": "A3b",
+   "ok": true,
+   "detail": {
+    "str_truth": true,
+    "attr_future": true,
+    "import_world": true,
+    "import_abs": true,
+    "clean": false
+   }
+  },
+  {
+   "id": "A4",
+   "ok": true,
+   "detail": {
+    "view_keys": [
+     "P_hat",
+     "budget_left",
+     "budget_total",
+     "csi_aoi",
+     "csi_stamp",
+     "h_log_mean",
+     "h_log_var",
+     "h_mean",
+     "h_var",
+     "history",
+     "i",
+     "n_users",
+     "prior",
+     "stamp",
+     "t",
+     "task_aoi",
+     "telemetry",
+     "x_hat",
+     "x_mean",
+     "x_var"
+    ],
+    "undeclared": [],
+    "missing_top": [],
+    "truth_in_view": [],
+    "forbidden_uncovered": [],
+    "n_declared_paths": 47
+   }
+  },
+  {
+   "id": "A5",
+   "ok": true,
+   "detail": {
+    "deploy_refused": true,
+    "normal_deployed": true,
+    "diag_label": "DIAG-truth_diagnostic",
+    "diag_privileged": true
+   }
+  },
+  {
+   "id": "A6a",
+   "ok": true,
+   "detail": {
+    "fp": "d3904923ce2c8d82",
+    "fp_again": "d3904923ce2c8d82"
+   }
+  },
+  {
+   "id": "A6b",
+   "ok": true,
+   "detail": {
+    "n_mutations": 11,
+    "unchanged": []
+   }
+  },
+  {
+   "id": "A6c",
+   "ok": true,
+   "detail": {
+    "planner_in_spec": {
+     "h_plan": 5,
+     "m_samples": 16,
+     "pacing": true,
+     "tail": null
+    },
+    "signature_defaults": {
+     "h_plan": 5,
+     "m_samples": 16,
+     "use_probe": true,
+     "pacing": true,
+     "cont_m": true,
+     "tail": null,
+     "send_other_advance": "fixed",
+     "dp_axis_mode": "user_axis"
+    },
+    "tail_module_default": "paced",
+    "dp_grid_module_default": "legacy"
+   }
+  },
+  {
+   "id": "A7",
+   "ok": true,
+   "detail": {
+    "clean": [],
+    "injected": [
+     "primary=share"
+    ],
+    "primary": "cost_true_per_step_median"
+   }
+  },
+  {
+   "id": "A8",
+   "ok": true,
+   "detail": {
+    "points": [
+     {
+      "tag": "R1.12",
+      "n_cells": 16,
+      "total_s": 71.8,
+      "s_per_cell": 4.4875,
+      "peak_mb": 2096.0
+     },
+     {
+      "tag": "R1.14",
+      "n_cells": 16,
+      "total_s": 66.4,
+      "s_per_cell": 4.15,
+      "peak_mb": 2096.2
+     },
+     {
+      "tag": "R1.16",
+      "n_cells": 80,
+      "total_s": 249.8,
+      "s_per_cell": 3.1225,
+      "peak_mb": 2096.4
+     }
+    ],
+    "spread": 1.437,
+    "r2_panel": {
+     "models": 2,
+     "plant_arms": 2,
+     "episodes": 10
+    },
+    "budget": {
+     "n_cells": 40,
+     "s_lo": 124.9,
+     "s_hi": 179.5,
+     "spread": 1.437
+    }
+   }
+  },
+  {
+   "id": "A9",
+   "ok": true,
+   "detail": {
+    "evidence": {
+     "cv_paced": "0.583391467891342",
+     "cv_nopace": "0.9286036223814766",
+     "cost_paced": "0.11067633547679674",
+     "cost_nopace": "0.1767897716156801",
+     "aoi_paced": "16.0",
+     "aoi_nopace": "128.5",
+     "tails_paced_cost_median": "0.07871360448861517"
+    },
+    "mismatch": {},
+    "found_in_card": {
+     "cv_paced": true,
+     "cv_nopace": true,
+     "cost_paced": true,
+     "cost_nopace": true,
+     "aoi_paced": true,
+     "aoi_nopace": true,
+     "tails_paced_cost_median": true
+    },
+    "three_arm_cost_median": {
+     "paced": 0.07871360448861517,
+     "dp_legacy": 0.07638889056773905,
+     "dp_r173": 0.0762433859018477
+    },
+    "note": "另两臂 `cost_median` 本轮现读并原样记录，卡里未引用（预注册 §0.3）"
+   }
+  },
+  {
+   "id": "A10",
+   "ok": true,
+   "detail": {
+    "n_checks": 84,
+    "n_fail": 0,
+    "elapsed_s": 0.81
+   }
+  }
+ ],
+ "n_checks": 14,
+ "n_fail": 0
+}

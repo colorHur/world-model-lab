@@ -1,0 +1,4 @@
+作废原因：首跑 2 FAIL，均为**判据自伤**（不是被测物的病）：
+  ① A1b 要求 dict 被属性守卫接受 —— `hasattr(dict,'t')` 恒 False，该断言不可达；
+  ② 资产清单用 `"ChannelAdapter" in src` 判依赖 —— `streams.py` 的 docstring 里就写着这个名字（解释为什么不用），字符串命中把注释误判成依赖。
+两处都在正式版改为 AST/属性级判据。正式版 = cw_r2_0_card_20261024T173546_2ade27baa8965d97。
