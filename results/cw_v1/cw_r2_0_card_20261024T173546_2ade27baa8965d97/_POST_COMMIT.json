@@ -1,0 +1,24 @@
+{
+ "_note": "运行期 meta.json 里 `blob_sha_r2_0` 记 None（当时该文件尚未提交）——这是 `_git(allow_fail=True)` 的**正确行为**，不是缺陷。提交后真实 blob 记录于此。",
+ "commit": "8e6386a",
+ "head_after_commit": "8e6386a",
+ "files": {
+  "experiments/cw_v1/r2_0_card.py": {
+   "blob_sha": "311ecd2896e00b52d6734fe27984eff523dd756f",
+   "worktree_sha": "311ecd2896e00b52d6734fe27984eff523dd756f",
+   "match": true
+  },
+  "experiments/cw_v1/model_api.py": {
+   "blob_sha": "18a51cb7114dca2f6a7a18b37b74ac32b7be262a",
+   "worktree_sha": "18a51cb7114dca2f6a7a18b37b74ac32b7be262a",
+   "match": true
+  },
+  "experiments/cw_v1/r2_models.py": {
+   "blob_sha": "ad6e6341dba363e12a8e717a8546e15ec2cc67df",
+   "worktree_sha": "ad6e6341dba363e12a8e717a8546e15ec2cc67df",
+   "match": true
+  }
+ },
+ "why_this_file_exists": "R1.16 教训：`_git()` 不查退出码时会把参数串当哈希记。R1.17 已修根因（失败抛异常/返回 None）；本文件只补**提交后**的真实值，使证据可被第三方复核。",
+ "src_hash_in_meta": "2ade27baa8965d97"
+}
