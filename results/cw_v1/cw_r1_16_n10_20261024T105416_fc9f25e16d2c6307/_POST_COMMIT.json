@@ -1,0 +1,21 @@
+{
+ "schema": "post-commit-correction-v1",
+ "stage": "CW-R1.16",
+ "written_local_time": "2026-10-24T19:01:25+08:00",
+ "written_by_run": "40e44914cd73",
+ "why": "meta.json 的 blob_sha_r1_16 无效：跑面板时 experiments/cw_v1/r1_16_n10.py 还是 untracked，`git rev-parse HEAD:<path>` 退出码 128 且把参数串打到 stdout，_git() 只取 stdout、不查退出码 ⇒ 记下的是参数串本身。",
+ "meta_field_status": {
+  "worktree_sha_r1_16": "VALID（git hash-object 的结果，与提交后 blob 相同）",
+  "blob_sha_r1_16": "INVALID（值为 'e7427a74...:experiments/cw_v1/r1_16_n10.py'，不是哈希）"
+ },
+ "corrections": {
+  "commit": "be332dbe913914c468e5c4238f28e5af2892b41e",
+  "commit_short": "be332db",
+  "blob_sha_r1_16": "e9add22da193e300a5fd124dd16435d53f70a8a8",
+  "blob_equals_worktree_sha": true,
+  "src_hash_in_meta": "fc9f25e16d2c6307",
+  "src_hash_note": "src_hash = experiments/cw_v1/*.py 全树的 sha256 前缀，取自**跑之前**的工作树；本轮之后未改任何 .py ⇒ 该值与提交后树一致（唯一新增文件就是本轮的入口脚本）。"
+ },
+ "not_redone": "未重跑面板：本轮只改文档（README / 交付 / 预注册 §8），不改 .py ⇒ 数字与 src_hash 都不受影响；改脚本会让 src_hash 与证据不一致，故不改。",
+ "followup": "下一轮（CW-R1.17）入口脚本改用 `git hash-object` 并且**检查子进程退出码**；本文件作为该字段的更正记录保留。"
+}
