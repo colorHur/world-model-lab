@@ -1,0 +1,22 @@
+{
+ "command": "python -m experiments.cw_v1.r1_16_n10 --tag main",
+ "python": "3.11.16",
+ "numpy": "2.4.6",
+ "timestamp_local": "2026-10-24T18:58:25.924699+08:00",
+ "head": "e7427a74c2046d7a0aa40752d41813d6c4af1e98",
+ "src_hash": "fc9f25e16d2c6307",
+ "worktree_sha_r1_16": "e9add22da193e300a5fd124dd16435d53f70a8a8",
+ "blob_sha_r1_16": "e7427a74c2046d7a0aa40752d41813d6c4af1e98:experiments/cw_v1/r1_16_n10.py",
+ "git_dirty_before_run": [
+  "?? docs/research/CW-R1.16-N10独立单元-预注册-v0.1.md",
+  "?? experiments/cw_v1/r1_16_n10.py"
+ ],
+ "gate_elapsed_s": 0.79,
+ "ctrl_elapsed_s": 0.1,
+ "panel_elapsed_s": 245.1,
+ "total_elapsed_s": 249.8,
+ "dp_builds_panel": 1,
+ "peak_rss_mb": 2096.4,
+ "n_checks_gates": 75,
+ "n_fail_gates": 0
+}

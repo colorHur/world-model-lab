@@ -1,0 +1,1297 @@
+{
+ "protocol": "CW-POMDP-v1.1",
+ "stage": "CW-R1.16",
+ "kind": "N10-INDEPENDENT-UNITS",
+ "prereg": "docs/research/CW-R1.16-N10独立单元-预注册-v0.1.md",
+ "eps": [
+  100,
+  101,
+  102,
+  103,
+  104,
+  105,
+  106,
+  107,
+  108,
+  109
+ ],
+ "seeds": [
+  2001,
+  2002,
+  2003,
+  2004
+ ],
+ "arms": [
+  "approx",
+  "exact"
+ ],
+ "n_cells": 80,
+ "verdict": {
+  "delivery": "DELIVERY-GAP-CONFIRMED-AT-N10",
+  "mechanism_10bins": "MIXED-MECHANISM-AT-N10",
+  "mechanism_5bins": "MIXED-MECHANISM-AT-N10",
+  "predictor": "PREDICTOR-INCONCLUSIVE"
+ },
+ "M1_boot": {
+  "n_ep": 10,
+  "n_boot": 10000,
+  "mean": -0.04963405199076011,
+  "median": -0.027933913588866016,
+  "ci_lo": -0.08441301166358271,
+  "ci_hi": -0.01825370431053321,
+  "frac_boot_lt0": 0.9999,
+  "min": -0.13593684549989526,
+  "max": 0.02456678607538973
+ },
+ "M4_verdict": "DELIVERY-GAP-CONFIRMED-AT-N10",
+ "M5": {
+  "10bins": {
+   "counts": {
+    "H-A-FRAME-SELECTION": 3,
+    "H-B-USER-ALLOCATION": 4,
+    "GAP-TOO-SMALL": 2,
+    "BOTH-MECHANISMS": 1
+   },
+   "verdict": {
+    "verdict": "MIXED-MECHANISM-AT-N10",
+    "n_ep": 10,
+    "counts": {
+     "H-A-FRAME-SELECTION": 3,
+     "H-B-USER-ALLOCATION": 4,
+     "GAP-TOO-SMALL": 2,
+     "BOTH-MECHANISMS": 1
+    }
+   }
+  },
+  "5bins": {
+   "counts": {
+    "H-A-FRAME-SELECTION": 3,
+    "H-B-USER-ALLOCATION": 4,
+    "GAP-TOO-SMALL": 2,
+    "BOTH-MECHANISMS": 1
+   },
+   "verdict": {
+    "verdict": "MIXED-MECHANISM-AT-N10",
+    "n_ep": 10,
+    "counts": {
+     "H-A-FRAME-SELECTION": 3,
+     "H-B-USER-ALLOCATION": 4,
+     "GAP-TOO-SMALL": 2,
+     "BOTH-MECHANISMS": 1
+    }
+   }
+  }
+ },
+ "M6": {
+  "verdict": "PREDICTOR-INCONCLUSIVE",
+  "rho": 0.5714285714285714,
+  "p_perm": 0.15033849661503385,
+  "n_points": 8,
+  "points": [
+   {
+    "ep": 100,
+    "dr_ep": -0.13593684549989526,
+    "sh_user": 0.19506822566665089,
+    "abs_delta_p_bad": 0.25983989075185976
+   },
+   {
+    "ep": 101,
+    "dr_ep": -0.11156015441028172,
+    "sh_user": 0.918834237338341,
+    "abs_delta_p_bad": 0.43020763700506515
+   },
+   {
+    "ep": 102,
+    "dr_ep": -0.019833520809898753,
+    "sh_user": 0.3650647121052068,
+    "abs_delta_p_bad": 0.16781620168456146
+   },
+   {
+    "ep": 104,
+    "dr_ep": 0.02456678607538973,
+    "sh_user": -0.6546518402212198,
+    "abs_delta_p_bad": 0.10947017658407449
+   },
+   {
+    "ep": 105,
+    "dr_ep": -0.05812021153605798,
+    "sh_user": 1.3960051673517329,
+    "abs_delta_p_bad": 0.29011136710707597
+   },
+   {
+    "ep": 107,
+    "dr_ep": -0.12722058573592002,
+    "sh_user": 0.6594232036253094,
+    "abs_delta_p_bad": 0.5513928574240894
+   },
+   {
+    "ep": 108,
+    "dr_ep": -0.024540134387784518,
+    "sh_user": 2.7585615297625097,
+    "abs_delta_p_bad": 0.37848513360960967
+   },
+   {
+    "ep": 109,
+    "dr_ep": -0.031327692789947514,
+    "sh_user": 1.6163921752520491,
+    "abs_delta_p_bad": 0.3984000238487709
+   }
+  ],
+  "rho_shifted_true": 0.14285714285714285,
+  "pooling": "p̄_ui = mean_{4 seeds}; Δp_bad = p̄_u0 − p̄_u1 (approx 臂)"
+ },
+ "per_ep": [
+  {
+   "ep": 100,
+   "per_seed": [
+    {
+     "seed": 2001,
+     "attempt_exact": 122.0,
+     "attempt_approx": 126.0,
+     "deliver_exact": 63.0,
+     "deliver_approx": 86.0,
+     "rate_exact": 0.5163934426229508,
+     "rate_approx": 0.6825396825396826,
+     "dr": -0.16614623991673172
+    },
+    {
+     "seed": 2002,
+     "attempt_exact": 126.0,
+     "attempt_approx": 123.0,
+     "deliver_exact": 62.0,
+     "deliver_approx": 81.0,
+     "rate_exact": 0.49206349206349204,
+     "rate_approx": 0.6585365853658537,
+     "dr": -0.16647309330236165
+    },
+    {
+     "seed": 2003,
+     "attempt_exact": 123.0,
+     "attempt_approx": 123.0,
+     "deliver_exact": 65.0,
+     "deliver_approx": 82.0,
+     "rate_exact": 0.5284552845528455,
+     "rate_approx": 0.6666666666666666,
+     "dr": -0.1382113821138211
+    },
+    {
+     "seed": 2004,
+     "attempt_exact": 128.0,
+     "attempt_approx": 123.0,
+     "deliver_exact": 76.0,
+     "deliver_approx": 82.0,
+     "rate_exact": 0.59375,
+     "rate_approx": 0.6666666666666666,
+     "dr": -0.07291666666666663
+    }
+   ],
+   "dr_ep": -0.13593684549989526,
+   "dr_ep_median": -0.15217881101527642,
+   "dr_seed_min": -0.16647309330236165,
+   "dr_seed_max": -0.07291666666666663,
+   "n_seeds_negative": 4,
+   "aoi_tavg_by_user": {
+    "exact": [
+     15.565693933823528,
+     8.163306451612904
+    ],
+    "approx": [
+     18.888671875,
+     12.277784025189565
+    ]
+   },
+   "attempt_by_user": {
+    "exact": [
+     56.5,
+     68.5
+    ],
+    "approx": [
+     45.0,
+     78.0
+    ]
+   },
+   "deliver_by_user": {
+    "exact": [
+     24.5,
+     41.0
+    ],
+    "approx": [
+     21.0,
+     60.5
+    ]
+   },
+   "n_probe_median": {
+    "exact": 2.5,
+    "approx": 1.5
+   },
+   "cost_true": {
+    "exact": 0.14268833861446986,
+    "approx": 0.1128414098622037
+   },
+   "cost_est": {
+    "exact": 0.017680836548458766,
+    "approx": 0.01286612073308888
+   },
+   "p_true_mean_by_user_approx": [
+    0.53471695674322,
+    0.7945568474950797
+   ],
+   "n_never_served": {
+    "note": "代理：逐用户 4-seed 中位送达数 == 0 的用户数（run_cell 未导出该字段）",
+    "exact": 0,
+    "approx": 0
+   },
+   "delta_p_bad": -0.25983989075185976,
+   "abs_delta_p_bad": 0.25983989075185976
+  },
+  {
+   "ep": 101,
+   "per_seed": [
+    {
+     "seed": 2001,
+     "attempt_exact": 125.0,
+     "attempt_approx": 125.0,
+     "deliver_exact": 63.0,
+     "deliver_approx": 76.0,
+     "rate_exact": 0.504,
+     "rate_approx": 0.608,
+     "dr": -0.10399999999999998
+    },
+    {
+     "seed": 2002,
+     "attempt_exact": 125.0,
+     "attempt_approx": 127.0,
+     "deliver_exact": 59.0,
+     "deliver_approx": 79.0,
+     "rate_exact": 0.472,
+     "rate_approx": 0.6220472440944882,
+     "dr": -0.15004724409448822
+    },
+    {
+     "seed": 2003,
+     "attempt_exact": 126.0,
+     "attempt_approx": 124.0,
+     "deliver_exact": 74.0,
+     "deliver_approx": 86.0,
+     "rate_exact": 0.5873015873015873,
+     "rate_approx": 0.6935483870967742,
+     "dr": -0.10624679979518692
+    },
+    {
+     "seed": 2004,
+     "attempt_exact": 126.0,
+     "attempt_approx": 123.0,
+     "deliver_exact": 66.0,
+     "deliver_approx": 75.0,
+     "rate_exact": 0.5238095238095238,
+     "rate_approx": 0.6097560975609756,
+     "dr": -0.08594657375145176
+    }
+   ],
+   "dr_ep": -0.11156015441028172,
+   "dr_ep_median": -0.10512339989759345,
+   "dr_seed_min": -0.15004724409448822,
+   "dr_seed_max": -0.08594657375145176,
+   "n_seeds_negative": 4,
+   "aoi_tavg_by_user": {
+    "exact": [
+     5.639958639705883,
+     17.597874852420308
+    ],
+    "approx": [
+     4.436144301470588,
+     32.75918367346939
+    ]
+   },
+   "attempt_by_user": {
+    "exact": [
+     64.5,
+     61.0
+    ],
+    "approx": [
+     92.0,
+     33.0
+    ]
+   },
+   "deliver_by_user": {
+    "exact": [
+     49.0,
+     14.0
+    ],
+    "approx": [
+     69.5,
+     8.5
+    ]
+   },
+   "n_probe_median": {
+    "exact": 2.0,
+    "approx": 2.5
+   },
+   "cost_true": {
+    "exact": 0.11282976634314369,
+    "approx": 0.10447877829676114
+   },
+   "cost_est": {
+    "exact": 0.023837627814880684,
+    "approx": 0.023500435981556763
+   },
+   "p_true_mean_by_user_approx": [
+    0.7120406332749367,
+    0.28183299626987157
+   ],
+   "n_never_served": {
+    "note": "代理：逐用户 4-seed 中位送达数 == 0 的用户数（run_cell 未导出该字段）",
+    "exact": 0,
+    "approx": 0
+   },
+   "delta_p_bad": 0.43020763700506515,
+   "abs_delta_p_bad": 0.43020763700506515
+  },
+  {
+   "ep": 102,
+   "per_seed": [
+    {
+     "seed": 2001,
+     "attempt_exact": 124.0,
+     "attempt_approx": 127.0,
+     "deliver_exact": 91.0,
+     "deliver_approx": 96.0,
+     "rate_exact": 0.7338709677419355,
+     "rate_approx": 0.7559055118110236,
+     "dr": -0.022034544069088113
+    },
+    {
+     "seed": 2002,
+     "attempt_exact": 124.0,
+     "attempt_approx": 126.0,
+     "deliver_exact": 95.0,
+     "deliver_approx": 91.0,
+     "rate_exact": 0.7661290322580645,
+     "rate_approx": 0.7222222222222222,
+     "dr": 0.04390681003584229
+    },
+    {
+     "seed": 2003,
+     "attempt_exact": 125.0,
+     "attempt_approx": 125.0,
+     "deliver_exact": 86.0,
+     "deliver_approx": 87.0,
+     "rate_exact": 0.688,
+     "rate_approx": 0.696,
+     "dr": -0.008000000000000007
+    },
+    {
+     "seed": 2004,
+     "attempt_exact": 126.0,
+     "attempt_approx": 125.0,
+     "deliver_exact": 82.0,
+     "deliver_approx": 93.0,
+     "rate_exact": 0.6507936507936508,
+     "rate_approx": 0.744,
+     "dr": -0.09320634920634918
+    }
+   ],
+   "dr_ep": -0.019833520809898753,
+   "dr_ep_median": -0.01501727203454406,
+   "dr_seed_min": -0.09320634920634918,
+   "dr_seed_max": 0.04390681003584229,
+   "n_seeds_negative": 3,
+   "aoi_tavg_by_user": {
+    "exact": [
+     10.983857769268774,
+     4.58984375
+    ],
+    "approx": [
+     10.93836462450593,
+     4.326807598039215
+    ]
+   },
+   "attempt_by_user": {
+    "exact": [
+     56.0,
+     69.5
+    ],
+    "approx": [
+     50.5,
+     75.0
+    ]
+   },
+   "deliver_by_user": {
+    "exact": [
+     30.0,
+     55.5
+    ],
+    "approx": [
+     32.0,
+     58.5
+    ]
+   },
+   "n_probe_median": {
+    "exact": 2.0,
+    "approx": 1.5
+   },
+   "cost_true": {
+    "exact": 0.033374904277407566,
+    "approx": 0.03664985718297728
+   },
+   "cost_est": {
+    "exact": 0.0035856374969379045,
+    "approx": 0.0034657461293095336
+   },
+   "p_true_mean_by_user_approx": [
+    0.6321908432028268,
+    0.8000070448873883
+   ],
+   "n_never_served": {
+    "note": "代理：逐用户 4-seed 中位送达数 == 0 的用户数（run_cell 未导出该字段）",
+    "exact": 0,
+    "approx": 0
+   },
+   "delta_p_bad": -0.16781620168456146,
+   "abs_delta_p_bad": 0.16781620168456146
+  },
+  {
+   "ep": 103,
+   "per_seed": [
+    {
+     "seed": 2001,
+     "attempt_exact": 124.0,
+     "attempt_approx": 126.0,
+     "deliver_exact": 80.0,
+     "deliver_approx": 84.0,
+     "rate_exact": 0.6451612903225806,
+     "rate_approx": 0.6666666666666666,
+     "dr": -0.021505376344086002
+    },
+    {
+     "seed": 2002,
+     "attempt_exact": 126.0,
+     "attempt_approx": 126.0,
+     "deliver_exact": 79.0,
+     "deliver_approx": 81.0,
+     "rate_exact": 0.626984126984127,
+     "rate_approx": 0.6428571428571429,
+     "dr": -0.015873015873015928
+    },
+    {
+     "seed": 2003,
+     "attempt_exact": 122.0,
+     "attempt_approx": 126.0,
+     "deliver_exact": 86.0,
+     "deliver_approx": 90.0,
+     "rate_exact": 0.7049180327868853,
+     "rate_approx": 0.7142857142857143,
+     "dr": -0.00936768149882905
+    },
+    {
+     "seed": 2004,
+     "attempt_exact": 124.0,
+     "attempt_approx": 127.0,
+     "deliver_exact": 88.0,
+     "deliver_approx": 88.0,
+     "rate_exact": 0.7096774193548387,
+     "rate_approx": 0.6929133858267716,
+     "dr": 0.0167640335280671
+    }
+   ],
+   "dr_ep": -0.00749551004696597,
+   "dr_ep_median": -0.012620348685922489,
+   "dr_seed_min": -0.021505376344086002,
+   "dr_seed_max": 0.0167640335280671,
+   "n_seeds_negative": 3,
+   "aoi_tavg_by_user": {
+    "exact": [
+     9.50609756097561,
+     6.673173881920887
+    ],
+    "approx": [
+     12.987394957983193,
+     5.475272915490307
+    ]
+   },
+   "attempt_by_user": {
+    "exact": [
+     57.0,
+     66.5
+    ],
+    "approx": [
+     48.5,
+     78.0
+    ]
+   },
+   "deliver_by_user": {
+    "exact": [
+     34.5,
+     48.0
+    ],
+    "approx": [
+     30.0,
+     57.5
+    ]
+   },
+   "n_probe_median": {
+    "exact": 3.0,
+    "approx": 1.0
+   },
+   "cost_true": {
+    "exact": 0.055139574639128254,
+    "approx": 0.0685292761768905
+   },
+   "cost_est": {
+    "exact": 0.004340385397655101,
+    "approx": 0.0039109473056270355
+   },
+   "p_true_mean_by_user_approx": [
+    0.6736302323001042,
+    0.7414810260873002
+   ],
+   "n_never_served": {
+    "note": "代理：逐用户 4-seed 中位送达数 == 0 的用户数（run_cell 未导出该字段）",
+    "exact": 0,
+    "approx": 0
+   },
+   "delta_p_bad": -0.06785079378719594,
+   "abs_delta_p_bad": 0.06785079378719594
+  },
+  {
+   "ep": 104,
+   "per_seed": [
+    {
+     "seed": 2001,
+     "attempt_exact": 121.0,
+     "attempt_approx": 109.0,
+     "deliver_exact": 46.0,
+     "deliver_approx": 39.0,
+     "rate_exact": 0.38016528925619836,
+     "rate_approx": 0.3577981651376147,
+     "dr": 0.02236712411858366
+    },
+    {
+     "seed": 2002,
+     "attempt_exact": 126.0,
+     "attempt_approx": 108.0,
+     "deliver_exact": 51.0,
+     "deliver_approx": 41.0,
+     "rate_exact": 0.40476190476190477,
+     "rate_approx": 0.37962962962962965,
+     "dr": 0.025132275132275117
+    },
+    {
+     "seed": 2003,
+     "attempt_exact": 125.0,
+     "attempt_approx": 109.0,
+     "deliver_exact": 55.0,
+     "deliver_approx": 43.0,
+     "rate_exact": 0.44,
+     "rate_approx": 0.3944954128440367,
+     "dr": 0.04550458715596328
+    },
+    {
+     "seed": 2004,
+     "attempt_exact": 125.0,
+     "attempt_approx": 114.0,
+     "deliver_exact": 50.0,
+     "deliver_approx": 45.0,
+     "rate_exact": 0.4,
+     "rate_approx": 0.39473684210526316,
+     "dr": 0.0052631578947368585
+    }
+   ],
+   "dr_ep": 0.02456678607538973,
+   "dr_ep_median": 0.023749699625429388,
+   "dr_seed_min": 0.0052631578947368585,
+   "dr_seed_max": 0.04550458715596328,
+   "n_seeds_negative": 0,
+   "aoi_tavg_by_user": {
+    "exact": [
+     22.00809626619253,
+     13.932146139705882
+    ],
+    "approx": [
+     26.579437751004015,
+     26.52209712009804
+    ]
+   },
+   "attempt_by_user": {
+    "exact": [
+     57.5,
+     67.5
+    ],
+    "approx": [
+     60.5,
+     50.5
+    ]
+   },
+   "deliver_by_user": {
+    "exact": [
+     24.5,
+     26.0
+    ],
+    "approx": [
+     27.5,
+     15.0
+    ]
+   },
+   "n_probe_median": {
+    "exact": 3.0,
+    "approx": 15.5
+   },
+   "cost_true": {
+    "exact": 0.15356211664645786,
+    "approx": 0.14470290881533185
+   },
+   "cost_est": {
+    "exact": 0.016333975719337174,
+    "approx": 0.016146276817007095
+   },
+   "p_true_mean_by_user_approx": [
+    0.46869506362302005,
+    0.35922488703894556
+   ],
+   "n_never_served": {
+    "note": "代理：逐用户 4-seed 中位送达数 == 0 的用户数（run_cell 未导出该字段）",
+    "exact": 0,
+    "approx": 0
+   },
+   "delta_p_bad": 0.10947017658407449,
+   "abs_delta_p_bad": 0.10947017658407449
+  },
+  {
+   "ep": 105,
+   "per_seed": [
+    {
+     "seed": 2001,
+     "attempt_exact": 126.0,
+     "attempt_approx": 126.0,
+     "deliver_exact": 80.0,
+     "deliver_approx": 91.0,
+     "rate_exact": 0.6349206349206349,
+     "rate_approx": 0.7222222222222222,
+     "dr": -0.08730158730158732
+    },
+    {
+     "seed": 2002,
+     "attempt_exact": 128.0,
+     "attempt_approx": 125.0,
+     "deliver_exact": 91.0,
+     "deliver_approx": 86.0,
+     "rate_exact": 0.7109375,
+     "rate_approx": 0.688,
+     "dr": 0.022937500000000055
+    },
+    {
+     "seed": 2003,
+     "attempt_exact": 125.0,
+     "attempt_approx": 127.0,
+     "deliver_exact": 80.0,
+     "deliver_approx": 88.0,
+     "rate_exact": 0.64,
+     "rate_approx": 0.6929133858267716,
+     "dr": -0.05291338582677163
+    },
+    {
+     "seed": 2004,
+     "attempt_exact": 126.0,
+     "attempt_approx": 128.0,
+     "deliver_exact": 79.0,
+     "deliver_approx": 95.0,
+     "rate_exact": 0.626984126984127,
+     "rate_approx": 0.7421875,
+     "dr": -0.11520337301587302
+    }
+   ],
+   "dr_ep": -0.05812021153605798,
+   "dr_ep_median": -0.07010748656417948,
+   "dr_seed_min": -0.11520337301587302,
+   "dr_seed_max": 0.022937500000000055,
+   "n_seeds_negative": 3,
+   "aoi_tavg_by_user": {
+    "exact": [
+     12.23687959214275,
+     4.720919281126482
+    ],
+    "approx": [
+     20.767942583732058,
+     4.23827353013834
+    ]
+   },
+   "attempt_by_user": {
+    "exact": [
+     57.0,
+     68.5
+    ],
+    "approx": [
+     34.0,
+     93.0
+    ]
+   },
+   "deliver_by_user": {
+    "exact": [
+     24.0,
+     58.0
+    ],
+    "approx": [
+     16.0,
+     77.0
+    ]
+   },
+   "n_probe_median": {
+    "exact": 2.0,
+    "approx": 0.5
+   },
+   "cost_true": {
+    "exact": 0.24141771718381724,
+    "approx": 0.4377794535207803
+   },
+   "cost_est": {
+    "exact": 0.024868516923057825,
+    "approx": 0.02382837191295286
+   },
+   "p_true_mean_by_user_approx": [
+    0.5147116643564921,
+    0.804823031463568
+   ],
+   "n_never_served": {
+    "note": "代理：逐用户 4-seed 中位送达数 == 0 的用户数（run_cell 未导出该字段）",
+    "exact": 0,
+    "approx": 0
+   },
+   "delta_p_bad": -0.29011136710707597,
+   "abs_delta_p_bad": 0.29011136710707597
+  },
+  {
+   "ep": 106,
+   "per_seed": [
+    {
+     "seed": 2001,
+     "attempt_exact": 123.0,
+     "attempt_approx": 112.0,
+     "deliver_exact": 57.0,
+     "deliver_approx": 58.0,
+     "rate_exact": 0.4634146341463415,
+     "rate_approx": 0.5178571428571429,
+     "dr": -0.05444250871080142
+    },
+    {
+     "seed": 2002,
+     "attempt_exact": 125.0,
+     "attempt_approx": 103.0,
+     "deliver_exact": 57.0,
+     "deliver_approx": 54.0,
+     "rate_exact": 0.456,
+     "rate_approx": 0.5242718446601942,
+     "dr": -0.06827184466019415
+    },
+    {
+     "seed": 2003,
+     "attempt_exact": 123.0,
+     "attempt_approx": 107.0,
+     "deliver_exact": 69.0,
+     "deliver_approx": 52.0,
+     "rate_exact": 0.5609756097560976,
+     "rate_approx": 0.48598130841121495,
+     "dr": 0.07499430134488266
+    },
+    {
+     "seed": 2004,
+     "attempt_exact": 123.0,
+     "attempt_approx": 108.0,
+     "deliver_exact": 57.0,
+     "deliver_approx": 47.0,
+     "rate_exact": 0.4634146341463415,
+     "rate_approx": 0.4351851851851852,
+     "dr": 0.02822944896115631
+    }
+   ],
+   "dr_ep": -0.004872650766239148,
+   "dr_ep_median": -0.013106529874822553,
+   "dr_seed_min": -0.06827184466019415,
+   "dr_seed_max": 0.07499430134488266,
+   "n_seeds_negative": 2,
+   "aoi_tavg_by_user": {
+    "exact": [
+     20.626130771033516,
+     8.85546875
+    ],
+    "approx": [
+     25.037254901960786,
+     7.813082107843138
+    ]
+   },
+   "attempt_by_user": {
+    "exact": [
+     52.5,
+     70.5
+    ],
+    "approx": [
+     38.0,
+     68.5
+    ]
+   },
+   "deliver_by_user": {
+    "exact": [
+     20.0,
+     41.0
+    ],
+    "approx": [
+     12.5,
+     41.0
+    ]
+   },
+   "n_probe_median": {
+    "exact": 5.0,
+    "approx": 15.5
+   },
+   "cost_true": {
+    "exact": 0.0382816141146632,
+    "approx": 0.03767463370649931
+   },
+   "cost_est": {
+    "exact": 0.002767463768354842,
+    "approx": 0.002771311028593076
+   },
+   "p_true_mean_by_user_approx": [
+    0.3539038413288537,
+    0.591280171575147
+   ],
+   "n_never_served": {
+    "note": "代理：逐用户 4-seed 中位送达数 == 0 的用户数（run_cell 未导出该字段）",
+    "exact": 0,
+    "approx": 0
+   },
+   "delta_p_bad": -0.2373763302462933,
+   "abs_delta_p_bad": 0.2373763302462933
+  },
+  {
+   "ep": 107,
+   "per_seed": [
+    {
+     "seed": 2001,
+     "attempt_exact": 127.0,
+     "attempt_approx": 125.0,
+     "deliver_exact": 80.0,
+     "deliver_approx": 93.0,
+     "rate_exact": 0.6299212598425197,
+     "rate_approx": 0.744,
+     "dr": -0.11407874015748032
+    },
+    {
+     "seed": 2002,
+     "attempt_exact": 127.0,
+     "attempt_approx": 122.0,
+     "deliver_exact": 72.0,
+     "deliver_approx": 86.0,
+     "rate_exact": 0.5669291338582677,
+     "rate_approx": 0.7049180327868853,
+     "dr": -0.13798889892861754
+    },
+    {
+     "seed": 2003,
+     "attempt_exact": 126.0,
+     "attempt_approx": 124.0,
+     "deliver_exact": 85.0,
+     "deliver_approx": 84.0,
+     "rate_exact": 0.6746031746031746,
+     "rate_approx": 0.6774193548387096,
+     "dr": -0.002816180235534982
+    },
+    {
+     "seed": 2004,
+     "attempt_exact": 127.0,
+     "attempt_approx": 128.0,
+     "deliver_exact": 62.0,
+     "deliver_approx": 95.0,
+     "rate_exact": 0.4881889763779528,
+     "rate_approx": 0.7421875,
+     "dr": -0.2539985236220472
+    }
+   ],
+   "dr_ep": -0.12722058573592002,
+   "dr_ep_median": -0.12603381954304893,
+   "dr_seed_min": -0.2539985236220472,
+   "dr_seed_max": -0.002816180235534982,
+   "n_seeds_negative": 4,
+   "aoi_tavg_by_user": {
+    "exact": [
+     24.147058823529413,
+     4.317386642156863
+    ],
+    "approx": [
+     59.192156862745094,
+     3.7081035539215685
+    ]
+   },
+   "attempt_by_user": {
+    "exact": [
+     45.0,
+     82.0
+    ],
+    "approx": [
+     26.0,
+     99.0
+    ]
+   },
+   "deliver_by_user": {
+    "exact": [
+     10.5,
+     67.0
+    ],
+    "approx": [
+     7.0,
+     83.0
+    ]
+   },
+   "n_probe_median": {
+    "exact": 1.0,
+    "approx": 0.5
+   },
+   "cost_true": {
+    "exact": 0.048891386746187954,
+    "approx": 0.05681678584386684
+   },
+   "cost_est": {
+    "exact": 0.002654681553902636,
+    "approx": 0.002889519337777754
+   },
+   "p_true_mean_by_user_approx": [
+    0.2775071278926382,
+    0.8288999853167276
+   ],
+   "n_never_served": {
+    "note": "代理：逐用户 4-seed 中位送达数 == 0 的用户数（run_cell 未导出该字段）",
+    "exact": 0,
+    "approx": 0
+   },
+   "delta_p_bad": -0.5513928574240894,
+   "abs_delta_p_bad": 0.5513928574240894
+  },
+  {
+   "ep": 108,
+   "per_seed": [
+    {
+     "seed": 2001,
+     "attempt_exact": 127.0,
+     "attempt_approx": 116.0,
+     "deliver_exact": 72.0,
+     "deliver_approx": 63.0,
+     "rate_exact": 0.5669291338582677,
+     "rate_approx": 0.5431034482758621,
+     "dr": 0.02382568558240561
+    },
+    {
+     "seed": 2002,
+     "attempt_exact": 126.0,
+     "attempt_approx": 127.0,
+     "deliver_exact": 69.0,
+     "deliver_approx": 82.0,
+     "rate_exact": 0.5476190476190477,
+     "rate_approx": 0.6456692913385826,
+     "dr": -0.09805024371953497
+    },
+    {
+     "seed": 2003,
+     "attempt_exact": 125.0,
+     "attempt_approx": 127.0,
+     "deliver_exact": 70.0,
+     "deliver_approx": 86.0,
+     "rate_exact": 0.56,
+     "rate_approx": 0.6771653543307087,
+     "dr": -0.11716535433070863
+    },
+    {
+     "seed": 2004,
+     "attempt_exact": 123.0,
+     "attempt_approx": 122.0,
+     "deliver_exact": 77.0,
+     "deliver_approx": 65.0,
+     "rate_exact": 0.6260162601626016,
+     "rate_approx": 0.5327868852459017,
+     "dr": 0.09322937491669991
+    }
+   ],
+   "dr_ep": -0.024540134387784518,
+   "dr_ep_median": -0.03711227906856468,
+   "dr_seed_min": -0.11716535433070863,
+   "dr_seed_max": 0.09322937491669991,
+   "n_seeds_negative": 2,
+   "aoi_tavg_by_user": {
+    "exact": [
+     5.14484126984127,
+     16.81761208420376
+    ],
+    "approx": [
+     4.5747003763083836,
+     29.656237049316204
+    ]
+   },
+   "attempt_by_user": {
+    "exact": [
+     67.5,
+     57.5
+    ],
+    "approx": [
+     88.5,
+     33.0
+    ]
+   },
+   "deliver_by_user": {
+    "exact": [
+     50.5,
+     19.0
+    ],
+    "approx": [
+     63.0,
+     11.5
+    ]
+   },
+   "n_probe_median": {
+    "exact": 2.5,
+    "approx": 3.5
+   },
+   "cost_true": {
+    "exact": 0.17197552261479812,
+    "approx": 0.16203481870613057
+   },
+   "cost_est": {
+    "exact": 0.02015183016718728,
+    "approx": 0.016779200115025594
+   },
+   "p_true_mean_by_user_approx": [
+    0.696533840044762,
+    0.3180487064351524
+   ],
+   "n_never_served": {
+    "note": "代理：逐用户 4-seed 中位送达数 == 0 的用户数（run_cell 未导出该字段）",
+    "exact": 0,
+    "approx": 0
+   },
+   "delta_p_bad": 0.37848513360960967,
+   "abs_delta_p_bad": 0.37848513360960967
+  },
+  {
+   "ep": 109,
+   "per_seed": [
+    {
+     "seed": 2001,
+     "attempt_exact": 124.0,
+     "attempt_approx": 114.0,
+     "deliver_exact": 48.0,
+     "deliver_approx": 47.0,
+     "rate_exact": 0.3870967741935484,
+     "rate_approx": 0.41228070175438597,
+     "dr": -0.025183927560837593
+    },
+    {
+     "seed": 2002,
+     "attempt_exact": 123.0,
+     "attempt_approx": 114.0,
+     "deliver_exact": 51.0,
+     "deliver_approx": 44.0,
+     "rate_exact": 0.4146341463414634,
+     "rate_approx": 0.38596491228070173,
+     "dr": 0.02866923406076166
+    },
+    {
+     "seed": 2003,
+     "attempt_exact": 126.0,
+     "attempt_approx": 121.0,
+     "deliver_exact": 50.0,
+     "deliver_approx": 63.0,
+     "rate_exact": 0.3968253968253968,
+     "rate_approx": 0.5206611570247934,
+     "dr": -0.12383576019939663
+    },
+    {
+     "seed": 2004,
+     "attempt_exact": 126.0,
+     "attempt_approx": 112.0,
+     "deliver_exact": 50.0,
+     "deliver_approx": 45.0,
+     "rate_exact": 0.3968253968253968,
+     "rate_approx": 0.4017857142857143,
+     "dr": -0.004960317460317498
+    }
+   ],
+   "dr_ep": -0.031327692789947514,
+   "dr_ep_median": -0.015072122510577546,
+   "dr_seed_min": -0.12383576019939663,
+   "dr_seed_max": 0.02866923406076166,
+   "n_seeds_negative": 3,
+   "aoi_tavg_by_user": {
+    "exact": [
+     7.60844337735094,
+     37.29205805636012
+    ],
+    "approx": [
+     8.211064425770308,
+     58.206458567679036
+    ]
+   },
+   "attempt_by_user": {
+    "exact": [
+     67.0,
+     57.0
+    ],
+    "approx": [
+     75.5,
+     38.5
+    ]
+   },
+   "deliver_by_user": {
+    "exact": [
+     41.5,
+     7.5
+    ],
+    "approx": [
+     41.5,
+     5.0
+    ]
+   },
+   "n_probe_median": {
+    "exact": 3.0,
+    "approx": 11.0
+   },
+   "cost_true": {
+    "exact": 0.10340497527913248,
+    "approx": 0.06963058546831336
+   },
+   "cost_est": {
+    "exact": 0.010077258671237287,
+    "approx": 0.009924357657377496
+   },
+   "p_true_mean_by_user_approx": [
+    0.5547199479875642,
+    0.1563199241387933
+   ],
+   "n_never_served": {
+    "note": "代理：逐用户 4-seed 中位送达数 == 0 的用户数（run_cell 未导出该字段）",
+    "exact": 0,
+    "approx": 0
+   },
+   "delta_p_bad": 0.3984000238487709,
+   "abs_delta_p_bad": 0.3984000238487709
+  }
+ ],
+ "identity": {
+  "all_identical": true,
+  "detail": "16/16",
+  "scope": "仅 ep100/101 的 16 格（其余 64 格无参照物）"
+ },
+ "repeatability": {
+  "n_attempted_by_user": true,
+  "n_delivered_by_user": true,
+  "cost_true_per_step": true,
+  "policy_trace_hash": true,
+  "aoi_tavg_by_user": true,
+  "all_identical": true
+ },
+ "CTRL": {
+  "S1": {
+   "degenerate_pos": {
+    "ci": [
+     0.1,
+     0.1
+    ],
+    "pass": true
+   },
+   "alternating": {
+    "ci": [
+     -0.06000000000000001,
+     0.06000000000000001
+    ],
+    "verdict": "UNRESOLVED-AT-N10",
+    "pass": true
+   },
+   "all_zero": {
+    "ci": [
+     0.0,
+     0.0
+    ],
+    "verdict": "UNRESOLVED-AT-N10",
+    "pass": true
+   },
+   "all_negative": {
+    "ci": [
+     -0.13500000000000004,
+     -0.10500000000000001
+    ],
+    "verdict": "DELIVERY-GAP-CONFIRMED-AT-N10",
+    "pass": true
+   }
+  },
+  "S1_pass": true,
+  "S2": {
+   "monotone": {
+    "rho": 1.0,
+    "pass": true
+   },
+   "anti": {
+    "rho": -1.0,
+    "pass": true
+   },
+   "ties": {
+    "rho": 0.9847319278346618,
+    "expect": 0.9847319,
+    "pass": true
+   },
+   "shuffled": {
+    "rho": 0.06666666666666667,
+    "perm": [
+     3,
+     7,
+     0,
+     9,
+     2,
+     5,
+     8,
+     1,
+     4,
+     6
+    ],
+    "pass": true
+   },
+   "constant_nan": {
+    "rho": NaN,
+    "pass": true
+   }
+  },
+  "S2_pass": true,
+  "S3": {
+   "p_perfect": 0.0004997501249375312,
+   "rho_null": -0.17407765595569782,
+   "p_null": 0.6866566716641679,
+   "pass": true
+  },
+  "S3_pass": true,
+  "S4": {
+   "mixed_5_5": {
+    "got": "MIXED-MECHANISM-AT-N10",
+    "pass": true
+   },
+   "dominant_10": {
+    "got": "MECHANISM-DOMINANT:H-A-FRAME-SELECTION",
+    "pass": true
+   },
+   "unresolved": {
+    "got": "MIXED-WEAK",
+    "pass": true
+   }
+  },
+  "S4_pass": true,
+  "S5": {
+   "rho_aligned": 0.9151515151515152,
+   "rho_reversed": -0.9151515151515152,
+   "rho_rolled": -0.6,
+   "pass": true
+  },
+  "S5_pass": true,
+  "all_pass": true
+ },
+ "gates": {
+  "n_checks": 75,
+  "n_fail": 0
+ },
+ "head": "e7427a74c2046d7a0aa40752d41813d6c4af1e98",
+ "src_hash": "fc9f25e16d2c6307",
+ "n10_note": "有效独立单元 = 10 个 episode；seed 只用于配对，不当样本。`Δp_bad` 内生于 approx 臂的 SEND 选择，不是外生信道参数。"
+}
