@@ -1,0 +1,19 @@
+{
+ "commit": "c8da534dbb6c310326bf0cfd2abb803647a5a782",
+ "kind": "POST-COMMIT-BLOB-SHA",
+ "note": "运行期 meta.json 的 `blob_sha_r2_1` 为 None（运行时文件尚未提交）；此处记真实 blob_sha。`core.autocrlf=input` ⇒ worktree 与 blob 可能不同，两者都记。",
+ "files": {
+  "model_policy.py": {
+   "worktree_sha": "3b73fc6b77451c327ac3a9f17a50c89656f6065a",
+   "blob_sha": "3b73fc6b77451c327ac3a9f17a50c89656f6065a"
+  },
+  "r2_1_sep.py": {
+   "worktree_sha": "2fffd587f2cc064a5bf74d9304bb6fdc30f6d240",
+   "blob_sha": "2fffd587f2cc064a5bf74d9304bb6fdc30f6d240"
+  },
+  "r2_1b_identity.py": {
+   "worktree_sha": "218e1b67732cd95d6d353d31e6e1f7b49e27b567",
+   "blob_sha": "218e1b67732cd95d6d353d31e6e1f7b49e27b567"
+  }
+ }
+}
