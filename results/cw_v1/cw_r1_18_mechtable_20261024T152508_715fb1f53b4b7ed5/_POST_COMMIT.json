@@ -1,0 +1,14 @@
+{
+ "note": "提交后用 _git（查退出码）取真实 blob_sha，纠正 meta.json 里运行时的 None。worktree_sha 与 blob_sha 必须一致（core.autocrlf=input 下两者可能不同，两个都记）。",
+ "commit": "862cd0cf0b09cf8c0b2a83af69015506d3f55843",
+ "blob_sha_r1_18_mechtable": "36be28c0ce0d8cb9a21d222925730a75e41994be",
+ "worktree_sha_r1_18_mechtable": "36be28c0ce0d8cb9a21d222925730a75e41994be",
+ "worktree_vs_blob_consistent": true,
+ "blob_sha_mech": "e343d7d664c8a5f8c032de4249c9ff74d4a0f8d3",
+ "blob_sha_gates": "20f4c1a5cad18fb7129933265c721b32b1a0b0e6",
+ "src_hash_at_commit": "715fb1f53b4b7ed5",
+ "src_hash_at_run": "715fb1f53b4b7ed5",
+ "src_hash_consistent": true,
+ "why_none_at_run": "运行时 r1_18_mechtable.py 尚未提交 ⇒ meta.json 显式记 None（不记参数串）",
+ "git_status_porcelain": []
+}
