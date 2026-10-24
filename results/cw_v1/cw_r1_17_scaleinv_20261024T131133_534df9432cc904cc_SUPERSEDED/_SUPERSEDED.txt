@@ -1,0 +1,1 @@
+作废原因：缺 M6' 混淆诊断（confound_diag：ρ(|Δp|,|E_u|)/ρ(|Δp|,Mu)/ρ(|Δp|,|dr|)）。正式版 = cw_r1_17_scaleinv_20261024T131211_cff7a830aa24d8d0。

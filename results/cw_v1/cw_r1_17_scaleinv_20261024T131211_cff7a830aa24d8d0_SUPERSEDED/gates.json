@@ -1,0 +1,1396 @@
+{
+ "n_checks": 79,
+ "n_fail": 0,
+ "all_pass": true,
+ "rows": [
+  {
+   "name": "1a 接口拒绝真值与未来键",
+   "pass": true,
+   "detail": {
+    "probed": [
+     "_x_true",
+     "_log_h_true",
+     "true_x",
+     "true_h",
+     "_w",
+     "world",
+     "env",
+     "future_csi",
+     "_future",
+     "packet_rng"
+    ],
+    "escaped": []
+   }
+  },
+  {
+   "name": "1b telemetry/history 无真值字段",
+   "pass": true,
+   "detail": {
+    "slots": [
+     "_pub"
+    ],
+    "leaks": []
+   }
+  },
+  {
+   "name": "1d[CSI 敏感] 改真信道后：首次动作分歧之前动作完全一致，且分歧前确有交付差异可解释",
+   "pass": true,
+   "detail": {
+    "first_divergence_at": 2,
+    "prefix_identical": true,
+    "ack_diff_explains": true,
+    "use_ack_for_csi": true
+   }
+  },
+  {
+   "name": "1d[纯 AoI（不看信道）] 改真信道后：首次动作分歧之前动作完全一致，且分歧前确有交付差异可解释",
+   "pass": true,
+   "detail": {
+    "first_divergence_at": 1,
+    "prefix_identical": true,
+    "ack_diff_explains": true,
+    "use_ack_for_csi": true
+   }
+  },
+  {
+   "name": "1d′ 首次交付之前，改真信道不改变任何动作（无合法信息可用时动作必须不变）",
+   "pass": true,
+   "detail": {
+    "first_divergence_at": 2,
+    "first_delivery_at": 0
+   }
+  },
+  {
+   "name": "1c[CSI 敏感] 只改真状态 x ⇒ 整条动作序列逐位不变",
+   "pass": true,
+   "detail": {
+    "identical": true
+   }
+  },
+  {
+   "name": "1c[纯 AoI] 只改真状态 x ⇒ 整条动作序列逐位不变",
+   "pass": true,
+   "detail": {
+    "identical": true
+   }
+  },
+  {
+   "name": "1e 扰动确实改变了真实送达数（上一条不是恒真）",
+   "pass": true,
+   "detail": {
+    "delivered_clean": 60,
+    "delivered_perturb_x": 60,
+    "delivered_perturb_h": 65
+   }
+  },
+  {
+   "name": "1f 越界策略读真值失败",
+   "pass": true,
+   "detail": "ILLEGAL_TruthGreedy 期望抛 AttributeError"
+  },
+  {
+   "name": "1g 未授权时拒绝构造越界策略",
+   "pass": true,
+   "detail": "期望 PermissionError"
+  },
+  {
+   "name": "1h[CSI 敏感] 公开历史相同 ⇒ 隐藏真值变化不改变当前动作",
+   "pass": true,
+   "detail": {
+    "public_identical": true,
+    "act_clean": "SEND(1)",
+    "act_perturbed": "SEND(1)",
+    "prefix_steps": 20
+   }
+  },
+  {
+   "name": "1h[纯 AoI] 公开历史相同 ⇒ 隐藏真值变化不改变当前动作",
+   "pass": true,
+   "detail": {
+    "public_identical": true,
+    "act_clean": "SEND(1)",
+    "act_perturbed": "SEND(1)",
+    "prefix_steps": 20
+   }
+  },
+  {
+   "name": "1h-ctl 偷看真状态的策略在公开历史相同时给出不同动作（证明 1h 有分辨力）",
+   "pass": true,
+   "detail": {
+    "public_identical": true,
+    "perturbed_user": 0,
+    "act_clean": "SEND(1)",
+    "act_perturbed": "SEND(0)"
+   }
+  },
+  {
+   "name": "1i 公开历史 = 白名单（无多余字段、无缺字段）",
+   "pass": true,
+   "detail": {
+    "leaked_fields": [],
+    "missing_fields": [],
+    "n_rows": 24
+   }
+  },
+  {
+   "name": "1i-ctl 白名单被篡改后立刻出现越界字段（证明 1i 有分辨力）",
+   "pass": true,
+   "detail": {
+    "leaked_fields": [
+     "cost_true_by_user"
+    ]
+   }
+  },
+  {
+   "name": "1j 失败的 SEND 不公开 y_t；成功的 SEND 才公开",
+   "pass": true,
+   "detail": {
+    "fail_delivered": 0,
+    "fail_y_t": null,
+    "ok_delivered": 1,
+    "ok_y_t": "finite"
+   }
+  },
+  {
+   "name": "1k 视图无 world 句柄，且快照里不含任何真值字段名",
+   "pass": true,
+   "detail": {
+    "found_handles": [],
+    "truth_keys_in_snapshot": [],
+    "slots": [
+     "_pub"
+    ],
+    "declared_members": [
+     "t",
+     "n_users",
+     "budget_left",
+     "budget_total",
+     "prior",
+     "telemetry",
+     "history"
+    ]
+   }
+  },
+  {
+   "name": "2a 信息敏感策略随 CSI 改变动作",
+   "pass": true,
+   "detail": {
+    "csi_0_high": "SEND(0)",
+    "csi_1_high": "SEND(1)"
+   }
+  },
+  {
+   "name": "2b 阴性对照：忽略 CSI 的策略不随 CSI 改变动作",
+   "pass": true,
+   "detail": {
+    "csi_0_high": "SEND(0)",
+    "csi_1_high": "SEND(0)"
+   }
+  },
+  {
+   "name": "2c 两者在 CSI 相同时动作一致（结构确实相同）",
+   "pass": true,
+   "detail": "同一 CSI 下应为同一动作"
+  },
+  {
+   "name": "3a PROBE 扣费 1 量子",
+   "pass": true,
+   "detail": {
+    "budget_used": 1,
+    "recorded": 1
+   }
+  },
+  {
+   "name": "3b PROBE 消耗物理时隙",
+   "pass": true,
+   "detail": {
+    "t_before": 0,
+    "t_after": 1
+   }
+  },
+  {
+   "name": "3c PROBE 不刷新任务状态估计与时间戳",
+   "pass": true,
+   "detail": {
+    "stamp": [
+     -1,
+     -1
+    ]
+   }
+  },
+  {
+   "name": "3d PROBE 使被测链路的信道信念收缩",
+   "pass": true,
+   "detail": {
+    "v_h_0_before": 1.0,
+    "v_h_0_after": 0.27930174563591026,
+    "v_h_1_before": 1.0,
+    "v_h_1_after": 1.0
+   }
+  },
+  {
+   "name": "3e 未测用户方差 = 纯 AR 演化（未被本次测量污染）",
+   "pass": true,
+   "detail": {
+    "measured_elsewhere": 1.0,
+    "pure_ar": 1.0
+   }
+  },
+  {
+   "name": "3f budget=0 时拒绝 PROBE 与 SEND",
+   "pass": true,
+   "detail": {
+    "PROBE": true,
+    "SEND": true
+   }
+  },
+  {
+   "name": "3g 预算耗尽后拒绝 SEND、但 HOLD 仍可执行且只推进 1 槽",
+   "pass": true,
+   "detail": {
+    "send_blocked": true,
+    "hold_ok": true,
+    "t": 2,
+    "note": "被拒的 SEND 不得推进物理时间"
+   }
+  },
+  {
+   "name": "4a 全失败环境下 SEND 确实失败",
+   "pass": true,
+   "detail": {
+    "p_true": 8.75651076269652e-27,
+    "ack": 0
+   }
+  },
+  {
+   "name": "4b 失败仍扣尝试资源",
+   "pass": true,
+   "detail": {
+    "attempted": 1,
+    "wasted": 1
+   }
+  },
+  {
+   "name": "4c 失败不刷新任务 AoI（时间戳不变）",
+   "pass": true,
+   "detail": {
+    "stamp": [
+     -1,
+     -1
+    ]
+   }
+  },
+  {
+   "name": "4d NACK 计入事件计数",
+   "pass": true,
+   "detail": {
+    "nack": 1,
+    "ack": 0
+   }
+  },
+  {
+   "name": "4e 成功时 ACK 计数 +1 且时间戳更新",
+   "pass": true,
+   "detail": {
+    "ack": 1,
+    "n_ack": 1,
+    "stamp0": 1
+   }
+  },
+  {
+   "name": "4f HOLD 不产生 ACK、不扣资源、不增加 attempted",
+   "pass": true,
+   "detail": {
+    "ack_field": null,
+    "n_ack": 1,
+    "n_nack": 1
+   }
+  },
+  {
+   "name": "4g ACK 抬均值、NACK 压均值，两者方差等量收缩",
+   "pass": true,
+   "detail": {
+    "m_after_ack": 0.5214723926380368,
+    "m_after_hold": 0.0,
+    "m_after_nack": -0.7822085889570553,
+    "v_after_ack": 0.5567484662576687,
+    "v_after_hold": 1.0,
+    "v_after_nack": 0.5567484662576687,
+    "config": "use_ack_for_csi=True（v1.1 默认）",
+    "legacy_behavior": "旧实现 m_nack == m_hold (0.0) ⇒ 本条 FAIL ⇒ 有分辨力"
+   }
+  },
+  {
+   "name": "4h 默认协议下 ACK 与 NACK 给出不同的信道信念（接线活着）",
+   "pass": true,
+   "detail": {
+    "m_after_ack": 0.5214723926380368,
+    "m_after_nack": -0.7822085889570553,
+    "default_use_ack_for_csi": true
+   }
+  },
+  {
+   "name": "4i 关闭 use_ack_for_csi 后 ACK 不影响信念（阴性对照）",
+   "pass": true,
+   "detail": {
+    "m_after_ack": 0.0,
+    "m_after_nack": 0.0
+   }
+  },
+  {
+   "name": "4j-1 裸 `_ack_bump` 与解析式逐位对账（g = 1/(1+ACK_VAR)）",
+   "pass": true,
+   "detail": {
+    "bare_m": -0.9202453987730062,
+    "bare_v": 0.38650306748466257,
+    "analytic_m": -0.9202453987730062,
+    "analytic_v": 0.38650306748466257,
+    "ACK_VAR": 0.63
+   }
+  },
+  {
+   "name": "4j-2 ★判别支：SEND(0) 失败 ⇒ 信念下降落在**用户 0** 上，用户 1 逐位不变（且数值 = 裸效应经一步滚动，公式对账）",
+   "pass": true,
+   "detail": {
+    "m_after_fail_send0": [
+     -0.7822085889570553,
+     0.0
+    ],
+    "v_after_fail_send0": [
+     0.5567484662576687,
+     1.0
+    ],
+    "expect_m0_step": -0.7822085889570553,
+    "expect_v0_step": 0.5567484662576687,
+    "rho": 0.85,
+    "legacy_would_give": [
+     0.0,
+     -0.7822085889570553
+    ],
+    "why_it_fails_on_legacy": "旧实现 _ack_bump(i,-1.5) 的 i = n_users-1 = 1 ⇒ m=[0.0, −0.78] ⇒ 本条 FAIL"
+   }
+  },
+  {
+   "name": "4k 镜像：SEND(1) 失败 ⇒ 下降落在用户 1 上，用户 0 逐位不变，且与 4j 逐位对称（★ 旧实现在此**恰好** PASS ⇒ 单靠本条无分辨力，必须与 4j 同时在场）",
+   "pass": true,
+   "detail": {
+    "m_after_fail_send1": [
+     0.0,
+     -0.7822085889570553
+    ],
+    "v_after_fail_send1": [
+     1.0,
+     0.5567484662576687
+    ],
+    "delta_vs_4j_m": 0.0,
+    "rho": 0.85,
+    "note": "legacy: i=n_users-1=1=act.user ⇒ 恰好正确 ⇒ 本条单独不构成判据"
+   }
+  },
+  {
+   "name": "4l 真实 episode 上逐用户归属恒等（attempt−deliver == nack，且逐用户/全局双对账）",
+   "pass": true,
+   "detail": {
+    "per_episode": {
+     "ep100": {
+      "attempted_by_user": [
+       64,
+       64
+      ],
+      "delivered_by_user": [
+       22,
+       31
+      ],
+      "ack_by_user(world)": [
+       22,
+       31
+      ],
+      "nack_by_user(world)": [
+       42,
+       33
+      ],
+      "n_ack": 53,
+      "n_nack": 75,
+      "absurd_users": [],
+      "had_nack": true
+     },
+     "ep101": {
+      "attempted_by_user": [
+       64,
+       64
+      ],
+      "delivered_by_user": [
+       55,
+       7
+      ],
+      "ack_by_user(world)": [
+       55,
+       7
+      ],
+      "nack_by_user(world)": [
+       9,
+       57
+      ],
+      "n_ack": 62,
+      "n_nack": 66,
+      "absurd_users": [],
+      "had_nack": true
+     }
+    },
+    "criterion": "Σ_i nack_i = n_nack 且逐用户 att_i = delv_i + nack_i 且无'真实失败>0 而计数=0'",
+    "★": "本条只封计数归属；实参正确性由 4j/4k 的行为观察覆盖"
+   }
+  },
+  {
+   "name": "4m 网格初值 ≡ 公开先验：mean=0（<1e-12）、var=1（<1e-9）、质量归一",
+   "pass": true,
+   "detail": {
+    "mean": [
+     -6.663842123379633e-17,
+     -6.663842123379633e-17
+    ],
+    "var": [
+     0.999999999999934,
+     0.999999999999934
+    ],
+    "mass_outside_6sd": [
+     1.684548996257241e-09,
+     1.684548996257241e-09
+    ],
+    "grid": {
+     "n": 321,
+     "half": 8.0,
+     "dx": 0.05
+    }
+   }
+  },
+  {
+   "name": "4n 单次 ACK/NACK 后网格后验 ≡ **同支撑** 32001 点数值积分（|Δm|,|Δv| < 1e-8）",
+   "pass": true,
+   "detail": {
+    "worst_abs_err": 5.294018112778076e-09,
+    "worst_support_truncation_shift": 3.7952630038695645e-08,
+    "cases": [
+     {
+      "prior": [
+       0.0,
+       1.0
+      ],
+      "ack": true,
+      "grid": [
+       0.6057055096021511,
+       0.6331208356375324
+      ],
+      "quad_same_support": [
+       0.6057055096021495,
+       0.6331208356375196
+      ],
+      "quad_full_support": [
+       0.6057055096021589,
+       0.6331208356375891
+      ],
+      "err_vs_same_support": [
+       1.5543122344752192e-15,
+       1.27675647831893e-14
+      ],
+      "truncation_shift": [
+       9.325873406851315e-15,
+       6.94999613415348e-14
+      ],
+      "laplace": [
+       0.5,
+       0.5
+      ],
+      "laplace_err_vs_quad": [
+       -0.10570550960214953,
+       -0.13312083563751964
+      ]
+     },
+     {
+      "prior": [
+       0.0,
+       1.0
+      ],
+      "ack": false,
+      "grid": [
+       -0.6057055096021513,
+       0.6331208356375323
+      ],
+      "quad_same_support": [
+       -0.6057055096021495,
+       0.6331208356375195
+      ],
+      "quad_full_support": [
+       -0.6057055096021589,
+       0.633120835637589
+      ],
+      "err_vs_same_support": [
+       -1.7763568394002505e-15,
+       1.27675647831893e-14
+      ],
+      "truncation_shift": [
+       -9.325873406851315e-15,
+       6.94999613415348e-14
+      ],
+      "laplace": [
+       -0.5,
+       0.5
+      ],
+      "laplace_err_vs_quad": [
+       0.10570550960214953,
+       -0.13312083563751953
+      ]
+     },
+     {
+      "prior": [
+       0.0,
+       0.25
+      ],
+      "ack": true,
+      "grid": [
+       0.206620964141907,
+       0.20730777717706877
+      ],
+      "quad_same_support": [
+       0.20662096414190703,
+       0.20730777717706875
+      ],
+      "quad_full_support": [
+       0.20662096414190703,
+       0.20730777717706875
+      ],
+      "err_vs_same_support": [
+       -2.7755575615628914e-17,
+       2.7755575615628914e-17
+      ],
+      "truncation_shift": [
+       0.0,
+       0.0
+      ],
+      "laplace": [
+       0.2,
+       0.2
+      ],
+      "laplace_err_vs_quad": [
+       -0.006620964141907021,
+       -0.007307777177068736
+      ]
+     },
+     {
+      "prior": [
+       1.5,
+       1.0
+      ],
+      "ack": true,
+      "grid": [
+       1.679014864203651,
+       0.8119302639610312
+      ],
+      "quad_same_support": [
+       1.6790148641575005,
+       0.8119302636748276
+      ],
+      "quad_full_support": [
+       1.6790148644561849,
+       0.8119302655702406
+      ],
+      "err_vs_same_support": [
+       4.615063886603821e-11,
+       2.8620361636200187e-10
+      ],
+      "truncation_shift": [
+       2.986844105379305e-10,
+       1.895413048735861e-09
+      ],
+      "laplace": [
+       1.5803347277200048,
+       0.846950433777197
+      ],
+      "laplace_err_vs_quad": [
+       -0.09868013643749562,
+       0.03502017010236946
+      ]
+     },
+     {
+      "prior": [
+       1.5,
+       1.0
+      ],
+      "ack": false,
+      "grid": [
+       0.29766552038671645,
+       0.6023066151807857
+      ],
+      "quad_same_support": [
+       0.29766552038671645,
+       0.6023066151807854
+      ],
+      "quad_full_support": [
+       0.2976655203867167,
+       0.602306615180787
+      ],
+      "err_vs_same_support": [
+       0.0,
+       2.220446049250313e-16
+      ],
+      "truncation_shift": [
+       2.220446049250313e-16,
+       1.5543122344752192e-15
+      ],
+      "laplace": [
+       -0.11356613983438923,
+       0.846950433777197
+      ],
+      "laplace_err_vs_quad": [
+       -0.4112316602211057,
+       0.2446438185964116
+      ]
+     },
+     {
+      "prior": [
+       -2.0,
+       1.0
+      ],
+      "ack": false,
+      "grid": [
+       -2.101196331881987,
+       0.8752894531163862
+      ],
+      "quad_same_support": [
+       -2.1011963309627766,
+       0.8752894478223681
+      ],
+      "quad_full_support": [
+       -2.101196337377356,
+       0.8752894857749981
+      ],
+      "err_vs_same_support": [
+       -9.192104855060279e-10,
+       5.294018112778076e-09
+      ],
+      "truncation_shift": [
+       -6.414579534208542e-09,
+       3.7952630038695645e-08
+      ],
+      "laplace": [
+       -2.033598647746913,
+       0.934011329171811
+      ],
+      "laplace_err_vs_quad": [
+       0.06759768321586357,
+       0.058721881349442895
+      ]
+     }
+    ],
+    "note": "`laplace_err_vs_quad` 是一阶高斯近似**自身**的误差（与网格无关），在 m=0 处 Δm 差 0.106、Δv 差 0.133 ⇒ §2 的解析式只能当**方向**判据；`truncation_shift` 是网格把 [−8,8] 之外当作不可能的代价（本批 ≤3.3e-8）"
+   }
+  },
+  {
+   "name": "4o exact 臂归属：SEND(0) 失败只压 u0 的均值、u1 保持 0（<1e-15，网格浮动零）；镜像同理且两者对称",
+   "pass": true,
+   "detail": {
+    "exact_fail_send0_m": [
+     -0.5148496831618263,
+     -1.0659408209000619e-16
+    ],
+    "exact_fail_send1_m": [
+     -1.0659408209000619e-16,
+     -0.5148496831618263
+    ],
+    "exact_fail_send0_v": [
+     0.7349298037480883,
+     0.9999999999999212
+    ],
+    "exact_fail_send1_v": [
+     0.9999999999999212,
+     0.7349298037480883
+    ],
+    "note": "u1 的均值 −1.07e-16 与方差 0.9999999999999212 都是'只做了 AR 传播'的浮点残差 ⇒ 该用户确实没收到任何 ACK 信息"
+   }
+  },
+  {
+   "name": "4p 模式隔离：ack_mode='approx' 时 5 次 ACK 后的 (m,v) ≡ 老公式逐位（`_grid is None`）",
+   "pass": true,
+   "detail": {
+    "trajectory": [
+     [
+      0.5214723926380368,
+      0.5567484662576687
+     ],
+     [
+      0.8420185932956812,
+      0.49103976039081887
+     ],
+     [
+      1.0880342635383922,
+      0.4768765349214473
+     ],
+     [
+      1.2910353284891447,
+      0.4736034224998494
+     ],
+     [
+      1.4621513781601234,
+      0.47283505735969966
+     ]
+    ],
+    "closed_form_last": [
+     1.4621513781601234,
+     0.47283505735969966
+    ],
+    "ACK_VAR": 0.63
+   }
+  },
+  {
+   "name": "4q 网格 AR 传播 ≡ 闭式 `m'=ρm`、`v'=ρ²v+(1−ρ²)`（200 步，<1e-12）",
+   "pass": true,
+   "detail": [
+    {
+     "rho": 0.98,
+     "worst_dm": 5.640518996621622e-16,
+     "worst_dv": 9.903189379656396e-14,
+     "v_final": 0.9999999999998996,
+     "v_closed": 0.9999999999999987
+    },
+    {
+     "rho": 0.85,
+     "worst_dm": 7.767523571157028e-17,
+     "worst_dv": 1.1224354778960333e-13,
+     "v_final": 0.9999999999998876,
+     "v_closed": 0.9999999999999999
+    }
+   ]
+  },
+  {
+   "name": "4r `ChannelConfig().ack_var` == `CWWorld.ACK_VAR`（默认同值，否则 4j-1/4p 参照物失效）且 ack_var ≤0 / NaN / inf 一律被 validate 拒绝",
+   "pass": true,
+   "detail": {
+    "config_default": 0.63,
+    "class_constant": 0.63,
+    "unvalidated_bad_values": [],
+    "why_it_matters": "配置默认漂走 ⇒ 4j-1/4p 仍在算 0.63 的解析式，而被测物已经用别的值 ⇒ 两条闸静默失去分辨力"
+   }
+  },
+  {
+   "name": "4s ★判别：`ack_var=1.726` 的裸 `_ack_bump` ≡ `g=1/(1+1.726)` 解析式，且与默认 0.63 的结果差 >1e-3（接线是死的时候本条必 FAIL）",
+   "pass": true,
+   "detail": {
+    "ack_var_seen_by_world": 1.726,
+    "bare_m_new": -0.5502567865003669,
+    "bare_v_new": 0.6331621423330888,
+    "analytic_m_new": -0.5502567865003669,
+    "analytic_v_new": 0.6331621423330888,
+    "bare_m_default": -0.9202453987730062,
+    "bare_v_default": 0.38650306748466257,
+    "max_abs_gap_vs_default": 0.36998861227263924,
+    "g_new": 0.36683785766691124,
+    "g_old": 0.6134969325153374
+   }
+  },
+  {
+   "name": "4t 非默认 ack_var 下 ACK/NACK 的方向不对称仍严格为 1.0 / −1.5（比值 1.5，≤1e-12）",
+   "pass": true,
+   "detail": {
+    "m_ack": 0.36683785766691124,
+    "m_nack": -0.5502567865003669,
+    "abs_ratio": 1.5000000000000002,
+    "v_ack": 0.6331621423330888,
+    "v_nack": 0.6331621423330888,
+    "note": "同一 (m,v) 下 ACK 与 NACK 的**方差**收缩必须相同（只差方向）"
+   }
+  },
+  {
+   "name": "4u 主线 profile 接线：`mainline_config().ack_mode==MAINLINE_ACK_MODE=='exact'`、plant==BOUNDED_PLANT、默认值仍 'approx'（未漂）、其余 channel 字段逐字段相同、真建出网格后验；★活体负控：常量改成 'approx' 时 `grid_ok` 必须 False",
+   "pass": true,
+   "detail": {
+    "MAINLINE_ACK_MODE": "exact",
+    "mainline_ack_mode": "exact",
+    "default_ack_mode": "approx",
+    "other_channel_fields_identical": true,
+    "plant_is_bounded": true,
+    "grid_built": true,
+    "negative_control": {
+     "label_ok": true,
+     "grid_ok": false
+    },
+    "restored": {
+     "label_ok": true,
+     "grid_ok": true
+    },
+    "note": "`grid_ok=False` 是**唯一**能抓「常量改了但 world 没接网格」的观察点 —— 只查名字（`label_ok`）在负控里也 True"
+   }
+  },
+  {
+   "name": "4v exact 模式下 `_m_h/_v_h` 与 `GridBelief.moments()` **逐位**相等（4 种操作后各一次）；`ack_var` 在 exact 下是**死参数**（换 1.726 后信念终值逐位不变），而 approx 下换值**必须**改信念终值 ⇒ `4j-1`/`4p` 的对象在 exact 下**不存在**，显式记 SKIP-NOT-APPLICABLE（清单非空 + approx 下两条仍 PASS）",
+   "pass": true,
+   "detail": {
+    "sync_snapshots": [
+     {
+      "op": "SEND0",
+      "m_sync_equal": [
+       true,
+       true
+      ],
+      "v_sync_equal": [
+       true,
+       true
+      ]
+     },
+     {
+      "op": "SEND1",
+      "m_sync_equal": [
+       true,
+       true
+      ],
+      "v_sync_equal": [
+       true,
+       true
+      ]
+     },
+     {
+      "op": "PROBE0",
+      "m_sync_equal": [
+       true,
+       true
+      ],
+      "v_sync_equal": [
+       true,
+       true
+      ]
+     },
+     {
+      "op": "HOLD",
+      "m_sync_equal": [
+       true,
+       true
+      ],
+      "v_sync_equal": [
+       true,
+       true
+      ]
+     }
+    ],
+    "exact_belief_vs_alt_ackvar": [
+     [
+      [
+       0.09431092369295355,
+       -0.3719788960844147
+      ],
+      [
+       0.47929462106796183,
+       0.8616317008677208
+      ]
+     ],
+     [
+      [
+       0.09431092369295355,
+       -0.3719788960844147
+      ],
+      [
+       0.47929462106796183,
+       0.8616317008677208
+      ]
+     ]
+    ],
+    "approx_belief_vs_alt_ackvar": [
+     [
+      [
+       0.09448506411853416,
+       -0.5651457055214724
+      ],
+      [
+       0.4792939836017017,
+       0.7686199290644173
+      ]
+     ],
+     [
+      [
+       0.09395633479356,
+       -0.3379264490095378
+      ],
+      [
+       0.47929474280688683,
+       0.8616472796680118
+      ]
+     ]
+    ],
+    "approx_4j1_pass": true,
+    "approx_4p_pass": true,
+    "SKIP_NOT_APPLICABLE_under_exact": [
+     "4j-1 `_ack_bump` ≡ 一阶解析式",
+     "4p approx 模式隔离（5 次 ACK ≡ 老公式）"
+    ],
+    "note": "SKIP 的依据是**行为**（换 ack_var 不改信念终值），不是注释；所以它不是静默 PASS，而是『对象不存在』的可证伪记录"
+   }
+  },
+  {
+   "name": "4w 纯记录对齐：第 0 槽记的是 override 注入值 (5,−5)；第 1 槽记的是**槽开始**的`_log_h_true`（而非推进后的值，两点必须不相等）；长度 == `len(records)`",
+   "pass": true,
+   "detail": {
+    "slot0_recorded": [
+     5.0,
+     -5.0
+    ],
+    "slot1_recorded": [
+     5.0,
+     -5.0
+    ],
+    "slot1_truth_at_start": [
+     5.0,
+     -5.0
+    ],
+    "slot1_truth_after_advance": [
+     4.205576397786496,
+     -4.25108983723706
+    ],
+    "lengths": [
+     2,
+     2
+    ],
+    "note": "把 append 挪到槽末 ⇒ `rec1` 等于 `after1` ⇒ FAIL（#52/#59 的 off-by-one 族）"
+   }
+  },
+  {
+   "name": "4x 纯记录纯净：关掉 `_log_h_hist` 后 6 步的 SlotRecord 七元组逐位相同（纯记录不得改轨迹/记账）",
+   "pass": true,
+   "detail": {
+    "n_slots": 6,
+    "identical": true,
+    "first_diff": null
+   }
+  },
+  {
+   "name": "4y `p_true` 聚合量对齐：① 合成记录下 10 箱计数逐箱 = 手算（**左闭右开**、`p=0`→箱0、`p=0.1`→箱1、`p=1` 饱和→箱9）、均值/分位单调；② 真实 7 槽轨迹下逐用户尝试/送达计数 = **独立代码路径**（直接扫 `records`）重数结果，且固定 `logh∈{0,1}` 下逐用户 `p_true` 均值 = 0.5 / sigmoid(2)（1e-12）",
+   "pass": true,
+   "detail": {
+    "bins_user0": [
+     2,
+     1,
+     0,
+     0,
+     1,
+     1,
+     0,
+     0,
+     0,
+     2
+    ],
+    "expected_bins_user0": [
+     2,
+     1,
+     0,
+     0,
+     1,
+     1,
+     0,
+     0,
+     0,
+     2
+    ],
+    "mean_user0": 0.4571,
+    "expected_mean_user0": 0.4571,
+    "n_attempt_by_user": [
+     2,
+     2
+    ],
+    "ref_n_by_user": [
+     2,
+     2
+    ],
+    "n_deliv_by_user": [
+     1,
+     2
+    ],
+    "ref_d_by_user": [
+     1,
+     2
+    ],
+    "p_mean_by_user": [
+     0.5,
+     0.8807970779778823
+    ],
+    "p_expected": [
+     0.5,
+     0.8807970779778823
+    ],
+    "n_bins": 10,
+    "note": "箱号写错（如用左开右闭）会让 `p=0.1` 落箱0、`p=0.5` 落箱4 ⇒ 前两格必 FAIL"
+   }
+  },
+  {
+   "name": "4z ①**信息边界**：`SlotRecord`/视图历史的键集合恰为 `PUBLIC_HISTORY_FIELDS`，新增的 `p_true` 聚合量一个都没进白名单（`VIEW_MEMBERS` 未增）；★活体负控：把 `p_true` 塞进白名单后重跑同一谓词必须**变 FAIL**；②**轨迹纯净**：把聚合换成空实现后，同种子 episode 的 `cost_est`/`cost_true`/轨迹哈希/逐用户尝试与送达/`n_probe`/ACK-NACK **逐位相同**",
+   "pass": true,
+   "detail": {
+    "history_keys": [
+     "ack",
+     "action",
+     "budget_left",
+     "cost_est",
+     "cost_est_by_user",
+     "csi_reading",
+     "data_attempted",
+     "data_delivered",
+     "probe_done",
+     "resource_spent",
+     "t",
+     "user",
+     "y_t"
+    ],
+    "whitelist": [
+     "t",
+     "action",
+     "user",
+     "resource_spent",
+     "probe_done",
+     "data_attempted",
+     "data_delivered",
+     "ack",
+     "csi_reading",
+     "y_t",
+     "cost_est",
+     "cost_est_by_user",
+     "budget_left"
+    ],
+    "negative_control_leaked": [
+     "p_true"
+    ],
+    "negative_control_boundary_ok": false,
+    "with_agg": [
+     0.008493089132277856,
+     1735.9591473322191,
+     "d76bf3b332806b26",
+     [
+      3,
+      2
+     ],
+     [
+      3,
+      1
+     ],
+     1,
+     4,
+     1
+    ],
+    "without_agg": [
+     0.008493089132277856,
+     1735.9591473322191,
+     "d76bf3b332806b26",
+     [
+      3,
+      2
+     ],
+     [
+      3,
+      1
+     ],
+     1,
+     4,
+     1
+    ],
+    "agg_fields_with": [
+     0.7982408182621974,
+     0.2712730600907346
+    ],
+    "agg_fields_without": [],
+    "view_members": [
+     "t",
+     "n_users",
+     "budget_left",
+     "budget_total",
+     "prior",
+     "telemetry",
+     "history"
+    ],
+    "note": "负控证明这条闸有分辨力；11 项『逐位相同』只防『聚合被挪进循环』"
+   }
+  },
+  {
+   "name": "4aa **尺度不变性**：只改送达结果 `nd_e`（dr 从 0 → +0.5 → −0.0025，符号翻转）时，`ku = E_user/Mu` 三版**逐位相同**（<1e-12），而 `share = E/Δr` 从 NaN 变为有限并**符号翻转**（`|share_C| > 10|share_A|`）⇒ 换分母不是换名字，是真的换了尺度",
+   "pass": true,
+   "detail": {
+    "ku_three": [
+     -0.6,
+     -0.6,
+     -0.6
+    ],
+    "dr_three": [
+     0.0,
+     0.5,
+     -0.0025000000000000022
+    ],
+    "share_three": [
+     "nan",
+     -0.24,
+     47.99999999999996
+    ],
+    "d_ku_max": 0.0,
+    "expect_ku": -0.6,
+    "note": "手算 ku=E_user/Mu=(-0.12)/0.2=-0.6 与实测对账"
+   }
+  },
+  {
+   "name": "4ab **有界性 + 规模无关**：① 五个构造全部满足 `|ku| ≤ 2·max|ρ_i−ρ_a|`（★ 首版上界写成 `max|…|` 漏了 TVD 的 1/2，实测 ku=−0.6 > 0.4 当场暴露）；② 所有计数同乘 10 后 `ku` 逐位不变；③ 搬运方向反转时 `ku` 符号反转（不是恒负）",
+   "pass": true,
+   "detail": {
+    "ku": -0.6,
+    "ku_bound": 0.8,
+    "ku_scale10": -0.6,
+    "ku_flipped": 0.6,
+    "bound_ok": true,
+    "scale_ok": true,
+    "sign_ok": true
+   }
+  },
+  {
+   "name": "4ac **NaN 语义**：两臂分配完全相同（`Mu=0`）时 `ku` 是 NaN，`dir_verdict` 把它记进 `n_nan` 而**不进** `n_neg`/`n_neu`，判词为 `DIRECTION-UNRESOLVED`（不许把'没发生'当成'零效应'，更不许当成'确认'）",
+   "pass": true,
+   "detail": {
+    "Mu": 0.0,
+    "ku": "nan",
+    "n_nan": 10,
+    "n_neg": 0,
+    "verdict": "DIRECTION-UNRESOLVED"
+   }
+  },
+  {
+   "name": "4ad **活体负控**：把 `ku` 的分母换成 `|Δr|`（即退回 R1.16 的 `share` 形态）后，同一批矩阵的 A/C 两点**不再相同**（|−6.0 − (−48.0)| = 42 ≫ 1e-12），且 `dr=0` 那一点直接变成 NaN（旧形态在 Δr=0 处**不可定义**）⇒ 证明 4aa 有分辨力，不是'三个数碰巧相等'",
+   "pass": true,
+   "detail": {
+    "bad_at_dr0": "nan",
+    "bad_at_A": -0.24,
+    "bad_at_C": -47.99999999999996,
+    "d_bad_AC": 47.759999999999955,
+    "note": "同一批计数矩阵：ku 三版全等（-0.600000），share 版 A/C 相差 47.76 且 dr=0 处为 NaN"
+   }
+  },
+  {
+   "name": "5a 零噪声下正确接收端的估计与真值逐位一致（不偏移一步）",
+   "pass": true,
+   "detail": {
+    "max_abs_dev": 0.0,
+    "x_hat": 0.0,
+    "x_true": 0.0
+   }
+  },
+  {
+   "name": "5b 错误接收端在估计误差上可分辨（不是恒等）",
+   "pass": true,
+   "detail": {
+    "mean_rel_rmse_diff": -0.027605975945839994,
+    "correct_rmse": [
+     0.554313,
+     0.59367,
+     0.936312,
+     0.169048,
+     0.465384,
+     0.343951
+    ],
+    "leaky_rmse": [
+     0.572407,
+     0.587447,
+     0.959665,
+     0.171476,
+     0.45386,
+     0.274358
+    ],
+    "n_leaky_worse": 3,
+    "n_episodes": 6
+   }
+  },
+  {
+   "name": "5c 正确接收端：观测校正到 t 再按期望动力学推到 t+1（含 K·(y−x̄) 与 A、B·u）",
+   "pass": true,
+   "detail": {
+    "x_hat": -0.3578203693966521,
+    "y_t": -0.3543123095417439,
+    "u_t": -0.0,
+    "A": 1.01,
+    "B": 0.1,
+    "w_t1": 0.0009659748182375333,
+    "w_t": 0.023109221495655082,
+    "prior_var_at_t": 1.0,
+    "K_t": 0.9999020184205369,
+    "P_t": 1.0205,
+    "pred_analytic": -0.3578203693966521,
+    "residual": 0.0
+   }
+  },
+  {
+   "name": "5d 错误接收端：把校正值直接当 t+1（x̂ = x̄ + K(y−x̄)，既不推进也不加噪声）",
+   "pass": true,
+   "detail": {
+    "x_hat": -0.3542775934620318,
+    "y_t": -0.3543123095417439,
+    "u_t": -0.0,
+    "A": 1.01,
+    "B": 0.1,
+    "w_t1": 0.0009659748182375333,
+    "w_t": 0.023109221495655082,
+    "prior_var_at_t": 1.0,
+    "K_t": 0.9999020184205369,
+    "pred_analytic": -0.3542775934620318
+   }
+  },
+  {
+   "name": "5e 两种映射在数值上可区分（差 A·(...) + B·u − (...)，即 (A−1)(x̄+K(y−x̄)) + B·u）",
+   "pass": true,
+   "detail": {
+    "diff": -0.0035427759346203236
+   }
+  },
+  {
+   "name": "5f 接收端没有偷看 w（真值与估计之差主要由 w 构成）",
+   "pass": true,
+   "detail": {
+    "x_true_next_approx": -0.33474621114150627,
+    "x_hat": -0.3578203693966521,
+    "gap_over_w": 0.9984827164984413,
+    "note": "gap/w ≈ 1 ⇒ 差值主要就是 w，未被估计吃掉"
+   }
+  },
+  {
+   "name": "5d 未加诊断开关时拒绝构造错误接收端",
+   "pass": true,
+   "detail": "期望 ValueError"
+  },
+  {
+   "name": "6a 纯 PROBE 的策略任务成本不优于全 HOLD（探测只保留开销）",
+   "pass": true,
+   "detail": {
+    "probe": 118307.21116111973,
+    "hold": 118307.21116111973,
+    "probe_spent": 128,
+    "hold_spent": 0
+   }
+  },
+  {
+   "name": "6b 纯 PROBE 确实消耗了预算与交付 0 帧数据",
+   "pass": true,
+   "detail": {
+    "spent": 128,
+    "delivered": 0
+   }
+  },
+  {
+   "name": "6c 不读 CSI 的普通策略动作与其无关（trace 不含探测）",
+   "pass": true,
+   "detail": {
+    "n_probe": 0
+   }
+  },
+  {
+   "name": "7a 全部 cell 的记账恒等式成立",
+   "pass": true,
+   "detail": {
+    "n_cells": 24,
+    "n_fail": 0,
+    "failed_items": []
+   }
+  },
+  {
+   "name": "7b 阴性对照：篡改 probe 计数导致恒等式 FAIL",
+   "pass": true,
+   "detail": {
+    "failed": [
+     "slots_eq_probe_plus_attempt_plus_idle",
+     "budget_used_eq_probe_plus_attempt_rsc"
+    ]
+   }
+  },
+  {
+   "name": "7c 逐用户成本齐全且非负",
+   "pass": true,
+   "detail": {
+    "cost_true_by_user": [
+     0.05626765508943707,
+     1.7835342243548769
+    ]
+   }
+  },
+  {
+   "name": "8a 子流 ID 全部唯一",
+   "pass": true,
+   "detail": {
+    "n_streams": 108,
+    "n_unique": 108,
+    "dup": [],
+    "determinism_fail": []
+   }
+  },
+  {
+   "name": "8b 不同策略共享同一 plant/channel 子流 ID",
+   "pass": true,
+   "detail": {
+    "plant": "2-20-0",
+    "channel": "2-20-1"
+   }
+  },
+  {
+   "name": "8c 同 (split,episode) 重新构造的 plant/channel 序列逐位相同",
+   "pass": true,
+   "detail": "5 点抽样"
+  },
+  {
+   "name": "8d 不同 episode 的 plant 序列不同（不被错误复用）",
+   "pass": true,
+   "detail": "5 点抽样"
+  },
+  {
+   "name": "8e 跨 split 子流经验相关（健康检查，仅记录）",
+   "pass": true,
+   "detail": {
+    "n_samples": 2000,
+    "corr_train0_vs_dev0": {
+     "plant": 0.010947842998418321,
+     "channel": -0.00419255631285298,
+     "meas": 0.004871277527522019,
+     "csi": 0.02234089455058236,
+     "packet": 0.023800624131249594,
+     "init": 0.016828746621742118
+    },
+    "note": "单次抽样数值，非统计检验；仅作健康检查"
+   }
+  },
+  {
+   "name": "S1 名义 LQR 闭环稳定 |A - B*K| < 1",
+   "pass": true,
+   "detail": [
+    {
+     "i": 0,
+     "K": 2.7913748820159814,
+     "A_closed": 0.7308625117984018,
+     "stable": true
+    },
+    {
+     "i": 1,
+     "K": 2.978162964265168,
+     "A_closed": 0.7321837035734833,
+     "stable": true
+    }
+   ]
+  },
+  {
+   "name": "S2 稳态成功率：蒙特卡洛与解析值一致（<2e-3）",
+   "pass": true,
+   "detail": {
+    "mc": 0.5002824322207461,
+    "analytic": 0.5,
+    "diff": 0.0002824322207460872
+   }
+  },
+  {
+   "name": "S3 不同 rho 档的稳态平均成功率相差 < 0.02（面板可比的前提）",
+   "pass": true,
+   "detail": {
+    "rho_panel": [
+     0.85,
+     0.98
+    ],
+    "mean_succ": [
+     0.49831952551423564,
+     0.4955117216244952
+    ]
+   }
+  }
+ ]
+}

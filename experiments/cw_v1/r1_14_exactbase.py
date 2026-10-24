@@ -64,9 +64,21 @@ def _src_hash() -> str:
     return h.hexdigest()[:16]
 
 
-def _git(args: list[str]) -> str:
-    return subprocess.run(["D:\\devtools\\Git\\cmd\\git.exe", *args],
-                          cwd=str(REPO), capture_output=True, text=True).stdout.strip()
+def _git(args: list[str], allow_fail: bool = False):
+    """跑 git 并**检查退出码**。
+
+    ★ R1.16 的教训：首版不查 `returncode`，`rev-parse <head>:<未提交路径>` 失败时
+      git 会把**参数串回显到 stdout**，于是 `blob_sha` 被记成 `"<sha>:<path>"` —— 一个假哈希。
+      R1.17 修根因：默认 `allow_fail=False` ⇒ 失败 **抛异常**（R14：报错优于给假数字）；
+      需要"文件可能还没提交"的场合显式传 `allow_fail=True`，拿到 `None` 而不是垃圾串。
+    """
+    r = subprocess.run(["D:\\devtools\\Git\\cmd\\git.exe", *args],
+                       cwd=str(REPO), capture_output=True, text=True)
+    if r.returncode != 0:
+        if allow_fail:
+            return None
+        raise RuntimeError(f"git {args} 失败（rc={r.returncode}）：{r.stderr.strip()[:200]}")
+    return r.stdout.strip()
 
 
 # ==================================================================== 配置（两臂）

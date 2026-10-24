@@ -1468,6 +1468,122 @@ def counterexample_4b4_delivery_attr(cfg: CWConfig, g: Gate) -> None:
              "note": "负控证明这条闸有分辨力；11 项『逐位相同』只防『聚合被挪进循环』"})
 
 
+# ============================================================ 4b5 R1.17 尺度不变机制量
+def _synth_mix(sign: int = -1, scale: int = 1):
+    """4 用户合成面板：`ρ = .9/.7/.3/.1`、`ρ_a = .5`；`m` 全搬向差用户（`sign=-1`）。
+
+    `scale` 把**所有计数**同乘（分配比例不变）⇒ 用来验"规模无关"。
+    `ku` 手算：`E_user = −48/N`、`Mu = 160/(2N)` ⇒ `ku = −0.6`（与 `scale` 无关）。
+    """
+    ni_a = np.array([[100], [100], [100], [100]], dtype=float) * scale
+    nd_a = np.array([[90], [70], [30], [10]], dtype=float) * scale
+    m = np.array([-40, -40, 40, 40], dtype=float) * (1 if sign < 0 else -1) * scale
+    ni_e = ni_a + m[:, None]
+    return ni_e, nd_a.copy(), ni_a, nd_a
+
+
+def _shift_nd(ni_e, nd_e, delta: int):
+    """只改 `nd_e` 的整数扰动（从第一个非空格加减 `delta` 个送达）。"""
+    nd = np.asarray(nd_e, dtype=int).copy()
+    ni = np.asarray(ni_e, dtype=int)
+    step = 1 if delta > 0 else -1
+    for _ in range(abs(delta)):
+        if step > 0:
+            i = int(np.argmax((ni - nd)[:, 0]))
+            if ni[i, 0] - nd[i, 0] <= 0:
+                break
+            nd[i, 0] += 1
+        else:
+            i = int(np.argmax(nd[:, 0]))
+            if nd[i, 0] <= 0:
+                break
+            nd[i, 0] -= 1
+    return nd
+
+
+def counterexample_4b5_scale_invariance(cfg: CWConfig, g: Gate) -> None:
+    """R1.17：机制量 `ku=E_user/Mu` 的**尺度不变性 / 有界性 / NaN 语义**（4aa–4ad）。
+
+    预注册：`docs/research/CW-R1.17-尺度不变机制判据-预注册-v0.1.md` §5。
+    ★ 只用合成矩阵，**不读** `results/`（闸必须能在干净树上跑）。
+    ★ 4aa 的谓词写作"`ku` 不动而 `share` 变了"，并配 4ad 的活体负控
+      （把分母换回 `|dr|` 必须 FAIL）—— 否则这条闸只是"碰巧相等"。
+    """
+    from .mech import dir_verdict, mech_quantities
+
+    ni_e, nd_e0, ni_a, nd_a = _synth_mix(-1)
+    q0 = mech_quantities(ni_e, nd_e0, ni_a, nd_a)          # dr = 0 ⇒ share 不可定义
+    # A：把送达加满（`Σnd_e = Σni_e` ⇒ dr = +0.5），share 最小
+    #   ★ 修订（§8-6）：首版用 +8 个送达（dr=+0.02），与 C 的 −0.0025 只差 **8×**，
+    #     而断言写 `>10×` ⇒ 构造上不可达。加满后比值为 200×，与 S1 实测同阶。
+    dA = int((np.asarray(ni_e, dtype=int) - np.asarray(nd_e0, dtype=int)).sum())
+    qA = mech_quantities(ni_e, _shift_nd(ni_e, nd_e0, dA), ni_a, nd_a)
+    # C：−1 个送达 ⇒ dr = −1/400 = −0.0025（符号与 A 相反）
+    qC = mech_quantities(ni_e, _shift_nd(ni_e, nd_e0, -1), ni_a, nd_a)
+    d_ku_max = max(abs(q["ku"] - q0["ku"]) for q in (qA, qC))
+    sh0 = float(q0["shares"]["user"])
+    shA = float(qA["shares"]["user"])
+    shC = float(qC["shares"]["user"])
+    sh_ok = bool(np.isnan(sh0) and shA != 0 and np.sign(shA) != np.sign(shC)
+                 and abs(shC) > 10 * abs(shA))
+    g.check("4aa **尺度不变性**：只改送达结果 `nd_e`（dr 从 0 → +0.5 → −0.0025，符号翻转）时，"
+            "`ku = E_user/Mu` 三版**逐位相同**（<1e-12），而 `share = E/Δr` 从 NaN 变为有限并**符号翻转**"
+            "（`|share_C| > 10|share_A|`）⇒ 换分母不是换名字，是真的换了尺度",
+            bool(d_ku_max < 1e-12 and sh_ok),
+            {"ku_three": [float(q0["ku"]), float(qA["ku"]), float(qC["ku"])],
+             "dr_three": [float(q0["dr"]), float(qA["dr"]), float(qC["dr"])],
+             "share_three": [str(sh0), shA, shC],
+             "d_ku_max": float(d_ku_max), "expect_ku": -0.6,
+             "note": "手算 ku=E_user/Mu=(-0.12)/0.2=-0.6 与实测对账"})
+
+    # ---- 4ab 有界性与规模无关
+    q10 = mech_quantities(*_synth_mix(-1, scale=10))
+    qp = mech_quantities(*_synth_mix(+1))
+    bound_ok = all(abs(q["ku"]) <= q["ku_bound"] + 1e-12
+                   for q in (q0, qA, qC, q10, qp))
+    scale_ok = abs(q10["ku"] - q0["ku"]) < 1e-12
+    sign_ok = qp["ku"] > 0 > q0["ku"]
+    g.check("4ab **有界性 + 规模无关**：① 五个构造全部满足 `|ku| ≤ 2·max|ρ_i−ρ_a|`"
+            "（★ 首版上界写成 `max|…|` 漏了 TVD 的 1/2，实测 ku=−0.6 > 0.4 当场暴露）；"
+            "② 所有计数同乘 10 后 `ku` 逐位不变；③ 搬运方向反转时 `ku` 符号反转（不是恒负）",
+            bool(bound_ok and scale_ok and sign_ok),
+            {"ku": q0["ku"], "ku_bound": q0["ku_bound"], "ku_scale10": q10["ku"],
+             "ku_flipped": qp["ku"], "bound_ok": bool(bound_ok),
+             "scale_ok": bool(scale_ok), "sign_ok": bool(sign_ok)})
+
+    # ---- 4ac NaN 语义：Mu=0 ⇒ ku=NaN 且**不进**符号计数
+    ni_same = np.array([[100], [100]], dtype=float)
+    nd_same = np.array([[80], [20]], dtype=float)
+    qz = mech_quantities(ni_same, nd_same, ni_same, nd_same)
+    v = dir_verdict([qz["ku"]] * 10)
+    g.check("4ac **NaN 语义**：两臂分配完全相同（`Mu=0`）时 `ku` 是 NaN，"
+            "`dir_verdict` 把它记进 `n_nan` 而**不进** `n_neg`/`n_neu`，判词为 `DIRECTION-UNRESOLVED`"
+            "（不许把'没发生'当成'零效应'，更不许当成'确认'）",
+            bool(qz["Mu"] == 0.0 and np.isnan(qz["ku"]) and v["n_nan"] == 10
+                 and v["n_neg"] == 0 and v["verdict"] == "DIRECTION-UNRESOLVED"),
+            {"Mu": qz["Mu"], "ku": str(qz["ku"]), "n_nan": v["n_nan"],
+             "n_neg": v["n_neg"], "verdict": v["verdict"]})
+
+    # ---- 4ad 活体负控：把分母换回 `|dr|`（= R1.16 的 share 形态）⇒ 4aa 的谓词必须 FAIL
+    #   ★ q0 的 `dr=0` 会让坏实现直接给 NaN ⇒ 用 A/C 两点（dr 分别为 +0.02 / −0.0025）比较，
+    #     并把 q0 的 NaN 单独作为"旧形态在 dr=0 处不可定义"的证据。
+    def _bad_share(q):
+        d = abs(q["dr"])
+        return q["E_user"] / d if d > 0 else float("nan")
+
+    bad0, badA, badC = _bad_share(q0), _bad_share(qA), _bad_share(qC)
+    d_bad2 = float(abs(badA - badC))
+    g.check("4ad **活体负控**：把 `ku` 的分母换成 `|Δr|`（即退回 R1.16 的 `share` 形态）后，"
+            "同一批矩阵的 A/C 两点**不再相同**（|−6.0 − (−48.0)| = 42 ≫ 1e-12），"
+            "且 `dr=0` 那一点直接变成 NaN（旧形态在 Δr=0 处**不可定义**）"
+            "⇒ 证明 4aa 有分辨力，不是'三个数碰巧相等'",
+            bool(d_bad2 > 1e-6 and not np.isfinite(bad0)),
+            {"bad_at_dr0": str(bad0), "bad_at_A": float(badA), "bad_at_C": float(badC),
+             "d_bad_AC": d_bad2,
+             "note": f"同一批计数矩阵：ku 三版全等（{q0['ku']:.6f}），"
+                     f"share 版 A/C 相差 {d_bad2:.2f} 且 dr=0 处为 NaN"})
+
+
 def _scripted_policy():
     """给 4z 用的确定性策略：不看视图，只按 t 轮转（避免把策略差异混进来）。"""
     from .world import Action as _A
@@ -1494,6 +1610,7 @@ def run_all(cfg: CWConfig | None = None) -> dict:
     counterexample_4b2_ack_var(cfg, g)
     counterexample_4b3_exact_mainline(cfg, g)
     counterexample_4b4_delivery_attr(cfg, g)
+    counterexample_4b5_scale_invariance(cfg, g)
     counterexample_5(cfg, g)
     counterexample_6(cfg, g)
     counterexample_7(cfg, g)

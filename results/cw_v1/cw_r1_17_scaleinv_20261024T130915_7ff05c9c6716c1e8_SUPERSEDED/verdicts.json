@@ -1,0 +1,224 @@
+{
+ "Q_dir": {
+  "combined": "DIRECTION-CONFIRMED:USER-NEGATIVE",
+  "user": {
+   "verdict": "DIRECTION-CONFIRMED:USER-NEGATIVE",
+   "label": "user",
+   "n": 10,
+   "n_nan": 0,
+   "n_neg": 10,
+   "n_pos": 0,
+   "n_neu": 0,
+   "median_abs": 0.35363651766892107,
+   "kappa_min": 0.01,
+   "p_binom_null50": 0.001953125,
+   "p_binom_null33": 3.387017561686056e-05
+  },
+  "frame": {
+   "verdict": "DIRECTION-UNRESOLVED",
+   "label": "frame",
+   "n": 10,
+   "n_nan": 0,
+   "n_neg": 6,
+   "n_pos": 4,
+   "n_neu": 0,
+   "median_abs": 0.1456923916125526,
+   "kappa_min": 0.01,
+   "p_binom_null50": 0.75390625,
+   "p_binom_null33": 0.1531270639638267
+  }
+ },
+ "Q_mag": {
+  "ku": {
+   "n": 10,
+   "mean": -0.33306174492625024,
+   "median": -0.35363651766892107,
+   "ci_lo": -0.4215138417233497,
+   "ci_hi": -0.23787807404798914,
+   "min": -0.5403887926007871,
+   "max": -0.08293389979222233,
+   "n_negative": 10,
+   "n_positive": 0
+  },
+  "kf": {
+   "n": 10,
+   "mean": -0.08949712276463553,
+   "median": -0.04298958108696542,
+   "ci_lo": -0.2453373095783981,
+   "ci_hi": 0.05137647039430462,
+   "min": -0.5461016549534504,
+   "max": 0.20368308073988292,
+   "n_negative": 6,
+   "n_positive": 4
+  }
+ },
+ "Q_share": {
+  "subset_def": "|dr| >= 0.02（**描述**门槛，不参与判词）",
+  "subset_eps": [
+   "ep100",
+   "ep101",
+   "ep102",
+   "ep104",
+   "ep105",
+   "ep107",
+   "ep108",
+   "ep109"
+  ],
+  "n_subset": 8,
+  "spearman_absdr_maxshare_all10": -0.6121212121212121,
+  "spearman_absdr_maxshare_subset": -0.5476190476190477,
+  "spearman_absdr_abs_ku_all10": 0.6,
+  "per_ep_shares": {
+   "ep100": {
+    "user": 0.19506822566665089,
+    "frame": 0.7908114057670941,
+    "within": 0.014120368566255315
+   },
+   "ep101": {
+    "user": 0.918834237338341,
+    "frame": 0.02956524222035513,
+    "within": 0.05160052044130412
+   },
+   "ep102": {
+    "user": 0.3650647121052068,
+    "frame": 1.9170801484885058,
+    "within": -1.28214486059371
+   },
+   "ep103": {
+    "user": 1.01343704598366,
+    "frame": 0.9311095029030947,
+    "within": -0.9445465488867595
+   },
+   "ep104": {
+    "user": -0.6546518402212198,
+    "frame": 0.7310196032641929,
+    "within": 0.9236322369570275
+   },
+   "ep105": {
+    "user": 1.3960051673517329,
+    "frame": 0.7472895184069701,
+    "within": -1.1432946857587025
+   },
+   "ep106": {
+    "user": 4.0514276503638245,
+    "frame": -3.3897740588236585,
+    "within": 0.3383464084598343
+   },
+   "ep107": {
+    "user": 0.6594232036253094,
+    "frame": 0.19339442330119008,
+    "within": 0.1471823730735003
+   },
+   "ep108": {
+    "user": 2.7585615297625097,
+    "frame": -1.3589364814090878,
+    "within": -0.39962504835342444
+   },
+   "ep109": {
+    "user": 1.6163921752520491,
+    "frame": -0.2993931124959203,
+    "within": -0.31699906275612827
+   }
+  }
+ },
+ "M6p": {
+  "verdict": "PREDICTOR-SUPPORTED-NEGATIVE",
+  "rho": -0.9757575757575757,
+  "p_perm": 1.999980000199998e-05,
+  "n_points": 10,
+  "y_new": "ku",
+  "y_old": "sh_user",
+  "rho_old_y": 0.22424242424242424,
+  "p_old_y": 0.5393146068539315,
+  "rho_shifted_true": -0.2727272727272727,
+  "points": [
+   {
+    "ep": 100,
+    "abs_delta_p_bad": 0.25983989075185976,
+    "ku": -0.3000271116440375,
+    "sh_user": 0.19506822566665089
+   },
+   {
+    "ep": 101,
+    "abs_delta_p_bad": 0.43020763700506515,
+    "ku": -0.49150860987651246,
+    "sh_user": 0.918834237338341
+   },
+   {
+    "ep": 102,
+    "abs_delta_p_bad": 0.16781620168456146,
+    "ku": -0.1600175602978217,
+    "sh_user": 0.3650647121052068
+   },
+   {
+    "ep": 103,
+    "abs_delta_p_bad": 0.06785079378719594,
+    "ku": -0.08293389979222233,
+    "sh_user": 1.01343704598366
+   },
+   {
+    "ep": 104,
+    "abs_delta_p_bad": 0.10947017658407449,
+    "ku": -0.1651661437559065,
+    "sh_user": -0.6546518402212198
+   },
+   {
+    "ep": 105,
+    "abs_delta_p_bad": 0.29011136710707597,
+    "ku": -0.40282709126253763,
+    "sh_user": 1.3960051673517329
+   },
+   {
+    "ep": 106,
+    "abs_delta_p_bad": 0.2373763302462933,
+    "ku": -0.3044459440753045,
+    "sh_user": 4.0514276503638245
+   },
+   {
+    "ep": 107,
+    "abs_delta_p_bad": 0.5513928574240894,
+    "ku": -0.5403887926007871,
+    "sh_user": 0.6594232036253094
+   },
+   {
+    "ep": 108,
+    "abs_delta_p_bad": 0.37848513360960967,
+    "ku": -0.4181366518862848,
+    "sh_user": 2.7585615297625097
+   },
+   {
+    "ep": 109,
+    "abs_delta_p_bad": 0.3984000238487709,
+    "ku": -0.46516564407108835,
+    "sh_user": 1.6163921752520491
+   }
+  ],
+  "no_info_flag": false
+ },
+ "sens_kappa": {
+  "kappa=0.005": {
+   "user": "DIRECTION-CONFIRMED:USER-NEGATIVE",
+   "frame": "DIRECTION-UNRESOLVED",
+   "combined": "DIRECTION-CONFIRMED:USER-NEGATIVE",
+   "n_neg_u": 10,
+   "n_neg_f": 6
+  },
+  "kappa=0.01": {
+   "user": "DIRECTION-CONFIRMED:USER-NEGATIVE",
+   "frame": "DIRECTION-UNRESOLVED",
+   "combined": "DIRECTION-CONFIRMED:USER-NEGATIVE",
+   "n_neg_u": 10,
+   "n_neg_f": 6
+  },
+  "kappa=0.02": {
+   "user": "DIRECTION-CONFIRMED:USER-NEGATIVE",
+   "frame": "DIRECTION-UNRESOLVED",
+   "combined": "DIRECTION-CONFIRMED:USER-NEGATIVE",
+   "n_neg_u": 10,
+   "n_neg_f": 5
+  }
+ },
+ "mu_min": 0.01,
+ "mu_min_effective": false,
+ "note_q_dir_vs_q_share": "Q_dir 与 Q_share 答不同问题：前者'搬运方向是否系统性'，后者'解释了多少净缺口'。两者可以给出不同判词，必须同报。"
+}
