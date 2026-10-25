@@ -1,7 +1,7 @@
 # `CW-R2.8` 交付 —— 「学习空间到底在哪里」：A 支逐位重建 + B 支参数不确定性剂量表
 
-- 执行时间：**2026-10-25 20:07–20:15 +08:00**（`python datetime.now().astimezone()` 实测 = Asia/Shanghai；
-  证据目录时间戳 `20261025T120711` 为 UTC）
+- 执行时间：**19:33 开工 / 20:07 正式面板落盘 / 20:16 收尾**（`python datetime.now().astimezone()` 实测 = Asia/Shanghai；
+  证据目录时间戳 `20261025T120711` 为 UTC，= 本地 20:07）
 - 轮次：`CW-R2.8`（游标：R2.7 `NOT-CONVERGED` → 本轮）
 - 预注册：`docs/research/CW-R2.8-学习空间判定-预注册-v0.1.md`（**跑前写**，含 §9 的 4 条跑前修订）
 - 协议：`CW-POMDP-v1.1`（**未改**）；研究基线 = `mainline_config()`（`BOUNDED` plant + `ack_mode="exact"`）
