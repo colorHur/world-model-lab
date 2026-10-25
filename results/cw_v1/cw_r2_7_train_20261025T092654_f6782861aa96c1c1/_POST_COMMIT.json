@@ -1,0 +1,16 @@
+{
+ "commit": "7d64b27543d38444615d4439ffa1c9fecb939608",
+ "remote_main": "7d64b27543d38444615d4439ffa1c9fecb939608",
+ "remote_checked_by": "git ls-remote origin refs/heads/main",
+ "executed_version_equals_committed": true,
+ "blob_sha": {
+  "experiments/cw_v1/r2_7_learn.py": "e5bb70ac6ea9b3f3d9ad6fbe0431ef464cebd0aa",
+  "experiments/cw_v1/r2_7_train.py": "a5b09f7a63c4ff423bdfc75e46507e37318e5a31"
+ },
+ "worktree_sha_hash_object": {
+  "experiments/cw_v1/r2_7_learn.py": "e5bb70ac6ea9b3f3d9ad6fbe0431ef464cebd0aa",
+  "experiments/cw_v1/r2_7_train.py": "a5b09f7a63c4ff423bdfc75e46507e37318e5a31"
+ },
+ "note": "执行版 == 提交版：两文件 hash-object 与 HEAD:path rev-parse 逐字相同（运行前未提交，运行后才提交）",
+ "post_run_git_status_clean": true
+}
