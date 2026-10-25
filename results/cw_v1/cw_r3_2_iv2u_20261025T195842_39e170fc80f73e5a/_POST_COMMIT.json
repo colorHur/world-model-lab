@@ -1,0 +1,10 @@
+{
+ "round": "CW-R3.2",
+ "recorded_at": "2026-10-26T04:05:32+08:00",
+ "head": "a4a1fa25537d58f78bd8a94a724cd1870b583c1f",
+ "head_short": "a4a1fa2",
+ "dirty": "M docs/CW-R3.2-2用户窗口DP-交付.md\n M docs/research/CW-R3.2-2用户窗口DP-预注册-v0.1.md",
+ "evidence": "results/cw_v1/cw_r3_2_iv2u_20261025T195842_39e170fc80f73e5a",
+ "summary_json_sha256": "59781c0040ffa8ffe791a4778e8451da23db6868346b1fe28a6744e66d71f190",
+ "note": "本文件记录主体提交后时点；其后 STATE/RUNLOG/MEMORY 在科研空间，不在本仓库"
+}
