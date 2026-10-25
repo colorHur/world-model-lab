@@ -1,0 +1,28 @@
+{
+  "round": "CW-R3.0",
+  "head": "7187cdd",
+  "head_full": "7187cdd2676d496498396f15748541fc2957e5cf",
+  "remote_main": "7187cdd2676d496498396f15748541fc2957e5cf",
+  "remote_matches": true,
+  "worktree_clean_before": true,
+  "now": "2026-10-25T22:55:29.838038+08:00",
+  "autocrlf": "input",
+  "note": "hash-object 用**默认过滤**（core.autocrlf=input 时 --no-filters 会误报）",
+  "files": {
+    "experiments/cw_v1/r3_0_card.py": {
+      "worktree_blob": "616904658d4643d4c095d150c87446afec8e0b6f",
+      "head_blob": "616904658d4643d4c095d150c87446afec8e0b6f",
+      "same": true
+    },
+    "docs/research/CW-R3.0-立项卡-预注册-v0.1.md": {
+      "worktree_blob": "5bb6ba789c80a699d5618343665b99c6411fdcd6",
+      "head_blob": "5bb6ba789c80a699d5618343665b99c6411fdcd6",
+      "same": true
+    },
+    "docs/CW-R3.0-立项卡-交付.md": {
+      "worktree_blob": "624e95cbd4859f8f38b94297ecdfe9bea738f79d",
+      "head_blob": "624e95cbd4859f8f38b94297ecdfe9bea738f79d",
+      "same": true
+    }
+  }
+}
