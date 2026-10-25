@@ -1,0 +1,28 @@
+{
+  "note": "提交后补记：执行版 == 提交版（**按 git 默认过滤**比对，见 eol_caveat）",
+  "head": "775a8a36db1c7849e0175cf8f8390fdd4105c756",
+  "remote_main": "775a8a36db1c7849e0175cf8f8390fdd4105c756",
+  "head_equals_remote": true,
+  "run_dir": "results/cw_v1/cw_r2_8_space_20261025T120711_31445505a9e40709",
+  "blobs": {
+    "experiments/cw_v1/r2_8_space.py": {
+      "worktree_filtered_sha": "cda8b1168aacd7064693ab795f0a75b0faadda09",
+      "head_path_sha": "cda8b1168aacd7064693ab795f0a75b0faadda09",
+      "worktree_raw_sha": "5477b6f7176ca0a258aaee5ae404007bfa20f3b9",
+      "same": true
+    },
+    "experiments/cw_v1/r2_8b_diag_theta.py": {
+      "worktree_filtered_sha": "25b7814566d1c448778afa7532ca4d8e61751a87",
+      "head_path_sha": "25b7814566d1c448778afa7532ca4d8e61751a87",
+      "worktree_raw_sha": "7d225e93aa2b61d1bcde8ab17b53fff87cc57603",
+      "same": true
+    }
+  },
+  "eol_caveat": "core.autocrlf=input ⇒ 工作树是 CRLF、blob 是 LF。`hash-object --no-filters` 与 `HEAD:path` **不相等是预期的**；必须用默认过滤的 `hash-object`（本轮 R2.7 的写法在此环境会误报不一致）。",
+  "verified_at": "2026-10-25T20:16:13+08:00",
+  "counts": {
+    "run_episode": 0,
+    "world_steps": 1536,
+    "train_steps": 0
+  }
+}
