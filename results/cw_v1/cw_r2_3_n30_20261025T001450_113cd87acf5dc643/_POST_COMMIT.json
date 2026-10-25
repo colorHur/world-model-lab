@@ -1,0 +1,15 @@
+{
+ "note": "R2.3 有效证据的提交后校正（运行 meta.json 里 blob_sha_r2_3=None：运行时该文件尚未入库）",
+ "run_dir": "cw_r2_3_n30_20261025T001450_113cd87acf5dc643",
+ "commit": "b4831501ab5a05adf06ecd6760e418fcb443fea1",
+ "blob_sha_r2_3_n30_py": "54ac357825aaa50f41ab9e34dd2abd937634b10b",
+ "worktree_sha_r2_3_n30_py": "54ac357825aaa50f41ab9e34dd2abd937634b10b",
+ "note_hash": "blob_sha 与 worktree_sha 相等（core.autocrlf=input 下该文件无 CRLF）",
+ "first_run": {
+  "tag": "main",
+  "exit": 1,
+  "reason": "secondary_aoi TypeError: float(None)；崩在 outdir.mkdir 之前 ⇒ 无证据目录、无 _SUPERSEDED",
+  "cells_log": "90 行 [CELL]/[NULL] 读数与有效版逐字相同（重复性对照，见交付 §5）"
+ },
+ "timestamp_local": "2026-10-25T08:21:15.647159+08:00"
+}
