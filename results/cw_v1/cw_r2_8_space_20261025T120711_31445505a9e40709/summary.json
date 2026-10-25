@@ -1,0 +1,78 @@
+{
+  "round": "CW-R2.8",
+  "protocol": "CW-POMDP-v1.1",
+  "src_hash": "31445505a9e40709",
+  "judgement": {
+    "A": "A-RECONSTRUCT-EXACT",
+    "B": "B-HEADROOM-PRESENT",
+    "overall_prereg": "LEARNING-SPACE-AT-UNKNOWN-PARAMS",
+    "overall_corrected": "R2-BELIEF-CLOSED-FORM",
+    "overall": "R2-BELIEF-CLOSED-FORM",
+    "worst_abs_dx": 0.0,
+    "worst_abs_dP": 0.0,
+    "ctrl_shuffle_min_dx": 0.6155241513098603,
+    "ctrl_drop_min_dx": 0.9968794878294764,
+    "ctrl_sigma15_min_dx": 0.056690137091440884,
+    "ctrl_sigma15_min_dP": 0.044107268877911054,
+    "mut_min_dx": 0.24194564765425008
+  },
+  "gates": {
+    "n": 11,
+    "n_fail": 0
+  },
+  "elapsed_s": {
+    "panel_a": 0.21422239998355508,
+    "panel_b": 0.16488680004840717,
+    "total": 0.3948693000129424
+  },
+  "config": {
+    "plant": {
+      "A": [
+        1.0,
+        1.0
+      ],
+      "B": 0.32,
+      "sigma_w": [
+        0.02,
+        0.03
+      ],
+      "prior_var": 1.0,
+      "sigma_meas": 0.2,
+      "q_cost": 1.0,
+      "r_cost": 0.02
+    },
+    "channel": {
+      "rho_panel": [
+        0.85,
+        0.98
+      ],
+      "kappa": 2.0,
+      "log_h_star": 0.0,
+      "sigma_csi": 0.05,
+      "h_log_init_std": 1.0,
+      "use_ack_for_csi": true,
+      "ack_mode": "exact",
+      "ack_var": 0.63
+    },
+    "protocol": {
+      "horizon": 256,
+      "c_probe": 1,
+      "c_data": 1,
+      "budget_ratios": [
+        0.5,
+        0.8
+      ],
+      "init_from_prior": true,
+      "event_pairing": "slot",
+      "allow_multislot": false
+    }
+  },
+  "counts": {
+    "run_episode": 0,
+    "world_steps": 1536,
+    "train_steps": 0,
+    "grad_steps": 0
+  },
+  "git_head": "48346a8aebe131fffe4aa80dd233667dc5148835",
+  "src_hash_self": "8688d87e20728943"
+}

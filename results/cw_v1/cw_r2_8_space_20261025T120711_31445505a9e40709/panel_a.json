@@ -1,0 +1,246 @@
+{
+  "runs": {
+    "dense@100": {
+      "script": "dense",
+      "episode": 100,
+      "max_abs_dx": 0.0,
+      "max_abs_dP": 0.0,
+      "max_abs_dx_init": 0.0,
+      "max_abs_dP_init": 0.0,
+      "n_delivered_records": 128,
+      "n_ack": 128,
+      "n_nack": 128,
+      "n_probe": 0,
+      "keys_touched": [
+        "data_delivered",
+        "user",
+        "y_t"
+      ],
+      "stream_ids": {
+        "split": "dev",
+        "episode": 100,
+        "spawn_keys": {
+          "plant": "2-100-0",
+          "channel": "2-100-1",
+          "meas": "2-100-2",
+          "csi": "2-100-3",
+          "packet": "2-100-4",
+          "init": "2-100-5"
+        }
+      }
+    },
+    "dense@101": {
+      "script": "dense",
+      "episode": 101,
+      "max_abs_dx": 0.0,
+      "max_abs_dP": 0.0,
+      "max_abs_dx_init": 0.0,
+      "max_abs_dP_init": 0.0,
+      "n_delivered_records": 121,
+      "n_ack": 121,
+      "n_nack": 135,
+      "n_probe": 0,
+      "keys_touched": [
+        "data_delivered",
+        "user",
+        "y_t"
+      ],
+      "stream_ids": {
+        "split": "dev",
+        "episode": 101,
+        "spawn_keys": {
+          "plant": "2-101-0",
+          "channel": "2-101-1",
+          "meas": "2-101-2",
+          "csi": "2-101-3",
+          "packet": "2-101-4",
+          "init": "2-101-5"
+        }
+      }
+    },
+    "sparse@100": {
+      "script": "sparse",
+      "episode": 100,
+      "max_abs_dx": 0.0,
+      "max_abs_dP": 0.0,
+      "max_abs_dx_init": 0.0,
+      "max_abs_dP_init": 0.0,
+      "n_delivered_records": 11,
+      "n_ack": 11,
+      "n_nack": 21,
+      "n_probe": 0,
+      "keys_touched": [
+        "data_delivered",
+        "user",
+        "y_t"
+      ],
+      "stream_ids": {
+        "split": "dev",
+        "episode": 100,
+        "spawn_keys": {
+          "plant": "2-100-0",
+          "channel": "2-100-1",
+          "meas": "2-100-2",
+          "csi": "2-100-3",
+          "packet": "2-100-4",
+          "init": "2-100-5"
+        }
+      }
+    },
+    "sparse@101": {
+      "script": "sparse",
+      "episode": 101,
+      "max_abs_dx": 0.0,
+      "max_abs_dP": 0.0,
+      "max_abs_dx_init": 0.0,
+      "max_abs_dP_init": 0.0,
+      "n_delivered_records": 18,
+      "n_ack": 18,
+      "n_nack": 14,
+      "n_probe": 0,
+      "keys_touched": [
+        "data_delivered",
+        "user",
+        "y_t"
+      ],
+      "stream_ids": {
+        "split": "dev",
+        "episode": 101,
+        "spawn_keys": {
+          "plant": "2-101-0",
+          "channel": "2-101-1",
+          "meas": "2-101-2",
+          "csi": "2-101-3",
+          "packet": "2-101-4",
+          "init": "2-101-5"
+        }
+      }
+    },
+    "mixed@100": {
+      "script": "mixed",
+      "episode": 100,
+      "max_abs_dx": 0.0,
+      "max_abs_dP": 0.0,
+      "max_abs_dx_init": 0.0,
+      "max_abs_dP_init": 0.0,
+      "n_delivered_records": 44,
+      "n_ack": 44,
+      "n_nack": 41,
+      "n_probe": 86,
+      "keys_touched": [
+        "data_delivered",
+        "user",
+        "y_t"
+      ],
+      "stream_ids": {
+        "split": "dev",
+        "episode": 100,
+        "spawn_keys": {
+          "plant": "2-100-0",
+          "channel": "2-100-1",
+          "meas": "2-100-2",
+          "csi": "2-100-3",
+          "packet": "2-100-4",
+          "init": "2-100-5"
+        }
+      }
+    },
+    "mixed@101": {
+      "script": "mixed",
+      "episode": 101,
+      "max_abs_dx": 0.0,
+      "max_abs_dP": 0.0,
+      "max_abs_dx_init": 0.0,
+      "max_abs_dP_init": 0.0,
+      "n_delivered_records": 45,
+      "n_ack": 45,
+      "n_nack": 40,
+      "n_probe": 86,
+      "keys_touched": [
+        "data_delivered",
+        "user",
+        "y_t"
+      ],
+      "stream_ids": {
+        "split": "dev",
+        "episode": 101,
+        "spawn_keys": {
+          "plant": "2-101-0",
+          "channel": "2-101-1",
+          "meas": "2-101-2",
+          "csi": "2-101-3",
+          "packet": "2-101-4",
+          "init": "2-101-5"
+        }
+      }
+    }
+  },
+  "controls": {
+    "dense@100": {
+      "shuffle_y_max_abs_dx": 1.6159946962478318,
+      "shuffle_y_max_abs_dP": 0.0,
+      "drop_one_max_abs_dx": 0.9968794878294764,
+      "sigma15_max_abs_dx": 0.066200974280751,
+      "sigma15_max_abs_dP": 0.04412164719493108,
+      "mut_gain0_max_abs_dx": 1.4467560919315312,
+      "mut_gain0_max_abs_dP": 1.2185166022705909,
+      "mut_gain1_max_abs_dx": 0.5392197683289934,
+      "mut_gain1_max_abs_dP": 0.03846552220197571
+    },
+    "dense@101": {
+      "shuffle_y_max_abs_dx": 1.8947095903995685,
+      "shuffle_y_max_abs_dP": 0.0,
+      "drop_one_max_abs_dx": 1.8159048581633022,
+      "sigma15_max_abs_dx": 0.08329838798914224,
+      "sigma15_max_abs_dP": 0.044159648816362765,
+      "mut_gain0_max_abs_dx": 1.8159048581633022,
+      "mut_gain0_max_abs_dP": 1.2204814821177197,
+      "mut_gain1_max_abs_dx": 0.41133425895183773,
+      "mut_gain1_max_abs_dP": 0.038476045337651255
+    },
+    "sparse@100": {
+      "shuffle_y_max_abs_dx": 0.6155241513098603,
+      "shuffle_y_max_abs_dP": 0.0,
+      "drop_one_max_abs_dx": 0.9968794878294764,
+      "sigma15_max_abs_dx": 0.056690137091440884,
+      "sigma15_max_abs_dP": 0.044107268877911054,
+      "mut_gain0_max_abs_dx": 0.9968794878294764,
+      "mut_gain0_max_abs_dP": 1.0801579796170133,
+      "mut_gain1_max_abs_dx": 0.25198393018551024,
+      "mut_gain1_max_abs_dP": 0.03846153846153855
+    },
+    "sparse@101": {
+      "shuffle_y_max_abs_dx": 1.653494547494169,
+      "shuffle_y_max_abs_dP": 0.0,
+      "drop_one_max_abs_dx": 1.8159048581633022,
+      "sigma15_max_abs_dx": 0.08329838798914224,
+      "sigma15_max_abs_dP": 0.044107268877911054,
+      "mut_gain0_max_abs_dx": 1.8159048581633022,
+      "mut_gain0_max_abs_dP": 1.0841272893299065,
+      "mut_gain1_max_abs_dx": 0.24194564765425008,
+      "mut_gain1_max_abs_dP": 0.03846153846153855
+    },
+    "mixed@100": {
+      "shuffle_y_max_abs_dx": 1.5750192590263175,
+      "shuffle_y_max_abs_dP": 0.0,
+      "drop_one_max_abs_dx": 1.3295746279052336,
+      "sigma15_max_abs_dx": 0.08365188880027624,
+      "sigma15_max_abs_dP": 0.04419768026130754,
+      "mut_gain0_max_abs_dx": 1.3295746279052336,
+      "mut_gain0_max_abs_dP": 1.212216866236079,
+      "mut_gain1_max_abs_dx": 0.29206616948660247,
+      "mut_gain1_max_abs_dP": 0.038486568293605826
+    },
+    "mixed@101": {
+      "shuffle_y_max_abs_dx": 2.1135883831317783,
+      "shuffle_y_max_abs_dP": 0.0,
+      "drop_one_max_abs_dx": 2.4288338591656458,
+      "sigma15_max_abs_dx": 0.11137352619064744,
+      "sigma15_max_abs_dP": 0.04415492548473309,
+      "mut_gain0_max_abs_dx": 2.4288338591656458,
+      "mut_gain0_max_abs_dP": 1.2069041907650533,
+      "mut_gain1_max_abs_dx": 0.45015736623904173,
+      "mut_gain1_max_abs_dP": 0.03847473784556724
+    }
+  }
+}
