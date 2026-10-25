@@ -1,0 +1,12 @@
+{
+ "head": "434aad759b011c12f5a1d0fcdb2de30634984553",
+ "commit_subject": "CW-R2.6 训练接口验收：T1-T6 双向反例 6/6 + 变异测试 7/7（零训练）",
+ "worktree_sha_r2_6": "4b239df077ae1f0df427b46b30782afbd88de517",
+ "blob_sha_r2_6": "4b239df077ae1f0df427b46b30782afbd88de517",
+ "executed_equals_committed_r2_6": true,
+ "worktree_sha_r2_train_spec": "263d32adf7271b765b1928832d22284fb9733c7c",
+ "blob_sha_r2_train_spec": "263d32adf7271b765b1928832d22284fb9733c7c",
+ "executed_equals_committed_r2_train_spec": true,
+ "note": "执行版 == 提交版：`git hash-object <worktree>` 与 `git rev-parse HEAD:<path>` 逐字相同 ⇒ 跑完之后没有改过这两个文件（R2.5 同法）。",
+ "timestamp_local": "2026-10-25T15:07:25+08:00"
+}
