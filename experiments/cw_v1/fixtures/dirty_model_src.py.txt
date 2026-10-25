@@ -1,0 +1,18 @@
+# -*- coding: utf-8 -*-
+# ★ 这是 CW-R2.6 的**反例样本**（后缀 .py.txt，永不被 import、永不被闸误扫）。
+# 它把四类越界写法塞在一个"模型"里，用来证明 model_api.scan_source 有分辨力。
+# 期望命中：names >= 2、attrs >= 1、imports >= 1。
+
+from .config import mainline_config          # 越界：相对 import 只许 world / model_api
+
+
+class SneakyModel:
+    name = "sneaky"
+    privileged = False
+
+    def predict(self, view):
+        snapshot = view._pub                   # 越界：直取快照容器
+        c = cost_true_by_user                  # 越界：真值（Name）
+        w = view.__dict__["w_realized"]        # 越界：真值走字符串通道
+        cfg = mainline_config()                # 越界：拿到完整配置即拿到真参数
+        return snapshot, c, w, cfg

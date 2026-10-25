@@ -1,0 +1,180 @@
+{
+ "spec_version": "CW-R2-TRAINSPEC-v1.0",
+ "round": "CW-R2.6",
+ "capacity": {
+  "max_params": 50000,
+  "max_hidden": 2,
+  "max_width": 64,
+  "n_features_used": 15,
+  "per_user_features": [
+   "x_hat",
+   "P_hat",
+   "stamp",
+   "task_aoi",
+   "h_mean",
+   "h_var",
+   "csi_stamp",
+   "csi_aoi"
+  ],
+  "global_features": [
+   "prior.x_mean",
+   "prior.x_var",
+   "prior.h_log_mean",
+   "prior.h_log_var",
+   "t",
+   "budget_left",
+   "budget_total"
+  ]
+ },
+ "budget": {
+  "train_eps": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32,
+   33,
+   34,
+   35,
+   36,
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49,
+   50,
+   51,
+   52,
+   53,
+   54,
+   55,
+   56,
+   57,
+   58,
+   59,
+   60,
+   61,
+   62,
+   63,
+   64,
+   65,
+   66,
+   67,
+   68,
+   69
+  ],
+  "dev_eps": [
+   100,
+   101,
+   102,
+   103,
+   104,
+   105,
+   106,
+   107,
+   108,
+   109,
+   110,
+   111,
+   112,
+   113,
+   114
+  ],
+  "max_grad_steps": 20000,
+  "max_wallclock_min": 30.0,
+  "train_seeds": [
+   7,
+   17,
+   27
+  ]
+ },
+ "objective": {
+  "eval_primary": "A_t",
+  "eval_required": [
+   "cost_true_per_step",
+   "per_user_r_i"
+  ],
+  "legacy_primary": "cost_true_per_step_median",
+  "forbidden": [
+   "ku",
+   "kf",
+   "share",
+   "share_user",
+   "share_frame"
+  ],
+  "secondary": [
+   "per_user_r_i",
+   "mean_task_aoi_per_user_timeavg",
+   "n_delivered",
+   "n_attempted",
+   "n_probe",
+   "cost_true_by_user"
+  ]
+ },
+ "derived": {
+  "n_declared_fields": 20,
+  "n_features_used": 15,
+  "max_params_at_structure_cap": 5314,
+  "structure_cap_binds_first": true
+ },
+ "conflicts": [
+  {
+   "id": "C1",
+   "where": "cards §5 vs model_api.OBJECTIVE",
+   "card": "primary = A_t",
+   "code": "primary = cost_true_per_step_median",
+   "handling": "本轮 EVAL_PRIMARY 取卡片口径；legacy 保留不改，冲突入证据"
+  },
+  {
+   "id": "C2",
+   "where": "cards §2 vs model_api.require_view",
+   "card": "输入 = 20 个公开字段",
+   "code": "require_view 只保证顶层 7 键",
+   "handling": "20 是三个元组的算术和；history 的 12 个子字段不在其中。骨架实际消费 15 维，未用 = telemetry.i / n_users / history"
+  },
+  {
+   "id": "C3",
+   "where": "cards §2 两条上限互不咬合",
+   "card": "params ≤ 50000 且 hidden ≤ 2 宽 ≤ 64",
+   "code": "结构用满也只有 5314 参数 < 50000 ⇒ 参数上限永不先触发",
+   "handling": "T5 分两条腿：结构腿 + 参数腿，各自用真数出来的计数"
+  }
+ ],
+ "training": "none"
+}

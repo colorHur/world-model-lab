@@ -1,0 +1,88 @@
+{
+ "head": "92117157ef19f32cb6539ed1574c8a307dca7846",
+ "n": 13,
+ "n_bad": 0,
+ "bad": [],
+ "pass": true,
+ "rows": [
+  {
+   "file": "experiments/cw_v1/world.py",
+   "worktree": "f950de12e00b",
+   "head": "f950de12e00b",
+   "same": true
+  },
+  {
+   "file": "experiments/cw_v1/plan_ref.py",
+   "worktree": "fd62a9e6813c",
+   "head": "fd62a9e6813c",
+   "same": true
+  },
+  {
+   "file": "experiments/cw_v1/plan_dp.py",
+   "worktree": "29019ae98168",
+   "head": "29019ae98168",
+   "same": true
+  },
+  {
+   "file": "experiments/cw_v1/runner.py",
+   "worktree": "c1610af43909",
+   "head": "c1610af43909",
+   "same": true
+  },
+  {
+   "file": "experiments/cw_v1/config.py",
+   "worktree": "cd61bd04defd",
+   "head": "cd61bd04defd",
+   "same": true
+  },
+  {
+   "file": "experiments/cw_v1/policies.py",
+   "worktree": "0a419c5629eb",
+   "head": "0a419c5629eb",
+   "same": true
+  },
+  {
+   "file": "experiments/cw_v1/model_api.py",
+   "worktree": "18a51cb7114d",
+   "head": "18a51cb7114d",
+   "same": true
+  },
+  {
+   "file": "experiments/cw_v1/r2_models.py",
+   "worktree": "ad6e6341dba3",
+   "head": "ad6e6341dba3",
+   "same": true
+  },
+  {
+   "file": "experiments/cw_v1/mech2.py",
+   "worktree": "9978f82eb8f4",
+   "head": "9978f82eb8f4",
+   "same": true
+  },
+  {
+   "file": "experiments/cw_v1/mech3.py",
+   "worktree": "93cb6e2d62bf",
+   "head": "93cb6e2d62bf",
+   "same": true
+  },
+  {
+   "file": "experiments/cw_v1/r2_1_sep.py",
+   "worktree": "2fffd587f2cc",
+   "head": "2fffd587f2cc",
+   "same": true
+  },
+  {
+   "file": "experiments/cw_v1/r2_4_aoi.py",
+   "worktree": "8bb2c540881f",
+   "head": "8bb2c540881f",
+   "same": true
+  },
+  {
+   "file": "experiments/cw_v1/r2_5_seed.py",
+   "worktree": "fb6051e66f99",
+   "head": "fb6051e66f99",
+   "same": true
+  }
+ ],
+ "why": "被测物若被改过，本轮'零训练/零 episode'的声明就不覆盖同一份代码"
+}

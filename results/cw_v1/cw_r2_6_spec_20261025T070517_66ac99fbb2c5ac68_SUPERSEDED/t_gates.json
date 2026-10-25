@@ -1,0 +1,400 @@
+{
+ "verdict": "SPEC-GATES-READY",
+ "n_pass": 14,
+ "n_expected": 14,
+ "legs": [
+  {
+   "id": "T1",
+   "caught": true,
+   "clean": true,
+   "pass": true,
+   "refused": {
+    "ku": "ValueError: 评价量 'ku' 在 OBJECTIVE['forbidden'] 里（['ku",
+    "kf": "ValueError: 评价量 'kf' 在 OBJECTIVE['forbidden'] 里（['ku",
+    "share": "ValueError: 评价量 'share' 在 OBJECTIVE['forbidden'] 里（[",
+    "share_user": "ValueError: 评价量 'share_user' 在 OBJECTIVE['forbidden'",
+    "model_input:x_true": "PermissionError: 'x_true' 是模型**不可见**字段（TRUTH_FIELDS ∪ EXT"
+   },
+   "allowed": {
+    "A_t": {
+     "name": "A_t",
+     "allowed": true,
+     "evidence_side_only": false,
+     "visibility": null,
+     "why": "公开量"
+    },
+    "cost_true_by_user": {
+     "name": "cost_true_by_user",
+     "allowed": true,
+     "evidence_side_only": true,
+     "visibility": "never",
+     "why": "真值类量：只许在证据层计算（算 r_i / 报绝对代价），不许进视图、不许当模型输入"
+    },
+    "model_input:telemetry.x_hat": "allowed"
+   }
+  },
+  {
+   "id": "T2",
+   "caught": true,
+   "clean": true,
+   "pass": true,
+   "dirty": {
+    "n_names": 2,
+    "n_attrs": 1,
+    "n_imports": 1,
+    "names": [
+     "cost_true_by_user",
+     "w_realized"
+    ],
+    "attrs": [
+     "_pub"
+    ],
+    "imports": [
+     ".config"
+    ]
+   },
+   "r2_models": {
+    "n_names": 0,
+    "n_attrs": 0,
+    "n_imports": 0,
+    "skipped": [
+     "TruthDiagnostic"
+    ]
+   },
+   "r2_train_spec": {
+    "n_names": 0,
+    "n_attrs": 0,
+    "n_imports": 0,
+    "hits": []
+   }
+  },
+  {
+   "id": "T3",
+   "caught": true,
+   "clean": true,
+   "pass": true,
+   "subclass": "TypeError: 模型只接受 `SchedulerView` 本体，收到 EvilView。真状态/真信道/未来随机数不向模型开放。",
+   "dict": "TypeError: 模型只接受 `SchedulerView` 本体，收到 dict。真状态/真信道",
+   "clean_view": {
+    "same_object": true,
+    "keys": [
+     "budget_left",
+     "budget_total",
+     "history",
+     "n_users",
+     "prior",
+     "t",
+     "telemetry"
+    ]
+   },
+   "evil_had_attrs": {
+    "x_true": true,
+    "cost_true_by_user": true
+   }
+  },
+  {
+   "id": "T4",
+   "caught": true,
+   "clean": true,
+   "pass": true,
+   "overlap": "AssertionError: train/dev 有 10 个 episode 重叠：[60, 61, 62, 63, 64, 65, 66, 67,",
+   "nominal": {
+    "n_train": 70,
+    "n_dev": 15,
+    "n_inter": 0,
+    "train_range": [
+     0,
+     69
+    ],
+    "dev_range": [
+     100,
+     114
+    ]
+   },
+   "r25_dev_eps": [
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    111,
+    112,
+    113,
+    114
+   ],
+   "r25_intersection_with_train": [],
+   "r25_source": "cw_r2_5_seed_20261025T045209_f00b22682d18e97f"
+  },
+  {
+   "id": "T5",
+   "caught": true,
+   "clean": true,
+   "pass": true,
+   "struct_width256": "CapacityExceeded: 宽度 [256] 超上限 64",
+   "param_measured_over": {
+    "n_params": 70402,
+    "shapes": [
+     [
+      15,
+      256
+     ],
+     [
+      256,
+      256
+     ],
+     [
+      256,
+      2
+     ]
+    ],
+    "by": "count_params_from_shapes"
+   },
+   "param_budget": "CapacityExceeded: 参数 70402 > 上限 50000（超出 20402）",
+   "clean_width32": {
+    "n_hidden": 1,
+    "widths": [
+     32
+    ],
+    "n_params": 578,
+    "max_params": 50000,
+    "headroom": 49422,
+    "source": "model",
+    "shapes": [
+     [
+      15,
+      32
+     ],
+     [
+      32,
+      2
+     ]
+    ],
+    "n_params_measured": 578
+   },
+   "clean_n_params": 578,
+   "max_params_at_cap": 5314,
+   "conflict3_confirmed": true,
+   "struct_depth3": "CapacityExceeded: 隐层数 3 > 上限 2"
+  },
+  {
+   "id": "T6",
+   "caught": true,
+   "clean": true,
+   "pass": true,
+   "refused": {
+    "one_seed": "ReportRefused: 缺训练种子 [17, 27]（已有 [7]，要求 [7, 17, 27]）⇒ 只报合并 Δ 或部分种",
+    "pooled_only": "ReportRefused: 报告键 'pooled' 不是训练种子（种子集 [7, 17, 27]）；把 'pooled'/'a"
+   },
+   "report": {
+    "n_seeds": 3,
+    "by_seed_medians": {
+     "7": 0.048906,
+     "17": 0.068334,
+     "27": -0.03422
+    },
+    "pooled_descriptive_only": true,
+    "seeds_differ_in_output": 3
+   }
+  }
+ ],
+ "skeleton_forward": {
+  "n_users": 2,
+  "x_hat_len": 2,
+  "P_min": 0.9865945434999097,
+  "finite": true,
+  "describe": {
+   "name": "numpy_mlp_skeleton",
+   "n_params": 578,
+   "hidden": [
+    32
+   ],
+   "d_in": 15,
+   "d_out": 2,
+   "seed": 7,
+   "trained": false,
+   "learned": false,
+   "uses": [
+    "x_hat",
+    "P_hat",
+    "stamp",
+    "task_aoi",
+    "h_mean",
+    "h_var",
+    "csi_stamp",
+    "csi_aoi",
+    "prior.x_mean",
+    "prior.x_var",
+    "prior.h_log_mean",
+    "prior.h_log_var",
+    "t",
+    "budget_left",
+    "budget_total"
+   ],
+   "note": "骨架：只跑了前向，没有任何参数更新"
+  },
+  "pass": true,
+  "params_unchanged_after_two_forwards": true
+ },
+ "identity": {
+  "head": "92117157ef19f32cb6539ed1574c8a307dca7846",
+  "n": 13,
+  "n_bad": 0,
+  "bad": [],
+  "pass": true,
+  "rows": [
+   {
+    "file": "experiments/cw_v1/world.py",
+    "worktree": "f950de12e00b",
+    "head": "f950de12e00b",
+    "same": true
+   },
+   {
+    "file": "experiments/cw_v1/plan_ref.py",
+    "worktree": "fd62a9e6813c",
+    "head": "fd62a9e6813c",
+    "same": true
+   },
+   {
+    "file": "experiments/cw_v1/plan_dp.py",
+    "worktree": "29019ae98168",
+    "head": "29019ae98168",
+    "same": true
+   },
+   {
+    "file": "experiments/cw_v1/runner.py",
+    "worktree": "c1610af43909",
+    "head": "c1610af43909",
+    "same": true
+   },
+   {
+    "file": "experiments/cw_v1/config.py",
+    "worktree": "cd61bd04defd",
+    "head": "cd61bd04defd",
+    "same": true
+   },
+   {
+    "file": "experiments/cw_v1/policies.py",
+    "worktree": "0a419c5629eb",
+    "head": "0a419c5629eb",
+    "same": true
+   },
+   {
+    "file": "experiments/cw_v1/model_api.py",
+    "worktree": "18a51cb7114d",
+    "head": "18a51cb7114d",
+    "same": true
+   },
+   {
+    "file": "experiments/cw_v1/r2_models.py",
+    "worktree": "ad6e6341dba3",
+    "head": "ad6e6341dba3",
+    "same": true
+   },
+   {
+    "file": "experiments/cw_v1/mech2.py",
+    "worktree": "9978f82eb8f4",
+    "head": "9978f82eb8f4",
+    "same": true
+   },
+   {
+    "file": "experiments/cw_v1/mech3.py",
+    "worktree": "93cb6e2d62bf",
+    "head": "93cb6e2d62bf",
+    "same": true
+   },
+   {
+    "file": "experiments/cw_v1/r2_1_sep.py",
+    "worktree": "2fffd587f2cc",
+    "head": "2fffd587f2cc",
+    "same": true
+   },
+   {
+    "file": "experiments/cw_v1/r2_4_aoi.py",
+    "worktree": "8bb2c540881f",
+    "head": "8bb2c540881f",
+    "same": true
+   },
+   {
+    "file": "experiments/cw_v1/r2_5_seed.py",
+    "worktree": "fb6051e66f99",
+    "head": "fb6051e66f99",
+    "same": true
+   }
+  ],
+  "why": "被测物若被改过，本轮'零训练/零 episode'的声明就不覆盖同一份代码"
+ },
+ "mutation": [
+  {
+   "id": "M1",
+   "target": "T1",
+   "turns_red": true,
+   "pass": true,
+   "detail": {
+    "caught_after": false,
+    "clean_after": false
+   },
+   "why": "变异后转红 ⇒ 检验有分辨力"
+  },
+  {
+   "id": "M2",
+   "target": "T2",
+   "turns_red": true,
+   "pass": true,
+   "detail": {
+    "caught_after": false,
+    "clean_after": true
+   },
+   "why": "变异后转红 ⇒ 检验有分辨力"
+  },
+  {
+   "id": "M3",
+   "target": "T3",
+   "turns_red": true,
+   "pass": true,
+   "detail": {
+    "caught_after": false,
+    "clean_after": true
+   },
+   "why": "变异后转红 ⇒ 检验有分辨力"
+  },
+  {
+   "id": "M4",
+   "target": "T4",
+   "turns_red": true,
+   "pass": true,
+   "detail": {
+    "caught_after": false,
+    "clean_after": true
+   },
+   "why": "变异后转红 ⇒ 检验有分辨力"
+  },
+  {
+   "id": "M5",
+   "target": "T5",
+   "turns_red": true,
+   "pass": true,
+   "detail": {
+    "caught_after": false,
+    "clean_after": true
+   },
+   "why": "变异后转红 ⇒ 检验有分辨力"
+  },
+  {
+   "id": "M6",
+   "target": "T6",
+   "turns_red": true,
+   "pass": true,
+   "detail": {
+    "caught_after": false,
+    "clean_after": false
+   },
+   "why": "变异后转红 ⇒ 检验有分辨力"
+  }
+ ]
+}

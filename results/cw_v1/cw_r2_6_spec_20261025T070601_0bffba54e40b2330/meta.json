@@ -1,0 +1,26 @@
+{
+ "command": "python -m experiments.cw_v1.r2_6_gates --tag main",
+ "timestamp_local": "2026-10-25T15:06:01.899851+08:00",
+ "python": "3.11.16",
+ "numpy": "2.4.6",
+ "head": "92117157ef19f32cb6539ed1574c8a307dca7846",
+ "src_hash": "0bffba54e40b2330",
+ "worktree_sha_r2_6": "4b239df077ae1f0df427b46b30782afbd88de517",
+ "blob_sha_r2_6": null,
+ "blob_sha_note": "运行前未入库 ⇒ 提交后补 _POST_COMMIT",
+ "git_dirty_before_run": [
+  "?? docs/research/CW-R2.6-训练接口验收-预注册-v0.1.md",
+  "?? experiments/cw_v1/fixtures/",
+  "?? experiments/cw_v1/r2_6_gates.py",
+  "?? experiments/cw_v1/r2_train_spec.py",
+  "?? results/cw_v1/cw_r2_6_spec_20261025T070517_66ac99fbb2c5ac68_SUPERSEDED/"
+ ],
+ "protocol": "CW-POMDP-v1.1",
+ "event_pairing": "slot",
+ "n_episodes": 0,
+ "world_step": 0,
+ "total_elapsed_s": 0.6,
+ "peak_rss_mb": 42.9,
+ "n_fail_total": 0,
+ "training": "none"
+}
