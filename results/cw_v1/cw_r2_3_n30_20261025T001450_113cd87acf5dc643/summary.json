@@ -1,0 +1,1201 @@
+{
+ "protocol": "CW-POMDP-v1.1",
+ "stage": "CW-R2.3",
+ "kind": "PANEL-EXTENSION-N30-FRESH-PRIMARY",
+ "prereg": "docs/research/CW-R2.3-扩N到30-预注册-v0.1.md",
+ "hypothesis": "H-R2-0",
+ "design": {
+  "eps_reuse": [
+   100,
+   101,
+   102,
+   103,
+   104,
+   105,
+   106,
+   107,
+   108,
+   109
+  ],
+  "eps_fresh": [
+   110,
+   111,
+   112,
+   113,
+   114
+  ],
+  "eps_all": [
+   100,
+   101,
+   102,
+   103,
+   104,
+   105,
+   106,
+   107,
+   108,
+   109,
+   110,
+   111,
+   112,
+   113,
+   114
+  ],
+  "plants": [
+   "P1",
+   "P2"
+  ],
+  "models": [
+   "belief_readout",
+   "prior_only"
+  ],
+  "seed_panel": 2001,
+  "seed_null": 3102,
+  "n_cells": 60,
+  "n_null": 30
+ },
+ "primary_fresh": {
+  "verdict": "FRESH-MAGNITUDE-UNRESOLVED",
+  "next_step": "SWITCH-METRIC:mean_task_aoi",
+  "h_sign": false,
+  "h_neg": false,
+  "h_beat": false,
+  "note": "`n_beat<9` **不等于**无效应：真实 beat 率 0.70 时 n=10 的功效仅 0.1493（预注册 §2.3）"
+ },
+ "fresh_block": {
+  "verdict": "CANNOT-SEPARATE",
+  "n_pos": 8,
+  "n_neg": 2,
+  "n_zero_delta": 0,
+  "n_beat": 6,
+  "binom_p_sign": 0.0546875,
+  "binom_p_neg": 0.9892578125,
+  "binom_p_beat": 0.376953125,
+  "h_sign": false,
+  "h_neg_reversed": false,
+  "h_beat": false,
+  "alpha": 0.05,
+  "n_units": 10,
+  "median_abs_delta": 0.01482576582459079,
+  "median_floor_pair": 0.01431325733211301,
+  "delta_median": 0.012703564153874324,
+  "n_zero_floor": 0,
+  "nonfinite_cells": [],
+  "ratio_desc": 1.0358065589534202,
+  "note": "Δ = cost(prior_only) − cost(belief_readout)；Δ>0 ⇒ 弱基线更贵 ⇒ 强基线更好"
+ },
+ "pooled_descriptive": {
+  "ALL": {
+   "verdict": "PANEL-SEPARATES",
+   "n_pos": 25,
+   "n_neg": 5,
+   "n_zero_delta": 0,
+   "n_beat": 20,
+   "binom_p_sign": 0.00016245711594820023,
+   "binom_p_neg": 0.99997026193887,
+   "binom_p_beat": 0.04936857335269451,
+   "h_sign": true,
+   "h_neg_reversed": false,
+   "h_beat": true,
+   "alpha": 0.05,
+   "n_units": 30,
+   "median_abs_delta": 0.03464138282738579,
+   "median_floor_pair": 0.016964526976333442,
+   "delta_median": 0.029861261294111704,
+   "n_zero_floor": 0,
+   "nonfinite_cells": [],
+   "ratio_desc": 2.0419893154529243,
+   "note": "Δ = cost(prior_only) − cost(belief_readout)；Δ>0 ⇒ 弱基线更贵 ⇒ 强基线更好"
+  },
+  "P1": {
+   "verdict": "MAGNITUDE-ONLY-NO-SIGN",
+   "n_pos": 11,
+   "n_neg": 4,
+   "n_zero_delta": 0,
+   "n_beat": 12,
+   "binom_p_sign": 0.059234619140625,
+   "binom_p_neg": 0.982421875,
+   "binom_p_beat": 0.017578125,
+   "h_sign": false,
+   "h_neg_reversed": false,
+   "h_beat": true,
+   "alpha": 0.05,
+   "n_units": 15,
+   "median_abs_delta": 0.04423603942394201,
+   "median_floor_pair": 0.017443973755798405,
+   "delta_median": 0.04423603942394201,
+   "n_zero_floor": 0,
+   "nonfinite_cells": [],
+   "ratio_desc": 2.5358923398539215,
+   "note": "Δ = cost(prior_only) − cost(belief_readout)；Δ>0 ⇒ 弱基线更贵 ⇒ 强基线更好"
+  },
+  "P2": {
+   "verdict": "SIGN-ONLY-NO-MAGNITUDE",
+   "n_pos": 14,
+   "n_neg": 1,
+   "n_zero_delta": 0,
+   "n_beat": 8,
+   "binom_p_sign": 0.00048828125,
+   "binom_p_neg": 0.999969482421875,
+   "binom_p_beat": 0.5,
+   "h_sign": true,
+   "h_neg_reversed": false,
+   "h_beat": false,
+   "alpha": 0.05,
+   "n_units": 15,
+   "median_abs_delta": 0.028797821756931852,
+   "median_floor_pair": 0.01648508019686848,
+   "delta_median": 0.015170536132136342,
+   "n_zero_floor": 0,
+   "nonfinite_cells": [],
+   "ratio_desc": 1.7469021328996817,
+   "note": "Δ = cost(prior_only) − cost(belief_readout)；Δ>0 ⇒ 弱基线更贵 ⇒ 强基线更好"
+  }
+ },
+ "pooled_caveat": "名义 alpha=0.05 无效：扩样由 ep100–109 的 14/20 触发，条件化后实效 I 类错误率 = P(X≥6|n=10,1/2) = 0.3770",
+ "k_need_table": {
+  "10": {
+   "0.05": {
+    "k_need": 9,
+    "p_at_k_need": 0.0107421875,
+    "p_at_k_need_minus_1": 0.0546875
+   },
+   "0.025": {
+    "k_need": 9,
+    "p_at_k_need": 0.0107421875,
+    "p_at_k_need_minus_1": 0.0546875
+   },
+   "0.01": {
+    "k_need": 10,
+    "p_at_k_need": 0.0009765625,
+    "p_at_k_need_minus_1": 0.0107421875
+   },
+   "pooled_conditional_typeI": 0.376953125
+  },
+  "20": {
+   "0.05": {
+    "k_need": 15,
+    "p_at_k_need": 0.020694732666015625,
+    "p_at_k_need_minus_1": 0.057659149169921875
+   },
+   "0.025": {
+    "k_need": 15,
+    "p_at_k_need": 0.020694732666015625,
+    "p_at_k_need_minus_1": 0.057659149169921875
+   },
+   "0.01": {
+    "k_need": 16,
+    "p_at_k_need": 0.005908966064453125,
+    "p_at_k_need_minus_1": 0.020694732666015625
+   },
+   "pooled_conditional_typeI": 0.376953125
+  },
+  "30": {
+   "0.05": {
+    "k_need": 20,
+    "p_at_k_need": 0.04936857335269451,
+    "p_at_k_need_minus_1": 0.10024421103298664
+   },
+   "0.025": {
+    "k_need": 21,
+    "p_at_k_need": 0.02138697262853384,
+    "p_at_k_need_minus_1": 0.04936857335269451
+   },
+   "0.01": {
+    "k_need": 22,
+    "p_at_k_need": 0.008062400855123997,
+    "p_at_k_need_minus_1": 0.02138697262853384
+   },
+   "pooled_conditional_typeI": 0.376953125
+  }
+ },
+ "subset_reconcile_c9": {
+  "n_units": 20,
+  "got": {
+   "ALL": {
+    "verdict": "SIGN-ONLY-NO-MAGNITUDE",
+    "n_pos": 17,
+    "n_neg": 3,
+    "n_beat": 14,
+    "median_abs_delta": 0.04563087743827283,
+    "median_floor_pair": 0.02215760874931358
+   },
+   "P1": {
+    "verdict": "CANNOT-SEPARATE",
+    "n_pos": 8,
+    "n_neg": 2,
+    "n_beat": 8,
+    "median_abs_delta": 0.07067629706211606,
+    "median_floor_pair": 0.02215760874931358
+   },
+   "P2": {
+    "verdict": "SIGN-ONLY-NO-MAGNITUDE",
+    "n_pos": 9,
+    "n_neg": 1,
+    "n_beat": 6,
+    "median_abs_delta": 0.040086324746157274,
+    "median_floor_pair": 0.02445862844931726
+   }
+  },
+  "expect": {
+   "ALL": {
+    "verdict": "SIGN-ONLY-NO-MAGNITUDE",
+    "n_pos": 17,
+    "n_neg": 3,
+    "n_beat": 14,
+    "median_abs_delta": 0.04563087743827283,
+    "median_floor_pair": 0.02215760874931358
+   },
+   "P1": {
+    "verdict": "CANNOT-SEPARATE",
+    "n_pos": 8,
+    "n_neg": 2,
+    "n_beat": 8,
+    "median_abs_delta": 0.07067629706211606,
+    "median_floor_pair": 0.02215760874931358
+   },
+   "P2": {
+    "verdict": "SIGN-ONLY-NO-MAGNITUDE",
+    "n_pos": 9,
+    "n_neg": 1,
+    "n_beat": 6,
+    "median_abs_delta": 0.040086324746157274,
+    "median_floor_pair": 0.02445862844931726
+   }
+  },
+  "items": {
+   "ALL": {
+    "verdict_same": true,
+    "n_pos_same": true,
+    "n_neg_same": true,
+    "n_beat_same": true,
+    "median_abs_delta_same": true,
+    "median_floor_same": true
+   },
+   "P1": {
+    "verdict_same": true,
+    "n_pos_same": true,
+    "n_neg_same": true,
+    "n_beat_same": true,
+    "median_abs_delta_same": true,
+    "median_floor_same": true
+   },
+   "P2": {
+    "verdict_same": true,
+    "n_pos_same": true,
+    "n_neg_same": true,
+    "n_beat_same": true,
+    "median_abs_delta_same": true,
+    "median_floor_same": true
+   }
+  },
+  "ok": true
+ },
+ "identity_I1": {
+  "ok": true,
+  "n_checked": 60,
+  "n_diff": 0,
+  "diffs": [],
+  "expect_n": 60,
+  "why": "复用单元若是另一个世界的读数 ⇒ 合并 n=30 与 floor 全部作废"
+ },
+ "identity_I2_n_bad": [],
+ "strata": {
+  "cut_median_floor": 0.016964526976333442,
+  "LOW": {
+   "verdict": "PANEL-SEPARATES",
+   "n_pos": 13,
+   "n_neg": 2,
+   "n_zero_delta": 0,
+   "n_beat": 14,
+   "binom_p_sign": 0.003692626953125,
+   "binom_p_neg": 0.99951171875,
+   "binom_p_beat": 0.00048828125,
+   "h_sign": true,
+   "h_neg_reversed": false,
+   "h_beat": true,
+   "alpha": 0.05,
+   "n_units": 15,
+   "median_abs_delta": 0.04028316539021595,
+   "median_floor_pair": 0.006698757126528121,
+   "delta_median": 0.03671823850866278,
+   "n_zero_floor": 0,
+   "nonfinite_cells": [],
+   "ratio_desc": 6.013528275370419,
+   "note": "Δ = cost(prior_only) − cost(belief_readout)；Δ>0 ⇒ 弱基线更贵 ⇒ 强基线更好"
+  },
+  "HIGH": {
+   "verdict": "NO-CLAIM-HIGH-FLOOR",
+   "why": "预注册 §3：高地板层不出效应判词（地板乘性，跨格不可比）",
+   "n_units": 15,
+   "descriptive_v2": {
+    "verdict": "SIGN-ONLY-NO-MAGNITUDE",
+    "n_pos": 12,
+    "n_neg": 3,
+    "n_zero_delta": 0,
+    "n_beat": 6,
+    "binom_p_sign": 0.017578125,
+    "binom_p_neg": 0.996307373046875,
+    "binom_p_beat": 0.84912109375,
+    "h_sign": true,
+    "h_neg_reversed": false,
+    "h_beat": false,
+    "alpha": 0.05,
+    "n_units": 15,
+    "median_abs_delta": 0.02936368955392569,
+    "median_floor_pair": 0.07084351173838115,
+    "delta_median": 0.028797821756931852,
+    "n_zero_floor": 0,
+    "nonfinite_cells": [],
+    "ratio_desc": 0.41448664575470523,
+    "note": "Δ = cost(prior_only) − cost(belief_readout)；Δ>0 ⇒ 弱基线更贵 ⇒ 强基线更好"
+   },
+   "n_pos": 12,
+   "n_beat": 6,
+   "median_floor_pair": 0.07084351173838115,
+   "median_abs_delta": 0.02936368955392569
+  },
+  "n_low": 15,
+  "n_high": 15,
+  "low_keys": [
+   "P1/ep102",
+   "P1/ep105",
+   "P1/ep106",
+   "P1/ep109",
+   "P1/ep110",
+   "P1/ep112",
+   "P1/ep113",
+   "P2/ep101",
+   "P2/ep102",
+   "P2/ep103",
+   "P2/ep106",
+   "P2/ep107",
+   "P2/ep111",
+   "P2/ep112",
+   "P2/ep113"
+  ],
+  "high_keys": [
+   "P1/ep100",
+   "P1/ep101",
+   "P1/ep103",
+   "P1/ep104",
+   "P1/ep107",
+   "P1/ep108",
+   "P1/ep111",
+   "P1/ep114",
+   "P2/ep100",
+   "P2/ep104",
+   "P2/ep105",
+   "P2/ep108",
+   "P2/ep109",
+   "P2/ep110",
+   "P2/ep114"
+  ]
+ },
+ "coupling": {
+  "spearman_floor_cost": 0.7993325917686318,
+  "floor_min": 9.881691081162561e-05,
+  "floor_max": 0.21506069165877065,
+  "floor_span_ratio": 2176.355138937102,
+  "n": 30
+ },
+ "secondary_mean_task_aoi": {
+  "rows": [
+   {
+    "plant": "P1",
+    "ep": 100,
+    "d": 24.85432866351757,
+    "floor": 2.3003686422478946,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P1",
+    "ep": 101,
+    "d": null,
+    "floor": null,
+    "undefined_side": [
+     "weak"
+    ],
+    "never_served_users": 1
+   },
+   {
+    "plant": "P1",
+    "ep": 102,
+    "d": 24.804401865118578,
+    "floor": 0.8949407962295588,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P1",
+    "ep": 103,
+    "d": 27.1209462409262,
+    "floor": 1.683178411880724,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P1",
+    "ep": 104,
+    "d": 36.34557711693548,
+    "floor": 0.3991817102047186,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P1",
+    "ep": 105,
+    "d": 26.97360901218576,
+    "floor": 5.861122174564269,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P1",
+    "ep": 106,
+    "d": 32.232616687979544,
+    "floor": 0.5345518879303697,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P1",
+    "ep": 107,
+    "d": 35.05503154386754,
+    "floor": 1.797066482843137,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P1",
+    "ep": 108,
+    "d": 36.12981418640661,
+    "floor": 2.4097386103180742,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P1",
+    "ep": 109,
+    "d": 29.642378287347327,
+    "floor": 4.147197542984808,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P1",
+    "ep": 110,
+    "d": 30.70115489397092,
+    "floor": 0.4152094498988177,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P1",
+    "ep": 111,
+    "d": 36.07697746526971,
+    "floor": 1.1653881364798888,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P1",
+    "ep": 112,
+    "d": 33.94129175263233,
+    "floor": 4.414989133279931,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P1",
+    "ep": 113,
+    "d": 29.960645583057165,
+    "floor": 0.11691614145658313,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P1",
+    "ep": 114,
+    "d": 19.55563056421339,
+    "floor": 5.331808665043837,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P2",
+    "ep": 100,
+    "d": 24.11409723973658,
+    "floor": 3.473126670792947,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P2",
+    "ep": 101,
+    "d": 30.82170972793137,
+    "floor": 4.75226808476193,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P2",
+    "ep": 102,
+    "d": 22.5347634887099,
+    "floor": 0.8169519862567292,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P2",
+    "ep": 103,
+    "d": 24.835146660290135,
+    "floor": 1.2768989547038316,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P2",
+    "ep": 104,
+    "d": 36.92230113274345,
+    "floor": 0.336290586527781,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P2",
+    "ep": 105,
+    "d": 20.73115079365079,
+    "floor": 0.24537037037037113,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P2",
+    "ep": 106,
+    "d": 19.62527621300302,
+    "floor": 0.5427039469026269,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P2",
+    "ep": 107,
+    "d": 38.48317969400166,
+    "floor": 3.131947883921441,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P2",
+    "ep": 108,
+    "d": 30.07544085511494,
+    "floor": 0.8004535484613156,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P2",
+    "ep": 109,
+    "d": 46.615865745205184,
+    "floor": 4.399681233370487,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P2",
+    "ep": 110,
+    "d": 26.073158517867867,
+    "floor": 0.43506127210289236,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P2",
+    "ep": 111,
+    "d": 23.67277377354104,
+    "floor": 0.6585367743935526,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P2",
+    "ep": 112,
+    "d": 22.15344831105215,
+    "floor": 2.627533919225833,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P2",
+    "ep": 113,
+    "d": 21.664328512720772,
+    "floor": 0.5380230363766509,
+    "undefined_side": [],
+    "never_served_users": 0
+   },
+   {
+    "plant": "P2",
+    "ep": 114,
+    "d": 24.285854341736695,
+    "floor": 2.6921226944816006,
+    "undefined_side": [],
+    "never_served_users": 0
+   }
+  ],
+  "n30": {
+   "n": 29,
+   "n_undefined": 1,
+   "undefined": [
+    "P1/ep101"
+   ],
+   "n_pos": 29,
+   "n_neg": 0,
+   "n_beat": 29,
+   "median_abs_delta": 27.1209462409262,
+   "median_floor": 1.2768989547038316
+  },
+  "fresh10": {
+   "n": 10,
+   "n_undefined": 0,
+   "undefined": [],
+   "n_pos": 10,
+   "n_neg": 0,
+   "n_beat": 10,
+   "median_abs_delta": 25.17950642980228,
+   "median_floor": 0.9119624554367207
+  },
+  "n_units_undefined": 1,
+  "n_units_unserved_any": 1,
+  "note": "描述量，不进判词；单位内任一臂有用户从未送达 ⇒ 该单位 `mean_task_aoi` 无定义（不删分母），`never_served_users` 作伴随量"
+ },
+ "r_i_summary": {
+  "n": 60,
+  "median": 1.5028149833054898,
+  "min": 0.3900208247316362,
+  "max": 7.567955163657191,
+  "n_gt1": 41,
+  "n_units_with_any_gt1": 27,
+  "by_cell": [
+   {
+    "plant": "P1",
+    "ep": 100,
+    "i": 0,
+    "r_i": 0.7805408282288989,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 100,
+    "i": 1,
+    "r_i": 5.903661175979434,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 101,
+    "i": 0,
+    "r_i": 0.9435239179228398,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 101,
+    "i": 1,
+    "r_i": 2.6922632077116257,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 102,
+    "i": 0,
+    "r_i": 3.6592533402456753,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 102,
+    "i": 1,
+    "r_i": 2.9418526502520654,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 103,
+    "i": 0,
+    "r_i": 1.0119548428178073,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 103,
+    "i": 1,
+    "r_i": 0.9803826253090869,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 104,
+    "i": 0,
+    "r_i": 0.9833337188753737,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 104,
+    "i": 1,
+    "r_i": 1.0936617456242104,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 105,
+    "i": 0,
+    "r_i": 1.5833664697004175,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 105,
+    "i": 1,
+    "r_i": 1.2774032151305328,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 106,
+    "i": 0,
+    "r_i": 2.6934884573502833,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 106,
+    "i": 1,
+    "r_i": 0.7604159785309959,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 107,
+    "i": 0,
+    "r_i": 3.794380914945594,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 107,
+    "i": 1,
+    "r_i": 2.281911810869354,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 108,
+    "i": 0,
+    "r_i": 1.015069042544907,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 108,
+    "i": 1,
+    "r_i": 1.8823902735503062,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 109,
+    "i": 0,
+    "r_i": 0.7433211265009189,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 109,
+    "i": 1,
+    "r_i": 0.6386484045421661,
+    "fresh": false
+   },
+   {
+    "plant": "P1",
+    "ep": 110,
+    "i": 0,
+    "r_i": 6.421289328676006,
+    "fresh": true
+   },
+   {
+    "plant": "P1",
+    "ep": 110,
+    "i": 1,
+    "r_i": 2.277219196637917,
+    "fresh": true
+   },
+   {
+    "plant": "P1",
+    "ep": 111,
+    "i": 0,
+    "r_i": 1.4530308378823353,
+    "fresh": true
+   },
+   {
+    "plant": "P1",
+    "ep": 111,
+    "i": 1,
+    "r_i": 1.8374900293632763,
+    "fresh": true
+   },
+   {
+    "plant": "P1",
+    "ep": 112,
+    "i": 0,
+    "r_i": 0.7169563458198416,
+    "fresh": true
+   },
+   {
+    "plant": "P1",
+    "ep": 112,
+    "i": 1,
+    "r_i": 0.8618604050422475,
+    "fresh": true
+   },
+   {
+    "plant": "P1",
+    "ep": 113,
+    "i": 0,
+    "r_i": 5.875466157064488,
+    "fresh": true
+   },
+   {
+    "plant": "P1",
+    "ep": 113,
+    "i": 1,
+    "r_i": 0.3900208247316362,
+    "fresh": true
+   },
+   {
+    "plant": "P1",
+    "ep": 114,
+    "i": 0,
+    "r_i": 1.7299090504035841,
+    "fresh": true
+   },
+   {
+    "plant": "P1",
+    "ep": 114,
+    "i": 1,
+    "r_i": 0.6013091359368656,
+    "fresh": true
+   },
+   {
+    "plant": "P2",
+    "ep": 100,
+    "i": 0,
+    "r_i": 0.6894584839544277,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 100,
+    "i": 1,
+    "r_i": 0.9695809135950857,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 101,
+    "i": 0,
+    "r_i": 1.0021289120660344,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 101,
+    "i": 1,
+    "r_i": 2.3817444898458366,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 102,
+    "i": 0,
+    "r_i": 7.567955163657191,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 102,
+    "i": 1,
+    "r_i": 4.143311832252623,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 103,
+    "i": 0,
+    "r_i": 1.3903690363777834,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 103,
+    "i": 1,
+    "r_i": 0.8660129379672115,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 104,
+    "i": 0,
+    "r_i": 0.9971236279479629,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 104,
+    "i": 1,
+    "r_i": 1.7424454840734285,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 105,
+    "i": 0,
+    "r_i": 0.9981288344343489,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 105,
+    "i": 1,
+    "r_i": 1.2461604144660363,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 106,
+    "i": 0,
+    "r_i": 3.8413143133120973,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 106,
+    "i": 1,
+    "r_i": 1.8385626069307404,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 107,
+    "i": 0,
+    "r_i": 1.9192652047559775,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 107,
+    "i": 1,
+    "r_i": 4.153417324452203,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 108,
+    "i": 0,
+    "r_i": 1.0909652276300665,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 108,
+    "i": 1,
+    "r_i": 3.7367785080081175,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 109,
+    "i": 0,
+    "r_i": 1.4499817737749412,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 109,
+    "i": 1,
+    "r_i": 1.7373163066052093,
+    "fresh": false
+   },
+   {
+    "plant": "P2",
+    "ep": 110,
+    "i": 0,
+    "r_i": 0.5547739587749487,
+    "fresh": true
+   },
+   {
+    "plant": "P2",
+    "ep": 110,
+    "i": 1,
+    "r_i": 2.0658682749967223,
+    "fresh": true
+   },
+   {
+    "plant": "P2",
+    "ep": 111,
+    "i": 0,
+    "r_i": 2.4568139869444066,
+    "fresh": true
+   },
+   {
+    "plant": "P2",
+    "ep": 111,
+    "i": 1,
+    "r_i": 1.5807177165542192,
+    "fresh": true
+   },
+   {
+    "plant": "P2",
+    "ep": 112,
+    "i": 0,
+    "r_i": 2.4308854352355285,
+    "fresh": true
+   },
+   {
+    "plant": "P2",
+    "ep": 112,
+    "i": 1,
+    "r_i": 1.0429789794662743,
+    "fresh": true
+   },
+   {
+    "plant": "P2",
+    "ep": 113,
+    "i": 0,
+    "r_i": 0.8890229316749387,
+    "fresh": true
+   },
+   {
+    "plant": "P2",
+    "ep": 113,
+    "i": 1,
+    "r_i": 1.8352393239711997,
+    "fresh": true
+   },
+   {
+    "plant": "P2",
+    "ep": 114,
+    "i": 0,
+    "r_i": 1.5525991287286443,
+    "fresh": true
+   },
+   {
+    "plant": "P2",
+    "ep": 114,
+    "i": 1,
+    "r_i": 0.9968084413483626,
+    "fresh": true
+   }
+  ]
+ },
+ "objective": {
+  "primary": "cost_true_per_step_median",
+  "primary_definition": "逐 episode 的 `q·Σ_i mean_t(x_i²) + r·Σ_i mean_t(u_i²)`，再取 episode 中位数",
+  "secondary": [
+   "per_user_r_i",
+   "mean_task_aoi_per_user_timeavg",
+   "n_delivered",
+   "n_attempted",
+   "n_probe",
+   "cost_true_by_user"
+  ],
+  "forbidden": [
+   "ku",
+   "kf",
+   "share",
+   "share_user",
+   "share_frame"
+  ],
+  "statistical_unit": "完整 episode（同初值的 seed 不是独立单元，R1.7.8 D5b）",
+  "weights": "由公开 `q_cost/r_cost` 固定，不按最终收益调权"
+ },
+ "spec_fingerprint_P1": "89a43b9dba1c961c",
+ "sigma_meas": {
+  "P1": 0.2,
+  "P2": 0.05
+ },
+ "budget": {
+  "panel_s": 261.1,
+  "total_s": 269.4,
+  "per_cell_s": [
+   23.71,
+   2.81,
+   2.88,
+   2.81,
+   2.74,
+   2.74,
+   2.77,
+   2.73,
+   2.75,
+   2.74,
+   2.76,
+   2.81,
+   2.77,
+   2.82,
+   2.72,
+   1.76,
+   1.79,
+   1.81,
+   1.76,
+   1.86,
+   1.73,
+   1.72,
+   1.78,
+   1.75,
+   1.85,
+   1.75,
+   1.77,
+   1.73,
+   1.74,
+   1.79,
+   24.12,
+   2.67,
+   2.66,
+   2.68,
+   2.68,
+   2.65,
+   2.69,
+   2.71,
+   2.74,
+   2.67,
+   2.68,
+   2.73,
+   2.73,
+   2.73,
+   2.7,
+   1.78,
+   1.79,
+   1.8,
+   1.86,
+   1.85,
+   1.89,
+   1.89,
+   1.99,
+   1.85,
+   1.83,
+   1.73,
+   1.81,
+   1.84,
+   1.84,
+   1.8
+  ]
+ },
+ "head": "63572e435a4b722c69caf970cde417a1b9dc9b78",
+ "src_hash": "113cd87acf5dc643",
+ "n_checks_gates": 11,
+ "n_fail_gates": 0,
+ "n_fail_total": 0,
+ "training": "none（本轮零训练）"
+}

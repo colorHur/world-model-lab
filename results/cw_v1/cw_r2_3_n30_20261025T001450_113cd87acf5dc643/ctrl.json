@@ -1,0 +1,226 @@
+{
+ "ctrl": {
+  "C1": {
+   "pass": true,
+   "detail": {
+    "keys_equal": true
+   }
+  },
+  "C2": {
+   "pass": true,
+   "detail": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  "C3": {
+   "pass": true,
+   "detail": {
+    "bad": [
+     "telemetry[0].P_hat",
+     "telemetry[0].x_hat",
+     "telemetry[1].P_hat",
+     "telemetry[1].x_hat"
+    ],
+    "expect": [
+     "telemetry[0].P_hat",
+     "telemetry[0].x_hat",
+     "telemetry[1].P_hat",
+     "telemetry[1].x_hat"
+    ]
+   }
+  },
+  "C4": {
+   "pass": true,
+   "detail": {
+    "x_hat_unchanged": true,
+    "P_hat_unchanged": true
+   }
+  },
+  "C5": {
+   "pass": true,
+   "detail": {
+    "bad": [
+     "budget_left"
+    ],
+    "why": "闸必须能 FAIL：用原值重绑定 + 预算改 1 ⇒ 必须报 budget_left"
+   }
+  },
+  "C6": {
+   "pass": true,
+   "detail": {
+    "belief": [
+     [
+      0.7,
+      -0.3
+     ],
+     [
+      0.2,
+      0.9
+     ]
+    ],
+    "prior": [
+     [
+      0.0,
+      0.0
+     ],
+     [
+      1.0,
+      1.0
+     ]
+    ]
+   }
+  },
+  "C7": {
+   "pass": true,
+   "detail": "PermissionError"
+  },
+  "C8": {
+   "pass": true,
+   "detail": {
+    "same": 0.0,
+    "fwd": 2.0,
+    "rev": 2.0
+   }
+  },
+  "all_pass": true
+ },
+ "c9": {
+  "n_units": 20,
+  "got": {
+   "ALL": {
+    "verdict": "SIGN-ONLY-NO-MAGNITUDE",
+    "n_pos": 17,
+    "n_neg": 3,
+    "n_beat": 14,
+    "median_abs_delta": 0.04563087743827283,
+    "median_floor_pair": 0.02215760874931358
+   },
+   "P1": {
+    "verdict": "CANNOT-SEPARATE",
+    "n_pos": 8,
+    "n_neg": 2,
+    "n_beat": 8,
+    "median_abs_delta": 0.07067629706211606,
+    "median_floor_pair": 0.02215760874931358
+   },
+   "P2": {
+    "verdict": "SIGN-ONLY-NO-MAGNITUDE",
+    "n_pos": 9,
+    "n_neg": 1,
+    "n_beat": 6,
+    "median_abs_delta": 0.040086324746157274,
+    "median_floor_pair": 0.02445862844931726
+   }
+  },
+  "expect": {
+   "ALL": {
+    "verdict": "SIGN-ONLY-NO-MAGNITUDE",
+    "n_pos": 17,
+    "n_neg": 3,
+    "n_beat": 14,
+    "median_abs_delta": 0.04563087743827283,
+    "median_floor_pair": 0.02215760874931358
+   },
+   "P1": {
+    "verdict": "CANNOT-SEPARATE",
+    "n_pos": 8,
+    "n_neg": 2,
+    "n_beat": 8,
+    "median_abs_delta": 0.07067629706211606,
+    "median_floor_pair": 0.02215760874931358
+   },
+   "P2": {
+    "verdict": "SIGN-ONLY-NO-MAGNITUDE",
+    "n_pos": 9,
+    "n_neg": 1,
+    "n_beat": 6,
+    "median_abs_delta": 0.040086324746157274,
+    "median_floor_pair": 0.02445862844931726
+   }
+  },
+  "items": {
+   "ALL": {
+    "verdict_same": true,
+    "n_pos_same": true,
+    "n_neg_same": true,
+    "n_beat_same": true,
+    "median_abs_delta_same": true,
+    "median_floor_same": true
+   },
+   "P1": {
+    "verdict_same": true,
+    "n_pos_same": true,
+    "n_neg_same": true,
+    "n_beat_same": true,
+    "median_abs_delta_same": true,
+    "median_floor_same": true
+   },
+   "P2": {
+    "verdict_same": true,
+    "n_pos_same": true,
+    "n_neg_same": true,
+    "n_beat_same": true,
+    "median_abs_delta_same": true,
+    "median_floor_same": true
+   }
+  },
+  "ok": true
+ },
+ "k_need": {
+  "10": {
+   "0.05": {
+    "k_need": 9,
+    "p_at_k_need": 0.0107421875,
+    "p_at_k_need_minus_1": 0.0546875
+   },
+   "0.025": {
+    "k_need": 9,
+    "p_at_k_need": 0.0107421875,
+    "p_at_k_need_minus_1": 0.0546875
+   },
+   "0.01": {
+    "k_need": 10,
+    "p_at_k_need": 0.0009765625,
+    "p_at_k_need_minus_1": 0.0107421875
+   },
+   "pooled_conditional_typeI": 0.376953125
+  },
+  "20": {
+   "0.05": {
+    "k_need": 15,
+    "p_at_k_need": 0.020694732666015625,
+    "p_at_k_need_minus_1": 0.057659149169921875
+   },
+   "0.025": {
+    "k_need": 15,
+    "p_at_k_need": 0.020694732666015625,
+    "p_at_k_need_minus_1": 0.057659149169921875
+   },
+   "0.01": {
+    "k_need": 16,
+    "p_at_k_need": 0.005908966064453125,
+    "p_at_k_need_minus_1": 0.020694732666015625
+   },
+   "pooled_conditional_typeI": 0.376953125
+  },
+  "30": {
+   "0.05": {
+    "k_need": 20,
+    "p_at_k_need": 0.04936857335269451,
+    "p_at_k_need_minus_1": 0.10024421103298664
+   },
+   "0.025": {
+    "k_need": 21,
+    "p_at_k_need": 0.02138697262853384,
+    "p_at_k_need_minus_1": 0.04936857335269451
+   },
+   "0.01": {
+    "k_need": 22,
+    "p_at_k_need": 0.008062400855123997,
+    "p_at_k_need_minus_1": 0.02138697262853384
+   },
+   "pooled_conditional_typeI": 0.376953125
+  }
+ }
+}

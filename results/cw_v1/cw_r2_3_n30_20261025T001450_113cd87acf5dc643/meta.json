@@ -1,0 +1,24 @@
+{
+ "command": "python -m experiments.cw_v1.r2_3_n30 --tag main2",
+ "timestamp_local": "2026-10-25T08:19:19.685853+08:00",
+ "python": "3.11.16",
+ "numpy": "2.4.6",
+ "head": "63572e435a4b722c69caf970cde417a1b9dc9b78",
+ "src_hash": "113cd87acf5dc643",
+ "worktree_sha_r2_3": "54ac357825aaa50f41ab9e34dd2abd937634b10b",
+ "blob_sha_r2_3": null,
+ "blob_sha_note": "运行前未入库 ⇒ 下一轮补 _POST_COMMIT",
+ "git_dirty_before_run": [
+  "?? docs/research/CW-R2.3-扩N到30-预注册-v0.1.md",
+  "?? experiments/cw_v1/r2_3_n30.py"
+ ],
+ "protocol": "CW-POMDP-v1.1",
+ "event_pairing": "slot",
+ "n_cells": 60,
+ "n_null": 30,
+ "panel_elapsed_s": 261.1,
+ "total_elapsed_s": 269.4,
+ "peak_rss_mb": 4150.5,
+ "n_fail_total": 0,
+ "training": "none"
+}
