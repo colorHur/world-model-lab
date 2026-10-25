@@ -1,0 +1,174 @@
+{
+ "zero_episode": [
+  {
+   "id": "G1",
+   "ok": true,
+   "detail": {
+    "EVAL_PRIMARY": "A_t",
+    "assert_objective_A_t": {
+     "name": "A_t",
+     "allowed": true,
+     "evidence_side_only": false,
+     "visibility": null,
+     "why": "公开量"
+    },
+    "OBJECTIVE_primary": "cost_true_per_step_median",
+    "why": "C1 裁定：主量 = A_t，OBJECTIVE 不改（只记 legacy）"
+   }
+  },
+  {
+   "id": "G2",
+   "ok": true,
+   "detail": {
+    "max_abs_diff": 0.0,
+    "why": "末层全零 ⇒ 未训练必须与强基线逐位相同；否则'训练有没有帮上忙'失去共同起点",
+    "n_params": 1601
+   }
+  },
+  {
+   "id": "G3",
+   "ok": true,
+   "detail": {
+    "file": "r2_7_learn.py",
+    "names": [],
+    "attrs": [],
+    "imports": []
+   }
+  },
+  {
+   "id": "G4",
+   "ok": true,
+   "detail": {
+    "measured": {
+     "n_hidden": 2,
+     "widths": [
+      32,
+      32
+     ],
+     "n_params": 1601,
+     "max_params": 50000,
+     "headroom": 48399,
+     "shapes": [
+      [
+       15,
+       32
+      ],
+      [
+       32,
+       32
+      ],
+      [
+       32,
+       1
+      ]
+     ],
+     "source": "shapes(d_out=1)"
+    },
+    "n_params_model": 1601,
+    "negative_controls": {
+     "width65": "CapacityExceeded",
+     "depth3": "CapacityExceeded"
+    },
+    "why": "上限必须能被触发；1601 是形状函数算出来的，不是硬编码"
+   }
+  },
+  {
+   "id": "G5",
+   "ok": true,
+   "detail": {
+    "disjoint": {
+     "n_train": 70,
+     "n_dev": 15,
+     "n_inter": 0,
+     "train_range": [
+      0,
+      69
+     ],
+     "dev_range": [
+      100,
+      114
+     ]
+    },
+    "negative_control": "AssertionError"
+   }
+  },
+  {
+   "id": "G5b",
+   "ok": true,
+   "detail": {
+    "n_features": 15,
+    "not_all_visible": [],
+    "missing_in_permission_table": [],
+    "perm_keys": [
+     "telemetry.x_hat",
+     "telemetry.P_hat",
+     "telemetry.stamp",
+     "telemetry.task_aoi",
+     "telemetry.h_mean",
+     "telemetry.h_var",
+     "telemetry.csi_stamp",
+     "telemetry.csi_aoi",
+     "prior.x_mean",
+     "prior.x_var",
+     "prior.h_log_mean",
+     "prior.h_log_var",
+     "view.t",
+     "view.budget_left",
+     "view.budget_total"
+    ],
+    "why": "标签只进 loss；特征列必须全部在权限表里可见性 = all"
+   }
+  },
+  {
+   "id": "G6",
+   "ok": true,
+   "detail": {
+    "state_mse_base": 0.26499999999999996,
+    "state_mse_flipped": 1.025,
+    "cost_mse_base": 0.06125000000000004,
+    "cost_mse_flipped": 0.06125000000000004,
+    "why": "只翻符号 ⇒ 状态空间损失变差、代价空间损失逐位不变；若两者都不变，说明状态空间损失也不看符号（§2.1 的裁定就成了空话）"
+   }
+  },
+  {
+   "id": "G7",
+   "ok": true,
+   "detail": {
+    "flat": {
+     "plateau": true,
+     "rel_drop_last20pct": 2.0000160000744897e-06,
+     "loss_start_win": 0.999992,
+     "loss_end": 0.99999,
+     "window_steps": [
+      800,
+      1000
+     ]
+    },
+    "dropping": {
+     "plateau": false,
+     "rel_drop_last20pct": 0.5,
+     "loss_start_win": 0.0625,
+     "loss_end": 0.03125,
+     "window_steps": [
+      800,
+      1000
+     ]
+    },
+    "why": "判据恒 PASS 的话，'未平台不许报 dev' 就没有约束力"
+   }
+  },
+  {
+   "id": "G8",
+   "ok": true,
+   "detail": {
+    "same_seed_bitwise_equal": true,
+    "other_seed_differs": true,
+    "why": "同种子必须逐位可复现；换种子必须真的换（否则'三种子分层'是空的）"
+   }
+  }
+ ],
+ "G9": {
+  "n_checks": 84,
+  "n_fail": 0
+ }
+}

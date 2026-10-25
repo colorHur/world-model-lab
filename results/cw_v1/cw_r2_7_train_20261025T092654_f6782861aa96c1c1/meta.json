@@ -1,0 +1,24 @@
+{
+ "command": "python -m experiments.cw_v1.r2_7_train --steps 12000 --tag main",
+ "timestamp_local": "2026-10-25T17:26:54.918808+08:00",
+ "python": "3.11.16",
+ "numpy": "2.4.6",
+ "head": "f933daaaa1eef646658254adcdeadd2a4d954dc1",
+ "src_hash": "f6782861aa96c1c1",
+ "worktree_sha_r2_7_learn": "e5bb70ac6ea9b3f3d9ad6fbe0431ef464cebd0aa",
+ "blob_sha_r2_7_learn": null,
+ "git_dirty_before_run": [
+  "?? docs/research/CW-R2.7-开训卡-预注册-v0.1.md",
+  "?? experiments/cw_v1/r2_7_learn.py",
+  "?? experiments/cw_v1/r2_7_train.py"
+ ],
+ "protocol": "CW-POMDP-v1.1",
+ "event_pairing": "slot",
+ "n_train_samples": 35840,
+ "n_dev_samples": 7680,
+ "data_elapsed_s": 251.8,
+ "total_elapsed_s": 544.4,
+ "peak_rss_mb": 2119.6,
+ "training": "residual readout only (no policy training)",
+ "gates_n_fail": 0
+}
