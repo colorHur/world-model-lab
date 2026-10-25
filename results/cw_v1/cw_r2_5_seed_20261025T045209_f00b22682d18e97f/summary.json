@@ -1,0 +1,600 @@
+{
+ "protocol": "CW-POMDP-v1.1",
+ "stage": "CW-R2.5",
+ "kind": "SEED-ROBUSTNESS-2x2-ONE-CELL-FILLED",
+ "prereg": "docs/research/CW-R2.5-种子稳健-预注册-v0.1.md",
+ "hypothesis": "H-R2-0",
+ "design": {
+  "eps": [
+   100,
+   101,
+   102,
+   103,
+   104,
+   105,
+   106,
+   107,
+   108,
+   109,
+   110,
+   111,
+   112,
+   113,
+   114
+  ],
+  "plants": [
+   "P1",
+   "P2"
+  ],
+  "seeds": [
+   2001,
+   3102
+  ],
+  "models": [
+   "belief_readout",
+   "prior_only"
+  ],
+  "n_new_cells": 30,
+  "new_plant_ep_units": 0,
+  "which_cell_filled": "(prior_only, plan_seed=3102)"
+ },
+ "primary_A_t": {
+  "n_pos3": 30,
+  "n": 30,
+  "k_need": 21,
+  "alpha": 0.025,
+  "p_one_sided": 9.313225746154785e-10,
+  "pass": true,
+  "verdict": "AOI-SEED-ROBUST",
+  "why": "Δ3 的符号在另一规划器种子下仍压倒 1/2"
+ },
+ "co_report_A_T": {
+  "n_pos3": 30,
+  "n": 30,
+  "k_need": 21,
+  "alpha": 0.025,
+  "p_one_sided": 9.313225746154785e-10,
+  "pass": true,
+  "verdict": "AOI-SEED-ROBUST",
+  "why": "Δ3 的符号在另一规划器种子下仍压倒 1/2"
+ },
+ "alpha_sensitivity": {
+  "0.05": {
+   "ALL": "AOI-SEED-ROBUST",
+   "P1": {
+    "n_pos3": 15,
+    "n": 15,
+    "k_need": 12,
+    "alpha": 0.05,
+    "p_one_sided": 3.0517578125e-05,
+    "pass": true,
+    "verdict": "AOI-SEED-ROBUST",
+    "why": "Δ3 的符号在另一规划器种子下仍压倒 1/2"
+   },
+   "P2": {
+    "n_pos3": 15,
+    "n": 15,
+    "k_need": 12,
+    "alpha": 0.05,
+    "p_one_sided": 3.0517578125e-05,
+    "pass": true,
+    "verdict": "AOI-SEED-ROBUST",
+    "why": "Δ3 的符号在另一规划器种子下仍压倒 1/2"
+   }
+  },
+  "0.025": {
+   "ALL": "AOI-SEED-ROBUST",
+   "P1": {
+    "n_pos3": 15,
+    "n": 15,
+    "k_need": 12,
+    "alpha": 0.025,
+    "p_one_sided": 3.0517578125e-05,
+    "pass": true,
+    "verdict": "AOI-SEED-ROBUST",
+    "why": "Δ3 的符号在另一规划器种子下仍压倒 1/2"
+   },
+   "P2": {
+    "n_pos3": 15,
+    "n": 15,
+    "k_need": 12,
+    "alpha": 0.025,
+    "p_one_sided": 3.0517578125e-05,
+    "pass": true,
+    "verdict": "AOI-SEED-ROBUST",
+    "why": "Δ3 的符号在另一规划器种子下仍压倒 1/2"
+   }
+  },
+  "0.01": {
+   "ALL": "AOI-SEED-ROBUST",
+   "P1": {
+    "n_pos3": 15,
+    "n": 15,
+    "k_need": 13,
+    "alpha": 0.01,
+    "p_one_sided": 3.0517578125e-05,
+    "pass": true,
+    "verdict": "AOI-SEED-ROBUST",
+    "why": "Δ3 的符号在另一规划器种子下仍压倒 1/2"
+   },
+   "P2": {
+    "n_pos3": 15,
+    "n": 15,
+    "k_need": 13,
+    "alpha": 0.01,
+    "p_one_sided": 3.0517578125e-05,
+    "pass": true,
+    "verdict": "AOI-SEED-ROBUST",
+    "why": "Δ3 的符号在另一规划器种子下仍压倒 1/2"
+   }
+  }
+ },
+ "descriptive_only": {
+  "median_abs_d3": 25.443359375,
+  "median_abs_d2": 27.171875,
+  "median_fW": 2.6982421875,
+  "median_fS": 1.169921875,
+  "ratio_d3_over_d2": 0.9363858539390454,
+  "ratio_d3_over_fS": 21.747913188647747,
+  "ratio_d3_over_fW": 9.429605501266739,
+  "n_trace_same_vs_w2": 0,
+  "median_action_diff_vs_w2": 0.30078125,
+  "per_pair_beat_vs_fS_DESCRIPTIVE_ONLY": 30,
+  "per_pair_beat_vs_fW_FORBIDDEN": 29,
+  "note": "全部为描述量。`f_W` 与 `Δ3` 共享 `W3`（预注册 §4.3-2，`S4` 实测偏离见 ctrl），`per_pair_beat_vs_fW_FORBIDDEN` 一栏只展示**不许当判据**的那个数"
+ },
+ "per_user_R17": {
+  "n": 60,
+  "n_user_delta_negative": 0,
+  "by_unit_user": [
+   {
+    "plant": "P1",
+    "ep": 100,
+    "i": 0,
+    "delta_user": 22.578125
+   },
+   {
+    "plant": "P1",
+    "ep": 100,
+    "i": 1,
+    "delta_user": 27.45703125
+   },
+   {
+    "plant": "P1",
+    "ep": 101,
+    "i": 0,
+    "delta_user": 25.23828125
+   },
+   {
+    "plant": "P1",
+    "ep": 101,
+    "i": 1,
+    "delta_user": 112.17578125
+   },
+   {
+    "plant": "P1",
+    "ep": 102,
+    "i": 0,
+    "delta_user": 28.99609375
+   },
+   {
+    "plant": "P1",
+    "ep": 102,
+    "i": 1,
+    "delta_user": 28.7421875
+   },
+   {
+    "plant": "P1",
+    "ep": 103,
+    "i": 0,
+    "delta_user": 23.41015625
+   },
+   {
+    "plant": "P1",
+    "ep": 103,
+    "i": 1,
+    "delta_user": 31.4609375
+   },
+   {
+    "plant": "P1",
+    "ep": 104,
+    "i": 0,
+    "delta_user": 45.6484375
+   },
+   {
+    "plant": "P1",
+    "ep": 104,
+    "i": 1,
+    "delta_user": 15.2890625
+   },
+   {
+    "plant": "P1",
+    "ep": 105,
+    "i": 0,
+    "delta_user": 27.66796875
+   },
+   {
+    "plant": "P1",
+    "ep": 105,
+    "i": 1,
+    "delta_user": 33.421875
+   },
+   {
+    "plant": "P1",
+    "ep": 106,
+    "i": 0,
+    "delta_user": 23.421875
+   },
+   {
+    "plant": "P1",
+    "ep": 106,
+    "i": 1,
+    "delta_user": 22.79296875
+   },
+   {
+    "plant": "P1",
+    "ep": 107,
+    "i": 0,
+    "delta_user": 33.70703125
+   },
+   {
+    "plant": "P1",
+    "ep": 107,
+    "i": 1,
+    "delta_user": 27.79296875
+   },
+   {
+    "plant": "P1",
+    "ep": 108,
+    "i": 0,
+    "delta_user": 27.8515625
+   },
+   {
+    "plant": "P1",
+    "ep": 108,
+    "i": 1,
+    "delta_user": 40.57421875
+   },
+   {
+    "plant": "P1",
+    "ep": 109,
+    "i": 0,
+    "delta_user": 20.82421875
+   },
+   {
+    "plant": "P1",
+    "ep": 109,
+    "i": 1,
+    "delta_user": 73.26953125
+   },
+   {
+    "plant": "P1",
+    "ep": 110,
+    "i": 0,
+    "delta_user": 21.30859375
+   },
+   {
+    "plant": "P1",
+    "ep": 110,
+    "i": 1,
+    "delta_user": 33.421875
+   },
+   {
+    "plant": "P1",
+    "ep": 111,
+    "i": 0,
+    "delta_user": 22.074218749999996
+   },
+   {
+    "plant": "P1",
+    "ep": 111,
+    "i": 1,
+    "delta_user": 48.07421875
+   },
+   {
+    "plant": "P1",
+    "ep": 112,
+    "i": 0,
+    "delta_user": 28.5
+   },
+   {
+    "plant": "P1",
+    "ep": 112,
+    "i": 1,
+    "delta_user": 33.91796875
+   },
+   {
+    "plant": "P1",
+    "ep": 113,
+    "i": 0,
+    "delta_user": 28.48046875
+   },
+   {
+    "plant": "P1",
+    "ep": 113,
+    "i": 1,
+    "delta_user": 27.4296875
+   },
+   {
+    "plant": "P1",
+    "ep": 114,
+    "i": 0,
+    "delta_user": 23.18359375
+   },
+   {
+    "plant": "P1",
+    "ep": 114,
+    "i": 1,
+    "delta_user": 25.51953125
+   },
+   {
+    "plant": "P2",
+    "ep": 100,
+    "i": 0,
+    "delta_user": 20.33203125
+   },
+   {
+    "plant": "P2",
+    "ep": 100,
+    "i": 1,
+    "delta_user": 27.71875
+   },
+   {
+    "plant": "P2",
+    "ep": 101,
+    "i": 0,
+    "delta_user": 24.953125
+   },
+   {
+    "plant": "P2",
+    "ep": 101,
+    "i": 1,
+    "delta_user": 24.51953125
+   },
+   {
+    "plant": "P2",
+    "ep": 102,
+    "i": 0,
+    "delta_user": 15.25
+   },
+   {
+    "plant": "P2",
+    "ep": 102,
+    "i": 1,
+    "delta_user": 24.30859375
+   },
+   {
+    "plant": "P2",
+    "ep": 103,
+    "i": 0,
+    "delta_user": 19.9375
+   },
+   {
+    "plant": "P2",
+    "ep": 103,
+    "i": 1,
+    "delta_user": 21.7109375
+   },
+   {
+    "plant": "P2",
+    "ep": 104,
+    "i": 0,
+    "delta_user": 52.29296875
+   },
+   {
+    "plant": "P2",
+    "ep": 104,
+    "i": 1,
+    "delta_user": 10.9765625
+   },
+   {
+    "plant": "P2",
+    "ep": 105,
+    "i": 0,
+    "delta_user": 21.84765625
+   },
+   {
+    "plant": "P2",
+    "ep": 105,
+    "i": 1,
+    "delta_user": 22.01953125
+   },
+   {
+    "plant": "P2",
+    "ep": 106,
+    "i": 0,
+    "delta_user": 19.04296875
+   },
+   {
+    "plant": "P2",
+    "ep": 106,
+    "i": 1,
+    "delta_user": 23.359375
+   },
+   {
+    "plant": "P2",
+    "ep": 107,
+    "i": 0,
+    "delta_user": 28.7890625
+   },
+   {
+    "plant": "P2",
+    "ep": 107,
+    "i": 1,
+    "delta_user": 22.94921875
+   },
+   {
+    "plant": "P2",
+    "ep": 108,
+    "i": 0,
+    "delta_user": 23.140625
+   },
+   {
+    "plant": "P2",
+    "ep": 108,
+    "i": 1,
+    "delta_user": 22.15234375
+   },
+   {
+    "plant": "P2",
+    "ep": 109,
+    "i": 0,
+    "delta_user": 16.52734375
+   },
+   {
+    "plant": "P2",
+    "ep": 109,
+    "i": 1,
+    "delta_user": 21.33203125
+   },
+   {
+    "plant": "P2",
+    "ep": 110,
+    "i": 0,
+    "delta_user": 23.9375
+   },
+   {
+    "plant": "P2",
+    "ep": 110,
+    "i": 1,
+    "delta_user": 25.648437500000004
+   },
+   {
+    "plant": "P2",
+    "ep": 111,
+    "i": 0,
+    "delta_user": 25.15234375
+   },
+   {
+    "plant": "P2",
+    "ep": 111,
+    "i": 1,
+    "delta_user": 15.74609375
+   },
+   {
+    "plant": "P2",
+    "ep": 112,
+    "i": 0,
+    "delta_user": 21.578125
+   },
+   {
+    "plant": "P2",
+    "ep": 112,
+    "i": 1,
+    "delta_user": 33.29296875
+   },
+   {
+    "plant": "P2",
+    "ep": 113,
+    "i": 0,
+    "delta_user": 23.910156250000004
+   },
+   {
+    "plant": "P2",
+    "ep": 113,
+    "i": 1,
+    "delta_user": 23.15625
+   },
+   {
+    "plant": "P2",
+    "ep": 114,
+    "i": 0,
+    "delta_user": 18.33203125
+   },
+   {
+    "plant": "P2",
+    "ep": 114,
+    "i": 1,
+    "delta_user": 21.1171875
+   }
+  ]
+ },
+ "ctrl_all_pass": true,
+ "S6_identity": {
+  "ok": true,
+  "n": 30,
+  "n_same_config_fingerprint": 30,
+  "n_seed_differs": 30,
+  "diffs": [],
+  "why": "配置指纹或 `sigma_meas` 若变了，这 30 格就不是'只换种子'的对照，2×2 不成立"
+ },
+ "S7_seed_wired": {
+  "pass": true,
+  "n_trace_same_vs_w2": 0,
+  "n": 30,
+  "why": "若换种子后动作轨迹 30/30 逐位相同，说明 `plan_seed` 没接进规划器采样 ⇒ 本轮检验是空的（'跑过了'≠'有分辨力'）"
+ },
+ "I2_bad": [],
+ "objective": {
+  "primary": "cost_true_per_step_median",
+  "primary_definition": "逐 episode 的 `q·Σ_i mean_t(x_i²) + r·Σ_i mean_t(u_i²)`，再取 episode 中位数",
+  "secondary": [
+   "per_user_r_i",
+   "mean_task_aoi_per_user_timeavg",
+   "n_delivered",
+   "n_attempted",
+   "n_probe",
+   "cost_true_by_user"
+  ],
+  "forbidden": [
+   "ku",
+   "kf",
+   "share",
+   "share_user",
+   "share_frame"
+  ],
+  "statistical_unit": "完整 episode（同初值的 seed 不是独立单元，R1.7.8 D5b）",
+  "weights": "由公开 `q_cost/r_cost` 固定，不按最终收益调权"
+ },
+ "spec_fingerprint_P1": "89a43b9dba1c961c",
+ "sigma_meas": {
+  "P1": 0.2,
+  "P2": 0.05
+ },
+ "budget": {
+  "panel_s": 99.7,
+  "total_s": 108.4,
+  "per_cell_s": [
+   22.95,
+   1.85,
+   1.83,
+   1.8,
+   1.91,
+   1.81,
+   1.84,
+   1.81,
+   1.84,
+   1.86,
+   1.82,
+   1.84,
+   1.8,
+   1.82,
+   1.83,
+   24.42,
+   1.88,
+   1.88,
+   1.92,
+   1.92,
+   1.9,
+   1.85,
+   1.91,
+   1.88,
+   1.95,
+   1.86,
+   2.09,
+   1.89,
+   1.9,
+   1.84
+  ]
+ },
+ "head": "59c0a19a16b854cb5d42f368c6fd5b1231bffacd",
+ "src_hash": "f00b22682d18e97f",
+ "n_checks_gates": 11,
+ "n_fail_gates": 0,
+ "n_fail_total": 0,
+ "training": "none（本轮零训练）",
+ "inputs": {
+  "cw_r2_4_aoi_20261025T023636_a83942167173392b": "bcc41c2d3d708ab1149ac721579bb642061c468ec93635726d207ec6922e6881",
+  "cw_r2_3_n30_20261025T001450_113cd87acf5dc643": "f3b2502fd0964cf91290a3cb940f5948601847ee3b2a0a832f8c5d5b97792ead"
+ }
+}

@@ -1,0 +1,149 @@
+{
+ "r25_S1_S5": {
+  "S1_threshold_two_ends": {
+   "pass": true,
+   "k_need": 21,
+   "p_at_21": 0.02138697262853384,
+   "p_at_20": 0.04936857335269451,
+   "why": "阈值必须两端都可代验：21 过（p<0.025）、20 不过（p>0.025）。只验一端等于没验（R2.3 的 `18/15` 在 n=10 算术不可达就是这样漏的）"
+  },
+  "S2_abs_as_sign_trap": {
+   "pass": true,
+   "n_pos_signed": 10,
+   "n_pos_abs": 30,
+   "verdict_signed": "AOI-SEED-SPECIFIC",
+   "verdict_abs": "AOI-SEED-ROBUST（恒真，错）",
+   "why": "同一份数据：有符号判 10/30 不过，绝对值判 30/30 恒过。若两者给出相同判词，本条判据就没有分辨力"
+  },
+  "S3_agreement_equals_sign": {
+   "pass": true,
+   "claim": "#{sign(Δ2)=sign(Δ3)} ≡ #{Δ3>0}，当且仅当 Δ2 有符号且全正",
+   "check_now": "Δ2 是否 30/30 全正由 S5 对账给出；若 S5 的 n_pos2≠30，本条自动失效并降级为描述",
+   "why": "防重复计证（把同一个检验报成两份证据）"
+  },
+  "S4a_null_calibration": {
+   "pass": true,
+   "h0_beat_rate_fS_mean": 0.5009166666666667,
+   "h0_beat_rate_fS_sd": 0.09261775537720134,
+   "h0_beat_rate_fW_mean": 0.4979083333333333,
+   "h0_beat_rate_fW_sd": 0.09165643844451589,
+   "M": 4000,
+   "why": "iid 噪声零假设下，两种 floor 的逐对 beat 率都应 ≈1/2（交换 W2↔S3 的不变性）。若显著偏离，说明我算 beat 的实现本身有偏 ⇒ 任何 beat 类结论都不可用。★ 本条的断言方向与预注册初稿**相反**，见 §10 跑前修订 1"
+  },
+  "S5_reconcile_r24": {
+   "pass": true,
+   "items": {
+    "n_pos2_same": true,
+    "median_abs_d2_same": true,
+    "median_fS_same": true
+   },
+   "got": {
+    "n_pos2": 30,
+    "median_abs_d2": 27.171875,
+    "median_fS": 1.169921875
+   },
+   "expect": {
+    "n_pos2": 30,
+    "median_abs_d2": 27.171875,
+    "median_fS": 1.169921875
+   },
+   "tol": 1e-09,
+   "why": "我用 `aoi_metrics` 重建的 `A_t` 必须与 R2.4 发布值逐位相同，否则本轮 2×2 里的 `S2/W2/S3` 与 R2.4 不是同一个量"
+  },
+  "S4b_magnitude_resolution": {
+   "pass": true,
+   "n_beat_at_scale_1": 30,
+   "k_need": 21,
+   "resolution_scale_r": 0.001,
+   "hit_grid_floor": true,
+   "collapse_factor_needed_to_fail": 1000.0,
+   "why": "`r` = 幅度要缩到原来的多少倍，`beat` 才会掉到 `k_need` 以下。`r` 越小 ⇒ 这条腿只能分辨越极端的崩塌 ⇒ 对'同量级/弱一点'无分辨力。这是**拒发幅度判词**的定量依据（预注册 §4.3-2'），也是本轮唯一允许引用它的方式"
+  }
+ },
+ "r21_base": {
+  "C1": {
+   "pass": true,
+   "detail": {
+    "keys_equal": true
+   }
+  },
+  "C2": {
+   "pass": true,
+   "detail": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  "C3": {
+   "pass": true,
+   "detail": {
+    "bad": [
+     "telemetry[0].P_hat",
+     "telemetry[0].x_hat",
+     "telemetry[1].P_hat",
+     "telemetry[1].x_hat"
+    ],
+    "expect": [
+     "telemetry[0].P_hat",
+     "telemetry[0].x_hat",
+     "telemetry[1].P_hat",
+     "telemetry[1].x_hat"
+    ]
+   }
+  },
+  "C4": {
+   "pass": true,
+   "detail": {
+    "x_hat_unchanged": true,
+    "P_hat_unchanged": true
+   }
+  },
+  "C5": {
+   "pass": true,
+   "detail": {
+    "bad": [
+     "budget_left"
+    ],
+    "why": "闸必须能 FAIL：用原值重绑定 + 预算改 1 ⇒ 必须报 budget_left"
+   }
+  },
+  "C6": {
+   "pass": true,
+   "detail": {
+    "belief": [
+     [
+      0.7,
+      -0.3
+     ],
+     [
+      0.2,
+      0.9
+     ]
+    ],
+    "prior": [
+     [
+      0.0,
+      0.0
+     ],
+     [
+      1.0,
+      1.0
+     ]
+    ]
+   }
+  },
+  "C7": {
+   "pass": true,
+   "detail": "PermissionError"
+  },
+  "C8": {
+   "pass": true,
+   "detail": {
+    "same": 0.0,
+    "fwd": 2.0,
+    "rev": 2.0
+   }
+  },
+  "all_pass": true
+ }
+}

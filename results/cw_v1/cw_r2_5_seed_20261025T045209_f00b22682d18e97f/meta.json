@@ -1,0 +1,23 @@
+{
+ "command": "python -m experiments.cw_v1.r2_5_seed --tag main",
+ "timestamp_local": "2026-10-25T12:53:58.197435+08:00",
+ "python": "3.11.16",
+ "numpy": "2.4.6",
+ "head": "59c0a19a16b854cb5d42f368c6fd5b1231bffacd",
+ "src_hash": "f00b22682d18e97f",
+ "worktree_sha_r2_5": "fb6051e66f9965bd9d3d0fe573b2e8af379d31cd",
+ "blob_sha_r2_5": null,
+ "blob_sha_note": "运行前未入库 ⇒ 提交后补 _POST_COMMIT",
+ "git_dirty_before_run": [
+  "?? docs/research/CW-R2.5-种子稳健-预注册-v0.1.md",
+  "?? experiments/cw_v1/r2_5_seed.py"
+ ],
+ "protocol": "CW-POMDP-v1.1",
+ "event_pairing": "slot",
+ "n_cells": 30,
+ "panel_elapsed_s": 99.7,
+ "total_elapsed_s": 108.4,
+ "peak_rss_mb": 4151.8,
+ "n_fail_total": 0,
+ "training": "none"
+}
