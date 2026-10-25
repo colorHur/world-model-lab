@@ -1,0 +1,10 @@
+{
+ "round": "CW-R3.1",
+ "recorded_at": "2026-10-26T01:42:27+08:00",
+ "head": "e74785d8896c7336058384cb4c3c2b80bb1c7a6f",
+ "remote_main": "e74785d8896c7336058384cb4c3c2b80bb1c7a6f\trefs/heads/main",
+ "dirty": "",
+ "evidence": "results/cw_v1/cw_r3_1_scale_20261025T173627_792d21d1ce0eb2e3",
+ "src_hash": "792d21d1ce0eb2e3",
+ "note": "本文件记录提交后时点；其后 STATE/RUNLOG/台账在科研空间，不在本仓库"
+}
