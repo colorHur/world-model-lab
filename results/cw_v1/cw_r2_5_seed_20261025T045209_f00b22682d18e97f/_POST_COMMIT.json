@@ -1,0 +1,55 @@
+{
+ "stage": "CW-R2.5",
+ "commit": "da6ff8e8ba47249f4bf1879d71cba07469e940b7",
+ "commit_short": "da6ff8e",
+ "parent": "59c0a19a16b854cb5d42f368c6fd5b1231bffacd",
+ "remote_main_after_push": "da6ff8e8ba47249f4bf1879d71cba07469e940b7",
+ "remote_verified_by": "git ls-remote origin refs/heads/main",
+ "remote_match_local": true,
+ "worktree_clean_after_push": true,
+ "files": {
+  "experiments/cw_v1/r2_5_seed.py": {
+   "worktree_sha": "fb6051e66f9965bd9d3d0fe573b2e8af379d31cd",
+   "blob_sha": "fb6051e66f9965bd9d3d0fe573b2e8af379d31cd",
+   "worktree_equals_blob": true,
+   "note": "★ 与 meta.json 的 worktree_sha_r2_5 逐字相同 ⇒ 执行版源码 == 提交版源码（跑后未再改动该文件）"
+  },
+  "experiments/cw_v1/r2_5b_r17.py": {
+   "worktree_sha": "ace126853a69a862c772bf22679878435605b15a",
+   "blob_sha": "ace126853a69a862c772bf22679878435605b15a",
+   "worktree_equals_blob": true
+  },
+  "docs/CW-R2.5-种子稳健-交付.md": {
+   "worktree_sha": "7766cfbf3a661eeaf6eff79cfbcae073f158f970",
+   "blob_sha": "7766cfbf3a661eeaf6eff79cfbcae073f158f970",
+   "worktree_equals_blob": true
+  },
+  "docs/research/CW-R2.5-种子稳健-预注册-v0.1.md": {
+   "worktree_sha": "6ce003ce929470956b325940f6f561d25e5572e0",
+   "blob_sha": "6ce003ce929470956b325940f6f561d25e5572e0",
+   "worktree_equals_blob": true
+  },
+  "docs/research/CW-R2-训练接口-v0.1.md": {
+   "worktree_sha": "b1e142698fc7217f6978fc9e5eb0254b7f66c2ab",
+   "blob_sha": "b1e142698fc7217f6978fc9e5eb0254b7f66c2ab",
+   "worktree_equals_blob": true
+  }
+ },
+ "verdict": "AOI-SEED-ROBUST",
+ "primary": {
+  "n_pos3": 30,
+  "n": 30,
+  "k_need": 21,
+  "alpha": 0.025,
+  "p_one_sided": 9.313225746154785e-10
+ },
+ "training": "none",
+ "run_episode": 30,
+ "budget": {
+  "panel_s": 99.7,
+  "total_s": 108.4,
+  "peak_rss_mb": 4151.8
+ },
+ "known_text_defect": "summary.json 的 descriptive_only.note 指针过期（指向已撤回的 §4.3-2），见同目录 _ERRATA.md E1；证据文件未手改",
+ "recorded_at_local": "2026-10-25T12:5x+08:00"
+}
