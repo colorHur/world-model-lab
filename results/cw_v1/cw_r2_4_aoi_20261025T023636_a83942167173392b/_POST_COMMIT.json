@@ -1,0 +1,8 @@
+{
+ "commit": "24372b70b86e7ceb5cba629172d029ae55127dda",
+ "ls_remote_main": "24372b70b86e7ceb5cba629172d029ae55127dda",
+ "blob_sha_r2_4_aoi": "8bb2c540881fb2d23a08447fa0d158bed3545ae7",
+ "blob_sha_mech3": "93cb6e2d62bf5a4bb605b62a906feeea0475b2f0",
+ "worktree_sha_still_valid": true,
+ "note": "meta.json 里的 blob_sha_r2_4 为 null（运行前未入库）；此处补真实 blob sha"
+}
