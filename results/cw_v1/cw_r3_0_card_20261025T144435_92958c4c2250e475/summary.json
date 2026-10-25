@@ -1,0 +1,109 @@
+{
+  "round": "CW-R3.0",
+  "protocol": "CW-POMDP-v1.1",
+  "src_hash": "92958c4c2250e475",
+  "plant": {
+    "A": [
+      1.0,
+      1.0
+    ],
+    "B": 0.32,
+    "sigma_w": [
+      0.02,
+      0.03
+    ],
+    "sigma_meas": 0.2,
+    "q": 1.0,
+    "r": 0.02
+  },
+  "grid": {
+    "taus": [
+      4,
+      6,
+      8,
+      10,
+      12,
+      14
+    ],
+    "P": [
+      0.005,
+      0.01,
+      0.02,
+      0.05
+    ],
+    "p_hat": [
+      0.5,
+      0.2
+    ]
+  },
+  "thresholds": {
+    "NB_regret": 0.005,
+    "B_regret": 0.05,
+    "agree_ok": 0.95,
+    "agree_bad": 0.85,
+    "close_ok": 0.8,
+    "close_bad": 0.5
+  },
+  "judge": {
+    "paced": {
+      "n": 544,
+      "median_regret_rel": 0.0,
+      "mean_regret_rel": 0.011176162215641198,
+      "p90_regret_rel": 0.04011573230972913,
+      "max_regret_rel": 0.10988856795291045,
+      "share_ge_1pct": 0.2702205882352941,
+      "share_ge_5pct": 0.058823529411764705,
+      "zero_share": 0.6378676470588235,
+      "agree": 0.6378676470588235,
+      "n_disagree": 197,
+      "median_regret_when_disagree": 0.027332978464166022,
+      "label": "IS-BOTTLENECK"
+    },
+    "dp_r173": {
+      "n": 544,
+      "median_regret_rel": 0.0,
+      "mean_regret_rel": 3.6607799170217214e-06,
+      "p90_regret_rel": 0.0,
+      "max_regret_rel": 0.000883027071754856,
+      "share_ge_1pct": 0.0,
+      "share_ge_5pct": 0.0,
+      "zero_share": 0.9944852941176471,
+      "agree": 0.9944852941176471,
+      "n_disagree": 3,
+      "median_regret_when_disagree": 0.0006955455454186507,
+      "label": "NOT-BOTTLENECK"
+    },
+    "closure_prereg": {
+      "value": null,
+      "verdict": "UNDEFINED",
+      "why": "median(regret_paced)==0.0。★ 这是**形式缺陷**，不是效应小：只要排序器在 >50% 的状态上与最优同解，zero-inflated 变量的中位必为 0，分母恒为 0 —— 与 R2.4「只用中位」同族。见预注册 §7-2。"
+    },
+    "closure_revised": {
+      "by_mean": 0.999672447496163,
+      "by_agree": 0.984771573604061,
+      "value": 0.984771573604061,
+      "verdict": "CLOSABLE",
+      "note": "两个口径都报，取**较小者**（保守）；均为跑后定义，见预注册 §7-2"
+    },
+    "overall_prereg": "INCONCLUSIVE-BY-MARGIN",
+    "overall": "NO-WINNABLE-OPPONENT-BY-RANKING",
+    "truth_window": {
+      "tau10_states": 40565,
+      "tau10_seconds": 0.027,
+      "max_tau_computed": 14,
+      "max_tau_states": 2385506,
+      "max_tau_seconds": 1.882,
+      "log10_ratio_to_panel": 115.463,
+      "panel_tau": 256,
+      "verdict": "TRUTH-OK-AT-TAU10-PANEL-INFEASIBLE",
+      "why": "τ=10 的真值可算（状态数/耗时都在限内）⇒ **可验证窗口**存在；但 τ=256 的状态数按 3^Δτ 增长（见 log10_ratio_to_panel）⇒ **面板尺度上没有真值**，任何在 τ=256 上的'学习更好'都只能对基线验证，不能对最优验证。"
+    }
+  },
+  "n_fail": 0,
+  "seconds_panel": 96.56,
+  "seconds_scaling": 2.61,
+  "seconds_total": 99.51,
+  "run_episode": 0,
+  "train_steps": 0,
+  "n_states_rows": 544
+}

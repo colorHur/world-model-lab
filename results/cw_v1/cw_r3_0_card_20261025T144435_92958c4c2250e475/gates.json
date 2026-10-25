@@ -1,0 +1,74 @@
+{
+  "C0": {
+    "pass": true,
+    "A": [
+      1.0,
+      1.0
+    ],
+    "need": "A≡1"
+  },
+  "C1": {
+    "pass": true,
+    "max_abs_diff": 0.0,
+    "n": 8,
+    "need": "==0.0（逐位）"
+  },
+  "C1b": {
+    "pass": true,
+    "v_ok": 0.1650672127870552,
+    "v_bad": 0.1995,
+    "need": ">1e-6"
+  },
+  "C2": {
+    "pass": true,
+    "max_resid": 5.551115123125783e-17,
+    "need": "<=1e-12"
+  },
+  "C3": {
+    "pass": true,
+    "mono_in_P": true,
+    "mono_in_b": true,
+    "need": "P↑⇒V↑ 且 b↑⇒V↓"
+  },
+  "C4": {
+    "pass": true,
+    "max_abs_diff": 0.0,
+    "need": "==0.0（逐位）"
+  },
+  "C5": {
+    "pass": true,
+    "hits": [],
+    "need": "代码字符串里不出现 PROBE（只在 docstring）"
+  },
+  "C6": {
+    "pass": true,
+    "mismatches": [],
+    "n": 3,
+    "need": "3/3 一致"
+  },
+  "C7": {
+    "pass": true,
+    "median_ok": 0.021427122139037108,
+    "median_reversed": 0.06768727249025756,
+    "ratio": 3.158953033965358,
+    "need": "反向排序的中位遗憾 ≥ 5e-2（= `IS-BOTTLENECK` 门槛）⇒ 指标在该量级有分辨力"
+  },
+  "C8": {
+    "pass": true,
+    "seconds": 96.56,
+    "need": "<1500 s（预注册 §5 上界 25 min）"
+  },
+  "C9": {
+    "pass": true,
+    "n": 544,
+    "need": "V* 有限且 >0"
+  },
+  "C10": {
+    "pass": true,
+    "verdict": "TRUTH-OK-AT-TAU10-PANEL-INFEASIBLE"
+  },
+  "C11": {
+    "pass": true,
+    "overall": "NO-WINNABLE-OPPONENT-BY-RANKING"
+  }
+}
