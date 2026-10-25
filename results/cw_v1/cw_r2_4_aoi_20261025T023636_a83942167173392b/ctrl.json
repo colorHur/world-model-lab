@@ -1,0 +1,268 @@
+{
+ "r24_C1_C11": {
+  "C1_all_zero_diff": {
+   "pass": true,
+   "verdict": "NO-RESOLUTION-AT-N30"
+  },
+  "C2_reversed": {
+   "pass": true,
+   "verdict": "AOI-SEPARATES-REVERSED"
+  },
+  "C3_separates": {
+   "pass": true,
+   "verdict": "AOI-SEPARATES"
+  },
+  "C4_incomplete": {
+   "pass": true,
+   "verdict": "INCOMPLETE-PANEL"
+  },
+  "C5_nonfinite": {
+   "pass": true,
+   "verdict": "UNDEFINED",
+   "named": [
+    "P2/ep103"
+   ]
+  },
+  "C6_sign_only": {
+   "pass": true,
+   "verdict": "AOI-SIGN-ONLY-NO-MAGNITUDE"
+  },
+  "C7_pos_neg_infeasible": {
+   "pass": true,
+   "n_pos+n_neg": 40,
+   "n": 30,
+   "why": "Δ 的符号互斥 ⇒ n_pos+n_neg ≤ n"
+  },
+  "C8_reconcile_r23": {
+   "pass": true,
+   "items": {
+    "n_pos_same": true,
+    "median_abs_delta_same": true,
+    "median_floor_same": true
+   },
+   "got": {
+    "n_pos": 29,
+    "median_abs_delta": 27.1209462409262,
+    "median_floor": 1.2768989547038316
+   },
+   "expect": {
+    "n_pos": 29,
+    "median_abs_delta": 27.1209462409262,
+    "median_floor": 1.2768989547038316
+   },
+   "tol": 1e-09,
+   "why": "重建口径若与 R2.3 `secondary_aoi` 不一致，本轮的'改写'就无从对照"
+  },
+  "C9_window_artifact": {
+   "pass": true,
+   "delta_aoi_tavg": 20.0,
+   "delta_A_t": -106.50390625,
+   "A_t_strong": 126.50390625,
+   "A_t_weak": 20.0,
+   "why": "旧口径把'拖到最后一槽才服务'判成更好（窗口只剩 1 槽、均值 0）；新口径把它判成更差 ⇒ 若新口径也判更好，修补就无分辨力，本轮全部作废"
+  },
+  "C11_decomposition_identity": {
+   "pass": true,
+   "cost": {
+    "lvl": 0.07959802961284712,
+    "d": 0.03464138282738579,
+    "f": 0.016964526976333442,
+    "ratio": 2.0419893154529243
+   },
+   "aoi": {
+    "lvl": 10.439069745728425,
+    "d": 27.1209462409262,
+    "f": 1.2768989547038316,
+    "ratio": 21.23969648578554
+   },
+   "factor_effect": 5.969667410770058,
+   "factor_floor": 1.7423873331974908,
+   "why": "两因子乘积必须等于比值之比（代数恒等式；不闭合说明报告里的数抄错）"
+  },
+  "C10_prefix_and_rebuild": {
+   "pass": true,
+   "T": 256,
+   "prefix_ok": true,
+   "n_rebuild_diff": 0,
+   "rebuild_diffs": [],
+   "n_identity_diff": 0,
+   "identity_diffs": [],
+   "direct_A_t": [
+    15.57421875,
+    7.71875
+   ],
+   "rebuilt_A_t": [
+    15.57421875,
+    7.71875
+   ],
+   "direct_A_T": [
+    16.57421875,
+    15.609375
+   ],
+   "rebuilt_A_T": [
+    16.57421875,
+    15.609375
+   ],
+   "why": "前缀性质若被破坏，`(aoi_tavg,k)` 就无法重建全时隙均值；重建若不等，主指标算错，本轮全部作废",
+   "cost": "2 格真跑（包装 1 + 未包装 1）"
+  },
+  "k_need": {
+   "10": {
+    "0.05": {
+     "k_need": 9,
+     "p_at_k_need": 0.0107421875,
+     "p_at_k_need_minus_1": 0.0546875
+    },
+    "0.025": {
+     "k_need": 9,
+     "p_at_k_need": 0.0107421875,
+     "p_at_k_need_minus_1": 0.0546875
+    },
+    "0.01": {
+     "k_need": 10,
+     "p_at_k_need": 0.0009765625,
+     "p_at_k_need_minus_1": 0.0107421875
+    }
+   },
+   "30": {
+    "0.05": {
+     "k_need": 20,
+     "p_at_k_need": 0.04936857335269451,
+     "p_at_k_need_minus_1": 0.10024421103298664
+    },
+    "0.025": {
+     "k_need": 21,
+     "p_at_k_need": 0.02138697262853384,
+     "p_at_k_need_minus_1": 0.04936857335269451
+    },
+    "0.01": {
+     "k_need": 22,
+     "p_at_k_need": 0.008062400855123997,
+     "p_at_k_need_minus_1": 0.02138697262853384
+    }
+   }
+  }
+ },
+ "r21_base": {
+  "C1": {
+   "pass": true,
+   "detail": {
+    "keys_equal": true
+   }
+  },
+  "C2": {
+   "pass": true,
+   "detail": {
+    "ok": true,
+    "bad": []
+   }
+  },
+  "C3": {
+   "pass": true,
+   "detail": {
+    "bad": [
+     "telemetry[0].P_hat",
+     "telemetry[0].x_hat",
+     "telemetry[1].P_hat",
+     "telemetry[1].x_hat"
+    ],
+    "expect": [
+     "telemetry[0].P_hat",
+     "telemetry[0].x_hat",
+     "telemetry[1].P_hat",
+     "telemetry[1].x_hat"
+    ]
+   }
+  },
+  "C4": {
+   "pass": true,
+   "detail": {
+    "x_hat_unchanged": true,
+    "P_hat_unchanged": true
+   }
+  },
+  "C5": {
+   "pass": true,
+   "detail": {
+    "bad": [
+     "budget_left"
+    ],
+    "why": "闸必须能 FAIL：用原值重绑定 + 预算改 1 ⇒ 必须报 budget_left"
+   }
+  },
+  "C6": {
+   "pass": true,
+   "detail": {
+    "belief": [
+     [
+      0.7,
+      -0.3
+     ],
+     [
+      0.2,
+      0.9
+     ]
+    ],
+    "prior": [
+     [
+      0.0,
+      0.0
+     ],
+     [
+      1.0,
+      1.0
+     ]
+    ]
+   }
+  },
+  "C7": {
+   "pass": true,
+   "detail": "PermissionError"
+  },
+  "C8": {
+   "pass": true,
+   "detail": {
+    "same": 0.0,
+    "fwd": 2.0,
+    "rev": 2.0
+   }
+  },
+  "all_pass": true
+ },
+ "k_need": {
+  "10": {
+   "0.05": {
+    "k_need": 9,
+    "p_at_k_need": 0.0107421875,
+    "p_at_k_need_minus_1": 0.0546875
+   },
+   "0.025": {
+    "k_need": 9,
+    "p_at_k_need": 0.0107421875,
+    "p_at_k_need_minus_1": 0.0546875
+   },
+   "0.01": {
+    "k_need": 10,
+    "p_at_k_need": 0.0009765625,
+    "p_at_k_need_minus_1": 0.0107421875
+   }
+  },
+  "30": {
+   "0.05": {
+    "k_need": 20,
+    "p_at_k_need": 0.04936857335269451,
+    "p_at_k_need_minus_1": 0.10024421103298664
+   },
+   "0.025": {
+    "k_need": 21,
+    "p_at_k_need": 0.02138697262853384,
+    "p_at_k_need_minus_1": 0.04936857335269451
+   },
+   "0.01": {
+    "k_need": 22,
+    "p_at_k_need": 0.008062400855123997,
+    "p_at_k_need_minus_1": 0.02138697262853384
+   }
+  }
+ }
+}

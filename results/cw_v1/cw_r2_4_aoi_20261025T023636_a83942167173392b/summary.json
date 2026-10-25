@@ -1,0 +1,742 @@
+{
+ "protocol": "CW-POMDP-v1.1",
+ "stage": "CW-R2.4",
+ "kind": "NON-DELETIVE-AOI-PRIMARY-WITH-CONDITIONAL-NULL",
+ "prereg": "docs/research/CW-R2.4-AoI主指标-预注册-v0.1.md",
+ "hypothesis": "H-R2-0",
+ "design": {
+  "eps": [
+   100,
+   101,
+   102,
+   103,
+   104,
+   105,
+   106,
+   107,
+   108,
+   109,
+   110,
+   111,
+   112,
+   113,
+   114
+  ],
+  "plants": [
+   "P1",
+   "P2"
+  ],
+  "models": [
+   "belief_readout",
+   "prior_only"
+  ],
+  "seed_panel": 2001,
+  "seed_null": 3102,
+  "n_cells": 60,
+  "n_null": 30,
+  "new_plant_ep_units": 0,
+  "why_rerun": "R2.3 cells.json 缺 n_unserved_slots_by_user，无法重建非删除型均值"
+ },
+ "primary_A_t": {
+  "ALL": {
+   "verdict": "AOI-SEPARATES",
+   "why": "方向 + 幅度同时过",
+   "n_pos": 30,
+   "n_neg": 0,
+   "n_zero_delta": 0,
+   "n_beat": 30,
+   "binom_p_sign": 9.313225746154785e-10,
+   "binom_p_neg": 1.0,
+   "binom_p_beat": 9.313225746154785e-10,
+   "h_sign": true,
+   "h_neg_reversed": false,
+   "h_beat": true,
+   "alpha": 0.05,
+   "label": "ALL/A_t",
+   "n_units": 30,
+   "median_abs_delta": 27.171875,
+   "median_floor_pair": 1.169921875,
+   "delta_median": 27.171875,
+   "n_zero_floor": 0,
+   "ratio_of_medians": 23.225375626043405,
+   "nonfinite_cells": [],
+   "note": "Δ = A(prior_only) − A(belief_readout)；Δ>0 ⇒ 弱基线更陈旧 ⇒ 强基线更好"
+  },
+  "P1": {
+   "verdict": "AOI-SEPARATES",
+   "why": "方向 + 幅度同时过",
+   "n_pos": 15,
+   "n_neg": 0,
+   "n_zero_delta": 0,
+   "n_beat": 15,
+   "binom_p_sign": 3.0517578125e-05,
+   "binom_p_neg": 1.0,
+   "binom_p_beat": 3.0517578125e-05,
+   "h_sign": true,
+   "h_neg_reversed": false,
+   "h_beat": true,
+   "alpha": 0.05,
+   "label": "P1/A_t",
+   "n_units": 15,
+   "median_abs_delta": 29.529296875,
+   "median_floor_pair": 1.64453125,
+   "delta_median": 29.529296875,
+   "n_zero_floor": 0,
+   "ratio_of_medians": 17.956057007125892,
+   "nonfinite_cells": [],
+   "note": "Δ = A(prior_only) − A(belief_readout)；Δ>0 ⇒ 弱基线更陈旧 ⇒ 强基线更好"
+  },
+  "P2": {
+   "verdict": "AOI-SEPARATES",
+   "why": "方向 + 幅度同时过",
+   "n_pos": 15,
+   "n_neg": 0,
+   "n_zero_delta": 0,
+   "n_beat": 15,
+   "binom_p_sign": 3.0517578125e-05,
+   "binom_p_neg": 1.0,
+   "binom_p_beat": 3.0517578125e-05,
+   "h_sign": true,
+   "h_neg_reversed": false,
+   "h_beat": true,
+   "alpha": 0.05,
+   "label": "P2/A_t",
+   "n_units": 15,
+   "median_abs_delta": 23.48828125,
+   "median_floor_pair": 0.7265625,
+   "delta_median": 23.48828125,
+   "n_zero_floor": 0,
+   "ratio_of_medians": 32.32795698924731,
+   "nonfinite_cells": [],
+   "note": "Δ = A(prior_only) − A(belief_readout)；Δ>0 ⇒ 弱基线更陈旧 ⇒ 强基线更好"
+  }
+ },
+ "co_report_A_T": {
+  "ALL": {
+   "verdict": "AOI-SEPARATES",
+   "why": "方向 + 幅度同时过",
+   "n_pos": 30,
+   "n_neg": 0,
+   "n_zero_delta": 0,
+   "n_beat": 30,
+   "binom_p_sign": 9.313225746154785e-10,
+   "binom_p_neg": 1.0,
+   "binom_p_beat": 9.313225746154785e-10,
+   "h_sign": true,
+   "h_neg_reversed": false,
+   "h_beat": true,
+   "alpha": 0.05,
+   "label": "ALL/A_T",
+   "n_units": 30,
+   "median_abs_delta": 29.791015625,
+   "median_floor_pair": 2.8056640625,
+   "delta_median": 29.791015625,
+   "n_zero_floor": 0,
+   "ratio_of_medians": 10.618169161155587,
+   "nonfinite_cells": [],
+   "note": "Δ = A(prior_only) − A(belief_readout)；Δ>0 ⇒ 弱基线更陈旧 ⇒ 强基线更好"
+  },
+  "P1": {
+   "verdict": "AOI-SEPARATES",
+   "why": "方向 + 幅度同时过",
+   "n_pos": 15,
+   "n_neg": 0,
+   "n_zero_delta": 0,
+   "n_beat": 15,
+   "binom_p_sign": 3.0517578125e-05,
+   "binom_p_neg": 1.0,
+   "binom_p_beat": 3.0517578125e-05,
+   "h_sign": true,
+   "h_neg_reversed": false,
+   "h_beat": true,
+   "alpha": 0.05,
+   "label": "P1/A_T",
+   "n_units": 15,
+   "median_abs_delta": 35.42578125,
+   "median_floor_pair": 2.453125,
+   "delta_median": 35.42578125,
+   "n_zero_floor": 0,
+   "ratio_of_medians": 14.44108280254777,
+   "nonfinite_cells": [],
+   "note": "Δ = A(prior_only) − A(belief_readout)；Δ>0 ⇒ 弱基线更陈旧 ⇒ 强基线更好"
+  },
+  "P2": {
+   "verdict": "AOI-SEPARATES",
+   "why": "方向 + 幅度同时过",
+   "n_pos": 15,
+   "n_neg": 0,
+   "n_zero_delta": 0,
+   "n_beat": 15,
+   "binom_p_sign": 3.0517578125e-05,
+   "binom_p_neg": 1.0,
+   "binom_p_beat": 3.0517578125e-05,
+   "h_sign": true,
+   "h_neg_reversed": false,
+   "h_beat": true,
+   "alpha": 0.05,
+   "label": "P2/A_T",
+   "n_units": 15,
+   "median_abs_delta": 24.580078125,
+   "median_floor_pair": 3.0546875,
+   "delta_median": 24.580078125,
+   "n_zero_floor": 0,
+   "ratio_of_medians": 8.046675191815856,
+   "nonfinite_cells": [],
+   "note": "Δ = A(prior_only) − A(belief_readout)；Δ>0 ⇒ 弱基线更陈旧 ⇒ 强基线更好"
+  }
+ },
+ "variant_agreement": {
+  "ok": true,
+  "diff_blocks": [],
+  "a": {
+   "ALL": "AOI-SEPARATES",
+   "P1": "AOI-SEPARATES",
+   "P2": "AOI-SEPARATES"
+  },
+  "b": {
+   "ALL": "AOI-SEPARATES",
+   "P1": "AOI-SEPARATES",
+   "P2": "AOI-SEPARATES"
+  }
+ },
+ "null_diagnostics": {
+  "N1": {
+   "n_floor_pos": 30,
+   "n": 30,
+   "p0_floor_sign_rate": 1.0,
+   "p_two_sided_vs_half": 1.862645149230957e-09,
+   "deviates_at_alpha": true,
+   "conditional_side_p": 1.0,
+   "n_pos": 30,
+   "n_neg": 0,
+   "p_conditional": 1.0,
+   "usage": "若 deviates ⇒ 判词取 max(p_naive, p_conditional)；两套都报"
+  },
+  "N2": {
+   "median_abs_delta": 27.171875,
+   "n_floor_ge_median": 0,
+   "empirical_quantile_of_median_effect": 0.0,
+   "usage": "经验分位越低 ⇒ 中位效应越不像'同模型两次跑'能产生的量"
+  },
+  "N3_note": "`beat` 腿用 Bin(n,1/2) 是**保守上界**：面板两臂共享 plan_seed ⇒ 严格 CRN，H0 下 |Δ| 通常远小于换 seed 得到的 floor ⇒ P(beat|H0) < 1/2。因此 beat 不显著**不能**说'没有幅度'。"
+ },
+ "alpha_sensitivity": {
+  "0.05": {
+   "ALL": "AOI-SEPARATES",
+   "P1": "AOI-SEPARATES",
+   "P2": "AOI-SEPARATES"
+  },
+  "0.025": {
+   "ALL": "AOI-SEPARATES",
+   "P1": "AOI-SEPARATES",
+   "P2": "AOI-SEPARATES"
+  },
+  "0.01": {
+   "ALL": "AOI-SEPARATES",
+   "P1": "AOI-SEPARATES",
+   "P2": "AOI-SEPARATES"
+  }
+ },
+ "action_diagnostic_H_R24_2": {
+  "n_trace_same": 0,
+  "n": 30,
+  "median_action_diff_frac": 0.6015625,
+  "min": 0.52734375,
+  "max": 0.65234375
+ },
+ "per_user_R17": {
+  "n": 60,
+  "n_user_delta_negative": 0,
+  "by_unit_user": [
+   {
+    "plant": "P1",
+    "ep": 100,
+    "i": 0,
+    "delta_user": 16.33984375
+   },
+   {
+    "plant": "P1",
+    "ep": 100,
+    "i": 1,
+    "delta_user": 31.40625
+   },
+   {
+    "plant": "P1",
+    "ep": 101,
+    "i": 0,
+    "delta_user": 23.953125
+   },
+   {
+    "plant": "P1",
+    "ep": 101,
+    "i": 1,
+    "delta_user": 110.45703125
+   },
+   {
+    "plant": "P1",
+    "ep": 102,
+    "i": 0,
+    "delta_user": 21.03515625
+   },
+   {
+    "plant": "P1",
+    "ep": 102,
+    "i": 1,
+    "delta_user": 28.32421875
+   },
+   {
+    "plant": "P1",
+    "ep": 103,
+    "i": 0,
+    "delta_user": 23.52734375
+   },
+   {
+    "plant": "P1",
+    "ep": 103,
+    "i": 1,
+    "delta_user": 29.3359375
+   },
+   {
+    "plant": "P1",
+    "ep": 104,
+    "i": 0,
+    "delta_user": 57.02734375
+   },
+   {
+    "plant": "P1",
+    "ep": 104,
+    "i": 1,
+    "delta_user": 13.82421875
+   },
+   {
+    "plant": "P1",
+    "ep": 105,
+    "i": 0,
+    "delta_user": 21.640625
+   },
+   {
+    "plant": "P1",
+    "ep": 105,
+    "i": 1,
+    "delta_user": 28.734375
+   },
+   {
+    "plant": "P1",
+    "ep": 106,
+    "i": 0,
+    "delta_user": 41.04296875
+   },
+   {
+    "plant": "P1",
+    "ep": 106,
+    "i": 1,
+    "delta_user": 22.84375
+   },
+   {
+    "plant": "P1",
+    "ep": 107,
+    "i": 0,
+    "delta_user": 35.17578125
+   },
+   {
+    "plant": "P1",
+    "ep": 107,
+    "i": 1,
+    "delta_user": 26.44921875
+   },
+   {
+    "plant": "P1",
+    "ep": 108,
+    "i": 0,
+    "delta_user": 28.12890625
+   },
+   {
+    "plant": "P1",
+    "ep": 108,
+    "i": 1,
+    "delta_user": 41.80078125
+   },
+   {
+    "plant": "P1",
+    "ep": 109,
+    "i": 0,
+    "delta_user": 19.73046875
+   },
+   {
+    "plant": "P1",
+    "ep": 109,
+    "i": 1,
+    "delta_user": 39.328125
+   },
+   {
+    "plant": "P1",
+    "ep": 110,
+    "i": 0,
+    "delta_user": 31.05859375
+   },
+   {
+    "plant": "P1",
+    "ep": 110,
+    "i": 1,
+    "delta_user": 24.765625
+   },
+   {
+    "plant": "P1",
+    "ep": 111,
+    "i": 0,
+    "delta_user": 25.01171875
+   },
+   {
+    "plant": "P1",
+    "ep": 111,
+    "i": 1,
+    "delta_user": 46.80078125
+   },
+   {
+    "plant": "P1",
+    "ep": 112,
+    "i": 0,
+    "delta_user": 29.1796875
+   },
+   {
+    "plant": "P1",
+    "ep": 112,
+    "i": 1,
+    "delta_user": 36.05859375
+   },
+   {
+    "plant": "P1",
+    "ep": 113,
+    "i": 0,
+    "delta_user": 30.0
+   },
+   {
+    "plant": "P1",
+    "ep": 113,
+    "i": 1,
+    "delta_user": 26.7890625
+   },
+   {
+    "plant": "P1",
+    "ep": 114,
+    "i": 0,
+    "delta_user": 13.8671875
+   },
+   {
+    "plant": "P1",
+    "ep": 114,
+    "i": 1,
+    "delta_user": 24.74609375
+   },
+   {
+    "plant": "P2",
+    "ep": 100,
+    "i": 0,
+    "delta_user": 21.046875
+   },
+   {
+    "plant": "P2",
+    "ep": 100,
+    "i": 1,
+    "delta_user": 25.44140625
+   },
+   {
+    "plant": "P2",
+    "ep": 101,
+    "i": 0,
+    "delta_user": 23.9453125
+   },
+   {
+    "plant": "P2",
+    "ep": 101,
+    "i": 1,
+    "delta_user": 35.046875
+   },
+   {
+    "plant": "P2",
+    "ep": 102,
+    "i": 0,
+    "delta_user": 18.44140625
+   },
+   {
+    "plant": "P2",
+    "ep": 102,
+    "i": 1,
+    "delta_user": 25.3046875
+   },
+   {
+    "plant": "P2",
+    "ep": 103,
+    "i": 0,
+    "delta_user": 26.29296875
+   },
+   {
+    "plant": "P2",
+    "ep": 103,
+    "i": 1,
+    "delta_user": 21.26171875
+   },
+   {
+    "plant": "P2",
+    "ep": 104,
+    "i": 0,
+    "delta_user": 55.10546875
+   },
+   {
+    "plant": "P2",
+    "ep": 104,
+    "i": 1,
+    "delta_user": 15.26171875
+   },
+   {
+    "plant": "P2",
+    "ep": 105,
+    "i": 0,
+    "delta_user": 17.87109375
+   },
+   {
+    "plant": "P2",
+    "ep": 105,
+    "i": 1,
+    "delta_user": 19.96484375
+   },
+   {
+    "plant": "P2",
+    "ep": 106,
+    "i": 0,
+    "delta_user": 20.3984375
+   },
+   {
+    "plant": "P2",
+    "ep": 106,
+    "i": 1,
+    "delta_user": 18.46484375
+   },
+   {
+    "plant": "P2",
+    "ep": 107,
+    "i": 0,
+    "delta_user": 58.671875
+   },
+   {
+    "plant": "P2",
+    "ep": 107,
+    "i": 1,
+    "delta_user": 15.78515625
+   },
+   {
+    "plant": "P2",
+    "ep": 108,
+    "i": 0,
+    "delta_user": 20.5703125
+   },
+   {
+    "plant": "P2",
+    "ep": 108,
+    "i": 1,
+    "delta_user": 36.77734375
+   },
+   {
+    "plant": "P2",
+    "ep": 109,
+    "i": 0,
+    "delta_user": 18.8515625
+   },
+   {
+    "plant": "P2",
+    "ep": 109,
+    "i": 1,
+    "delta_user": 71.9921875
+   },
+   {
+    "plant": "P2",
+    "ep": 110,
+    "i": 0,
+    "delta_user": 23.59375
+   },
+   {
+    "plant": "P2",
+    "ep": 110,
+    "i": 1,
+    "delta_user": 28.03125
+   },
+   {
+    "plant": "P2",
+    "ep": 111,
+    "i": 0,
+    "delta_user": 23.28125
+   },
+   {
+    "plant": "P2",
+    "ep": 111,
+    "i": 1,
+    "delta_user": 23.6953125
+   },
+   {
+    "plant": "P2",
+    "ep": 112,
+    "i": 0,
+    "delta_user": 20.328125
+   },
+   {
+    "plant": "P2",
+    "ep": 112,
+    "i": 1,
+    "delta_user": 22.1875
+   },
+   {
+    "plant": "P2",
+    "ep": 113,
+    "i": 0,
+    "delta_user": 20.48046875
+   },
+   {
+    "plant": "P2",
+    "ep": 113,
+    "i": 1,
+    "delta_user": 21.9296875
+   },
+   {
+    "plant": "P2",
+    "ep": 114,
+    "i": 0,
+    "delta_user": 22.875
+   },
+   {
+    "plant": "P2",
+    "ep": 114,
+    "i": 1,
+    "delta_user": 22.46875
+   }
+  ]
+ },
+ "decomposition_C11": {
+  "pass": true,
+  "cost": {
+   "lvl": 0.07959802961284712,
+   "d": 0.03464138282738579,
+   "f": 0.016964526976333442,
+   "ratio": 2.0419893154529243
+  },
+  "aoi": {
+   "lvl": 10.439069745728425,
+   "d": 27.1209462409262,
+   "f": 1.2768989547038316,
+   "ratio": 21.23969648578554
+  },
+  "factor_effect": 5.969667410770058,
+  "factor_floor": 1.7423873331974908,
+  "why": "两因子乘积必须等于比值之比（代数恒等式；不闭合说明报告里的数抄错）"
+ },
+ "ctrl_all_pass": true,
+ "identity_I1": {
+  "ok": true,
+  "n_checked": 90,
+  "n_diff": 0,
+  "diffs": [],
+  "n_fields_compared": 27,
+  "fields_skipped": [
+   "elapsed_s"
+  ],
+  "why": "同 seed 同配置重跑若读数变了，90 格就不属于同一个世界，主指标作废"
+ },
+ "identity_I2_n_bad": [],
+ "objective": {
+  "primary": "cost_true_per_step_median",
+  "primary_definition": "逐 episode 的 `q·Σ_i mean_t(x_i²) + r·Σ_i mean_t(u_i²)`，再取 episode 中位数",
+  "secondary": [
+   "per_user_r_i",
+   "mean_task_aoi_per_user_timeavg",
+   "n_delivered",
+   "n_attempted",
+   "n_probe",
+   "cost_true_by_user"
+  ],
+  "forbidden": [
+   "ku",
+   "kf",
+   "share",
+   "share_user",
+   "share_frame"
+  ],
+  "statistical_unit": "完整 episode（同初值的 seed 不是独立单元，R1.7.8 D5b）",
+  "weights": "由公开 `q_cost/r_cost` 固定，不按最终收益调权"
+ },
+ "spec_fingerprint_P1": "89a43b9dba1c961c",
+ "sigma_meas": {
+  "P1": 0.2,
+  "P2": 0.05
+ },
+ "budget": {
+  "panel_s": 240.6,
+  "total_s": 275.6,
+  "per_cell_s": [
+   2.83,
+   2.8,
+   2.9,
+   2.83,
+   2.75,
+   2.73,
+   2.77,
+   2.74,
+   2.73,
+   2.73,
+   2.77,
+   2.8,
+   2.74,
+   2.82,
+   2.7,
+   1.77,
+   1.79,
+   1.79,
+   1.75,
+   1.87,
+   1.74,
+   1.74,
+   1.77,
+   1.74,
+   1.86,
+   1.75,
+   1.77,
+   1.74,
+   1.75,
+   1.79,
+   23.99,
+   2.75,
+   2.73,
+   2.73,
+   2.73,
+   2.71,
+   2.75,
+   2.7,
+   2.75,
+   2.73,
+   2.75,
+   2.71,
+   2.72,
+   2.71,
+   2.72,
+   1.79,
+   1.78,
+   1.79,
+   1.86,
+   1.86,
+   1.89,
+   1.89,
+   1.98,
+   1.86,
+   1.83,
+   1.74,
+   1.82,
+   1.84,
+   1.84,
+   1.79
+  ]
+ },
+ "head": "2c71b7ac6f9c63cb7045ad76a9c4e254c48d6412",
+ "src_hash": "a83942167173392b",
+ "n_checks_gates": 11,
+ "n_fail_gates": 0,
+ "n_fail_total": 0,
+ "training": "none（本轮零训练）"
+}

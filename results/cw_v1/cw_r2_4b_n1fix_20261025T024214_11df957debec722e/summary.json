@@ -1,0 +1,136 @@
+{
+ "protocol": "CW-POMDP-v1.1",
+ "stage": "CW-R2.4b",
+ "kind": "N1-CRITERIA-FIX-ZERO-EPISODE",
+ "corrects": "cw_r2_4_aoi_20261025T023636_a83942167173392b",
+ "corrects_scope": "只更正 `null_diagnostics.N1`；`cells/null/primary_A_t/co_report_A_T/I1/I2` 全部逐字沿用（`K5` 证明）",
+ "prereg_r24": "docs/research/CW-R2.4-AoI主指标-预注册-v0.1.md",
+ "bug": "预注册 §4.1 用 `floor_u>0`（绝对值）当符号率 ⇒ 恒真（30/30, p=1.86e-9），条件化后 p=1.0，按 §7-3 字面规则会误杀 `AOI-SEPARATES`",
+ "fix": "改用有符号 `s_u = A(strong,2001) − A(strong,3102)`",
+ "N1_A_t": {
+  "n": 30,
+  "n_signed_pos": 18,
+  "n_signed_zero": 0,
+  "n_eff": 30,
+  "p0_signed_sign_rate": 0.6,
+  "s_min": -4.576171875,
+  "s_median": 0.353515625,
+  "s_max": 5.166015625,
+  "p_two_sided_vs_half": 0.361594608053565,
+  "deviates_at_alpha": false,
+  "conditional_side_p": 0.6,
+  "n_pos": 30,
+  "n_neg": 0,
+  "p_conditional": 2.2107391972073312e-07,
+  "usage": "若 deviates ⇒ 判词取 max(p_naive, p_conditional)，两套都报；若不 deviates ⇒ 朴素 1/2 零分布成立，不需条件化"
+ },
+ "N1_A_T": {
+  "n": 30,
+  "n_signed_pos": 18,
+  "n_signed_zero": 0,
+  "n_eff": 30,
+  "p0_signed_sign_rate": 0.6,
+  "s_min": -7.83203125,
+  "s_median": 1.59375,
+  "s_max": 13.833984375,
+  "p_two_sided_vs_half": 0.361594608053565,
+  "deviates_at_alpha": false,
+  "conditional_side_p": 0.6,
+  "n_pos": 30,
+  "n_neg": 0,
+  "p_conditional": 2.2107391972073312e-07,
+  "usage": "若 deviates ⇒ 判词取 max(p_naive, p_conditional)，两套都报；若不 deviates ⇒ 朴素 1/2 零分布成立，不需条件化"
+ },
+ "N1_abs_vacuous": {
+  "n_abs_pos": 30,
+  "note": "★ 恒真：`floor` 是绝对值 ⇒ `>0` 与符号无关。初版误用它当符号率（得 30/30），已作废，只留档"
+ },
+ "N2": {
+  "median_abs_delta": 27.171875,
+  "n_floor_ge_median": 0,
+  "empirical_quantile_of_median_effect": 0.0,
+  "usage": "经验分位越低 ⇒ 中位效应越不像'同模型两次跑'能产生的量"
+ },
+ "gates_K1_K5": {
+  "K1_symmetric_signed": {
+   "pass": true,
+   "p0": 0.5,
+   "deviates": false
+  },
+  "K2_all_positive_signed": {
+   "pass": true,
+   "p0": 1.0
+  },
+  "K3_abs_vs_signed_discriminates": {
+   "pass": true,
+   "abs": {
+    "n_abs_pos": 30,
+    "n": 30,
+    "p0": 1.0,
+    "p_two_sided_vs_half": 1.862645149230957e-09,
+    "deviates_at_alpha": true
+   },
+   "signed": {
+    "p0": 0.5
+   },
+   "why": "同一份对称数据：绝对值版必得 30/30（恒真），有符号版得 15/30。两版若相同 ⇒ 修补无效"
+  },
+  "K4_real_signed_null": {
+   "pass": true,
+   "N1": {
+    "n": 30,
+    "n_signed_pos": 18,
+    "n_signed_zero": 0,
+    "n_eff": 30,
+    "p0_signed_sign_rate": 0.6,
+    "s_min": -4.576171875,
+    "s_median": 0.353515625,
+    "s_max": 5.166015625,
+    "p_two_sided_vs_half": 0.361594608053565,
+    "deviates_at_alpha": false,
+    "conditional_side_p": 0.6,
+    "n_pos": 30,
+    "n_neg": 0,
+    "p_conditional": 2.2107391972073312e-07,
+    "usage": "若 deviates ⇒ 判词取 max(p_naive, p_conditional)，两套都报；若不 deviates ⇒ 朴素 1/2 零分布成立，不需条件化"
+   },
+   "N1_abs_vacuous": {
+    "n_abs_pos": 30,
+    "note": "★ 恒真：`floor` 是绝对值 ⇒ `>0` 与符号无关。初版误用它当符号率（得 30/30），已作废，只留档"
+   }
+  },
+  "K5_reproduce_primary": {
+   "pass": true,
+   "items": {
+    "ALL": {
+     "verdict_same": true,
+     "n_pos_same": true,
+     "n_neg_same": true,
+     "n_beat_same": true,
+     "p_sign_same": true,
+     "p_beat_same": true
+    },
+    "P1": {
+     "verdict_same": true,
+     "n_pos_same": true,
+     "n_neg_same": true,
+     "n_beat_same": true,
+     "p_sign_same": true,
+     "p_beat_same": true
+    },
+    "P2": {
+     "verdict_same": true,
+     "n_pos_same": true,
+     "n_neg_same": true,
+     "n_beat_same": true,
+     "p_sign_same": true,
+     "p_beat_same": true
+    }
+   }
+  }
+ },
+ "n_run_episode": 0,
+ "head": "2c71b7ac6f9c63cb7045ad76a9c4e254c48d6412",
+ "src_hash": "11df957debec722e",
+ "elapsed_s": 0.07
+}

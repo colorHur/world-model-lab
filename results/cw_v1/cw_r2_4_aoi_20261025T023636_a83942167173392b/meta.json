@@ -1,0 +1,25 @@
+{
+ "command": "python -m experiments.cw_v1.r2_4_aoi --tag main",
+ "timestamp_local": "2026-10-25T10:40:44.860721+08:00",
+ "python": "3.11.16",
+ "numpy": "2.4.6",
+ "head": "2c71b7ac6f9c63cb7045ad76a9c4e254c48d6412",
+ "src_hash": "a83942167173392b",
+ "worktree_sha_r2_4": "8bb2c540881fb2d23a08447fa0d158bed3545ae7",
+ "blob_sha_r2_4": null,
+ "blob_sha_note": "运行前未入库 ⇒ 提交后补 _POST_COMMIT",
+ "git_dirty_before_run": [
+  "?? docs/research/CW-R2.4-AoI主指标-预注册-v0.1.md",
+  "?? experiments/cw_v1/mech3.py",
+  "?? experiments/cw_v1/r2_4_aoi.py"
+ ],
+ "protocol": "CW-POMDP-v1.1",
+ "event_pairing": "slot",
+ "n_cells": 60,
+ "n_null": 30,
+ "panel_elapsed_s": 240.6,
+ "total_elapsed_s": 275.6,
+ "peak_rss_mb": 4154.4,
+ "n_fail_total": 0,
+ "training": "none"
+}
