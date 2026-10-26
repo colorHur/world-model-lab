@@ -1,0 +1,145 @@
+[
+  {
+    "tag": "n33_tau4",
+    "n_m": 33,
+    "tau": [
+      4
+    ],
+    "b_ticks": [
+      16
+    ],
+    "p": [
+      1.0,
+      0.25
+    ],
+    "alpha": 2.5,
+    "P": 0.01,
+    "capped": false,
+    "states": {
+      "p=1": {
+        "noprobe": 51,
+        "paid": 2221,
+        "n_before_any_query": 0,
+        "n_after_first_cell": 2221
+      },
+      "p=0.25": {
+        "noprobe": 51,
+        "paid": 8171,
+        "n_before_any_query": 0,
+        "n_after_first_cell": 8171
+      }
+    },
+    "sec": {
+      "p=1": 0.007,
+      "p=0.25": 0.022
+    }
+  },
+  {
+    "tag": "n33_tau6",
+    "n_m": 33,
+    "tau": [
+      6
+    ],
+    "b_ticks": [
+      16,
+      24
+    ],
+    "p": [
+      1.0,
+      0.25
+    ],
+    "alpha": 2.5,
+    "P": 0.01,
+    "capped": false,
+    "states": {
+      "p=1": {
+        "noprobe": 393,
+        "paid": 70713,
+        "n_before_any_query": 0,
+        "n_after_first_cell": 10147
+      },
+      "p=0.25": {
+        "noprobe": 393,
+        "paid": 628929,
+        "n_before_any_query": 0,
+        "n_after_first_cell": 256845
+      }
+    },
+    "sec": {
+      "p=1": 0.214,
+      "p=0.25": 3.664
+    }
+  },
+  {
+    "tag": "n65_tau4",
+    "n_m": 65,
+    "tau": [
+      4
+    ],
+    "b_ticks": [
+      16
+    ],
+    "p": [
+      1.0,
+      0.25
+    ],
+    "alpha": 2.5,
+    "P": 0.01,
+    "capped": false,
+    "states": {
+      "p=1": {
+        "noprobe": 51,
+        "paid": 2397,
+        "n_before_any_query": 0,
+        "n_after_first_cell": 2397
+      },
+      "p=0.25": {
+        "noprobe": 51,
+        "paid": 10803,
+        "n_before_any_query": 0,
+        "n_after_first_cell": 10803
+      }
+    },
+    "sec": {
+      "p=1": 0.006,
+      "p=0.25": 0.026
+    }
+  },
+  {
+    "tag": "n33_tau8",
+    "n_m": 33,
+    "tau": [
+      8
+    ],
+    "b_ticks": [
+      8,
+      16,
+      24
+    ],
+    "p": [
+      1.0,
+      0.25
+    ],
+    "alpha": 2.5,
+    "P": 0.01,
+    "capped": true,
+    "states": {
+      "p=1": {
+        "noprobe": 1208,
+        "paid": 269375,
+        "n_before_any_query": 0,
+        "n_after_first_cell": 799
+      },
+      "p=0.25": {
+        "noprobe": 1208,
+        "paid": 6000002,
+        "n_before_any_query": 0,
+        "n_after_first_cell": 157783
+      }
+    },
+    "sec": {
+      "p=1": 0.87,
+      "p=0.25": 58.023
+    }
+  }
+]
