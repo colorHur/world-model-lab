@@ -1,0 +1,80 @@
+[
+  {
+    "n_m": 5,
+    "sec": 0.024,
+    "states": {
+      "A0": 138,
+      "A0p": 290,
+      "VL2": 1583,
+      "VL1": 2450
+    },
+    "capped": false,
+    "clamp": 258,
+    "fallback": 0
+  },
+  {
+    "n_m": 9,
+    "sec": 0.037,
+    "states": {
+      "A0": 138,
+      "A0p": 290,
+      "VL2": 2739,
+      "VL1": 4076
+    },
+    "capped": false,
+    "clamp": 278,
+    "fallback": 0
+  },
+  {
+    "n_m": 13,
+    "sec": 0.042,
+    "states": {
+      "A0": 138,
+      "A0p": 290,
+      "VL2": 2915,
+      "VL1": 4609
+    },
+    "capped": false,
+    "clamp": 266,
+    "fallback": 0
+  },
+  {
+    "n_m": 17,
+    "sec": 0.046,
+    "states": {
+      "A0": 138,
+      "A0p": 290,
+      "VL2": 3523,
+      "VL1": 5203
+    },
+    "capped": false,
+    "clamp": 278,
+    "fallback": 0
+  },
+  {
+    "n_m": 25,
+    "sec": 0.065,
+    "states": {
+      "A0": 138,
+      "A0p": 290,
+      "VL2": 5209,
+      "VL1": 7405
+    },
+    "capped": false,
+    "clamp": 296,
+    "fallback": 0
+  },
+  {
+    "n_m": 33,
+    "sec": 0.081,
+    "states": {
+      "A0": 138,
+      "A0p": 290,
+      "VL2": 5979,
+      "VL1": 8478
+    },
+    "capped": false,
+    "clamp": 290,
+    "fallback": 0
+  }
+]

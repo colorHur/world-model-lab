@@ -1,0 +1,4 @@
+# CW-R5.5 主面板 n=1（预注册 §2）
+cd D:/repos/world-model-lab
+python -m experiments.cw_v1.r5_5_l1_ack
+# 输出 r55.json（cells/legs/gates/verdicts）

@@ -1,0 +1,4 @@
+# CW-R5.5 读后追加诊断：n=2, b=24（3 发送 / 2 用户）
+cd D:/repos/world-model-lab
+python -m experiments.cw_v1.r5_5_l1_ack --diag-b24
+# 探索性，不进主判据
