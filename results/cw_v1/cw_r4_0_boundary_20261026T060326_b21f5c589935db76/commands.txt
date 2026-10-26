@@ -1,0 +1,20 @@
+# CW-R4.0 证据目录 · 命令与时间（系统实测）
+
+## 本地时间（date，+08:00）
+2026-10-26 14:04:22     (+0800)
+
+## 解释器
+3.11.16 numpy 2.4.6
+
+## 硬件
+纯 CPU；本机无 NVIDIA 独显
+
+## 正式面板命令
+cd D:/repos/world-model-lab && D:/devtools/miniconda3/envs/ai-lab/python.exe -m experiments.cw_v1.r4_0_boundary
+exit=0
+
+## 闸单独跑（--ctrl-only）
+D:/devtools/miniconda3/envs/ai-lab/python.exe -m experiments.cw_v1.r4_0_boundary --ctrl-only  → n_fail=0 / 8
+
+## 源码哈希（本目录名后缀）
+b21f5c589935db76
