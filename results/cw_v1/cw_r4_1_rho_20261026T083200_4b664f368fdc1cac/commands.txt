@@ -1,0 +1,43 @@
+# CW-R4.1 证据目录 · 命令与时间（系统实测）
+
+## 本地时间（`date`，+08:00）
+- 预注册写卡：2026-10-26 16:2x	(+0800)
+- 正式面板起跑：2026-10-26 16:32	(+0800)
+- 网格外推点（posthoc-ext）：2026-10-26 16:35	(+0800)
+- 收工：2026-10-26 16:37	(+0800)
+
+## 解释器
+python 3.11.16 / numpy 2.4.6（`D:/devtools/miniconda3/envs/ai-lab/python.exe`）
+
+## 硬件
+纯 CPU；本机无 NVIDIA 独显（工位机）
+
+## 开工 HEAD（= 远端 `refs/heads/main`，`ls-remote` 只走 SSH）
+ea697eacfc6d9ab7580d8d6501735be5c6b069a7
+
+## 正式面板命令
+```
+cd D:/repos/world-model-lab
+D:/devtools/miniconda3/envs/ai-lab/python.exe -m experiments.cw_v1.r4_1_rho
+exit=0
+```
+210 格 / 11 个 `(ρ,α)` 引擎 / 零 episode、零训练、零参数更新 / 纯 CPU
+
+## 控制闸（不含面板）
+```
+D:/devtools/miniconda3/envs/ai-lab/python.exe -m experiments.cw_v1.r4_1_rho --ctrl-only
+→ n_fail=0 / 5
+```
+
+## 网格外推点（**未预注册**，posthoc-ext）
+```
+D:/devtools/miniconda3/envs/ai-lab/python.exe -m experiments.cw_v1.r4_1b_ext
+exit=0        → r41b_ext.json
+```
+
+## 作废目录
+`results/cw_v1/cw_r4_1_rho_20261026T082804_04abce3a813c55d3/`（`refine` 靶子取错，见其 `_SUPERSEDED.txt`；
+`cells` 与正式目录 **210 格 0 字段差异、`max_abs_diff=0.0`** 已 diff 核）
+
+## 源码哈希（目录名后缀）
+`4b664f368fdc1cac`（= `_src_hash()`，`experiments/cw_v1/*.py` 内容哈希前 16 位）

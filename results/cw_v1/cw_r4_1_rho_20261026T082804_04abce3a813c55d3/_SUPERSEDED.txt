@@ -1,0 +1,16 @@
+# `_SUPERSEDED` — 本目录的 `refine`/`R6` 有实现缺陷，正式证据见
+# `results/cw_v1/cw_r4_1_rho_20261026T083200_4b664f368fdc1cac/`
+#
+# 作废原因（不是"跑错了"，是"靶子挑错了"）：
+#   `panel()` 里记录 `argmax_ratio` 时用了外层循环的残留变量 `c`（= 最后一格
+#   `τ=5,b=4,P=0.05`，其 `ratio_free ≡ 0`），而不是 `max(..., key=ratio_free)` 那一格。
+#   ⇒ `refine_argmax` 挑中全 0 格，`(max−min)/max = 0/0` 被写成 `spread_rel = 0.000`，
+#     `R6` 于是判 `GRID-STABLE`（**假通过**：分母为 0 的"稳定"）。
+#
+# 本目录里**仍然有效**的部分：
+#   `cells`（210 格面板读数）与 `panel_meta` 的 `max_*` 字段 —— 它们不经过那条出错路径；
+#   两次运行在全部 210 格上的 `IV_free / IV_paid / ratio_free / A0 / dV_q` 逐位相同（已 diff 核）。
+# 已作废的部分：`refine`、`R6`、`R6_detail`。
+#
+# 修复：`argmax = max(fin, key=...)` + 新增闸 `gate_g_argmax_consistent`
+#（用本目录的实况 meta 做变异测试：11/11 转红，`pass=False`），并补 `skipped="no-target"` 分支。
