@@ -1,0 +1,30 @@
+{
+  "round": "CW-R5.3",
+  "protocol": "CW-POMDP-v1.3-ticks",
+  "commit": "fd91164db0df3c1abb3c93305c63e89b2add6cc3",
+  "commit_note": "本轮本金（13 文件）。本文件是提交后追加的复现记录，不改任何读数。",
+  "src_hash_now": "514c926583f03112",
+  "src_hash_at_run": "c5dbe200237f1db1",
+  "src_hash_match": false,
+  "reproduction": {
+    "method": "同一命令 `--n-m 65,129,257 --out <tmp>` 再跑一遍，逐格比 A0 / V_paid / IV_paid",
+    "n_cells": 51,
+    "n_cells_equal": 51,
+    "max_abs_diff": 0.0,
+    "verdict_same": true,
+    "mechanism_same": true,
+    "tmp_dir": "results/cw_v1/_r53_rerun_tmp（比对后删除）"
+  },
+  "key_readings": {
+    "ctrl2u_b8_p0_tau3": 0.0,
+    "ctrl2u_b8_p0_tau4": 0.00031456406290131245,
+    "ctrl2u_b8_p0_tau5": 0.0005075603800662465,
+    "ctrl2u_b8_p0_tau6": 0.0006240961443744752,
+    "main3u_b8_p0_tau4": 0.0006174640025770339,
+    "main3u_b8_p0_tau5": 0.0010992248910351443,
+    "sym2u_tau6": 0.00021686542018125,
+    "struct_p1_max_abs": 0.0
+  },
+  "note": "3u 的 τ=6 撞 STATE_CAP=6e6（n_m=65 就 6,000,158）⇒ 未测，本面板不含该格。",
+  "src_hash_note": "面板在 18:34:03 跑（当时树里还没有 r5_3b_btau.py ⇒ c5dbe200237f1db1）；事后对照脚本 `r5_3b_btau.py` 加入后 `_src_hash()` 变 514c926583f03112（该函数对 experiments/cw_v1/*.py 全量取哈希）。复跑（树已含新文件）51 格 A0/V_paid/IV_paid 与 18:34 那遍逐位相同（max_abs_diff=0.0）⇒ 差异只来自新增入口文件，`r5_3` 不 import 它，被测路径未变。"
+}

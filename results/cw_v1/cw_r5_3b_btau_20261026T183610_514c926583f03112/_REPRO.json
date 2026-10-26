@@ -1,0 +1,23 @@
+{
+  "round": "CW-R5.3b",
+  "protocol": "CW-POMDP-v1.3-ticks",
+  "commit": "fd91164db0df3c1abb3c93305c63e89b2add6cc3",
+  "post_hoc": true,
+  "post_hoc_note": "看到 R5.3 主面板之后追加；不进主判据",
+  "src_hash_now": "514c926583f03112",
+  "src_hash_at_run": "514c926583f03112",
+  "src_hash_match": true,
+  "reproduction": {
+    "method": "同一命令再跑一遍逐格比对",
+    "n_cells": 16,
+    "n_cells_equal": 16,
+    "max_abs_diff": 0.0,
+    "tmp_dir": "results/cw_v1/_r53_rerun_tmp_b（比对后删除）"
+  },
+  "key_readings": {
+    "b16_tau4_IV": 0.0,
+    "b16_tau5_IV": 0.0,
+    "b16_tau6_IV_at_129": 0.00068494329,
+    "b16_tau6_IV_at_257": 0.0006807856
+  }
+}
