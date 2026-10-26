@@ -1,0 +1,5 @@
+cwd=D:\repos\world-model-lab
+python=D:\devtools\miniconda3\envs\ai-lab\python.exe
+argv=['D:\\repos\\world-model-lab\\experiments\\cw_v1\\r4_2_multisend.py']
+utc=20261026T115302
+src_hash=1d8b27e363bdeb4d
