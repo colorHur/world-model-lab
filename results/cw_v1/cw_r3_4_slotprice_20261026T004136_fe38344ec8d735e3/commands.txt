@@ -1,0 +1,17 @@
+# CW-R3.4 复现命令（本机工位机，纯 CPU，无 episode、无训练）
+# 时间：2026-10-26 08:30–08:5x +08:00（Get-Date 实测）
+# 解释器：D:\devtools\miniconda3\envs\ai-lab\python.exe (3.11 / numpy 2.4.6)
+# 工作目录：D:\repos\world-model-lab  (HEAD 0bc584b，开工时树干净)
+
+# 1) 自证（零 DP 面板，5 条闸）
+D:\devtools\miniconda3\envs\ai-lab\python.exe -m experiments.cw_v1.r3_4_slotprice --ctrl-only
+
+# 2) 正式面板（46 格：τ=2..5 @n_m=129 + τ=6 @n_m=65；三臂；38.7 s）
+D:\devtools\miniconda3\envs\ai-lab\python.exe -m experiments.cw_v1.r3_4_slotprice
+
+# 3) 跑后分析（探索性，明确不是预注册判据）
+D:\devtools\miniconda3\envs\ai-lab\python.exe -m experiments.cw_v1.r3_4b_posthoc ^
+    "results/cw_v1/cw_r3_4_slotprice_20261026T004136_fe38344ec8d735e3/r34.json"
+
+# 4) 旧证据目录作废说明（不删）
+#    results/cw_v1/cw_r3_4_slotprice_20261026T003931_3367c18c581fd02a_SUPERSEDED/_SUPERSEDED.txt

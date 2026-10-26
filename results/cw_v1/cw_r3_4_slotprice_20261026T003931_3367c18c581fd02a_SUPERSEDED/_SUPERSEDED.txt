@@ -1,0 +1,14 @@
+# 作废：`cw_r3_4_slotprice_20261026T003931_3367c18c581fd02a`
+
+- 作废时间：2026-10-26 08:45（`Get-Date` 实测 +08:00）
+- 原因：**`G4` 的断言写死了**「`π_slot ≥ 0`，即 `SEND` 弱支配 `HOLD`」。本轮数据把它证伪：
+  `τ=5,b=1,P=0.005` 一格 `π_slot = −2.6470588235301407e-05`（**等**比**发**便宜）。
+  该断言来自 scratch 的**单格**（`τ=4,b=2,P=0.02`，`π_slot=+6.3e−3`）外推，不是这套 DP 的结构性质。
+- 处理：把 `π_slot` 的符号从"闸"降为**必报量**（`negative_slot_cells`），闸只保留两条真正结构的单调性。
+  **不改被测物、不改任何判据或容差**。
+- 判词影响：**无**。`J0–J4` 与本目录逐字相同（`A-FORM-INSUFFICIENT` / `PROBE-COMPETITIVE-SOMEWHERE` /
+  `SLOT-COMPARABLE` / `CRITERION-STILL-MISCALIBRATED` / `SYMMETRY-BREAK-RESTORES-PROBE`）。
+  唯一差别：`n_fail` 由 1（`G4`）变 0。
+- 替代目录：`cw_r3_4_slotprice_20261026T004136_fe38344ec8d735e3`（源码哈希随之改变，
+  `3367c18c…` → `fe38344e…`，这正是内容哈希该有的行为）。
+- 本目录保留不删。
