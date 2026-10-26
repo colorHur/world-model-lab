@@ -1,0 +1,4 @@
+# 2026-10-26 20:55:32 (+08:00) 正式面板（原始读数，未改）
+D:/devtools/miniconda3/envs/ai-lab/python.exe -u -m experiments.cw_v1.r5_0_probcap > .r50c.log 2>&1
+# 2026-10-26 21:0x (+08:00) 跑后重算判据（原始读数未改；修 seq 排序把 ∞ 排末 + C-3b 方向）=> r50_judge2.json
+D:/devtools/miniconda3/envs/ai-lab/python.exe -u -m experiments.cw_v1.r5_0_probcap --rejudge results/cw_v1/cw_r5_0_probcap_20261026T125532_fe7293ee42e4b1ef/r50.json

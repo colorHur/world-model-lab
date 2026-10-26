@@ -1,0 +1,6 @@
+# 2026-10-26 20:50:22 (+08:00) 面板首跑：读数已落盘
+# 判据按预注册写反的方向（IV 随 k 不增）评估 => CAP-EXPERIMENT-INVALID；这是我校的规格错误，不是数据异常
+# 另：(tau=8,b=3,n_m=17) 的 probe_max=None 撞 STATE_CAP 被 break 掉 => 该格缺 ∞ 值
+D:/devtools/miniconda3/envs/ai-lab/python.exe -u -m experiments.cw_v1.r5_0_probcap > .r50.log 2>&1
+# 之后两次重跑均未落盘：① json.dumps 不接受 tuple 键；② judge 里 binding 初始化成 dict（AttributeError）
+# 最终提交版本见 ../cw_r5_0_probcap_20261026T125532_fe7293ee42e4b1ef/
