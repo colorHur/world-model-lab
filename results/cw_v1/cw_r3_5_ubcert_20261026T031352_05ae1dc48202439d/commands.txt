@@ -1,0 +1,18 @@
+# CW-R3.5 证据 · 运行命令与依赖（机器生成，勿手写）
+utc_now=20261026T031842
+python=3.11.16 (D:\devtools\miniconda3\envs\ai-lab\python.exe)
+numpy=2.4.6
+platform=Windows-10-10.0.26100-SP0
+src_hash=bc81bb924619abed
+
+# 主面板（预注册判据 C0/C1/C2/C3/C4/C5）
+cd /d/repos/world-model-lab
+D:/devtools/miniconda3/envs/ai-lab/python.exe -m experiments.cw_v1.r3_5_ubcert
+
+# 跑后补充（探索性，未预注册）
+D:/devtools/miniconda3/envs/ai-lab/python.exe -m experiments.cw_v1.r3_5b_posthoc
+
+# 控制闸（不含主面板）
+D:/devtools/miniconda3/envs/ai-lab/python.exe -m experiments.cw_v1.r3_5_ubcert --ctrl-only
+
+# 本目录：cw_r3_5_ubcert_20261026T031352_05ae1dc48202439d
