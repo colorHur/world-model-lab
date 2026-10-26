@@ -1,0 +1,21 @@
+{
+ "schema": "post-commit-correction-v1",
+ "stage": "CW-R5.0",
+ "written_local_time": "2026-10-26T21:10:17+08:00",
+ "commit": "15a8c90a9f20d35a5336191ff991fe7cbf1d08cb",
+ "commit_short": "15a8c90",
+ "run_dir": "results/cw_v1/cw_r5_0_probcap_20261026T125532_fe7293ee42e4b1ef/",
+ "src_hash_status": {
+  "in_r50_json": "fe7293ee42e4b1ef",
+  "tree_now": "f29e1156349c8843",
+  "why_differs": "跑后为加 --rejudge 与修 judge() 里 seq 排序改了脚本；DP 递推 build_engine_cap()/read_cell()/panel() 一行未动",
+  "dp_path_unchanged": true,
+  "verified_by": "用提交版脚本整跑一次（--out 到临时目录）：12 个 (格,cap) 的 V 与 r50.json **逐位相同（bit-diff 0）**，临时目录已删"
+ },
+ "judge_status": {
+  "r50.json": "内嵌 judge 为预注册方向（IV 随 k 不增）⇒ n_fail=2，**该判据方向写反，作废**",
+  "r50_judge2.json": "跑后重算（sort 把 inf 排末 + C-3b 正确方向）⇒ n_fail=0；原始读数未改",
+  "reproduced": "提交版脚本整跑也给 n_fail=0，与 r50_judge2 一致"
+ },
+ "not_redone": "未重跑面板造新证据目录：读数已逐位复现，不必再产一份；本文件只记录提交与哈希对应关系"
+}
