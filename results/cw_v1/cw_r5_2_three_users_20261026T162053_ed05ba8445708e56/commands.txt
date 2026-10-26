@@ -1,0 +1,12 @@
+# CW-R5.2 复现命令（工作目录 = D:/repos/world-model-lab，解释器 = D:\devtools\miniconda3\envs\ai-lab\python.exe）
+#
+# 1) 规模探针（定 n_m 用，不是判据；10 档 5..257，全不撞 STATE_CAP=6e6）
+python -m experiments.cw_v1.r5_2_three_users --size-only --n-m 5,7,9,13,17,33,65,129,257 --out <evidence_dir>
+#
+# 2) 不依赖面板的闸（G1a/G1b/G2/G6/G7b/G8/G9）
+python -m experiments.cw_v1.r5_2_three_users --ctrl-only
+#
+# 3) 正式面板（52 格 = 主面板 24 + 2u 锚 4 + 3u 锚 4 + 镜像 8+4 + 构成 8）
+python -m experiments.cw_v1.r5_2_three_users --out <evidence_dir>
+#
+# 4) 复现核验：同一命令再跑一遍，52 格 A0/V_paid/IV_paid 逐位相同（max_abs_diff = 0.0）
