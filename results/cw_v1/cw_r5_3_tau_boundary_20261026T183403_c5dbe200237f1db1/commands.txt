@@ -1,0 +1,12 @@
+# CW-R5.3 复现命令（工作目录 = D:/repos/world-model-lab，解释器 = D:\devtools\miniconda3\envs\ai-lab\python.exe）
+#
+# 1) 不依赖面板的闸（G2/G3/G6G8/G7b/G9，约 3 s）
+python -m experiments.cw_v1.r5_3_tau_boundary --ctrl-only --n-m 65,129,257
+#
+# 2) 规模探针（只打印 n_states/sec/capped，不打印 IV；n_m 33/65/129 已在跑前执行）
+python -m experiments.cw_v1.r5_3_tau_boundary --size-only --n-m 33,65,129 --taus 2,3,4,5,6 --out results/cw_v1/cw_r5_3_size_probe
+#
+# 3) 正式面板（51 格：每个 n_m 下 2u 5τ + struct 4τ + 3u 4τ + sym 3τ + 4u 1τ = 17 格，× 3 个 n_m；61.85 s）
+python -m experiments.cw_v1.r5_3_tau_boundary --n-m 65,129,257
+#
+# 4) 复现核验：同一命令再跑一遍，51 格 A0/V_paid/IV_paid 逐位比对（结果见 _REPRO.json）

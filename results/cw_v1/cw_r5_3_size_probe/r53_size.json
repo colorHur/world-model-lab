@@ -1,0 +1,142 @@
+[
+  {
+    "n_m": 33,
+    "legs": {
+      "2u_b8_p0": [
+        {
+          "tau": 2,
+          "sec": 0.0,
+          "states_after": 36,
+          "capped": false
+        },
+        {
+          "tau": 3,
+          "sec": 0.002,
+          "states_after": 670,
+          "capped": false
+        },
+        {
+          "tau": 4,
+          "sec": 0.021,
+          "states_after": 7804,
+          "capped": false
+        },
+        {
+          "tau": 5,
+          "sec": 0.207,
+          "states_after": 51238,
+          "capped": false
+        },
+        {
+          "tau": 6,
+          "sec": 1.259,
+          "states_after": 205756,
+          "capped": false
+        }
+      ],
+      "3u_b8_p0": [
+        {
+          "tau": 2,
+          "sec": 0.0,
+          "states_after": 51,
+          "capped": false
+        },
+        {
+          "tau": 3,
+          "sec": 0.003,
+          "states_after": 1582,
+          "capped": false
+        },
+        {
+          "tau": 4,
+          "sec": 0.095,
+          "states_after": 37923,
+          "capped": false
+        },
+        {
+          "tau": 5,
+          "sec": 1.916,
+          "states_after": 597720,
+          "capped": false
+        },
+        {
+          "tau": 6,
+          "sec": 33.328,
+          "states_after": 5607961,
+          "capped": false
+        }
+      ]
+    },
+    "capped": false
+  },
+  {
+    "n_m": 65,
+    "legs": {
+      "2u_b8_p0": [
+        {
+          "tau": 2,
+          "sec": 0.0,
+          "states_after": 36,
+          "capped": false
+        },
+        {
+          "tau": 3,
+          "sec": 0.002,
+          "states_after": 726,
+          "capped": false
+        },
+        {
+          "tau": 4,
+          "sec": 0.423,
+          "states_after": 10436,
+          "capped": false
+        },
+        {
+          "tau": 5,
+          "sec": 0.301,
+          "states_after": 94350,
+          "capped": false
+        },
+        {
+          "tau": 6,
+          "sec": 2.649,
+          "states_after": 499444,
+          "capped": false
+        }
+      ],
+      "3u_b8_p0": [
+        {
+          "tau": 2,
+          "sec": 0.0,
+          "states_after": 51,
+          "capped": false
+        },
+        {
+          "tau": 3,
+          "sec": 0.003,
+          "states_after": 1666,
+          "capped": false
+        },
+        {
+          "tau": 4,
+          "sec": 0.122,
+          "states_after": 45063,
+          "capped": false
+        },
+        {
+          "tau": 5,
+          "sec": 2.541,
+          "states_after": 906900,
+          "capped": false
+        },
+        {
+          "tau": 6,
+          "sec": 23.647,
+          "states_after": 6000158,
+          "capped": true
+        }
+      ]
+    },
+    "capped": true
+  }
+]

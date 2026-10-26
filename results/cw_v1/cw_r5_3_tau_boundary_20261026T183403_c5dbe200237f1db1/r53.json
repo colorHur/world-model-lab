@@ -1,0 +1,2220 @@
+{
+  "round": "CW-R5.3",
+  "protocol": "CW-POMDP-v1.3-ticks",
+  "utc": "20261026T183505",
+  "ticks_per_quantum": 8,
+  "send_ticks": 8,
+  "sec_panel": 55.186,
+  "sec_total": 61.847,
+  "panel": {
+    "alpha": 2.5,
+    "P": 0.01,
+    "kappa": 1.0,
+    "gh_n": 21,
+    "n_m_main": [
+      65,
+      129,
+      257
+    ],
+    "n_m_one": 129,
+    "taus": [
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "b_ticks": 8,
+    "p": 0.0,
+    "p_struct": 1.0,
+    "tau_sym": [
+      3,
+      4,
+      6
+    ],
+    "tau_k4": [
+      4
+    ],
+    "tau_max_3u": 5,
+    "sigma_w": {
+      "2u_asym": [
+        0.02,
+        0.05
+      ],
+      "2u_sym": [
+        0.02,
+        0.02
+      ],
+      "3u_HH": [
+        0.02,
+        0.05,
+        0.05
+      ],
+      "4u": [
+        0.02,
+        0.05,
+        0.05,
+        0.05
+      ]
+    }
+  },
+  "cells": [
+    {
+      "arm": "ctrl2u_b8_p0",
+      "n_users": 2,
+      "n_m": 65,
+      "tau": 2,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.04190000000000001,
+      "V_paid": 0.04190000000000001,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_p0",
+      "n_users": 2,
+      "n_m": 65,
+      "tau": 3,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.06670000000000001,
+      "V_paid": 0.06670000000000001,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_p0",
+      "n_users": 2,
+      "n_m": 65,
+      "tau": 4,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.0944,
+      "V_paid": 0.0941095152214118,
+      "IV_paid": 0.00029048477858820143,
+      "IV_share_A0": 0.003077169264705524,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_p0",
+      "n_users": 2,
+      "n_m": 65,
+      "tau": 5,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.12453571428571429,
+      "V_paid": 0.12406427283211775,
+      "IV_paid": 0.00047144145359653833,
+      "IV_share_A0": 0.0037855924005457623,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_p0",
+      "n_users": 2,
+      "n_m": 65,
+      "tau": 6,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.15736363636363634,
+      "V_paid": 0.156764613153339,
+      "IV_paid": 0.0005990232102973392,
+      "IV_share_A0": 0.003806617743079568,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_struct_p1",
+      "n_users": 2,
+      "n_m": 65,
+      "tau": 2,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 1.0,
+      "probe_ticks": 8,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.04190000000000001,
+      "V_paid": 0.04190000000000001,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_struct_p1",
+      "n_users": 2,
+      "n_m": 65,
+      "tau": 3,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 1.0,
+      "probe_ticks": 8,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.06670000000000001,
+      "V_paid": 0.06670000000000001,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_struct_p1",
+      "n_users": 2,
+      "n_m": 65,
+      "tau": 4,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 1.0,
+      "probe_ticks": 8,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.0944,
+      "V_paid": 0.0944,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_struct_p1",
+      "n_users": 2,
+      "n_m": 65,
+      "tau": 6,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 1.0,
+      "probe_ticks": 8,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.15736363636363634,
+      "V_paid": 0.15736363636363634,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "main3u_b8_p0",
+      "n_users": 3,
+      "n_m": 65,
+      "tau": 2,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.0644,
+      "V_paid": 0.0644,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "main3u_b8_p0",
+      "n_users": 3,
+      "n_m": 65,
+      "tau": 3,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.1042,
+      "V_paid": 0.1042,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "main3u_b8_p0",
+      "n_users": 3,
+      "n_m": 65,
+      "tau": 4,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.1494,
+      "V_paid": 0.1488066152817361,
+      "IV_paid": 0.0005933847182638952,
+      "IV_share_A0": 0.0039717852628105435,
+      "capped": false
+    },
+    {
+      "arm": "main3u_b8_p0",
+      "n_users": 3,
+      "n_m": 65,
+      "tau": 5,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.1995357142857143,
+      "V_paid": 0.1984815534118395,
+      "IV_paid": 0.0010541608738747765,
+      "IV_share_A0": 0.005283068635849963,
+      "capped": false
+    },
+    {
+      "arm": "sym2u_b8_p0",
+      "n_users": 2,
+      "n_m": 65,
+      "tau": 3,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 1.0,
+      "kappa": 1.0,
+      "A0": 0.060399999999999995,
+      "V_paid": 0.060399999999999995,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "sym2u_b8_p0",
+      "n_users": 2,
+      "n_m": 65,
+      "tau": 4,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 1.0,
+      "kappa": 1.0,
+      "A0": 0.0818,
+      "V_paid": 0.0818,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "sym2u_b8_p0",
+      "n_users": 2,
+      "n_m": 65,
+      "tau": 6,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 1.0,
+      "kappa": 1.0,
+      "A0": 0.12699999999999997,
+      "V_paid": 0.12681786011830104,
+      "IV_paid": 0.00018213988169893391,
+      "IV_share_A0": 0.0014341722968419996,
+      "capped": false
+    },
+    {
+      "arm": "k4u_b8_p0",
+      "n_users": 4,
+      "n_m": 65,
+      "tau": 4,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.2044,
+      "V_paid": 0.20380661528173616,
+      "IV_paid": 0.0005933847182638397,
+      "IV_share_A0": 0.0029030563515843426,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_p0",
+      "n_users": 2,
+      "n_m": 129,
+      "tau": 2,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.04190000000000001,
+      "V_paid": 0.04190000000000001,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_p0",
+      "n_users": 2,
+      "n_m": 129,
+      "tau": 3,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.06670000000000001,
+      "V_paid": 0.06670000000000001,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_p0",
+      "n_users": 2,
+      "n_m": 129,
+      "tau": 4,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.0944,
+      "V_paid": 0.09408543492116975,
+      "IV_paid": 0.00031456507883025064,
+      "IV_share_A0": 0.003332257190998418,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_p0",
+      "n_users": 2,
+      "n_m": 129,
+      "tau": 5,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.12453571428571429,
+      "V_paid": 0.12402815238175464,
+      "IV_paid": 0.0005075619039596468,
+      "IV_share_A0": 0.004075633298213395,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_p0",
+      "n_users": 2,
+      "n_m": 129,
+      "tau": 6,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.15736363636363634,
+      "V_paid": 0.15673981782070445,
+      "IV_paid": 0.0006238185429318921,
+      "IV_share_A0": 0.003964184848209598,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_struct_p1",
+      "n_users": 2,
+      "n_m": 129,
+      "tau": 2,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 1.0,
+      "probe_ticks": 8,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.04190000000000001,
+      "V_paid": 0.04190000000000001,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_struct_p1",
+      "n_users": 2,
+      "n_m": 129,
+      "tau": 3,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 1.0,
+      "probe_ticks": 8,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.06670000000000001,
+      "V_paid": 0.06670000000000001,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_struct_p1",
+      "n_users": 2,
+      "n_m": 129,
+      "tau": 4,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 1.0,
+      "probe_ticks": 8,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.0944,
+      "V_paid": 0.0944,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_struct_p1",
+      "n_users": 2,
+      "n_m": 129,
+      "tau": 6,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 1.0,
+      "probe_ticks": 8,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.15736363636363634,
+      "V_paid": 0.15736363636363634,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "main3u_b8_p0",
+      "n_users": 3,
+      "n_m": 129,
+      "tau": 2,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.0644,
+      "V_paid": 0.0644,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "main3u_b8_p0",
+      "n_users": 3,
+      "n_m": 129,
+      "tau": 3,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.1042,
+      "V_paid": 0.1042,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "main3u_b8_p0",
+      "n_users": 3,
+      "n_m": 129,
+      "tau": 4,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.1494,
+      "V_paid": 0.14878253498149405,
+      "IV_paid": 0.0006174650185059583,
+      "IV_share_A0": 0.004132965317978301,
+      "capped": false
+    },
+    {
+      "arm": "main3u_b8_p0",
+      "n_users": 3,
+      "n_m": 129,
+      "tau": 5,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.1995357142857143,
+      "V_paid": 0.1984364874933835,
+      "IV_paid": 0.001099226792330793,
+      "IV_share_A0": 0.0055089225318171115,
+      "capped": false
+    },
+    {
+      "arm": "sym2u_b8_p0",
+      "n_users": 2,
+      "n_m": 129,
+      "tau": 3,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 1.0,
+      "kappa": 1.0,
+      "A0": 0.060399999999999995,
+      "V_paid": 0.060399999999999995,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "sym2u_b8_p0",
+      "n_users": 2,
+      "n_m": 129,
+      "tau": 4,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 1.0,
+      "kappa": 1.0,
+      "A0": 0.0818,
+      "V_paid": 0.0818,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "sym2u_b8_p0",
+      "n_users": 2,
+      "n_m": 129,
+      "tau": 6,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 1.0,
+      "kappa": 1.0,
+      "A0": 0.12699999999999997,
+      "V_paid": 0.12678313311464526,
+      "IV_paid": 0.0002168668853547162,
+      "IV_share_A0": 0.0017076132705095767,
+      "capped": false
+    },
+    {
+      "arm": "k4u_b8_p0",
+      "n_users": 4,
+      "n_m": 129,
+      "tau": 4,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.2044,
+      "V_paid": 0.20378253498149407,
+      "IV_paid": 0.0006174650185059305,
+      "IV_share_A0": 0.0030208660396571943,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_p0",
+      "n_users": 2,
+      "n_m": 257,
+      "tau": 2,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.04190000000000001,
+      "V_paid": 0.04190000000000001,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_p0",
+      "n_users": 2,
+      "n_m": 257,
+      "tau": 3,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.06670000000000001,
+      "V_paid": 0.06670000000000001,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_p0",
+      "n_users": 2,
+      "n_m": 257,
+      "tau": 4,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.0944,
+      "V_paid": 0.09408543593709869,
+      "IV_paid": 0.00031456406290131245,
+      "IV_share_A0": 0.0033322464290393267,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_p0",
+      "n_users": 2,
+      "n_m": 257,
+      "tau": 5,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.12453571428571429,
+      "V_paid": 0.12402815390564804,
+      "IV_paid": 0.0005075603800662465,
+      "IV_share_A0": 0.004075621061615974,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_p0",
+      "n_users": 2,
+      "n_m": 257,
+      "tau": 6,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.15736363636363634,
+      "V_paid": 0.15673954021926187,
+      "IV_paid": 0.0006240961443744752,
+      "IV_share_A0": 0.00396594892439008,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_struct_p1",
+      "n_users": 2,
+      "n_m": 257,
+      "tau": 2,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 1.0,
+      "probe_ticks": 8,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.04190000000000001,
+      "V_paid": 0.04190000000000001,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_struct_p1",
+      "n_users": 2,
+      "n_m": 257,
+      "tau": 3,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 1.0,
+      "probe_ticks": 8,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.06670000000000001,
+      "V_paid": 0.06670000000000001,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_struct_p1",
+      "n_users": 2,
+      "n_m": 257,
+      "tau": 4,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 1.0,
+      "probe_ticks": 8,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.0944,
+      "V_paid": 0.0944,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "ctrl2u_b8_struct_p1",
+      "n_users": 2,
+      "n_m": 257,
+      "tau": 6,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 1.0,
+      "probe_ticks": 8,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.15736363636363634,
+      "V_paid": 0.15736363636363634,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "main3u_b8_p0",
+      "n_users": 3,
+      "n_m": 257,
+      "tau": 2,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.0644,
+      "V_paid": 0.0644,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "main3u_b8_p0",
+      "n_users": 3,
+      "n_m": 257,
+      "tau": 3,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.1042,
+      "V_paid": 0.1042,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "main3u_b8_p0",
+      "n_users": 3,
+      "n_m": 257,
+      "tau": 4,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.1494,
+      "V_paid": 0.14878253599742297,
+      "IV_paid": 0.0006174640025770339,
+      "IV_share_A0": 0.004132958517918567,
+      "capped": false
+    },
+    {
+      "arm": "main3u_b8_p0",
+      "n_users": 3,
+      "n_m": 257,
+      "tau": 5,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.1995357142857143,
+      "V_paid": 0.19843648939467914,
+      "IV_paid": 0.0010992248910351443,
+      "IV_share_A0": 0.0055089130032189085,
+      "capped": false
+    },
+    {
+      "arm": "sym2u_b8_p0",
+      "n_users": 2,
+      "n_m": 257,
+      "tau": 3,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 1.0,
+      "kappa": 1.0,
+      "A0": 0.060399999999999995,
+      "V_paid": 0.060399999999999995,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "sym2u_b8_p0",
+      "n_users": 2,
+      "n_m": 257,
+      "tau": 4,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 1.0,
+      "kappa": 1.0,
+      "A0": 0.0818,
+      "V_paid": 0.0818,
+      "IV_paid": 0.0,
+      "IV_share_A0": 0.0,
+      "capped": false
+    },
+    {
+      "arm": "sym2u_b8_p0",
+      "n_users": 2,
+      "n_m": 257,
+      "tau": 6,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 1.0,
+      "kappa": 1.0,
+      "A0": 0.12699999999999997,
+      "V_paid": 0.12678313457975027,
+      "IV_paid": 0.00021686542024970668,
+      "IV_share_A0": 0.0017076017342496591,
+      "capped": false
+    },
+    {
+      "arm": "k4u_b8_p0",
+      "n_users": 4,
+      "n_m": 257,
+      "tau": 4,
+      "b_ticks": 8,
+      "b_quanta": 1.0,
+      "p": 0.0,
+      "probe_ticks": 0,
+      "P": 0.01,
+      "alpha": 2.5,
+      "kappa": 1.0,
+      "A0": 0.2044,
+      "V_paid": 0.20378253599742302,
+      "IV_paid": 0.0006174640025769784,
+      "IV_share_A0": 0.0030208610693589944,
+      "capped": false
+    }
+  ],
+  "legs": [
+    {
+      "tag": "ctrl2u_b8",
+      "n_users": 2,
+      "n_m": 65,
+      "sec": 2.984,
+      "sec_no": 0.0,
+      "sec_build": {
+        "0": 0.0,
+        "8": 0.0
+      },
+      "states": {
+        "noprobe": 105,
+        "paid": {
+          "0": 499339,
+          "8": 726
+        },
+        "capped": false
+      },
+      "n_cells": 9,
+      "max_IV": 0.0005990232102973392
+    },
+    {
+      "tag": "main3u_b8",
+      "n_users": 3,
+      "n_m": 65,
+      "sec": 2.62,
+      "sec_no": 0.0,
+      "sec_build": {
+        "0": 0.0
+      },
+      "states": {
+        "noprobe": 84,
+        "paid": {
+          "0": 906816
+        },
+        "capped": false
+      },
+      "n_cells": 4,
+      "max_IV": 0.0010541608738747765
+    },
+    {
+      "tag": "sym2u",
+      "n_users": 2,
+      "n_m": 65,
+      "sec": 2.722,
+      "sec_no": 0.0,
+      "sec_build": {
+        "0": 0.0
+      },
+      "states": {
+        "noprobe": 71,
+        "paid": {
+          "0": 415423
+        },
+        "capped": false
+      },
+      "n_cells": 3,
+      "max_IV": 0.00018213988169893391
+    },
+    {
+      "tag": "k4u",
+      "n_users": 4,
+      "n_m": 65,
+      "sec": 0.255,
+      "sec_no": 0.0,
+      "sec_build": {
+        "0": 0.0
+      },
+      "states": {
+        "noprobe": 31,
+        "paid": {
+          "0": 117911
+        },
+        "capped": false
+      },
+      "n_cells": 1,
+      "max_IV": 0.0005933847182638397
+    },
+    {
+      "tag": "ctrl2u_b8",
+      "n_users": 2,
+      "n_m": 129,
+      "sec": 6.683,
+      "sec_no": 0.0,
+      "sec_build": {
+        "0": 0.0,
+        "8": 0.0
+      },
+      "states": {
+        "noprobe": 105,
+        "paid": {
+          "0": 1324223,
+          "8": 726
+        },
+        "capped": false
+      },
+      "n_cells": 9,
+      "max_IV": 0.0006238185429318921
+    },
+    {
+      "tag": "main3u_b8",
+      "n_users": 3,
+      "n_m": 129,
+      "sec": 3.701,
+      "sec_no": 0.0,
+      "sec_build": {
+        "0": 0.0
+      },
+      "states": {
+        "noprobe": 84,
+        "paid": {
+          "0": 1477692
+        },
+        "capped": false
+      },
+      "n_cells": 4,
+      "max_IV": 0.001099226792330793
+    },
+    {
+      "tag": "sym2u",
+      "n_users": 2,
+      "n_m": 129,
+      "sec": 6.134,
+      "sec_no": 0.0,
+      "sec_build": {
+        "0": 0.0
+      },
+      "states": {
+        "noprobe": 71,
+        "paid": {
+          "0": 1152807
+        },
+        "capped": false
+      },
+      "n_cells": 3,
+      "max_IV": 0.0002168668853547162
+    },
+    {
+      "tag": "k4u",
+      "n_users": 4,
+      "n_m": 129,
+      "sec": 0.326,
+      "sec_no": 0.0,
+      "sec_build": {
+        "0": 0.0
+      },
+      "states": {
+        "noprobe": 31,
+        "paid": {
+          "0": 141703
+        },
+        "capped": false
+      },
+      "n_cells": 1,
+      "max_IV": 0.0006174650185059305
+    },
+    {
+      "tag": "ctrl2u_b8",
+      "n_users": 2,
+      "n_m": 257,
+      "sec": 12.774,
+      "sec_no": 0.0,
+      "sec_build": {
+        "0": 0.0,
+        "8": 0.0
+      },
+      "states": {
+        "noprobe": 105,
+        "paid": {
+          "0": 2809255,
+          "8": 726
+        },
+        "capped": false
+      },
+      "n_cells": 9,
+      "max_IV": 0.0006240961443744752
+    },
+    {
+      "tag": "main3u_b8",
+      "n_users": 3,
+      "n_m": 257,
+      "sec": 4.899,
+      "sec_no": 0.0,
+      "sec_build": {
+        "0": 0.0
+      },
+      "states": {
+        "noprobe": 84,
+        "paid": {
+          "0": 2116206
+        },
+        "capped": false
+      },
+      "n_cells": 4,
+      "max_IV": 0.0010992248910351443
+    },
+    {
+      "tag": "sym2u",
+      "n_users": 2,
+      "n_m": 257,
+      "sec": 11.655,
+      "sec_no": 0.0,
+      "sec_build": {
+        "0": 0.0
+      },
+      "states": {
+        "noprobe": 71,
+        "paid": {
+          "0": 2520207
+        },
+        "capped": false
+      },
+      "n_cells": 3,
+      "max_IV": 0.00021686542024970668
+    },
+    {
+      "tag": "k4u",
+      "n_users": 4,
+      "n_m": 257,
+      "sec": 0.428,
+      "sec_no": 0.0,
+      "sec_build": {
+        "0": 0.0
+      },
+      "states": {
+        "noprobe": 31,
+        "paid": {
+          "0": 165503
+        },
+        "capped": false
+      },
+      "n_cells": 1,
+      "max_IV": 0.0006174640025769784
+    }
+  ],
+  "gates": {
+    "g2": {
+      "rows": [
+        {
+          "tau": 3,
+          "two_plant": 0.06670000000000001,
+          "three_plant_nu2": 0.06670000000000001,
+          "abs": 0.0
+        },
+        {
+          "tau": 4,
+          "two_plant": 0.09408543492116975,
+          "three_plant_nu2": 0.09408543492116975,
+          "abs": 0.0
+        }
+      ],
+      "max_abs": 0.0,
+      "tol": 0.0,
+      "pass": true
+    },
+    "g3": {
+      "tau2": {
+        "b8": 0.04190000000000001,
+        "b16": 0.04190000000000001,
+        "b24": 0.04190000000000001
+      },
+      "tau2_max_spread": 0.0,
+      "tau3": {
+        "b8": 0.06670000000000001,
+        "b16": 0.06521190476190476,
+        "b24": 0.06521190476190476
+      },
+      "tau3_gap_8_minus_16": 0.0014880952380952467,
+      "tau4": {
+        "b8": 0.0944,
+        "b16": 0.09142380952380953,
+        "b24": 0.08970634268477519
+      },
+      "tau4_gap_8_minus_16": 0.0029761904761904656,
+      "tol": 1e-15,
+      "pass": true,
+      "note": "τ=4 的两项是诊断；判定只用 τ=2 逐位同值 + τ=3 严格下降"
+    },
+    "g6g8": {
+      "per_plant": {
+        "2u_asym": {
+          "A": [
+            1.0,
+            1.0
+          ],
+          "sigma_w": [
+            0.02,
+            0.05
+          ],
+          "fp": "741e523be299d6fd"
+        },
+        "3u_HH": {
+          "A": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "sigma_w": [
+            0.02,
+            0.05,
+            0.05
+          ],
+          "fp": "b98be05294ea3977"
+        },
+        "2u_sym": {
+          "A": [
+            1.0,
+            1.0
+          ],
+          "sigma_w": [
+            0.02,
+            0.02
+          ],
+          "fp": "400535f55ffa50f1"
+        },
+        "4u": {
+          "A": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ],
+          "sigma_w": [
+            0.02,
+            0.05,
+            0.05,
+            0.05
+          ],
+          "fp": "b718af6b783acb64"
+        }
+      },
+      "n_plants": 4,
+      "n_distinct": 4,
+      "pass": true
+    },
+    "g7b": {
+      "v1": 0.09408543492116975,
+      "v2": 0.09408543492116975,
+      "n1": 14195,
+      "n2": 14195,
+      "pass": true
+    },
+    "g9": {
+      "hits": [],
+      "n_hits": 0,
+      "detector_catches_mutation": true,
+      "pass": true
+    },
+    "g1": {
+      "ref": "cw_r5_2_three_users_20261026T162053_ed05ba8445708e56/r52.json",
+      "rows": [
+        {
+          "n_users": 2,
+          "n_m": 65,
+          "A0_mine": 0.0944,
+          "A0_ref": 0.0944,
+          "IV_mine": 0.00029048477858820143,
+          "IV_ref": 0.00029048477858820143,
+          "abs_dA0": 0.0,
+          "abs_dIV": 0.0
+        },
+        {
+          "n_users": 2,
+          "n_m": 129,
+          "A0_mine": 0.0944,
+          "A0_ref": 0.0944,
+          "IV_mine": 0.00031456507883025064,
+          "IV_ref": 0.00031456507883025064,
+          "abs_dA0": 0.0,
+          "abs_dIV": 0.0
+        },
+        {
+          "n_users": 2,
+          "n_m": 257,
+          "A0_mine": 0.0944,
+          "A0_ref": 0.0944,
+          "IV_mine": 0.00031456406290131245,
+          "IV_ref": 0.00031456406290131245,
+          "abs_dA0": 0.0,
+          "abs_dIV": 0.0
+        },
+        {
+          "n_users": 3,
+          "n_m": 65,
+          "A0_mine": 0.1494,
+          "A0_ref": 0.1494,
+          "IV_mine": 0.0005933847182638952,
+          "IV_ref": 0.0005933847182638952,
+          "abs_dA0": 0.0,
+          "abs_dIV": 0.0
+        },
+        {
+          "n_users": 3,
+          "n_m": 129,
+          "A0_mine": 0.1494,
+          "A0_ref": 0.1494,
+          "IV_mine": 0.0006174650185059583,
+          "IV_ref": 0.0006174650185059583,
+          "abs_dA0": 0.0,
+          "abs_dIV": 0.0
+        },
+        {
+          "n_users": 3,
+          "n_m": 257,
+          "A0_mine": 0.1494,
+          "A0_ref": 0.1494,
+          "IV_mine": 0.0006174640025770339,
+          "IV_ref": 0.0006174640025770339,
+          "abs_dA0": 0.0,
+          "abs_dIV": 0.0
+        }
+      ],
+      "n_cells": 6,
+      "n_missing": 0,
+      "max_abs": 0.0,
+      "tol": 0.0,
+      "pass": true
+    },
+    "g4": {
+      "rows": [
+        {
+          "n_users": 2,
+          "tau": 3,
+          "IV": 0.0
+        },
+        {
+          "n_users": 2,
+          "tau": 4,
+          "IV": 0.0
+        },
+        {
+          "n_users": 3,
+          "tau": 3,
+          "IV": 0.0
+        },
+        {
+          "n_users": 3,
+          "tau": 4,
+          "IV": 0.0
+        }
+      ],
+      "max_IV": 0.0,
+      "min_IV": 0.0,
+      "tol": 1e-09,
+      "pass": true
+    },
+    "g5": {
+      "rows": [
+        {
+          "n_users": 2,
+          "tau": 3,
+          "IV_good": 0.0,
+          "IV_drop_obs": 0.0,
+          "dV": 0.0,
+          "positive": false,
+          "changed": false
+        },
+        {
+          "n_users": 2,
+          "tau": 4,
+          "IV_good": 0.00031456507883025064,
+          "IV_drop_obs": 0.0,
+          "dV": -0.00031456507883025064,
+          "positive": true,
+          "changed": true
+        },
+        {
+          "n_users": 2,
+          "tau": 5,
+          "IV_good": 0.0005075619039596468,
+          "IV_drop_obs": 0.0,
+          "dV": -0.0005075619039596468,
+          "positive": true,
+          "changed": true
+        },
+        {
+          "n_users": 3,
+          "tau": 3,
+          "IV_good": 0.0,
+          "IV_drop_obs": 0.0,
+          "dV": 0.0,
+          "positive": false,
+          "changed": false
+        },
+        {
+          "n_users": 3,
+          "tau": 4,
+          "IV_good": 0.0006174650185059583,
+          "IV_drop_obs": 0.0,
+          "dV": -0.0006174650185059583,
+          "positive": true,
+          "changed": true
+        },
+        {
+          "n_users": 3,
+          "tau": 5,
+          "IV_good": 0.001099226792330793,
+          "IV_drop_obs": 0.0,
+          "dV": -0.001099226792330793,
+          "positive": true,
+          "changed": true
+        }
+      ],
+      "n_changed": 4,
+      "n_positive_cells": 4,
+      "n_collapse": 4,
+      "pass": true
+    },
+    "g7": {
+      "rows": [
+        {
+          "tag": "ctrl2u_b8",
+          "n_m": 65,
+          "noprobe": 105,
+          "paid": {
+            "0": 499339,
+            "8": 726
+          },
+          "capped": false,
+          "ok": true
+        },
+        {
+          "tag": "main3u_b8",
+          "n_m": 65,
+          "noprobe": 84,
+          "paid": {
+            "0": 906816
+          },
+          "capped": false,
+          "ok": true
+        },
+        {
+          "tag": "sym2u",
+          "n_m": 65,
+          "noprobe": 71,
+          "paid": {
+            "0": 415423
+          },
+          "capped": false,
+          "ok": true
+        },
+        {
+          "tag": "k4u",
+          "n_m": 65,
+          "noprobe": 31,
+          "paid": {
+            "0": 117911
+          },
+          "capped": false,
+          "ok": true
+        },
+        {
+          "tag": "ctrl2u_b8",
+          "n_m": 129,
+          "noprobe": 105,
+          "paid": {
+            "0": 1324223,
+            "8": 726
+          },
+          "capped": false,
+          "ok": true
+        },
+        {
+          "tag": "main3u_b8",
+          "n_m": 129,
+          "noprobe": 84,
+          "paid": {
+            "0": 1477692
+          },
+          "capped": false,
+          "ok": true
+        },
+        {
+          "tag": "sym2u",
+          "n_m": 129,
+          "noprobe": 71,
+          "paid": {
+            "0": 1152807
+          },
+          "capped": false,
+          "ok": true
+        },
+        {
+          "tag": "k4u",
+          "n_m": 129,
+          "noprobe": 31,
+          "paid": {
+            "0": 141703
+          },
+          "capped": false,
+          "ok": true
+        },
+        {
+          "tag": "ctrl2u_b8",
+          "n_m": 257,
+          "noprobe": 105,
+          "paid": {
+            "0": 2809255,
+            "8": 726
+          },
+          "capped": false,
+          "ok": true
+        },
+        {
+          "tag": "main3u_b8",
+          "n_m": 257,
+          "noprobe": 84,
+          "paid": {
+            "0": 2116206
+          },
+          "capped": false,
+          "ok": true
+        },
+        {
+          "tag": "sym2u",
+          "n_m": 257,
+          "noprobe": 71,
+          "paid": {
+            "0": 2520207
+          },
+          "capped": false,
+          "ok": true
+        },
+        {
+          "tag": "k4u",
+          "n_m": 257,
+          "noprobe": 31,
+          "paid": {
+            "0": 165503
+          },
+          "capped": false,
+          "ok": true
+        }
+      ],
+      "pass": true
+    }
+  },
+  "verdicts": {
+    "n_cells": 51,
+    "n_cells_dropped": 0,
+    "n_capped": 0,
+    "tau_max_measured": 6,
+    "grids": {
+      "ctrl2u_b8_p0": [
+        {
+          "n_m": 65,
+          "tau": [
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "IV": [
+            0.0,
+            0.0,
+            0.00029048477858820143,
+            0.00047144145359653833,
+            0.0005990232102973392
+          ],
+          "A0": [
+            0.04190000000000001,
+            0.06670000000000001,
+            0.0944,
+            0.12453571428571429,
+            0.15736363636363634
+          ],
+          "share": [
+            0.0,
+            0.0,
+            0.003077169264705524,
+            0.0037855924005457623,
+            0.003806617743079568
+          ]
+        },
+        {
+          "n_m": 129,
+          "tau": [
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "IV": [
+            0.0,
+            0.0,
+            0.00031456507883025064,
+            0.0005075619039596468,
+            0.0006238185429318921
+          ],
+          "A0": [
+            0.04190000000000001,
+            0.06670000000000001,
+            0.0944,
+            0.12453571428571429,
+            0.15736363636363634
+          ],
+          "share": [
+            0.0,
+            0.0,
+            0.003332257190998418,
+            0.004075633298213395,
+            0.003964184848209598
+          ]
+        },
+        {
+          "n_m": 257,
+          "tau": [
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "IV": [
+            0.0,
+            0.0,
+            0.00031456406290131245,
+            0.0005075603800662465,
+            0.0006240961443744752
+          ],
+          "A0": [
+            0.04190000000000001,
+            0.06670000000000001,
+            0.0944,
+            0.12453571428571429,
+            0.15736363636363634
+          ],
+          "share": [
+            0.0,
+            0.0,
+            0.0033322464290393267,
+            0.004075621061615974,
+            0.00396594892439008
+          ]
+        }
+      ],
+      "main3u_b8_p0": [
+        {
+          "n_m": 65,
+          "tau": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "IV": [
+            0.0,
+            0.0,
+            0.0005933847182638952,
+            0.0010541608738747765
+          ],
+          "A0": [
+            0.0644,
+            0.1042,
+            0.1494,
+            0.1995357142857143
+          ],
+          "share": [
+            0.0,
+            0.0,
+            0.0039717852628105435,
+            0.005283068635849963
+          ]
+        },
+        {
+          "n_m": 129,
+          "tau": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "IV": [
+            0.0,
+            0.0,
+            0.0006174650185059583,
+            0.001099226792330793
+          ],
+          "A0": [
+            0.0644,
+            0.1042,
+            0.1494,
+            0.1995357142857143
+          ],
+          "share": [
+            0.0,
+            0.0,
+            0.004132965317978301,
+            0.0055089225318171115
+          ]
+        },
+        {
+          "n_m": 257,
+          "tau": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "IV": [
+            0.0,
+            0.0,
+            0.0006174640025770339,
+            0.0010992248910351443
+          ],
+          "A0": [
+            0.0644,
+            0.1042,
+            0.1494,
+            0.1995357142857143
+          ],
+          "share": [
+            0.0,
+            0.0,
+            0.004132958517918567,
+            0.0055089130032189085
+          ]
+        }
+      ],
+      "sym2u_b8_p0": [
+        {
+          "n_m": 65,
+          "tau": [
+            3,
+            4,
+            6
+          ],
+          "IV": [
+            0.0,
+            0.0,
+            0.00018213988169893391
+          ],
+          "A0": [
+            0.060399999999999995,
+            0.0818,
+            0.12699999999999997
+          ],
+          "share": [
+            0.0,
+            0.0,
+            0.0014341722968419996
+          ]
+        },
+        {
+          "n_m": 129,
+          "tau": [
+            3,
+            4,
+            6
+          ],
+          "IV": [
+            0.0,
+            0.0,
+            0.0002168668853547162
+          ],
+          "A0": [
+            0.060399999999999995,
+            0.0818,
+            0.12699999999999997
+          ],
+          "share": [
+            0.0,
+            0.0,
+            0.0017076132705095767
+          ]
+        },
+        {
+          "n_m": 257,
+          "tau": [
+            3,
+            4,
+            6
+          ],
+          "IV": [
+            0.0,
+            0.0,
+            0.00021686542024970668
+          ],
+          "A0": [
+            0.060399999999999995,
+            0.0818,
+            0.12699999999999997
+          ],
+          "share": [
+            0.0,
+            0.0,
+            0.0017076017342496591
+          ]
+        }
+      ],
+      "k4u_b8_p0": [
+        {
+          "n_m": 65,
+          "tau": [
+            4
+          ],
+          "IV": [
+            0.0005933847182638397
+          ],
+          "A0": [
+            0.2044
+          ],
+          "share": [
+            0.0029030563515843426
+          ]
+        },
+        {
+          "n_m": 129,
+          "tau": [
+            4
+          ],
+          "IV": [
+            0.0006174650185059305
+          ],
+          "A0": [
+            0.2044
+          ],
+          "share": [
+            0.0030208660396571943
+          ]
+        },
+        {
+          "n_m": 257,
+          "tau": [
+            4
+          ],
+          "IV": [
+            0.0006174640025769784
+          ],
+          "A0": [
+            0.2044
+          ],
+          "share": [
+            0.0030208610693589944
+          ]
+        }
+      ],
+      "ctrl2u_b8_struct_p1": [
+        {
+          "n_m": 65,
+          "tau": [
+            2,
+            3,
+            4,
+            6
+          ],
+          "IV": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "A0": [
+            0.04190000000000001,
+            0.06670000000000001,
+            0.0944,
+            0.15736363636363634
+          ],
+          "share": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "n_m": 129,
+          "tau": [
+            2,
+            3,
+            4,
+            6
+          ],
+          "IV": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "A0": [
+            0.04190000000000001,
+            0.06670000000000001,
+            0.0944,
+            0.15736363636363634
+          ],
+          "share": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "n_m": 257,
+          "tau": [
+            2,
+            3,
+            4,
+            6
+          ],
+          "IV": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "A0": [
+            0.04190000000000001,
+            0.06670000000000001,
+            0.0944,
+            0.15736363636363634
+          ],
+          "share": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ]
+    },
+    "resolution": {
+      "ctrl2u_b8_p0@2": null,
+      "ctrl2u_b8_p0@3": null,
+      "ctrl2u_b8_p0@4": 0.07655109184908511,
+      "ctrl2u_b8_p0@5": 0.07116462067251648,
+      "ctrl2u_b8_p0@6": 0.04017479406520993,
+      "main3u_b8_p0@2": null,
+      "main3u_b8_p0@3": null,
+      "main3u_b8_p0@4": 0.03899864691983474,
+      "main3u_b8_p0@5": 0.040997834814832906,
+      "main3u_b8_p0@6": null
+    },
+    "tau2": {
+      "n": 6,
+      "max_abs_IV": 0.0,
+      "all_bit_zero": true
+    },
+    "ge3": {
+      "n": 21,
+      "n_pos": 15,
+      "n_zero": 6,
+      "per_arm": {
+        "ctrl2u_b8_p0": {
+          "n": 12,
+          "n_pos": 9,
+          "min": 0.0,
+          "max": 0.0006240961443744752
+        },
+        "main3u_b8_p0": {
+          "n": 9,
+          "n_pos": 6,
+          "min": 0.0,
+          "max": 0.001099226792330793
+        }
+      },
+      "tau_by_arm": {
+        "ctrl2u_b8_p0": [
+          3,
+          4,
+          5,
+          6
+        ],
+        "main3u_b8_p0": [
+          3,
+          4,
+          5
+        ]
+      }
+    },
+    "monotone": {
+      "pairs": [
+        {
+          "arm": "ctrl2u_b8_p0",
+          "n_m": 257,
+          "tau_from": 3,
+          "tau_to": 4,
+          "IV_from": 0.0,
+          "IV_to": 0.00031456406290131245,
+          "rel_drop": -1.0,
+          "res": 0.07655109184908511,
+          "beyond_res": false
+        },
+        {
+          "arm": "ctrl2u_b8_p0",
+          "n_m": 257,
+          "tau_from": 4,
+          "tau_to": 5,
+          "IV_from": 0.00031456406290131245,
+          "IV_to": 0.0005075603800662465,
+          "rel_drop": -0.380243070075218,
+          "res": 0.07655109184908511,
+          "beyond_res": false
+        },
+        {
+          "arm": "ctrl2u_b8_p0",
+          "n_m": 257,
+          "tau_from": 5,
+          "tau_to": 6,
+          "IV_from": 0.0005075603800662465,
+          "IV_to": 0.0006240961443744752,
+          "rel_drop": -0.186727262071185,
+          "res": 0.07116462067251648,
+          "beyond_res": false
+        },
+        {
+          "arm": "main3u_b8_p0",
+          "n_m": 257,
+          "tau_from": 3,
+          "tau_to": 4,
+          "IV_from": 0.0,
+          "IV_to": 0.0006174640025770339,
+          "rel_drop": -1.0,
+          "res": 0.03899864691983474,
+          "beyond_res": false
+        },
+        {
+          "arm": "main3u_b8_p0",
+          "n_m": 257,
+          "tau_from": 4,
+          "tau_to": 5,
+          "IV_from": 0.0006174640025770339,
+          "IV_to": 0.0010992248910351443,
+          "rel_drop": -0.4382732709085893,
+          "res": 0.040997834814832906,
+          "beyond_res": false
+        }
+      ],
+      "n_drop_beyond_res": 0
+    },
+    "struct_p1": {
+      "n": 12,
+      "max_abs_IV": 0.0,
+      "all_bit_zero": true
+    },
+    "sym2u": {
+      "n": 9,
+      "max_abs_IV": 0.0002168668853547162,
+      "all_le_noise": false
+    },
+    "k4u": {
+      "n": 3,
+      "max_abs_IV": 0.0006174650185059305,
+      "n_pos": 3
+    },
+    "gates": {
+      "g2": {
+        "max_abs": 0.0,
+        "tol": 0.0,
+        "pass": true
+      },
+      "g3": {
+        "tau2_max_spread": 0.0,
+        "tau3_gap_8_minus_16": 0.0014880952380952467,
+        "tol": 1e-15,
+        "pass": true
+      },
+      "g6g8": {
+        "n_distinct": 4,
+        "pass": true
+      },
+      "g7b": {
+        "pass": true
+      },
+      "g9": {
+        "n_hits": 0,
+        "pass": true
+      },
+      "g1": {
+        "n_missing": 0,
+        "max_abs": 0.0,
+        "tol": 0.0,
+        "pass": true
+      },
+      "g4": {
+        "max_IV": 0.0,
+        "min_IV": 0.0,
+        "tol": 1e-09,
+        "pass": true
+      },
+      "g5": {
+        "n_changed": 4,
+        "n_collapse": 4,
+        "pass": true
+      },
+      "g7": {
+        "pass": true
+      }
+    },
+    "gates_failed": [],
+    "gates_n_fail": 0,
+    "VERDICT": "SINGLE-SEND-VALUE-PARTIAL",
+    "collapse_check": {
+      "n_positive_cells": 4,
+      "n_collapse": 4,
+      "all_collapsed": true
+    },
+    "MECHANISM": "MECHANISM-WINDOW-DEPENDENT",
+    "mechanism_parts": {
+      "tau2_all_bit_zero": true,
+      "struct_p1_all_bit_zero": true,
+      "sym2u_all_le_noise": false,
+      "drop_obs_all_collapsed": true,
+      "drop_obs_changed_cells": 4,
+      "k4u_n_pos": 3
+    },
+    "verdict_scope": "只覆盖 α=2.5 (2u (0.02,0.05) / 3u (0.02,0.05,0.05) / 4u +3 高噪), P=0.01, κ=1, b=8, p=0, τ∈{2..6}, σ_csi=σ⋆, gh_n=21；跨实例（2u/3u/4u）不相减；不是价格边界；不外推 τ≥7 或 p>0"
+  },
+  "diag_gh": {
+    "n_m": 129,
+    "rows": [
+      {
+        "tau": 3,
+        "IV_gh21": 0.0,
+        "IV_gh41": 1.3877787807814457e-17,
+        "rel_dV": 0.0,
+        "same_sign": true
+      },
+      {
+        "tau": 4,
+        "IV_gh21": 0.00031456507883025064,
+        "IV_gh41": 0.0002995932468071172,
+        "rel_dV": 0.0,
+        "same_sign": true
+      },
+      {
+        "tau": 5,
+        "IV_gh21": 0.0005075619039596468,
+        "IV_gh41": 0.0004888316816202554,
+        "rel_dV": 0.0,
+        "same_sign": true
+      }
+    ],
+    "same_sign_all": true,
+    "note": "诊断，不是判据；符号一致 ≠ 幅度可信"
+  }
+}

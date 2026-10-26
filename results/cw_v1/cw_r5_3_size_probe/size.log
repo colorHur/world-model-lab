@@ -1,0 +1,23 @@
+[CW-R5.3] CW-POMDP-v1.3-ticks  b=8 p=0 tau=(2, 3, 4, 5, 6) n_m=(33, 65, 129)
+  [size n_m=33 2u_b8_p0 tau=2] 0.0 s states=36 capped=False
+  [size n_m=33 2u_b8_p0 tau=3] 0.002 s states=670 capped=False
+  [size n_m=33 2u_b8_p0 tau=4] 0.021 s states=7804 capped=False
+  [size n_m=33 2u_b8_p0 tau=5] 0.207 s states=51238 capped=False
+  [size n_m=33 2u_b8_p0 tau=6] 1.259 s states=205756 capped=False
+  [size n_m=33 3u_b8_p0 tau=2] 0.0 s states=51 capped=False
+  [size n_m=33 3u_b8_p0 tau=3] 0.003 s states=1582 capped=False
+  [size n_m=33 3u_b8_p0 tau=4] 0.095 s states=37923 capped=False
+  [size n_m=33 3u_b8_p0 tau=5] 1.916 s states=597720 capped=False
+  [size n_m=33 3u_b8_p0 tau=6] 33.328 s states=5607961 capped=False
+  [size n_m=65 2u_b8_p0 tau=2] 0.0 s states=36 capped=False
+  [size n_m=65 2u_b8_p0 tau=3] 0.002 s states=726 capped=False
+  [size n_m=65 2u_b8_p0 tau=4] 0.423 s states=10436 capped=False
+  [size n_m=65 2u_b8_p0 tau=5] 0.301 s states=94350 capped=False
+  [size n_m=65 2u_b8_p0 tau=6] 2.649 s states=499444 capped=False
+  [size n_m=65 3u_b8_p0 tau=2] 0.0 s states=51 capped=False
+  [size n_m=65 3u_b8_p0 tau=3] 0.003 s states=1666 capped=False
+  [size n_m=65 3u_b8_p0 tau=4] 0.122 s states=45063 capped=False
+  [size n_m=65 3u_b8_p0 tau=5] 2.541 s states=906900 capped=False
+  [size n_m=65 3u_b8_p0 tau=6] 23.647 s states=6000158 capped=True
+  [size] n_m=65 撞顶 ⇒ 停止（规模随 n_m 单调以外，τ 也已到顶）
+[size-only] n_m 探测 2 档；最后一条 capped=True
