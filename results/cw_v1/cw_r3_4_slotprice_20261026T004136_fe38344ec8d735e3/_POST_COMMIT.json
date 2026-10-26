@@ -1,0 +1,15 @@
+{
+  "round": "CW-R3.4",
+  "protocol": "CW-POMDP-v1.1",
+  "commit": "0f86ed6bda5159af369a844c71a6bfdae5c194c0",
+  "remote_main": "0f86ed6bda5159af369a844c71a6bfdae5c194c0",
+  "remote_checked_by": "git ls-remote git@github.com:colorHur/world-model-lab.git refs/heads/main (SSH；https 会撞死代理 127.0.0.1:443)",
+  "tree_after_commit": "clean",
+  "parent": "0bc584be1b534dda52297c4a0ab93d929687e326",
+  "superseded_dir": "results/cw_v1/cw_r3_4_slotprice_20261026T003931_3367c18c581fd02a_SUPERSEDED（G4 断言写死；J0–J4 判词与正式目录逐字相同）",
+  "gates": "G1-G8 / n_fail=0",
+  "budget": "38.7 s / 纯 CPU / 零 episode / 零训练 / 零参数更新；free 状态 3.40e6、tau6 5.95e6（未撞 6e6）",
+  "doc_sync_check": "19/19 PASS",
+  "ledger_snapshot": "8/8 PASS（先 --write 再 --check）",
+  "post_commit_local_time": "2026-10-26 08:50 +08:00 (Get-Date 实测)"
+}
