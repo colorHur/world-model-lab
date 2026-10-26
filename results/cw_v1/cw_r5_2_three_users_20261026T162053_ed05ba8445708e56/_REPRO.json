@@ -1,0 +1,39 @@
+{
+  "round": "CW-R5.2",
+  "protocol": "CW-POMDP-v1.3-ticks",
+  "commit": "1c9e5ec97b0278bb8bdf8d22a31adb523e320002",
+  "commit_note": "本轮本金（11 文件）。本文件是提交后追加的复现记录，不改任何读数。",
+  "src_hash_now": "ed05ba8445708e56",
+  "src_hash_at_run": "ed05ba8445708e56",
+  "src_hash_match": true,
+  "reproduction": {
+    "method": "同一命令 `python -m experiments.cw_v1.r5_2_three_users --out <tmp>` 再跑一遍，逐格比 A0 / V_paid / IV_paid",
+    "n_cells": 52,
+    "n_cells_equal": 52,
+    "max_abs_diff": 0.0,
+    "verdict_same": true,
+    "mechanism_same": true,
+    "tmp_dir_removed": "results/cw_v1/_r52_rerun_tmp（比对后删除；两遍 52 格全字段相同）"
+  },
+  "key_readings": {
+    "main3u_b16_IV_max": 0.0,
+    "ctrl2u_b16_IV_max": 0.0,
+    "mirror3u_b24_IV_max": 0.0,
+    "mirror2u_b24_IV_max": 0.0,
+    "comp3u_b16_HL_IV_max": 0.0,
+    "anchor2u_b8_p0_IV_nm257": 3.1456406290e-4,
+    "anchor3u_b8_p0_IV_nm257": 6.1746400258e-4,
+    "ratio_3u_over_2u": 1.96292,
+    "IV_over_dV_send_2u": 0.10485,
+    "IV_over_dV_send_3u": 0.20582,
+    "IV_over_A0_2u_pct": 0.33322,
+    "IV_over_A0_3u_pct": 0.41330,
+    "r51_nm17_vs_converged_pct": -19.1118,
+    "gh21_vs_gh41_2u": {"gh21": 3.1456507883e-4, "gh41": 2.9959324681e-4, "rel": -0.04762}
+  },
+  "caveats": [
+    "G3 本轮 24 对全是 0 vs 0（空过）；G4 正格本来全零；G5 的 3 用户腿 dV=0 ⇒ 三条无分辨力，交付 §3 已标注",
+    "首跑在全跑结束后崩在打印环节（JSON 未落盘），判词在修打印前已可见 ⇒ 事后追加的 3 用户 b=8 活体对照不是盲的（预注册 §9-3）",
+    "机制只到价值层：无策略路径统计，'2 次发送时 DP 用预算对冲 ⇒ 无动作依赖 m' 是假说"
+  ]
+}
