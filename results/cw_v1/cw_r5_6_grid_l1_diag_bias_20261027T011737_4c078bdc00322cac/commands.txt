@@ -1,0 +1,3 @@
+# CW-R5.6 · diag_bias · nu=2 · n_w=129 · tau=(5,6) · b=(8,16,24)
+cd D:/repos/world-model-lab
+python -m experiments.cw_v1.r5_6_grid_l1 --diag-bias --nu 2 --nw 129 --tau 5,6 --b 8,16,24

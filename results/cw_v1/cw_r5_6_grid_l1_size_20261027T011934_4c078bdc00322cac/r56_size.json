@@ -1,0 +1,32 @@
+[
+  {
+    "n_w": 33,
+    "n_users": 2,
+    "probe_max": 1,
+    "probe_total": null,
+    "sec": 9.139,
+    "states": {
+      "A0": 592,
+      "A0p": 2429,
+      "VL2": 2024416,
+      "VL1": 3969161
+    },
+    "n_beliefs": 3701,
+    "capped": false
+  },
+  {
+    "n_w": 65,
+    "n_users": 2,
+    "probe_max": 1,
+    "probe_total": null,
+    "sec": 21.056,
+    "states": {
+      "A0": 592,
+      "A0p": 2429,
+      "VL2": 6000048,
+      "VL1": 6000006
+    },
+    "n_beliefs": 3661,
+    "capped": true
+  }
+]

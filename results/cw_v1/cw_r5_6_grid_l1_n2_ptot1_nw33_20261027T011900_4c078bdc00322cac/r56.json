@@ -1,0 +1,470 @@
+{
+  "round": "CW-R5.6",
+  "protocol": "CW-POMDP-v1.5-grid",
+  "utc": "20261027T011901",
+  "ticks_per_quantum": 8,
+  "send_ticks": 8,
+  "half": 4.0,
+  "probe_max": 1,
+  "probe_total": 1,
+  "n_users": 2,
+  "sec_panel": 0.37,
+  "sec_total": 0.952,
+  "panel_spec": {
+    "rho": 0.999,
+    "P": 0.01,
+    "tau": [
+      5,
+      6
+    ],
+    "b_ticks": [
+      16,
+      24
+    ],
+    "n_w": [
+      33
+    ],
+    "probe_ticks": 0,
+    "sigma_w": [
+      0.02,
+      0.05
+    ]
+  },
+  "cells": [
+    {
+      "n_users": 2,
+      "n_w": 33,
+      "tau": 5,
+      "b_ticks": 16,
+      "b_quanta": 2.0,
+      "probe_ticks": 0,
+      "p": 0.0,
+      "rho": 0.999,
+      "probe_max": 1,
+      "probe_total": 1,
+      "P": 0.01,
+      "A0": 0.12053571428571429,
+      "A0p": 0.12053571428571429,
+      "VL2": 0.12033289874007838,
+      "VL1": 0.12037287792582439,
+      "IV_probe_L2": 0.00020281554563590654,
+      "IV_probe_L1": 0.0001628363598898952,
+      "IV_ack": 0.0,
+      "survival": 0.8028790859169062,
+      "mono_ok": true,
+      "ack_nonneg": true,
+      "capped": false,
+      "arm": "n2_ptot1_nw33"
+    },
+    {
+      "n_users": 2,
+      "n_w": 33,
+      "tau": 5,
+      "b_ticks": 24,
+      "b_quanta": 3.0,
+      "probe_ticks": 0,
+      "p": 0.0,
+      "rho": 0.999,
+      "probe_max": 1,
+      "probe_total": 1,
+      "P": 0.01,
+      "A0": 0.1171007806076456,
+      "A0p": 0.11735941405099033,
+      "VL2": 0.1171007806076456,
+      "VL1": 0.11735941405099033,
+      "IV_probe_L2": 0.0,
+      "IV_probe_L1": 0.0,
+      "IV_ack": -0.00025863344334473015,
+      "survival": NaN,
+      "mono_ok": false,
+      "ack_nonneg": false,
+      "capped": false,
+      "arm": "n2_ptot1_nw33"
+    },
+    {
+      "n_users": 2,
+      "n_w": 33,
+      "tau": 6,
+      "b_ticks": 16,
+      "b_quanta": 2.0,
+      "probe_ticks": 0,
+      "p": 0.0,
+      "rho": 0.999,
+      "probe_max": 1,
+      "probe_total": 1,
+      "P": 0.01,
+      "A0": 0.15236363636363634,
+      "A0p": 0.15236363636363634,
+      "VL2": 0.1513552532642521,
+      "VL1": 0.15141522204287114,
+      "IV_probe_L2": 0.0010083830993842524,
+      "IV_probe_L1": 0.0009484143207652007,
+      "IV_ack": 0.0,
+      "survival": 0.9405297662607889,
+      "mono_ok": true,
+      "ack_nonneg": true,
+      "capped": false,
+      "arm": "n2_ptot1_nw33"
+    },
+    {
+      "n_users": 2,
+      "n_w": 33,
+      "tau": 6,
+      "b_ticks": 24,
+      "b_quanta": 3.0,
+      "probe_ticks": 0,
+      "p": 0.0,
+      "rho": 0.999,
+      "probe_max": 1,
+      "probe_total": 1,
+      "P": 0.01,
+      "A0": 0.147395218530516,
+      "A0p": 0.14778316869553312,
+      "VL2": 0.14735155909237727,
+      "VL1": 0.14769225120090054,
+      "IV_probe_L2": 4.3659438138721196e-05,
+      "IV_probe_L1": 9.091749463258081e-05,
+      "IV_ack": -0.00038795016501713686,
+      "survival": 2.0824247518647483,
+      "mono_ok": false,
+      "ack_nonneg": false,
+      "capped": false,
+      "arm": "n2_ptot1_nw33"
+    }
+  ],
+  "legs": [
+    {
+      "tag": "n2_ptot1_nw33",
+      "n_users": 2,
+      "n_w": 33,
+      "sec": 0.369,
+      "sec_build": 0.0,
+      "states": {
+        "A0": 584,
+        "A0p": 2318,
+        "VL2": 76352,
+        "VL1": 249884,
+        "n_beliefs": 3701,
+        "capped": false
+      }
+    }
+  ],
+  "gates": {
+    "g_ps_ref": {
+      "rows": [
+        {
+          "n_w": 33,
+          "dx": 0.25,
+          "grid_ps": 0.5000000000000001,
+          "ref_ps": 0.5,
+          "rel": 2.220446049250313e-16,
+          "mass_outside_support": -2.220446049250313e-16
+        }
+      ],
+      "ref": 0.5,
+      "max_rel": 2.220446049250313e-16,
+      "tol": 0.001,
+      "pass": true
+    },
+    "g_mart": {
+      "rows": [
+        {
+          "n_w": 33,
+          "max_delta": 1.3877787807814457e-17,
+          "max_Trow": 2.220446049250313e-16,
+          "max_prior_family": 0.0,
+          "max_all": 2.220446049250313e-16
+        }
+      ],
+      "max_abs": 2.220446049250313e-16,
+      "tol": 1e-09,
+      "pass": true
+    },
+    "g_noinfo": {
+      "n_w": 33,
+      "kappa": 0.0,
+      "values": {
+        "A0": 0.04729708776072412,
+        "A0p": 0.047297087760724124,
+        "VL2": 0.04729708776072412,
+        "VL1": 0.04729708776072412
+      },
+      "max_abs": 6.938893903907228e-18,
+      "tol": 1e-12,
+      "pass": true
+    },
+    "g_budget": {
+      "n_w": 33,
+      "A0": {
+        "8": 0.049999999999999996,
+        "16": 0.04729708776072412,
+        "24": 0.04565686755879104,
+        "32": 0.04490314539690895
+      },
+      "gaps": {
+        "8->16": 0.0027029122392758786,
+        "16->24": 0.0016402202019330792,
+        "24->32": 0.0007537221618820894
+      },
+      "pass": true
+    },
+    "g_ast": {
+      "hits": [],
+      "n_hits": 0,
+      "detector_catches_mutation": true,
+      "pass": true
+    },
+    "g_fp": {
+      "per_plant": {
+        "1u": {
+          "A": [
+            1.0
+          ],
+          "sigma_w": [
+            0.02
+          ],
+          "fp": "64cff3f497cb6172"
+        },
+        "2u": {
+          "A": [
+            1.0,
+            1.0
+          ],
+          "sigma_w": [
+            0.02,
+            0.05
+          ],
+          "fp": "0a118ade2b9c38bc"
+        }
+      },
+      "n_distinct": 2,
+      "n_plants": 2,
+      "dx_by_nw": {
+        "129": 0.0625,
+        "257": 0.03125,
+        "513": 0.015625
+      },
+      "n_distinct_dx": 3,
+      "pass": true
+    },
+    "g_mono": {
+      "n_cells": 4,
+      "n_violations": 2,
+      "n_neg_ack": 2,
+      "worst_excess": 0.00038795016501713686,
+      "violations": [
+        {
+          "n_w": 33,
+          "tau": 5,
+          "b_ticks": 24,
+          "A0": 0.1171007806076456,
+          "A0p": 0.11735941405099033
+        },
+        {
+          "n_w": 33,
+          "tau": 6,
+          "b_ticks": 24,
+          "A0": 0.147395218530516,
+          "A0p": 0.14778316869553312
+        }
+      ],
+      "pass": false
+    },
+    "g_nw3": {
+      "rows": [],
+      "n_cells": 0,
+      "max_rel_spread": 0.0,
+      "tol": 0.3,
+      "pass": null
+    },
+    "g_size": {
+      "rows": [
+        {
+          "tag": "n2_ptot1_nw33",
+          "n_users": 2,
+          "n_w": 33,
+          "states": {
+            "A0": 584,
+            "A0p": 2318,
+            "VL2": 76352,
+            "VL1": 249884
+          },
+          "n_beliefs": 3701,
+          "capped": false,
+          "c1_all_positive": true
+        }
+      ],
+      "pass": true
+    },
+    "g_dropobs": {
+      "rows": [
+        {
+          "fixture": "n1_empty",
+          "n_users": 1,
+          "tau": 6,
+          "b_ticks": 16,
+          "ack_updates": true,
+          "V_good": 0.057667448058906924,
+          "V_dropobs": 0.057667448058906924,
+          "dV": 0.0,
+          "changed": false
+        },
+        {
+          "fixture": "n1_empty",
+          "n_users": 1,
+          "tau": 6,
+          "b_ticks": 16,
+          "ack_updates": false,
+          "V_good": 0.05739611701429883,
+          "V_dropobs": 0.05739611701429883,
+          "dV": 0.0,
+          "changed": false
+        },
+        {
+          "fixture": "n2_live",
+          "n_users": 2,
+          "tau": 5,
+          "b_ticks": 16,
+          "ack_updates": true,
+          "V_good": 0.12037287792582439,
+          "V_dropobs": 0.12053571428571429,
+          "dV": -0.0001628363598898952,
+          "changed": true
+        },
+        {
+          "fixture": "n2_live",
+          "n_users": 2,
+          "tau": 5,
+          "b_ticks": 16,
+          "ack_updates": false,
+          "V_good": 0.12033289874007838,
+          "V_dropobs": 0.12053571428571429,
+          "dV": -0.00020281554563590654,
+          "changed": true
+        }
+      ],
+      "n_changed": 2,
+      "n_changed_live": 2,
+      "pass": true
+    }
+  },
+  "verdicts": {
+    "n_cells": 4,
+    "n_capped": 0,
+    "n_unmeasured_survival": 1,
+    "gates": {
+      "g_ps_ref": {
+        "max_rel": 2.220446049250313e-16,
+        "tol": 0.001,
+        "pass": true
+      },
+      "g_mart": {
+        "max_abs": 2.220446049250313e-16,
+        "tol": 1e-09,
+        "pass": true
+      },
+      "g_noinfo": {
+        "max_abs": 6.938893903907228e-18,
+        "tol": 1e-12,
+        "pass": true
+      },
+      "g_budget": {
+        "pass": true
+      },
+      "g_ast": {
+        "pass": true
+      },
+      "g_fp": {
+        "pass": true
+      },
+      "g_mono": {
+        "n_violations": 2,
+        "n_neg_ack": 2,
+        "worst_excess": 0.00038795016501713686,
+        "pass": false
+      },
+      "g_nw3": {
+        "max_rel_spread": 0.0,
+        "tol": 0.3,
+        "pass": null
+      },
+      "g_size": {
+        "pass": true
+      },
+      "g_dropobs": {
+        "n_changed": 2,
+        "n_changed_live": 2,
+        "pass": true
+      }
+    },
+    "gates_failed": [
+      "g_mono"
+    ],
+    "gates_na": [
+      "g_nw3"
+    ],
+    "P_STRUCT_b8": "NOT-APPLICABLE-NO-B8",
+    "sign_profile_IV_probe_L2": {
+      "tau5_b16": {
+        "n": 1,
+        "pos": 1,
+        "neg": 0,
+        "IV_probe_L2": [
+          0.00020281554563590654
+        ]
+      },
+      "tau5_b24": {
+        "n": 1,
+        "pos": 0,
+        "neg": 0,
+        "IV_probe_L2": [
+          0.0
+        ]
+      },
+      "tau6_b16": {
+        "n": 1,
+        "pos": 1,
+        "neg": 0,
+        "IV_probe_L2": [
+          0.0010083830993842524
+        ]
+      },
+      "tau6_b24": {
+        "n": 1,
+        "pos": 1,
+        "neg": 0,
+        "IV_probe_L2": [
+          4.3659438138721196e-05
+        ]
+      }
+    },
+    "P_PROBE_L2": "PROBE-HAS-VALUE-GRID-L2",
+    "P_MAIN": {
+      "cell": {
+        "b_ticks": 24,
+        "tau": 6,
+        "n_users": 2
+      },
+      "n": 1,
+      "n_measured": 1,
+      "survival": [
+        2.0824247518647483
+      ],
+      "IV_probe_L2": [
+        4.3659438138721196e-05
+      ],
+      "IV_probe_L1": [
+        9.091749463258081e-05
+      ],
+      "IV_ack": [
+        -0.00038795016501713686
+      ],
+      "spread": NaN,
+      "survival_finest": 2.0824247518647483,
+      "n_w_finest": 33
+    },
+    "VERDICT_MAIN": "WIRING-SUSPECT",
+    "VERDICT": "NO-VERDICT-GATE-FAIL",
+    "verdict_scope": "只覆盖网格信念（`CW-POMDP-v1.5-grid`）、ρ=0.999、P0=0.01、κ=2、p=0、probe_max=1、HALF=4.0；`P` 未离散化；不许跨 ρ（R4–R5 的 0.85）或跨表示（ADF vs 网格）相减/相除"
+  }
+}

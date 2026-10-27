@@ -1,0 +1,47 @@
+[
+  {
+    "n_w": 33,
+    "n_users": 2,
+    "probe_max": 1,
+    "probe_total": 1,
+    "sec": 0.384,
+    "states": {
+      "A0": 592,
+      "A0p": 2429,
+      "VL2": 77284,
+      "VL1": 266561
+    },
+    "n_beliefs": 3701,
+    "capped": false
+  },
+  {
+    "n_w": 65,
+    "n_users": 2,
+    "probe_max": 1,
+    "probe_total": 1,
+    "sec": 0.822,
+    "states": {
+      "A0": 592,
+      "A0p": 2429,
+      "VL2": 151652,
+      "VL1": 522689
+    },
+    "n_beliefs": 7061,
+    "capped": false
+  },
+  {
+    "n_w": 129,
+    "n_users": 2,
+    "probe_max": 1,
+    "probe_total": 1,
+    "sec": 1.857,
+    "states": {
+      "A0": 592,
+      "A0p": 2429,
+      "VL2": 300388,
+      "VL1": 1034945
+    },
+    "n_beliefs": 13781,
+    "capped": false
+  }
+]

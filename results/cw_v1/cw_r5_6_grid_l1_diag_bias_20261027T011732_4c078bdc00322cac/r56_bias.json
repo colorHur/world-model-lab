@@ -1,0 +1,90 @@
+{
+  "round": "CW-R5.6",
+  "protocol": "CW-POMDP-v1.5-grid",
+  "utc": "20261027T011732",
+  "post_hoc": true,
+  "note": "本模式在**看到主面板读数之后**写；不是预注册项。用途：判 `A0` 报出的数是否等于它自己策略在真实测度下的成本。",
+  "n_w": 129,
+  "rows": [
+    {
+      "n_w": 129,
+      "n_users": 1,
+      "tau": 5,
+      "b_ticks": 8,
+      "A0_as_reported": 0.049999999999999996,
+      "V_piL2_true_measure": 0.049999999999999996,
+      "A0p": 0.049999999999999996,
+      "l2_self_bias": 0.0,
+      "l2_self_bias_rel": 0.0,
+      "A0p_vs_VpiL2": 0.0,
+      "mono_holds_under_true_measure": true
+    },
+    {
+      "n_w": 129,
+      "n_users": 1,
+      "tau": 5,
+      "b_ticks": 16,
+      "A0_as_reported": 0.04729708776072412,
+      "V_piL2_true_measure": 0.04750034059034709,
+      "A0p": 0.04750034059034709,
+      "l2_self_bias": 0.00020325282962297547,
+      "l2_self_bias_rel": 0.004297364578792487,
+      "A0p_vs_VpiL2": 0.0,
+      "mono_holds_under_true_measure": true
+    },
+    {
+      "n_w": 129,
+      "n_users": 1,
+      "tau": 5,
+      "b_ticks": 24,
+      "A0_as_reported": 0.04565686755879104,
+      "V_piL2_true_measure": 0.04605750069342575,
+      "A0p": 0.04605750069342575,
+      "l2_self_bias": 0.00040063313463471056,
+      "l2_self_bias_rel": 0.008774871252803903,
+      "A0p_vs_VpiL2": 0.0,
+      "mono_holds_under_true_measure": true
+    },
+    {
+      "n_w": 129,
+      "n_users": 1,
+      "tau": 6,
+      "b_ticks": 8,
+      "A0_as_reported": 0.06099999999999999,
+      "V_piL2_true_measure": 0.06099999999999999,
+      "A0p": 0.06099999999999999,
+      "l2_self_bias": 0.0,
+      "l2_self_bias_rel": 0.0,
+      "A0p_vs_VpiL2": 0.0,
+      "mono_holds_under_true_measure": true
+    },
+    {
+      "n_w": 129,
+      "n_users": 1,
+      "tau": 6,
+      "b_ticks": 16,
+      "A0_as_reported": 0.05739611701429883,
+      "V_piL2_true_measure": 0.057667120787129454,
+      "A0p": 0.057667120787129454,
+      "l2_self_bias": 0.0002710037728306247,
+      "l2_self_bias_rel": 0.004721639492844277,
+      "A0p_vs_VpiL2": 0.0,
+      "mono_holds_under_true_measure": true
+    },
+    {
+      "n_w": 129,
+      "n_users": 1,
+      "tau": 6,
+      "b_ticks": 24,
+      "A0_as_reported": 0.0549357867113992,
+      "V_piL2_true_measure": 0.05550286094174743,
+      "A0p": 0.05550286094174743,
+      "l2_self_bias": 0.0005670742303482343,
+      "l2_self_bias_rel": 0.010322492209446527,
+      "A0p_vs_VpiL2": 0.0,
+      "mono_holds_under_true_measure": true
+    }
+  ],
+  "n_positive_self_bias": 4,
+  "n_rows": 6
+}
