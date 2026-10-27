@@ -1,0 +1,17 @@
+[
+  {
+    "n_w": 129,
+    "n_users": 2,
+    "probe_max": 1,
+    "probe_total": 2,
+    "sec": 20.073,
+    "states": {
+      "A0": 251,
+      "A0p": 686,
+      "VL2": 6000002,
+      "VL1": 6000006
+    },
+    "n_beliefs": 4244,
+    "capped": true
+  }
+]

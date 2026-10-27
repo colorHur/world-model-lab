@@ -1,0 +1,2 @@
+python -m experiments.cw_v1.r5_8_figures --tag all
+# 只读证据，不 import DP 引擎；F-SRC 由 AST 自查

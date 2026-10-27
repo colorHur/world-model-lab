@@ -1,0 +1,64 @@
+{
+  "g_src_ast": {
+    "pass": true,
+    "hits": [],
+    "checked": "源码 AST 里的 import 节点",
+    "forbidden": [
+      "r5_6_grid_l1",
+      "r5_7_price_panel",
+      "Quad",
+      "world-model-lab.experiments"
+    ]
+  },
+  "g_prov": {
+    "pass": true,
+    "n_points": 119,
+    "n_missing": 0,
+    "checked": "每个绘点都带 source_dir + cell_index，且目录存在"
+  },
+  "g_nofake": {
+    "pass": false,
+    "n_no_target_points": 2,
+    "n_no_target_tau5_b24": 2,
+    "checked": "IV(0)=0 的格必须带 no_target 标记、且不在图 1 里画成 0%；预期全表只有 tau=5,b=24 的三个 n_w"
+  },
+  "g_slack": {
+    "pass": true,
+    "checked": "fig2 全部归一化值 ∈{0,1}（违反会直接抛异常）",
+    "n_fig2_points": 65
+  },
+  "g_scale_probe": {
+    "pass": true,
+    "checked": "ptotal=inf 与 ptotal=2 在 n_w=129 的规模探针结果（撞顶 = UNMEASURED）",
+    "n_w129_ptotinf": {
+      "n_w": 129,
+      "n_users": 2,
+      "probe_max": 1,
+      "probe_total": null,
+      "sec": 20.393,
+      "states": {
+        "A0": 592,
+        "A0p": 2429,
+        "VL2": 6000131,
+        "VL1": 6000003
+      },
+      "n_beliefs": 4364,
+      "capped": true
+    },
+    "n_w129_ptot2": {
+      "n_w": 129,
+      "n_users": 2,
+      "probe_max": 1,
+      "probe_total": 2,
+      "sec": 20.073,
+      "states": {
+        "A0": 251,
+        "A0p": 686,
+        "VL2": 6000002,
+        "VL1": 6000006
+      },
+      "n_beliefs": 4244,
+      "capped": true
+    }
+  }
+}
