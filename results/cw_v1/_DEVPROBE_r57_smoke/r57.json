@@ -1,0 +1,327 @@
+{
+  "round": "CW-R5.7",
+  "protocol": "CW-POMDP-v1.5-grid",
+  "utc": "20261027T032857",
+  "ticks_per_quantum": 8,
+  "send_ticks": 8,
+  "half": 4.0,
+  "probe_max": 1,
+  "probe_total": 1,
+  "n_users": 1,
+  "p_ticks": [
+    0,
+    1,
+    2,
+    4,
+    8
+  ],
+  "sec_panel": 0.026,
+  "sec_total": 0.096,
+  "src_hash": "163bd7e86aa3669c",
+  "panel_spec": {
+    "rho": 0.999,
+    "P": 0.01,
+    "tau": [
+      6
+    ],
+    "b_ticks": [
+      16
+    ],
+    "n_w": [
+      33
+    ],
+    "sigma_w": [
+      0.02
+    ],
+    "probe_slot": true,
+    "probe_kind": "point-observation"
+  },
+  "cells": [
+    {
+      "n_users": 1,
+      "n_w": 33,
+      "tau": 6,
+      "b_ticks": 16,
+      "b_quanta": 2.0,
+      "rho": 0.999,
+      "probe_max": 1,
+      "probe_total": 1,
+      "probe_slot": true,
+      "A0p": 0.057667448058906924,
+      "A0_sidebar": 0.05739611701429883,
+      "VL1": {
+        "0": 0.057667448058906924,
+        "1": 0.057667448058906924,
+        "2": 0.057667448058906924,
+        "4": 0.057667448058906924,
+        "8": 0.057667448058906924
+      },
+      "IV_probe_L1": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.0,
+        "4": 0.0,
+        "8": 0.0
+      },
+      "rel_IV": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.0,
+        "4": 0.0,
+        "8": 0.0
+      },
+      "boundary": {
+        "verdict": "MEASUREMENT-WORTH-NOTHING-IN-SCANNED-PRICE-RANGE",
+        "positive_p_ticks": [],
+        "p_star_interval": null
+      },
+      "capped": false,
+      "arm": "smoke1u"
+    }
+  ],
+  "legs": [
+    {
+      "tag": "smoke1u",
+      "n_users": 1,
+      "n_w": 33,
+      "sec": 0.026,
+      "sec_build": 0.0,
+      "states": {
+        "A0p": 116,
+        "A0": 64,
+        "VL1": {
+          "0": 7772,
+          "1": 2921,
+          "2": 2921,
+          "4": 2921,
+          "8": 2921
+        },
+        "n_beliefs": 2261,
+        "capped": false
+      }
+    }
+  ],
+  "gates": {
+    "g_ps_ref": {
+      "rows": [
+        {
+          "n_w": 33,
+          "dx": 0.25,
+          "grid_ps": 0.5000000000000001,
+          "ref_ps": 0.5,
+          "rel": 2.220446049250313e-16,
+          "mass_outside_support": -2.220446049250313e-16
+        }
+      ],
+      "ref": 0.5,
+      "max_rel": 2.220446049250313e-16,
+      "tol": 0.001,
+      "pass": true
+    },
+    "g_mart": {
+      "rows": [
+        {
+          "n_w": 33,
+          "max_delta": 1.3877787807814457e-17,
+          "max_Trow": 2.220446049250313e-16,
+          "max_prior_family": 0.0,
+          "max_all": 2.220446049250313e-16
+        }
+      ],
+      "max_abs": 2.220446049250313e-16,
+      "tol": 1e-09,
+      "pass": true
+    },
+    "g_noinfo": {
+      "n_w": 33,
+      "kappa": 0.0,
+      "p_ticks": [
+        0,
+        1,
+        2,
+        4,
+        8
+      ],
+      "IV_probe_L1": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.0,
+        "4": 0.0,
+        "8": 0.0
+      },
+      "max_abs": 0.0,
+      "tol": 1e-12,
+      "pass": true
+    },
+    "g_ast": {
+      "hits": [],
+      "n_hits": 0,
+      "detector_catches_mutation": true,
+      "pass": true
+    },
+    "g_p0_regression": {
+      "rows": [
+        {
+          "n_w": 33,
+          "tau": 6,
+          "b_ticks": 16,
+          "VL1_p0_r57": 0.057667448058906924,
+          "VL1_p0_r56_engine": 0.057667448058906924,
+          "VL1_p0_in_panel": 0.057667448058906924,
+          "identical": true
+        }
+      ],
+      "n_cells": 1,
+      "n_identical": 1,
+      "pass": true
+    },
+    "g_price_mono": {
+      "n_violations": 0,
+      "worst_excess": 0.0,
+      "tol": 1e-15,
+      "violations": [],
+      "pass": true
+    },
+    "g_legal_info": {
+      "n_cells": 1,
+      "n_violations": 0,
+      "worst_excess": 0.0,
+      "tol": 0.0,
+      "violations": [],
+      "pass": true
+    },
+    "g_a0p_invariant": {
+      "n_groups": 1,
+      "n_groups_inconsistent": 0,
+      "detail": {},
+      "pass": true
+    },
+    "g_nw3": {
+      "rows": [],
+      "n_cells": 0,
+      "n_skipped_all_zero": 0,
+      "max_rel_spread": 0.0,
+      "tol": 0.3,
+      "pass": null
+    },
+    "g_size": {
+      "rows": [
+        {
+          "tag": "smoke1u",
+          "n_w": 33,
+          "n_users": 1,
+          "states": {
+            "0": 7772,
+            "1": 2921,
+            "2": 2921,
+            "4": 2921,
+            "8": 2921
+          },
+          "A0p": 116,
+          "A0": 64,
+          "n_beliefs": 2261,
+          "capped": false,
+          "c1_all_positive": true
+        }
+      ],
+      "pass": true
+    }
+  },
+  "verdicts": {
+    "n_cells": 1,
+    "n_capped": 0,
+    "n_cells_by_verdict": {
+      "MEASUREMENT-WORTH-NOTHING-IN-SCANNED-PRICE-RANGE": 1
+    },
+    "gates": {
+      "g_ps_ref": {
+        "max_rel": 2.220446049250313e-16,
+        "tol": 0.001,
+        "pass": true
+      },
+      "g_mart": {
+        "max_abs": 2.220446049250313e-16,
+        "tol": 1e-09,
+        "pass": true
+      },
+      "g_noinfo": {
+        "max_abs": 0.0,
+        "tol": 1e-12,
+        "pass": true
+      },
+      "g_ast": {
+        "n_hits": 0,
+        "pass": true
+      },
+      "g_p0_regression": {
+        "n_identical": 1,
+        "pass": true
+      },
+      "g_price_mono": {
+        "n_violations": 0,
+        "worst_excess": 0.0,
+        "tol": 1e-15,
+        "pass": true
+      },
+      "g_legal_info": {
+        "n_violations": 0,
+        "worst_excess": 0.0,
+        "tol": 0.0,
+        "pass": true
+      },
+      "g_a0p_invariant": {
+        "n_groups_inconsistent": 0,
+        "pass": true
+      },
+      "g_nw3": {
+        "max_rel_spread": 0.0,
+        "tol": 0.3,
+        "pass": null
+      },
+      "g_size": {
+        "pass": true
+      }
+    },
+    "gates_failed": [],
+    "gates_na": [
+      "g_nw3"
+    ],
+    "boundary_table_finest": [
+      {
+        "tau": 6,
+        "b_ticks": 16,
+        "positive_p_ticks": [],
+        "p_star_interval": null,
+        "verdict": "MEASUREMENT-WORTH-NOTHING-IN-SCANNED-PRICE-RANGE",
+        "IV_p0": 0.0,
+        "IV_max_p": 0.0,
+        "rel_IV_p0": 0.0
+      }
+    ],
+    "P_MAIN": {
+      "cell": {
+        "b_ticks": 16,
+        "tau": 6,
+        "n_w": 33
+      },
+      "verdict": "MEASUREMENT-WORTH-NOTHING-IN-SCANNED-PRICE-RANGE",
+      "p_star_interval": null,
+      "IV_probe_L1": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.0,
+        "4": 0.0,
+        "8": 0.0
+      },
+      "rel_IV": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.0,
+        "4": 0.0,
+        "8": 0.0
+      }
+    },
+    "VERDICT": "MEASUREMENT-WORTH-NOTHING-IN-SCANNED-PRICE-RANGE",
+    "verdict_scope": "只覆盖网格信念（`CW-POMDP-v1.5-grid`）、L1（ACK 更新信念）、ρ=0.999、P0=0.01、κ=2、n=2、probe_max=1、probe_total=1、HALF=4.0、探测=点观测、`P` 未离散化；不许外推到多次测量 / n>2 / 其他 ρ 或 κ"
+  }
+}

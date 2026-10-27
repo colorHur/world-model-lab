@@ -1,0 +1,5 @@
+# CW-R5.7 · 追加面板（预注册 §9-3 登记，看到主面板读数之后）· b=(9,10,12,20) 非整包预算
+cd D:/repos/world-model-lab
+python -m experiments.cw_v1.r5_7_price_panel --nu 2 --nw 129,257,513 --tau 5,6 --b 9,10,12,20 --p 0,1,2,4,8 --tag ext_nonmult
+
+# 实测：2026-10-27 11:32:16 起，面板 19.6 s；这是 g_slack_rule 的样本外检验集（257/513）

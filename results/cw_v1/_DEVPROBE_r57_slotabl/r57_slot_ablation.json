@@ -1,0 +1,120 @@
+{
+  "round": "CW-R5.7",
+  "utc": "20261027T033018",
+  "idealized": true,
+  "note": "no_slot 物理不可实现，只作分解，不进主表、不进判词",
+  "rows": [
+    {
+      "n_w": 129,
+      "tau": 6,
+      "b_ticks": 16,
+      "p_ticks": 0,
+      "n_users": 2,
+      "by_arm": {
+        "slot": {
+          "VL1": 0.15141933729092352,
+          "A0p": 0.15236363636363634,
+          "IV_probe_L1": 0.0009442990727128175,
+          "states_VL1": 207292,
+          "capped": false
+        },
+        "no_slot": {
+          "VL1": 0.15236363636363634,
+          "A0p": 0.15236363636363634,
+          "IV_probe_L1": 0.0,
+          "states_VL1": 416014,
+          "capped": false
+        }
+      },
+      "IV_with_slot": 0.0009442990727128175,
+      "IV_no_slot": 0.0,
+      "slot_cost_abs": 0.0009442990727128175,
+      "slot_cost_rel": 9.442990727128175e+26,
+      "note": "`no_slot` 物理不可实现，只作分解；不进主表、不进判词"
+    },
+    {
+      "n_w": 129,
+      "tau": 6,
+      "b_ticks": 16,
+      "p_ticks": 1,
+      "n_users": 2,
+      "by_arm": {
+        "slot": {
+          "VL1": 0.15236363636363634,
+          "A0p": 0.15236363636363634,
+          "IV_probe_L1": 0.0,
+          "states_VL1": 42946,
+          "capped": false
+        },
+        "no_slot": {
+          "VL1": 0.15236363636363634,
+          "A0p": 0.15236363636363634,
+          "IV_probe_L1": 0.0,
+          "states_VL1": 68488,
+          "capped": false
+        }
+      },
+      "IV_with_slot": 0.0,
+      "IV_no_slot": 0.0,
+      "slot_cost_abs": 0.0,
+      "slot_cost_rel": 0.0,
+      "note": "`no_slot` 物理不可实现，只作分解；不进主表、不进判词"
+    },
+    {
+      "n_w": 129,
+      "tau": 6,
+      "b_ticks": 16,
+      "p_ticks": 2,
+      "n_users": 2,
+      "by_arm": {
+        "slot": {
+          "VL1": 0.15236363636363634,
+          "A0p": 0.15236363636363634,
+          "IV_probe_L1": 0.0,
+          "states_VL1": 42946,
+          "capped": false
+        },
+        "no_slot": {
+          "VL1": 0.15236363636363634,
+          "A0p": 0.15236363636363634,
+          "IV_probe_L1": 0.0,
+          "states_VL1": 68488,
+          "capped": false
+        }
+      },
+      "IV_with_slot": 0.0,
+      "IV_no_slot": 0.0,
+      "slot_cost_abs": 0.0,
+      "slot_cost_rel": 0.0,
+      "note": "`no_slot` 物理不可实现，只作分解；不进主表、不进判词"
+    },
+    {
+      "n_w": 129,
+      "tau": 6,
+      "b_ticks": 16,
+      "p_ticks": 4,
+      "n_users": 2,
+      "by_arm": {
+        "slot": {
+          "VL1": 0.15236363636363634,
+          "A0p": 0.15236363636363634,
+          "IV_probe_L1": 0.0,
+          "states_VL1": 42946,
+          "capped": false
+        },
+        "no_slot": {
+          "VL1": 0.15236363636363634,
+          "A0p": 0.15236363636363634,
+          "IV_probe_L1": 0.0,
+          "states_VL1": 68488,
+          "capped": false
+        }
+      },
+      "IV_with_slot": 0.0,
+      "IV_no_slot": 0.0,
+      "slot_cost_abs": 0.0,
+      "slot_cost_rel": 0.0,
+      "note": "`no_slot` 物理不可实现，只作分解；不进主表、不进判词"
+    }
+  ]
+}

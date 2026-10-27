@@ -1,0 +1,3 @@
+CW-R5.7 开发期探针 —— **不得引用当读数**
+用途：正式面板之前的规模/语义探针（含 n=1 结构性零的冒烟、n_w=129 的首批读数、b 非整包的规律发现）。
+正式读数见 cw_r5_7_price_main2u_* / cw_r5_7_price_ext_nonmult_* / cw_r5_7_price_slotabl_*（后者亦作废，见其 NOTE）。

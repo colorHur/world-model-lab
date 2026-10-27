@@ -1,0 +1,575 @@
+{
+  "round": "CW-R5.7",
+  "protocol": "CW-POMDP-v1.5-grid",
+  "utc": "20261027T032956",
+  "ticks_per_quantum": 8,
+  "send_ticks": 8,
+  "half": 4.0,
+  "probe_max": 1,
+  "probe_total": 1,
+  "n_users": 2,
+  "p_ticks": [
+    0,
+    1,
+    2,
+    4,
+    8
+  ],
+  "sec_panel": 1.589,
+  "sec_total": 2.683,
+  "src_hash": "8f45a43b4382c62d",
+  "panel_spec": {
+    "rho": 0.999,
+    "P": 0.01,
+    "tau": [
+      6
+    ],
+    "b_ticks": [
+      9,
+      10,
+      12,
+      20
+    ],
+    "n_w": [
+      129
+    ],
+    "sigma_w": [
+      0.02,
+      0.05
+    ],
+    "probe_slot": true,
+    "probe_kind": "point-observation"
+  },
+  "cells": [
+    {
+      "n_users": 2,
+      "n_w": 129,
+      "tau": 6,
+      "b_ticks": 9,
+      "b_quanta": 1.125,
+      "rho": 0.999,
+      "probe_max": 1,
+      "probe_total": 1,
+      "probe_slot": true,
+      "A0p": 0.15736363636363634,
+      "A0_sidebar": 0.15736363636363634,
+      "VL1": {
+        "0": 0.15647346780449392,
+        "1": 0.15647346780449392,
+        "2": 0.15736363636363634,
+        "4": 0.15736363636363634,
+        "8": 0.15736363636363634
+      },
+      "IV_probe_L1": {
+        "0": 0.0008901685591424235,
+        "1": 0.0008901685591424235,
+        "2": 0.0,
+        "4": 0.0,
+        "8": 0.0
+      },
+      "rel_IV": {
+        "0": 0.005656761496572305,
+        "1": 0.005656761496572305,
+        "2": 0.0,
+        "4": 0.0,
+        "8": 0.0
+      },
+      "boundary": {
+        "verdict": "PRICE-BOUNDARY-IN-RANGE",
+        "positive_p_ticks": [
+          0,
+          1
+        ],
+        "p_star_interval": [
+          1,
+          2
+        ],
+        "p_lo_quanta": 0.125,
+        "p_hi_quanta": 0.25
+      },
+      "capped": false
+    },
+    {
+      "n_users": 2,
+      "n_w": 129,
+      "tau": 6,
+      "b_ticks": 10,
+      "b_quanta": 1.25,
+      "rho": 0.999,
+      "probe_max": 1,
+      "probe_total": 1,
+      "probe_slot": true,
+      "A0p": 0.15736363636363634,
+      "A0_sidebar": 0.15736363636363634,
+      "VL1": {
+        "0": 0.15647346780449392,
+        "1": 0.15647346780449392,
+        "2": 0.15647346780449392,
+        "4": 0.15736363636363634,
+        "8": 0.15736363636363634
+      },
+      "IV_probe_L1": {
+        "0": 0.0008901685591424235,
+        "1": 0.0008901685591424235,
+        "2": 0.0008901685591424235,
+        "4": 0.0,
+        "8": 0.0
+      },
+      "rel_IV": {
+        "0": 0.005656761496572305,
+        "1": 0.005656761496572305,
+        "2": 0.005656761496572305,
+        "4": 0.0,
+        "8": 0.0
+      },
+      "boundary": {
+        "verdict": "PRICE-BOUNDARY-IN-RANGE",
+        "positive_p_ticks": [
+          0,
+          1,
+          2
+        ],
+        "p_star_interval": [
+          2,
+          4
+        ],
+        "p_lo_quanta": 0.25,
+        "p_hi_quanta": 0.5
+      },
+      "capped": false
+    },
+    {
+      "n_users": 2,
+      "n_w": 129,
+      "tau": 6,
+      "b_ticks": 12,
+      "b_quanta": 1.5,
+      "rho": 0.999,
+      "probe_max": 1,
+      "probe_total": 1,
+      "probe_slot": true,
+      "A0p": 0.15736363636363634,
+      "A0_sidebar": 0.15736363636363634,
+      "VL1": {
+        "0": 0.15647346780449392,
+        "1": 0.15647346780449392,
+        "2": 0.15647346780449392,
+        "4": 0.15647346780449392,
+        "8": 0.15736363636363634
+      },
+      "IV_probe_L1": {
+        "0": 0.0008901685591424235,
+        "1": 0.0008901685591424235,
+        "2": 0.0008901685591424235,
+        "4": 0.0008901685591424235,
+        "8": 0.0
+      },
+      "rel_IV": {
+        "0": 0.005656761496572305,
+        "1": 0.005656761496572305,
+        "2": 0.005656761496572305,
+        "4": 0.005656761496572305,
+        "8": 0.0
+      },
+      "boundary": {
+        "verdict": "PRICE-BOUNDARY-IN-RANGE",
+        "positive_p_ticks": [
+          0,
+          1,
+          2,
+          4
+        ],
+        "p_star_interval": [
+          4,
+          8
+        ],
+        "p_lo_quanta": 0.5,
+        "p_hi_quanta": 1.0
+      },
+      "capped": false
+    },
+    {
+      "n_users": 2,
+      "n_w": 129,
+      "tau": 6,
+      "b_ticks": 20,
+      "b_quanta": 2.5,
+      "rho": 0.999,
+      "probe_max": 1,
+      "probe_total": 1,
+      "probe_slot": true,
+      "A0p": 0.15236363636363634,
+      "A0_sidebar": 0.15236363636363634,
+      "VL1": {
+        "0": 0.15141933729092352,
+        "1": 0.15141933729092352,
+        "2": 0.15141933729092352,
+        "4": 0.15141933729092352,
+        "8": 0.15236363636363634
+      },
+      "IV_probe_L1": {
+        "0": 0.0009442990727128175,
+        "1": 0.0009442990727128175,
+        "2": 0.0009442990727128175,
+        "4": 0.0009442990727128175,
+        "8": 0.0
+      },
+      "rel_IV": {
+        "0": 0.006197666945012527,
+        "1": 0.006197666945012527,
+        "2": 0.006197666945012527,
+        "4": 0.006197666945012527,
+        "8": 0.0
+      },
+      "boundary": {
+        "verdict": "PRICE-BOUNDARY-IN-RANGE",
+        "positive_p_ticks": [
+          0,
+          1,
+          2,
+          4
+        ],
+        "p_star_interval": [
+          4,
+          8
+        ],
+        "p_lo_quanta": 0.5,
+        "p_hi_quanta": 1.0
+      },
+      "capped": false
+    }
+  ],
+  "legs": [
+    {
+      "tag": "probe_bnonmult",
+      "n_users": 2,
+      "n_w": 129,
+      "sec": 1.588,
+      "states": {
+        "A0p": 574,
+        "A0": 239,
+        "VL1": {
+          "0": 335200,
+          "1": 335200,
+          "2": 296500,
+          "4": 257800,
+          "8": 54754
+        },
+        "n_beliefs": 8501,
+        "capped": false
+      }
+    }
+  ],
+  "gates": {
+    "g_ps_ref": {
+      "rows": [
+        {
+          "n_w": 129,
+          "dx": 0.0625,
+          "grid_ps": 0.49999999999999994,
+          "ref_ps": 0.5,
+          "rel": 1.1102230246251565e-16,
+          "mass_outside_support": 2.220446049250313e-16
+        }
+      ],
+      "ref": 0.5,
+      "max_rel": 1.1102230246251565e-16,
+      "tol": 0.001,
+      "pass": true
+    },
+    "g_mart": {
+      "rows": [
+        {
+          "n_w": 129,
+          "max_delta": 1.1102230246251565e-16,
+          "max_Trow": 3.3306690738754696e-16,
+          "max_prior_family": 5.551115123125783e-17,
+          "max_all": 3.3306690738754696e-16
+        }
+      ],
+      "max_abs": 3.3306690738754696e-16,
+      "tol": 1e-09,
+      "pass": true
+    },
+    "g_noinfo": {
+      "n_w": 129,
+      "kappa": 0.0,
+      "p_ticks": [
+        0,
+        1,
+        2,
+        4,
+        8
+      ],
+      "IV_probe_L1": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.0,
+        "4": 0.0,
+        "8": 0.0
+      },
+      "max_abs": 0.0,
+      "tol": 1e-12,
+      "pass": true
+    },
+    "g_ast": {
+      "hits": [],
+      "n_hits": 0,
+      "detector_catches_mutation": true,
+      "pass": true
+    },
+    "g_p0_regression": {
+      "rows": [
+        {
+          "n_w": 129,
+          "tau": 6,
+          "b_ticks": 9,
+          "VL1_p0_r57": 0.15647346780449392,
+          "VL1_p0_r56_engine": 0.15647346780449392,
+          "VL1_p0_in_panel": 0.15647346780449392,
+          "identical": true
+        },
+        {
+          "n_w": 129,
+          "tau": 6,
+          "b_ticks": 10,
+          "VL1_p0_r57": 0.15647346780449392,
+          "VL1_p0_r56_engine": 0.15647346780449392,
+          "VL1_p0_in_panel": 0.15647346780449392,
+          "identical": true
+        },
+        {
+          "n_w": 129,
+          "tau": 6,
+          "b_ticks": 12,
+          "VL1_p0_r57": 0.15647346780449392,
+          "VL1_p0_r56_engine": 0.15647346780449392,
+          "VL1_p0_in_panel": 0.15647346780449392,
+          "identical": true
+        },
+        {
+          "n_w": 129,
+          "tau": 6,
+          "b_ticks": 20,
+          "VL1_p0_r57": 0.15141933729092352,
+          "VL1_p0_r56_engine": 0.15141933729092352,
+          "VL1_p0_in_panel": 0.15141933729092352,
+          "identical": true
+        }
+      ],
+      "n_cells": 4,
+      "n_identical": 4,
+      "pass": true
+    },
+    "g_price_mono": {
+      "n_violations": 0,
+      "worst_excess": 0.0,
+      "tol": 1e-15,
+      "violations": [],
+      "pass": true
+    },
+    "g_legal_info": {
+      "n_cells": 4,
+      "n_violations": 0,
+      "worst_excess": 0.0,
+      "tol": 0.0,
+      "violations": [],
+      "pass": true
+    },
+    "g_a0p_invariant": {
+      "n_groups": 4,
+      "n_groups_inconsistent": 0,
+      "detail": {},
+      "pass": true
+    },
+    "g_nw3": {
+      "rows": [],
+      "n_cells": 0,
+      "n_skipped_all_zero": 0,
+      "max_rel_spread": 0.0,
+      "tol": 0.3,
+      "pass": null
+    },
+    "g_size": {
+      "rows": [
+        {
+          "tag": "probe_bnonmult",
+          "n_w": 129,
+          "n_users": 2,
+          "states": {
+            "0": 335200,
+            "1": 335200,
+            "2": 296500,
+            "4": 257800,
+            "8": 54754
+          },
+          "A0p": 574,
+          "A0": 239,
+          "n_beliefs": 8501,
+          "capped": false,
+          "c1_all_positive": true
+        }
+      ],
+      "pass": true
+    }
+  },
+  "verdicts": {
+    "n_cells": 4,
+    "n_capped": 0,
+    "n_cells_by_verdict": {
+      "PRICE-BOUNDARY-IN-RANGE": 4
+    },
+    "gates": {
+      "g_ps_ref": {
+        "max_rel": 1.1102230246251565e-16,
+        "tol": 0.001,
+        "pass": true
+      },
+      "g_mart": {
+        "max_abs": 3.3306690738754696e-16,
+        "tol": 1e-09,
+        "pass": true
+      },
+      "g_noinfo": {
+        "max_abs": 0.0,
+        "tol": 1e-12,
+        "pass": true
+      },
+      "g_ast": {
+        "n_hits": 0,
+        "pass": true
+      },
+      "g_p0_regression": {
+        "n_identical": 4,
+        "pass": true
+      },
+      "g_price_mono": {
+        "n_violations": 0,
+        "worst_excess": 0.0,
+        "tol": 1e-15,
+        "pass": true
+      },
+      "g_legal_info": {
+        "n_violations": 0,
+        "worst_excess": 0.0,
+        "tol": 0.0,
+        "pass": true
+      },
+      "g_a0p_invariant": {
+        "n_groups_inconsistent": 0,
+        "pass": true
+      },
+      "g_nw3": {
+        "max_rel_spread": 0.0,
+        "tol": 0.3,
+        "pass": null
+      },
+      "g_size": {
+        "pass": true
+      }
+    },
+    "gates_failed": [],
+    "gates_na": [
+      "g_nw3"
+    ],
+    "boundary_table_finest": [
+      {
+        "tau": 6,
+        "b_ticks": 9,
+        "positive_p_ticks": [
+          0,
+          1
+        ],
+        "p_star_interval": [
+          1,
+          2
+        ],
+        "verdict": "PRICE-BOUNDARY-IN-RANGE",
+        "IV_p0": 0.0008901685591424235,
+        "IV_max_p": 0.0,
+        "rel_IV_p0": 0.005656761496572305
+      },
+      {
+        "tau": 6,
+        "b_ticks": 10,
+        "positive_p_ticks": [
+          0,
+          1,
+          2
+        ],
+        "p_star_interval": [
+          2,
+          4
+        ],
+        "verdict": "PRICE-BOUNDARY-IN-RANGE",
+        "IV_p0": 0.0008901685591424235,
+        "IV_max_p": 0.0,
+        "rel_IV_p0": 0.005656761496572305
+      },
+      {
+        "tau": 6,
+        "b_ticks": 12,
+        "positive_p_ticks": [
+          0,
+          1,
+          2,
+          4
+        ],
+        "p_star_interval": [
+          4,
+          8
+        ],
+        "verdict": "PRICE-BOUNDARY-IN-RANGE",
+        "IV_p0": 0.0008901685591424235,
+        "IV_max_p": 0.0,
+        "rel_IV_p0": 0.005656761496572305
+      },
+      {
+        "tau": 6,
+        "b_ticks": 20,
+        "positive_p_ticks": [
+          0,
+          1,
+          2,
+          4
+        ],
+        "p_star_interval": [
+          4,
+          8
+        ],
+        "verdict": "PRICE-BOUNDARY-IN-RANGE",
+        "IV_p0": 0.0009442990727128175,
+        "IV_max_p": 0.0,
+        "rel_IV_p0": 0.006197666945012527
+      }
+    ],
+    "P_MAIN": {
+      "cell": {
+        "b_ticks": 20,
+        "tau": 6,
+        "n_w": 129
+      },
+      "verdict": "PRICE-BOUNDARY-IN-RANGE",
+      "p_star_interval": [
+        4,
+        8
+      ],
+      "IV_probe_L1": {
+        "0": 0.0009442990727128175,
+        "1": 0.0009442990727128175,
+        "2": 0.0009442990727128175,
+        "4": 0.0009442990727128175,
+        "8": 0.0
+      },
+      "rel_IV": {
+        "0": 0.006197666945012527,
+        "1": 0.006197666945012527,
+        "2": 0.006197666945012527,
+        "4": 0.006197666945012527,
+        "8": 0.0
+      }
+    },
+    "VERDICT": "PRICE-BOUNDARY-IN-RANGE",
+    "verdict_scope": "只覆盖网格信念（`CW-POMDP-v1.5-grid`）、L1（ACK 更新信念）、ρ=0.999、P0=0.01、κ=2、n=2、probe_max=1、probe_total=1、HALF=4.0、探测=点观测、`P` 未离散化；不许外推到多次测量 / n>2 / 其他 ρ 或 κ"
+  }
+}
